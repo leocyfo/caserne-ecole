@@ -9,6 +9,10 @@ Le site de gestion scolaire de l’Académie des pompiers : calendrier des class
 
 Tant que Firebase n’est pas configuré (`config.js` vide), `index.html` renvoie vers la démo.
 
+## Essayer le site sur cet ordinateur
+
+Double-cliquez **`Lancer le site local.cmd`** (il faut Node.js) : le site s’ouvre à http://localhost:8080/demo.html. Fermez la fenêtre noire pour l’arrêter.
+
 ## Mettre la connexion en service (Firebase, gratuit)
 
 1. Sur [console.firebase.google.com](https://console.firebase.google.com), **Ajouter un projet** (par exemple `caserne-ecole`). Google Analytics n’est pas nécessaire.
