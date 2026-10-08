@@ -484,6 +484,10 @@ legend{font-size:13px;color:var(--ink-2);font-weight:600;padding:0 4px}
 .side-out{margin-top:0}
 @media (max-width:760px){.dem-list li{grid-template-columns:1fr}}
 
+/* Sigle du cours devant son nom */
+.cc-code{font-weight:700;color:var(--chip-ink,var(--muted))}
+.lrow .cc-code,.nx-t .cc-code{color:var(--muted)}
+
 /* Corvée de ménage : bien visible partout (bande jaune, pastille, encadré) */
 .cc-chore{display:flex;align-items:center;gap:7px;margin:6px -11px -10px;padding:7px 11px;background:#FFE08A;color:#5A3E00;border-top:1px solid #F0C64A;border-radius:0 0 7px 7px;font-size:12.5px;font-weight:800}
 .cc-chore .ic{width:16px;height:16px;flex:none}
@@ -810,9 +814,15 @@ function sessionsOn(ds){
   }
   return out.sort((x,y)=>x.start-y.start||x.end-y.end);
 }
+/* On parle d’avant-midi, d’après-midi ou de toute la journée, jamais d’heures. */
+function moment(a,b){if(a<12*60&&b>13*60)return 'Toute la journée';return a<12*60?'Avant-midi':'Après-midi';}
+const momentOf=s=>moment(s.start,s.end);
+const momentShort=s=>({'Avant-midi':'AM','Après-midi':'PM'})[momentOf(s)]||'Jour';
+const momentIn=(a,b)=>({'Avant-midi':'en avant-midi','Après-midi':'en après-midi'})[moment(a,b)]||'toute la journée';
+const codeOf=c=>c&&c.code?`<span class="cc-code">${esc(c.code)}</span> `:'';
 function movedLabel(s){
   const x=s.movedX;if(!x)return '';
-  if(x.date===s.date) return 'Déplacé à '+fmtT(x.debut);
+  if(x.date===s.date) return 'Déplacé '+momentIn(toMin(x.debut),toMin(x.fin));
   const d=parse(x.date);return `Déplacé au ${WD[d.getDay()].toLowerCase()} ${dn(d)}`;
 }
 function examItem(e){
@@ -941,18 +951,18 @@ function cardHTML(s,mode){
   if(s.kind==='exam'){
     const e=s.e, meta=metaFor(s,mode), ti=s.c?s.c.titre:(e.titre||'Examen');
     return `<button type="button" class="cc exam kx" data-act="exam" data-id="${esc(e.id)}" data-key="${esc(s.key)}" title="${esc(`Examen · ${ti} · ${fmtT(s.start)} – ${fmtT(s.end)}`)}" aria-label="${esc(`Examen, ${ti}, ${fmtT(s.start)} à ${fmtT(s.end)}${meta?', '+meta:''}`)}">
-      ${cardTop(`${fmtT(s.start)} – ${fmtT(s.end)}`,'Examen')}
-      <span class="cc-title"><span class="tstart">${fmtT(s.start)}</span><span class="xtag">Examen</span><strong>${esc(ti)}</strong></span>${meta?`<span class="cc-meta">${esc(meta)}</span>`:''}</button>`;
+      ${cardTop(momentOf(s),'Examen')}
+      <span class="cc-title"><span class="tstart">${fmtT(s.start)}</span><span class="xtag">Examen</span><strong>${s.c?codeOf(s.c):''}${esc(ti)}</strong></span>${meta?`<span class="cc-meta">${esc(meta)}</span>`:''}</button>`;
   }
   const c=s.c, meta=metaFor(s,mode), drag=mode==='admin'&&isAdmin()&&!s.cancelled&&S.conn==='shared';
   const st=s.cancelled||mode==='student'?'':attInfo(s).state, dot=st==='done'||st==='todo'||st==='partial'?` data-st="${st}"`:'';
   const stTxt=st==='done'?'présences faites':st==='partial'?'présences commencées':st==='todo'?'présences à faire':'';
   const badge=s.cancelled&&s.movedX?['info','Cours déplacé']:s.cancelled?['bad','Cours annulé']:profAbsent(s)?['bad','Prof. absent']:null;
   const {kind,flags}=cardKind(tagsOf(s)), ch=choreOf(s), foot=s.cancelled?'':cardStatus(s,mode)+flags.filter(t=>!CHORE_TAGS.has(t)).map(t=>`<span class="cc-flag">${esc(t)}</span>`).join('');
-  const note=s.cancelled&&s.movedX?(s.movedX.date===s.date?`Déplacé à ${fmtT(s.movedX.debut)}`:`${movedLabel(s)} à ${fmtT(s.movedX.debut)}`):'';
+  const note=s.cancelled&&s.movedX?(s.movedX.date===s.date?movedLabel(s):`${movedLabel(s)}, ${momentIn(toMin(s.movedX.debut),toMin(s.movedX.fin)).replace(/^en /,'')}`):'';
   return `<button type="button" class="cc ${sessTone(s)}${s.cancelled?' cancelled':''}${badge?' has-badge':''}" data-act="sess" data-key="${esc(s.key)}" data-date="${s.date}" data-grp="${esc(s.grp||'')}"${dot}${drag?' data-drag="1"':''} title="${esc(`${c.titre} · ${fmtT(s.start)} – ${fmtT(s.end)}${meta?' · '+meta:''}${stTxt?' · '+stTxt:''}${drag?' · glisser pour déplacer':''}`)}" aria-label="${esc(`${c.titre}, ${fmtT(s.start)} à ${fmtT(s.end)}${meta?', '+meta:''}${s.cancelled?', '+(s.movedX?movedLabel(s):'annulé'):''}${ch?', corvée de ménage'+(ch==='maybe'?' à confirmer':''):''}`)}">
-    ${cardTop(`${fmtT(s.start)} – ${fmtT(s.end)}`,kind)}
-    <span class="cc-title"><span class="tstart">${fmtT(s.start)}</span><strong>${esc(c.titre)}</strong></span>${meta?`<span class="cc-meta">${esc(meta)}</span>`:''}${note?`<span class="cc-note">${esc(note)}</span>`:''}${foot?`<span class="cc-foot">${foot}</span>`:''}${ch?`<span class="cc-chore${ch==='maybe'?' maybe':''}" title="${ch==='maybe'?'Corvée de ménage à confirmer':'Corvée de ménage'}">${icon('broom')}<span>Corvée de ménage${ch==='maybe'?' à confirmer':''}</span></span>`:''}${badge?`<span class="cc-badge ${badge[0]}">${badge[1]}</span>`:''}</button>`;
+    ${cardTop(momentOf(s),kind)}
+    <span class="cc-title"><span class="tstart">${fmtT(s.start)}</span><strong>${codeOf(c)}${esc(c.titre)}</strong></span>${meta?`<span class="cc-meta">${esc(meta)}</span>`:''}${note?`<span class="cc-note">${esc(note)}</span>`:''}${foot?`<span class="cc-foot">${foot}</span>`:''}${ch?`<span class="cc-chore${ch==='maybe'?' maybe':''}" title="${ch==='maybe'?'Corvée de ménage à confirmer':'Corvée de ménage'}">${icon('broom')}<span>Corvée de ménage${ch==='maybe'?' à confirmer':''}</span></span>`:''}${badge?`<span class="cc-badge ${badge[0]}">${badge[1]}</span>`:''}</button>`;
 }
 function rowLabel(name){
   const m=/^(groupe|classe)\s+(.+)$/i.exec(String(name||''));
@@ -989,10 +999,10 @@ function boardHTML(list,rows,mode,corner){
   return h+'</div></div>';
 }
 function rowHTML(s,mode){
-  if(s.kind==='exam') return `<button type="button" class="lrow" data-act="exam" data-id="${esc(s.e.id)}"><span class="when">${fmtT(s.start)}<small>${fmtT(s.end)}</small></span><span class="what"><span class="ti">${esc(s.c?s.c.titre:s.e.titre)}</span><span class="sub">${esc(metaFor(s,mode))}</span></span><span class="chip exam">Examen</span></button>`;
+  if(s.kind==='exam') return `<button type="button" class="lrow" data-act="exam" data-id="${esc(s.e.id)}"><span class="when">${momentShort(s)}</span><span class="what"><span class="ti">${s.c?codeOf(s.c):''}${esc(s.c?s.c.titre:s.e.titre)}</span><span class="sub">${esc(metaFor(s,mode))}</span></span><span class="chip exam">Examen</span></button>`;
   return `<button type="button" class="lrow${s.cancelled?' cancelled':''}" data-act="sess" data-key="${esc(s.key)}">
-    <span class="when">${fmtT(s.start)}<small>${fmtT(s.end)}</small></span>
-    <span class="what"><span class="ti">${esc(s.c.titre)}${choreChip(s)}</span><span class="sub">${esc(metaFor(s,mode))}</span></span>${mode==='teacher'?statusChip(s,mode):(s.cancelled?'<span class="chip off">Annulé</span>':'')}</button>`;
+    <span class="when">${momentShort(s)}</span>
+    <span class="what"><span class="ti">${codeOf(s.c)}${esc(s.c.titre)}${choreChip(s)}</span><span class="sub">${esc(metaFor(s,mode))}</span></span>${mode==='teacher'?statusChip(s,mode):(s.cancelled?'<span class="chip off">Annulé</span>':'')}</button>`;
 }
 
 const profAbsent=s=>!!(s&&s.kind!=='exam'&&s.c&&s.c.enseignant&&(S.data.absProfs[s.date]||[]).includes(s.c.enseignant));
@@ -1104,7 +1114,7 @@ const examAct=x=>x.fromSess?`data-act="sess-at" data-key="${esc(x.key)}" data-da
 function upcomingExams(filter,n){const t=todayISO();return allExamItems().filter(x=>x.date>=t&&filter(x)).sort((a,b)=>a.date.localeCompare(b.date)||a.start-b.start).slice(0,n);}
 function examRows(items,mode){
   return items.map(x=>{const d=parse(x.date), k=daysBetween(todayISO(),x.date);
-    return `<button type="button" class="lrow" ${examAct(x)}><span class="when">${dn(d)}<small>${fMonthS.format(d)}</small></span><span class="what"><span class="ti">${esc(x.c?x.c.titre:x.e.titre)}</span><span class="sub">${esc([x.c?x.e.titre:'',fmtT(x.start)+' – '+fmtT(x.end),mode==='student'?'':gName(x.grp)].filter(Boolean).join(' · '))}</span></span><span class="chip ${k<=2?'exam':'off'}">${k===0?'Aujourd’hui':k===1?'Demain':'Dans '+k+' jours'}</span></button>`;}).join('');
+    return `<button type="button" class="lrow" ${examAct(x)}><span class="when">${dn(d)}<small>${fMonthS.format(d)}</small></span><span class="what"><span class="ti">${esc(x.c?x.c.titre:x.e.titre)}</span><span class="sub">${esc([x.c?x.e.titre:'',momentOf(x),mode==='student'?'':gName(x.grp)].filter(Boolean).join(' · '))}</span></span><span class="chip ${k<=2?'exam':'off'}">${k===0?'Aujourd’hui':k===1?'Demain':'Dans '+k+' jours'}</span></button>`;}).join('');
 }
 function studentMain(){
   const gs=groups();
@@ -1116,7 +1126,7 @@ function studentMain(){
     const s=nx.s, ongoing=nx.i===0&&s.start<=nowMin();
     const when=nx.i===0?'Aujourd’hui':nx.i===1?'Demain':dayLabel(parse(s.date));
     next=`<div class="next ${tone(s.c)}"><div class="row">${ongoing?'<span class="chip today">En cours</span>':`<span class="chip">${esc(when)}</span>`}${choreChip(s)}</div>
-      <p class="nx-t">${esc(s.c.titre)}</p><div class="nx-w">${ongoing?'Jusqu’à '+fmtT(s.end):`${fmtT(s.start)} – ${fmtT(s.end)}`}</div>
+      <p class="nx-t">${codeOf(s.c)}${esc(s.c.titre)}</p><div class="nx-w">${ongoing?'En cours · ':''}${momentOf(s)}</div>
       <div class="muted">${esc([s.salle?'Local '+s.salle:'',tName(s.c.enseignant)].filter(Boolean).join(' · '))}</div></div>`;
   }
   const ex=upcomingExams(x=>x.grp===gid,4);
@@ -1302,7 +1312,7 @@ function staffFiche(){
         return `<li><button type="button" class="cg-head" id="cg-${esc(g)}" data-act="fi-og" data-g="${esc(g)}" aria-expanded="${open}"><span><b>${esc(gName(g))}</b><span class="muted sm"> · ${pl(arr.length,'cours','cours')}${h?` · ${h} h prévues`:''}</span></span>${icon('right')}</button>
         ${open?`<ul class="plist cg-body">${arr.map(c=>`<li><button class="link" type="button" data-act="edit-course" data-id="${esc(c.id)}">${c.code?`<span class="muted">${esc(c.code)}</span> `:''}${esc(c.titre)}</button><span class="muted sm">${c.heures!=null&&c.heures!==''?esc(c.heures)+' h':''}</span></li>`).join('')}</ul>`:''}</li>`;}).join('')}</ul>`:'<p class="help">Aucun cours assigné.</p>';
       return `<div class="fiche-two"><section class="panel"><h2>Cours par classe</h2>${groupsHTML}</section>
-        <section class="panel"><h2>À venir</h2><p class="help">${nx?`Prochain cours : <b>${esc(nx.s.c.titre)}</b> (${esc(gName(nx.s.c.groupe))}), ${esc(dayLabel(parse(nx.s.date)).toLowerCase())} à ${fmtT(nx.s.start)}.`:'Aucun cours prévu prochainement.'}</p>
+        <section class="panel"><h2>À venir</h2><p class="help">${nx?`Prochain cours : <b>${esc(nx.s.c.titre)}</b> (${esc(gName(nx.s.c.groupe))}), ${esc(dayLabel(parse(nx.s.date)).toLowerCase())}, ${momentIn(nx.s.start,nx.s.end).replace(/^en /,'')}.`:'Aucun cours prévu prochainement.'}</p>
         ${surv.length?`<h3 class="fiche-h3">Examens à surveiller</h3><div class="list">${examRows(surv,'admin')}</div>`:''}</section></div>`;
     }
     if(tab==='travail'){
@@ -1357,7 +1367,7 @@ function attStudents(tabs){
   const watch=Object.entries(stats).map(([id,s])=>({e:byId(S.data.eleves,id),s})).filter(x=>x.e&&(x.s.A+x.s.M>=3||(x.s.n>=5&&rateOf(x.s)<90))).sort((a,b)=>(b.s.A+b.s.M)-(a.s.A+a.s.M)).slice(0,8);
   const miss=missing.sort((a,b)=>b.date.localeCompare(a.date)||b.start-a.start).slice(0,8);
   return head+kpis+`<div class="two"><div class="stackp"><div class="tbl-wrap"><table class="tbl" style="min-width:480px"><thead><tr><th>Classe</th><th class="num">Présence</th><th class="num">Absences</th><th class="num">Retards</th><th class="num">Cours complétés</th></tr></thead><tbody>${rowsG||'<tr><td colspan="5" class="muted">Aucune classe.</td></tr>'}</tbody></table></div>
-    <section class="panel"><h2>Présences à rattraper</h2>${miss.length?`<div class="list">${miss.map(s=>`<button type="button" class="lrow" data-act="open-att" data-date="${s.date}" data-key="${esc(s.key)}"><span class="when">${dn(parse(s.date))}<small>${fMonthS.format(parse(s.date))}</small></span><span class="what"><span class="ti">${esc(s.c.titre)}${choreChip(s)}</span><span class="sub">${esc(`${gName(s.c.groupe)} · ${fmtT(s.start)} · ${shortName(tName(s.c.enseignant))}`)}</span></span><span class="chip warn">À faire</span></button>`).join('')}</div>${missing.length>8?`<p class="help">Et ${missing.length-8} autres.</p>`:''}`:'<p class="help">Toutes les présences de la période sont prises.</p>'}</section></div>
+    <section class="panel"><h2>Présences à rattraper</h2>${miss.length?`<div class="list">${miss.map(s=>`<button type="button" class="lrow" data-act="open-att" data-date="${s.date}" data-key="${esc(s.key)}"><span class="when">${dn(parse(s.date))}<small>${fMonthS.format(parse(s.date))}</small></span><span class="what"><span class="ti">${esc(s.c.titre)}${choreChip(s)}</span><span class="sub">${esc(`${gName(s.c.groupe)} · ${momentOf(s)} · ${shortName(tName(s.c.enseignant))}`)}</span></span><span class="chip warn">À faire</span></button>`).join('')}</div>${missing.length>8?`<p class="help">Et ${missing.length-8} autres.</p>`:''}`:'<p class="help">Toutes les présences de la période sont prises.</p>'}</section></div>
     <section class="panel"><h2>Élèves à surveiller</h2>${watch.length?`<div class="list">${watch.map(x=>`<button type="button" class="lrow" data-act="student" data-id="${esc(x.e.id)}" style="grid-template-columns:minmax(0,1fr) auto"><span class="what"><span class="ti">${esc(x.e.nom)}</span><span class="sub">${esc(gName(x.e.groupe))} · ${pl(x.s.A+x.s.M,'absence','absences')} · ${pl(x.s.R,'retard','retards')}</span></span><span class="chip ${rateOf(x.s)>=90?'warn':'bad'}">${rateOf(x.s)} %</span></button>`).join('')}</div>`:'<p class="help">Aucun élève avec 3 absences ou plus, ni sous 90 % de présence.</p>'}</section></div>`;
 }
 function staffDraft(){
@@ -1404,7 +1414,7 @@ function examsPage(){
   const lim=+st.lim||30, more=items.length-lim;
   const byDate={};for(const x of items.slice(0,lim))(byDate[x.date]||(byDate[x.date]=[])).push(x);
   return tb+`<p class="summary"><span><b>${items.length}</b>${items.length>1?'examens':'examen'} ${past?'passés':'à venir'}</span></p>`+'<section class="panel">'+Object.entries(byDate).map(([ds,xs])=>{const k=daysBetween(t,ds);
-    return `<div class="dgroup"><div class="dhead">${esc(dayLabel(parse(ds)))}${past?'':`<span class="chip ${k<=2?'exam':'off'}">${k===0?'Aujourd’hui':k===1?'Demain':'Dans '+k+' jours'}</span>`}</div><div class="list">${xs.map(x=>`<button type="button" class="lrow" ${examAct(x)}><span class="when">${fmtT(x.start)}<small>${fmtT(x.end)}</small></span><span class="what"><span class="ti">${esc(x.c?x.c.titre:x.e.titre)}${x.c?` <span class="muted" style="font-weight:400">· ${esc(x.e.titre)}</span>`:''}</span><span class="sub">${esc([gName(x.grp),x.salle?'Local '+x.salle:'',x.e.surveillant?'Surveillance : '+tName(x.e.surveillant):''].filter(Boolean).join(' · '))}</span></span>${x.c&&x.c.code?`<span class="chip ${tone(x.c)}">${esc(x.c.code)}</span>`:''}</button>`).join('')}</div></div>`;}).join('')+(more>0?`<div class="row" style="margin-top:12px"><button class="btn" type="button" data-act="pg-set" data-k="lim" data-v="${lim+30}">Afficher ${Math.min(30,more)} examens de plus</button><span class="muted sm">${more} autres</span></div>`:'')+'</section>';
+    return `<div class="dgroup"><div class="dhead">${esc(dayLabel(parse(ds)))}${past?'':`<span class="chip ${k<=2?'exam':'off'}">${k===0?'Aujourd’hui':k===1?'Demain':'Dans '+k+' jours'}</span>`}</div><div class="list">${xs.map(x=>`<button type="button" class="lrow" ${examAct(x)}><span class="when">${momentShort(x)}</span><span class="what"><span class="ti">${x.c?codeOf(x.c):''}${esc(x.c?x.c.titre:x.e.titre)}${x.c?` <span class="muted" style="font-weight:400">· ${esc(x.e.titre)}</span>`:''}</span><span class="sub">${esc([gName(x.grp),x.salle?'Local '+x.salle:'',x.e.surveillant?'Surveillance : '+tName(x.e.surveillant):''].filter(Boolean).join(' · '))}</span></span>${x.c&&x.c.code?`<span class="chip ${tone(x.c)}">${esc(x.c.code)}</span>`:''}</button>`).join('')}</div></div>`;}).join('')+(more>0?`<div class="row" style="margin-top:12px"><button class="btn" type="button" data-act="pg-set" data-k="lim" data-v="${lim+30}">Afficher ${Math.min(30,more)} examens de plus</button><span class="muted sm">${more} autres</span></div>`:'')+'</section>';
 }
 
 /* ---------- Pages : calendrier scolaire ---------- */
@@ -1634,7 +1644,7 @@ function profilePage(){
   }
   const head=`<section class="panel prof-head">${avHTML(P.name,own?S.me.avatarUrl:'','lg')}<div class="prof-id"><h2 id="pf-name">${esc(P.name)}</h2><div class="prof-chips">${chips.join('')}</div><p class="help">${note}</p>${siteMode()?'<button class="btn sm" type="button" id="pf-logout" data-act="logout">Se déconnecter</button>':''}</div>${pick}</section>`;
   const facts=rows=>`<dl class="facts">${rows.map(([k,v])=>`<div><dt>${k}</dt><dd>${v!=null&&v!==''?esc(v):'<span class="muted">—</span>'}</dd></div>`).join('')}</dl>`;
-  const sess=s=>`${dayLabel(parse(s.date))} · ${fmtT(s.start)} – ${fmtT(s.end)}`;
+  const sess=s=>`${dayLabel(parse(s.date))} · ${momentOf(s).toLowerCase()}`;
   let panels='', warn='';
   if(r==='student'){
     const gid=rec.groupe||S.group, wk=weekItems().filter(s=>s.grp===gid&&s.kind!=='exam'&&!s.cancelled);
@@ -1847,7 +1857,7 @@ function attDrawer(){
   const c=s.c, els=studentsOf(c.groupe), st=d.draft.statuts;
   const cnt={P:0,A:0,R:0,M:0};let marked=0;
   for(const e of els){const v=st[e.id];if(cnt[v]!=null){cnt[v]++;marked++;}}
-  const sub=esc(`${dayLabel(parse(s.date))} · ${fmtT(s.start)} – ${fmtT(s.end)} · ${gName(c.groupe)}${s.salle?' · Local '+s.salle:''}`);
+  const sub=esc(`${dayLabel(parse(s.date))} · ${momentOf(s)} · ${gName(c.groupe)}${s.salle?' · Local '+s.salle:''}`);
   let body=choreNote(s);
   if(!isPast(s)) body+='<p class="help">Ce cours n’a pas encore commencé. Vous pouvez quand même préparer la liste.</p>';
   if(!els.length) body+=`<div class="notice"><p>Aucun élève dans ${esc(gName(c.groupe))}. L’administration les inscrit dans le menu Classes.</p></div>`;
@@ -1882,10 +1892,10 @@ function infoDrawer(){
   const d=S.dr, s=findSess(d.date,d.key);
   if(!s) return goneHTML();
   const c=s.c;
-  const weekly=activeSlots(c).slice().sort((a,b)=>a.jour-b.jour||toMin(a.debut)-toMin(b.debut)).map(sl=>`<li><span class="d">${DAYS[sl.jour-1]?DAYS[sl.jour-1].slice(0,3)+'.':''}</span><span>${fmtT(sl.debut)} – ${fmtT(sl.fin)}${(sl.salle||c.salle)?' · Local '+esc(sl.salle||c.salle):''}</span></li>`).join('');
+  const weekly=activeSlots(c).slice().sort((a,b)=>a.jour-b.jour||toMin(a.debut)-toMin(b.debut)).map(sl=>`<li><span class="d">${DAYS[sl.jour-1]?DAYS[sl.jour-1].slice(0,3)+'.':''}</span><span>${moment(toMin(sl.debut),toMin(sl.fin))}${(sl.salle||c.salle)?' · Local '+esc(sl.salle||c.salle):''}</span></li>`).join('');
   return dTop('Cours',titleOf(c))+`<div class="dr-body">
     ${s.cancelled?'<div class="notice warn"><p>Ce cours est annulé ce jour-là.</p></div>':choreNote(s)}
-    <dl class="facts"><div><dt>Quand</dt><dd>${esc(dayLabel(parse(s.date)))}, ${fmtT(s.start)} – ${fmtT(s.end)}</dd></div><div><dt>Local</dt><dd>${esc(s.salle)||'À confirmer'}</dd></div><div><dt>Enseignant</dt><dd>${esc(tName(c.enseignant))}</dd></div><div><dt>Classe</dt><dd>${esc(gName(c.groupe))}</dd></div></dl>
+    <dl class="facts"><div><dt>Quand</dt><dd>${esc(dayLabel(parse(s.date)))}, ${momentOf(s).toLowerCase()}</dd></div><div><dt>Local</dt><dd>${esc(s.salle)||'À confirmer'}</dd></div><div><dt>Enseignant</dt><dd>${esc(tName(c.enseignant))}</dd></div><div><dt>Classe</dt><dd>${esc(gName(c.groupe))}</dd></div></dl>
     <section class="dr-sec"><h3>Chaque semaine</h3><ul class="wlist">${weekly}</ul></section></div>`;
 }
 
@@ -1909,7 +1919,7 @@ function conflicts(f,selfId){
       for(const s2 of activeSlots(c)){
         if(+s2.jour!==+sl.jour)continue;
         const x=toMin(s2.debut),y=toMin(s2.fin);
-        if(a<y&&x<b) out.push(`${DAYS[sl.jour-1]}, ${fmtT(a)} : ${sameG?`${gName(f.groupe)} a déjà ${c.titre}`:`${tName(f.enseignant)} donne déjà ${c.titre} (${gName(c.groupe)})`}`);
+        if(a<y&&x<b) out.push(`${DAYS[sl.jour-1]} ${momentIn(a,b)} : ${sameG?`${gName(f.groupe)} a déjà ${c.titre}`:`${tName(f.enseignant)} donne déjà ${c.titre} (${gName(c.groupe)})`}`);
       }
     }
   }
@@ -1925,7 +1935,7 @@ function courseDrawer(){
       for(const v of Object.values((a.doc&&a.doc.statuts)||{})) if(cnt[v]!=null) cnt[v]++;
       const status=s.cancelled?(s.movedX?`<span class="chip info">${esc(movedLabel(s))}</span>`:'<span class="chip bad">Cours annulé</span>'):profAbsent(s)?'<span class="chip bad">Prof. absent</span>':'';
       const pres=s.cancelled?'<span class="muted">Aucune : le cours est annulé.</span>':a.total?`<b>${a.marked} / ${a.total}</b> élèves marqués${a.marked?` <span class="muted">· ${['P','A','R','M'].filter(k=>cnt[k]).map(k=>pl(cnt[k],LBLS[k][0],LBLS[k][1])).join(' · ')}</span>`:a.past?' <span class="need-t">· à prendre</span>':''}`:'<span class="muted">Aucun élève dans la classe.</span>';
-      sessBox=`<section class="sess-box"><div class="sb-head"><p class="per-lg">${esc(dayLabel(parse(s.date)))} · ${fmtT(s.start)} – ${fmtT(s.end)}</p><div class="sb-chips">${kind?`<span class="chip ${sessTone(s)}">${esc(kind)}</span>`:''}${choreChip(s)}${status}</div></div>
+      sessBox=`<section class="sess-box"><div class="sb-head"><p class="per-lg">${esc(dayLabel(parse(s.date)))} · ${momentOf(s)}</p><div class="sb-chips">${kind?`<span class="chip ${sessTone(s)}">${esc(kind)}</span>`:''}${choreChip(s)}${status}</div></div>
         <dl class="facts sb-facts"><div><dt>Classe</dt><dd>${esc(gName(s.c.groupe))}</dd></div><div><dt>Enseignant</dt><dd>${esc(tName(s.c.enseignant))}</dd></div><div><dt>Local</dt><dd>${s.salle?esc(s.salle):'<span class="muted">—</span>'}</dd></div>${lab?`<div><dt>Séance</dt><dd>${esc(lab.replace(/^Séance /,''))}</dd></div>`:''}<div class="wide"><dt>Présences</dt><dd>${pres}</dd></div></dl>
         <div class="row">${s.cancelled?'':`<button class="btn sm primary" type="button" data-act="goto-att">${a.state==='done'?'Voir les présences':'Prendre les présences'}</button><button class="btn sm" type="button" data-act="move-open">${icon('move')}Déplacer</button>`}<button class="btn sm" type="button" data-act="new-exam" data-cours="${esc(s.c.id)}" data-date="${esc(s.date)}">Planifier un examen</button><button class="btn sm${s.cancelled?'':' danger'}" type="button" data-act="s-cancel"${dis()}>${s.cancelled?'Rétablir ce cours':'Annuler ce cours seulement'}</button></div>${s.extra&&!s.cancelled?`<h3 class="sb-h3">Modifier cette séance</h3><div class="grid2"><label class="field"><span>Période</span>${periodSelect('sb-per',s.sl.debut,s.sl.fin,'data-sb="per"'+(S.busy?' disabled':''))}</label><label class="field"><span>Activité</span>${actSelect('sb-act',actOf(tagsOf(s)),'data-sb="act"'+(S.busy?' disabled':''))}</label></div><label class="chore-check"><input type="checkbox" id="sb-menage" data-sb="menage"${choreOf(s)?' checked':''}${S.busy?' disabled':''}>${icon('broom')}Corvée de ménage pour cette séance</label>`:''}</section><h3 class="dr-h3">Le cours, toutes les semaines</h3>`;
     }
@@ -1943,8 +1953,8 @@ function courseDrawer(){
   const extras=prevC?(prevC.extras||[]).filter(x=>x.de&&x.date>=t0).sort((a,b)=>a.date.localeCompare(b.date)):[];
   const dated=prevC?datedOf(prevC).slice().sort((a,b)=>a.date.localeCompare(b.date)||a.debut.localeCompare(b.debut)):[], tday=todayISO(), upc=dated.filter(x=>x.date>=tday);
   const plannedH=Math.round(dated.reduce((n,x)=>n+((prevC.annulees||[]).includes(`${x.date}@${x.id}`)?0:sessMinutes(x)),0)/60);
-  const datedHTML=dated.length?`<section class="dr-sec"><h3>Séances de l’horaire annuel</h3><p class="help">${pl(dated.length,'séance datée','séances datées')} · ${plannedH} h planifiées${prevC.heures?` sur ${prevC.heures} h prévues`:''} · ${upc.length} à venir.</p>${upc.length?`<ul class="plist">${upc.slice(0,6).map(x=>`<li><span><b>${esc(dayLabel(parse(x.date)))}</b> <span class="muted">${fmtT(x.debut)} – ${fmtT(x.fin)}${x.label&&x.label.toLowerCase()!==String(prevC.titre).toLowerCase()?' · '+esc(x.label):''}</span></span><span class="cc-tags">${(x.tags||[]).map(t=>`<span class="chip ${TAGCHIP[t]||'off'}">${esc(t)}</span>`).join('')}</span></li>`).join('')}</ul>${upc.length>6?`<p class="help">Et ${upc.length-6} autres séances.</p>`:''}`:''}</section>`:'';
-  const extrasHTML=extras.length?`<section class="dr-sec"><h3>Changements ponctuels</h3><ul class="plist">${extras.map(x=>{const od=x.de?parse(x.de.split('@')[0]):null;return `<li><span><b>${esc(dayLabel(parse(x.date)))}, ${fmtT(x.debut)}</b>${od?` <span class="muted">au lieu du ${esc(dayLabel(od).toLowerCase())}</span>`:''}</span><button type="button" class="btn sm ghost" data-act="x-extra" data-id="${esc(x.id)}"${dis()}>Remettre comme avant</button></li>`;}).join('')}</ul></section>`:'';
+  const datedHTML=dated.length?`<section class="dr-sec"><h3>Séances de l’horaire annuel</h3><p class="help">${pl(dated.length,'séance datée','séances datées')} · ${plannedH} h planifiées${prevC.heures?` sur ${prevC.heures} h prévues`:''} · ${upc.length} à venir.</p>${upc.length?`<ul class="plist">${upc.slice(0,6).map(x=>`<li><span><b>${esc(dayLabel(parse(x.date)))}</b> <span class="muted">${moment(toMin(x.debut),toMin(x.fin)).toLowerCase()}${x.label&&x.label.toLowerCase()!==String(prevC.titre).toLowerCase()?' · '+esc(x.label):''}</span></span><span class="cc-tags">${(x.tags||[]).map(t=>`<span class="chip ${TAGCHIP[t]||'off'}">${esc(t)}</span>`).join('')}</span></li>`).join('')}</ul>${upc.length>6?`<p class="help">Et ${upc.length-6} autres séances.</p>`:''}`:''}</section>`:'';
+  const extrasHTML=extras.length?`<section class="dr-sec"><h3>Changements ponctuels</h3><ul class="plist">${extras.map(x=>{const od=x.de?parse(x.de.split('@')[0]):null;return `<li><span><b>${esc(dayLabel(parse(x.date)))}, ${moment(toMin(x.debut),toMin(x.fin)).toLowerCase()}</b>${od?` <span class="muted">au lieu du ${esc(dayLabel(od).toLowerCase())}</span>`:''}</span><button type="button" class="btn sm ghost" data-act="x-extra" data-id="${esc(x.id)}"${dis()}>Remettre comme avant</button></li>`;}).join('')}</ul></section>`:'';
   const ks=comps(), kSel=ks.find(k=>k.nom===f.titre), custom=!!ks.length&&(d.customName||(!!f.titre&&!kSel));
   const nameField=!ks.length
     ?`<label class="field"><span>Nom du cours</span><input id="c-titre" data-f="titre" value="${esc(f.titre)}" maxlength="80" placeholder="Ex. Mathématiques" autocomplete="off"></label>`
@@ -2010,16 +2020,16 @@ function moveWarnings(s,t,toDate,a,b){
   if(t){
     for(const [x,y] of [[s,t],[t,s]]){
       for(const o of sessionsOn(y.date)) if(o.key!==s.key&&o.key!==t.key&&!o.cancelled&&o.start<y.end&&y.start<o.end&&x.c.enseignant&&o.c.enseignant===x.c.enseignant)
-        w.push(`${tName(x.c.enseignant)} donne déjà ${o.c.titre} (${gName(o.grp)}) le ${WD[parse(y.date).getDay()].toLowerCase()} à ${fmtT(o.start)}.`);
+        w.push(`${tName(x.c.enseignant)} donne déjà ${o.c.titre} (${gName(o.grp)}) le ${WD[parse(y.date).getDay()].toLowerCase()} ${momentIn(o.start,o.end)}.`);
     }
     return w;
   }
   for(const o of sessionsOn(toDate)){
     if(o.key===s.key||o.cancelled||!(o.start<b&&a<o.end)) continue;
-    if(o.grp===s.grp) w.push(`${gName(s.grp)} a déjà ${o.c.titre} à ${fmtT(o.start)}. Glissez plutôt sur ce cours pour les échanger.`);
-    else if(s.c.enseignant&&o.c.enseignant===s.c.enseignant) w.push(`${tName(s.c.enseignant)} donne déjà ${o.c.titre} (${gName(o.grp)}) à ${fmtT(o.start)}.`);
+    if(o.grp===s.grp) w.push(`${gName(s.grp)} a déjà ${o.c.titre} ${momentIn(o.start,o.end)}. Glissez plutôt sur ce cours pour les échanger.`);
+    else if(s.c.enseignant&&o.c.enseignant===s.c.enseignant) w.push(`${tName(s.c.enseignant)} donne déjà ${o.c.titre} (${gName(o.grp)}) ${momentIn(o.start,o.end)}.`);
   }
-  for(const e of S.data.examens) if(e.date===toDate&&e.groupe===s.grp&&toMin(e.debut)<b&&a<toMin(e.fin)) w.push(`${gName(s.grp)} a un examen (${e.titre||'examen'}) à ${fmtT(e.debut)}.`);
+  for(const e of S.data.examens) if(e.date===toDate&&e.groupe===s.grp&&toMin(e.debut)<b&&a<toMin(e.fin)) w.push(`${gName(s.grp)} a un examen (${e.titre||'examen'}) ${momentIn(toMin(e.debut),toMin(e.fin))}.`);
   return w;
 }
 function moveDrawer(){
@@ -2033,18 +2043,18 @@ function moveDrawer(){
   let body, title, eyebrow;
   if(t){
     eyebrow='Échanger deux cours';title=`${esc(s.c.titre)} ⇄ ${esc(t.c.titre)}`;
-    body=`<div class="mv-route"><div class="mv-box"><small>${esc(s.c.titre)} passe au</small><b>${esc(dayLabel(parse(t.date)))}</b><span>${fmtT(t.start)} – ${fmtT(t.end)}</span></div><span class="mv-arrow" aria-hidden="true">⇄</span><div class="mv-box"><small>${esc(t.c.titre)} passe au</small><b>${esc(dayLabel(src))}</b><span>${fmtT(s.start)} – ${fmtT(s.end)}</span></div></div>`;
+    body=`<div class="mv-route"><div class="mv-box"><small>${esc(s.c.titre)} passe au</small><b>${esc(dayLabel(parse(t.date)))}</b><span>${momentOf(t)}</span></div><span class="mv-arrow" aria-hidden="true">⇄</span><div class="mv-box"><small>${esc(t.c.titre)} passe au</small><b>${esc(dayLabel(src))}</b><span>${momentOf(s)}</span></div></div>`;
   }else{
     eyebrow='Déplacer un cours';title=esc(s.c.titre);
     const mon=monday(src);
     const dayOpts=[0,1,2,3,4].map(i=>{const x=addDays(mon,i),ds=iso(x),o=offDay(ds);return `<option value="${ds}"${ds===d.toDate?' selected':''}${o?' disabled':''}>${esc(dayLabel(x))}${o?' ('+esc(o)+')':''}</option>`;}).join('');
     const timeOpts=periodOptions(d.time).map(k=>{const [x,y]=k.split('-'),p=PERIODES.find(z=>z.debut===x&&z.fin===y);return `<option value="${k}"${k===d.time?' selected':''}>${p?p.label+' ('+fmtT(x)+' – '+fmtT(y)+')':fmtT(x)+' – '+fmtT(y)}</option>`;}).join('');
-    body=`<div class="mv-route"><div class="mv-box"><small>De</small><b>${esc(dayLabel(src))}</b><span>${fmtT(s.start)} – ${fmtT(s.end)}</span></div><span class="mv-arrow" aria-hidden="true">→</span><div class="mv-box"><small>Vers</small><b>${esc(dayLabel(to))}</b><span>${fmtT(a)} – ${fmtT(b)}</span></div></div>
+    body=`<div class="mv-route"><div class="mv-box"><small>De</small><b>${esc(dayLabel(src))}</b><span>${momentOf(s)}</span></div><span class="mv-arrow" aria-hidden="true">→</span><div class="mv-box"><small>Vers</small><b>${esc(dayLabel(to))}</b><span>${moment(a,b)}</span></div></div>
       <div class="grid2"><label class="field"><span>Jour</span><select id="mv-day" data-mv="toDate">${dayOpts}</select></label><label class="field"><span>Période</span><select id="mv-time" data-mv="time">${timeOpts}</select></label></div>`;
   }
   const once=t?`Seulement cette semaine`:`Seulement le ${dn(src)} ${fMonth.format(src)}`;
   const onceSub=t?'Les deux cours changent de place cette semaine. Les autres semaines ne changent pas.':`Le cours du ${wdS} ${dn(src)} est donné le ${wdT} ${dn(to)}. Les autres semaines ne changent pas.`;
-  const weeklySub=t?'Les deux périodes sont échangées pour cette semaine et les suivantes. Les semaines passées ne changent pas.':`Le cours du ${wdS} devient un cours du ${wdT} à ${fmtT(a)}, dès cette semaine. Les semaines passées ne changent pas.`;
+  const weeklySub=t?'Les deux périodes sont échangées pour cette semaine et les suivantes. Les semaines passées ne changent pas.':`Le cours du ${wdS} devient un cours du ${wdT} ${momentIn(a,b)}, dès cette semaine. Les semaines passées ne changent pas.`;
   body+=`<div class="choice" role="radiogroup" aria-label="Portée du changement">
     <label class="opt"><input type="radio" name="mv-scope" value="once"${d.scope==='once'?' checked':''}><div><b>${once}</b><span>${onceSub}</span></div></label>
     ${regular?`<label class="opt"><input type="radio" name="mv-scope" value="weekly"${d.scope==='weekly'?' checked':''}><div><b>Chaque semaine, à partir de celle-ci</b><span>${weeklySub}</span></div></label>`:''}</div>`;
@@ -2127,7 +2137,7 @@ function examDrawer(){
   if(d.id&&!e) return goneHTML('Examen');
   if(!canEditExam(e)){
     const x=examItem(e);
-    return dTop('Examen',x.c?titleOf(x.c):esc(e.titre||'Examen'),esc(e.titre||''))+`<div class="dr-body"><dl class="facts"><div><dt>Quand</dt><dd>${esc(dayLabel(parse(e.date)))}, ${fmtT(x.start)} – ${fmtT(x.end)}</dd></div><div><dt>Local</dt><dd>${esc(x.salle)||'À confirmer'}</dd></div><div><dt>Classe</dt><dd>${esc(gName(x.grp))}</dd></div><div><dt>Surveillance</dt><dd>${esc(e.surveillant?tName(e.surveillant):'À confirmer')}</dd></div></dl>${e.notes?`<section class="dr-sec"><h3>À savoir</h3><p style="margin:0;white-space:pre-wrap">${esc(e.notes)}</p></section>`:''}</div>`;
+    return dTop('Examen',x.c?titleOf(x.c):esc(e.titre||'Examen'),esc(e.titre||''))+`<div class="dr-body"><dl class="facts"><div><dt>Quand</dt><dd>${esc(dayLabel(parse(e.date)))}, ${momentOf(x).toLowerCase()}</dd></div><div><dt>Local</dt><dd>${esc(x.salle)||'À confirmer'}</dd></div><div><dt>Classe</dt><dd>${esc(gName(x.grp))}</dd></div><div><dt>Surveillance</dt><dd>${esc(e.surveillant?tName(e.surveillant):'À confirmer')}</dd></div></dl>${e.notes?`<section class="dr-sec"><h3>À savoir</h3><p style="margin:0;white-space:pre-wrap">${esc(e.notes)}</p></section>`:''}</div>`;
   }
   let cs=S.data.cours.slice().sort((a,b)=>collator.compare(gName(a.groupe)+a.titre,gName(b.groupe)+b.titre));
   if(S.role==='teacher') cs=cs.filter(c=>c.enseignant===S.teacher||c.id===f.cours);
@@ -2163,7 +2173,7 @@ async function saveExam(force){
   if(isNaN(a)||isNaN(b)) return err('Indiquez l’heure de début et de fin.');
   if(b<=a) return err('L’examen se termine avant de commencer.');
   if(!force){
-    const w=S.data.examens.filter(x=>x.id!==d.id&&x.date===f.date&&x.groupe===f.groupe&&toMin(x.debut)<b&&a<toMin(x.fin)).map(x=>`${gName(f.groupe)} a déjà « ${x.titre||'un examen'} » de ${fmtT(x.debut)} à ${fmtT(x.fin)}.`);
+    const w=S.data.examens.filter(x=>x.id!==d.id&&x.date===f.date&&x.groupe===f.groupe&&toMin(x.debut)<b&&a<toMin(x.fin)).map(x=>`${gName(f.groupe)} a déjà « ${x.titre||'un examen'} » ${momentIn(toMin(x.debut),toMin(x.fin))}.`);
     if(w.length){d.warn=w;d.err='';renderDrawer();return;}
   }
   const res={};for(const el of studentsOf(f.groupe)) if(f.resultats&&f.resultats[el.id]) res[el.id]=f.resultats[el.id];
