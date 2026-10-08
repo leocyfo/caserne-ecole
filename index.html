@@ -432,9 +432,22 @@ legend{font-size:13px;color:var(--ink-2);font-weight:600;padding:0 4px}
 .fiche-nav{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
 .fiche-nav .grow{flex:1}
 .fi-lbl{max-width:190px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.fiche-head{display:flex;flex-wrap:wrap;align-items:center;gap:14px 18px}
+.fiche-head{display:flex;flex-direction:column;gap:0;padding:0;overflow:hidden}
+.fh-top{display:flex;flex-wrap:wrap;align-items:center;gap:14px 18px;padding:18px 20px}
+.fh-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));margin:0;border-top:1px solid var(--line-2);background:var(--surface-2)}
+.fh-stats>div{padding:12px 20px;border-left:1px solid var(--line-2);min-width:0}
+.fh-stats>div:first-child{border-left:0}
+.fh-stats dt{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.fh-stats dd{margin:3px 0 0;font-size:20px;font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fh-stats dd.ok{color:var(--ok)}.fh-stats dd.warn{color:var(--warn)}.fh-stats dd.bad{color:var(--bad)}
+.fiche-tabs{align-self:flex-start}
+.fiche-tabs button{padding:9px 18px;font-size:14px}
+.fiche-body{min-width:0}
+.fiche-two{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,360px),1fr));gap:14px;align-items:start}
+.facts3{grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
+.fiche .plist{max-height:420px;overflow-y:auto}
 .panel.fiche-head .prof-id h2{margin:0;font-size:24px;font-weight:700;line-height:1.2;letter-spacing:0;text-transform:none;color:var(--ink)}
-.fiche-act{display:flex;flex-wrap:wrap;gap:8px}
+.fiche-act{display:flex;flex-wrap:wrap;gap:8px;margin-left:auto}
 .fiche-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));gap:14px;align-items:start}
 .facts .wide{grid-column:1/-1}
 .facts dd a{color:var(--head-ink)}
@@ -1172,7 +1185,7 @@ function ficheStep(d){
 const ageOf=d=>{if(!d)return null;const b=parse(d),t=new Date();let a=t.getFullYear()-b.getFullYear();if(t.getMonth()<b.getMonth()||(t.getMonth()===b.getMonth()&&t.getDate()<b.getDate()))a--;return a>=0&&a<120?a:null;};
 const acctOfRef=id=>S.data.comptes.find(a=>a.ref===id&&!a.exemple)||S.data.comptes.find(a=>a.ref===id)||null;
 function ficheFacts(rows){return `<dl class="facts">${rows.map(([k,v,wide])=>`<div${wide?' class="wide"':''}><dt>${k}</dt><dd>${v!=null&&v!==''?v:'<span class="muted">—</span>'}</dd></div>`).join('')}</dl>`;}
-function ficheShell(kind,list,cur,listItem,head,body){
+function ficheShell(kind,list,cur,listItem,head,tabs,content){
   const i=list.findIndex(x=>x.id===cur.id), prev=list[i-1], next=list[i+1];
   const from=S.pg.from&&S.pg.from!==S.page?S.pg.from:null;
   const backLbl=from==='classes'?'Retour aux classes':from==='presences'?'Retour aux présences':kind==='eleves'?'Retour à la liste des élèves':'Retour à la liste du personnel';
@@ -1181,8 +1194,10 @@ function ficheShell(kind,list,cur,listItem,head,body){
     ${i>=0?`<span class="muted sm">${i+1} sur ${list.length}</span>`:''}
     <button class="btn sm" type="button" id="fi-prev" data-act="fi-step" data-d="-1"${prev?` title="${esc(prev.nom)} (←)"`:' disabled'}>${icon('left')}<span class="fi-lbl">${prev?esc(prev.nom):'Précédent'}</span></button>
     <button class="btn sm" type="button" id="fi-next" data-act="fi-step" data-d="1"${next?` title="${esc(next.nom)} (→)"`:' disabled'}><span class="fi-lbl">${next?esc(next.nom):'Suivant'}</span>${icon('right')}</button></div>`;
+  const tab=S.pg.tab&&tabs.some(t=>t[0]===S.pg.tab)?S.pg.tab:tabs[0][0];
+  const tabBar=`<div class="seg fiche-tabs" role="group" aria-label="Sections de la fiche">${tabs.map(([k,l])=>`<button type="button" id="fi-tab-${k}" data-act="fi-tab" data-v="${k}" aria-pressed="${k===tab}">${l}</button>`).join('')}</div>`;
   return `<div class="fiche"><aside class="fiche-list" aria-label="${kind==='eleves'?'Élèves':'Personnel'}">${filt}<ul>${list.map(x=>`<li><button type="button" class="fl-item" id="fl-${esc(x.id)}" data-act="${kind==='eleves'?'student':'staff'}" data-id="${esc(x.id)}" aria-current="${x.id===cur.id}">${listItem(x)}</button></li>`).join('')||'<li class="muted sm" style="padding:12px">Aucun résultat.</li>'}</ul></aside>
-    <div class="fiche-main">${nav}${head}<div class="fiche-grid">${body}</div></div></div>`;
+    <div class="fiche-main">${nav}${head}${tabBar}<div class="fiche-body">${content(tab)}</div></div></div>`;
 }
 /* Compte de la personne, affiché dans l’en-tête de sa fiche */
 function acctChip(id){
@@ -1199,70 +1214,94 @@ function acctBtn(id,role){
     :`<button class="btn sm" type="button" id="fi-acct-btn" data-act="fi-acct" data-role="${role}" data-id="${esc(id)}"${dis()}>${icon('plus')}Créer son compte</button>`;
 }
 
+/* En-tête : identité, actions, puis quelques chiffres clés */
+const ficheHead=(name,chips,actions,stats)=>`<section class="panel fiche-head"><div class="fh-top">${avHTML(name,'','lg')}<div class="prof-id"><h2 id="fi-name">${esc(name)}</h2><div class="prof-chips">${chips}</div></div><div class="fiche-act">${actions}</div></div>
+  <dl class="fh-stats">${stats.map(([k,v,cls])=>`<div><dt>${k}</dt><dd${cls?` class="${cls}"`:''}>${v}</dd></div>`).join('')}</dl></section>`;
+const rows=items=>items.length?`<ul class="plist">${items.join('')}</ul>`:'';
+
 function studentFiche(){
   const e=byId(S.data.eleves,S.pg.fiche);
   if(!e){S.pg.fiche=null;return studentsPage();}
-  const list=studentList(), stats=studentStats(yearStart(),todayISO()), s=stats[e.id], r=rateOf(s);
-  const item=x=>{const rr=rateOf(stats[x.id]);return `<span class="fl-name">${esc(x.nom)}</span><span class="fl-sub">${esc(gName(x.groupe))}${x.numero?` · n° ${esc(x.numero)}`:''}${rr==null?'':`<span class="fl-rate ${rr>=95?'ok':rr>=90?'warn':'bad'}">${rr} %</span>`}</span>`;};
-  const age=ageOf(e.naissance);
-  const head=`<section class="panel fiche-head">${avHTML(e.nom,'','lg')}<div class="prof-id"><h2 id="fi-name">${esc(e.nom)}</h2><div class="prof-chips"><span class="chip">${esc(gName(e.groupe))}</span>${e.numero?`<span class="chip off">n° ${esc(e.numero)}</span>`:''}${e.fonction?`<span class="role-chip">${esc(e.fonction)}</span>`:''}${acctChip(e.id)}</div></div>
-    <div class="fiche-act"><button class="btn sm primary" type="button" id="fi-edit" data-act="st-edit" data-id="${esc(e.id)}">Modifier le dossier</button>${e.groupe?`<button class="btn sm" type="button" data-act="see-group" data-id="${esc(e.groupe)}">Horaire de la classe</button>`:''}${acctBtn(e.id,'student')}</div></section>`;
-  // présences, par cours
-  const byC={};
-  for(const p of Object.values(S.data.presTerm)){const v=p&&p.statuts&&p.statuts[e.id];if(!v||!LBL[v])continue;const x=byC[p.cours]||(byC[p.cours]={P:0,A:0,R:0,M:0,n:0});if(x[v]!=null){x[v]++;x.n++;}}
-  const log=s?s.log.slice().sort((a,b)=>b.date.localeCompare(a.date)):[];
-  const att=!S.termLoaded?'<p class="help">Chargement des présences…</p>':s&&s.n?`<p class="big">${r} %<span> de présence</span></p><div class="meter" role="img" aria-label="${r} % de présence"><i style="width:${r}%"></i></div>
-      <div class="att-sum"><span class="chip ok">${pl(s.P,'présence','présences')}</span><span class="chip bad">${pl(s.A,'absence','absences')}</span><span class="chip warn">${pl(s.R,'retard','retards')}</span>${s.M?`<span class="chip info">${pl(s.M,'absence motivée','absences motivées')}</span>`:''}</div>
-      <p class="help" style="margin-top:6px">Sur ${pl(s.n,'cours noté','cours notés')} depuis le ${esc(longDate(parse(yearStart())))}.</p>`
-    :'<p class="help">Aucune présence notée depuis la rentrée.</p>';
-  const logHTML=log.length?`<ul class="plist fiche-scroll">${log.map(x=>{const c=byId(S.data.cours,x.cours);return `<li><span>${esc(dayLabel(parse(x.date)))} · ${esc(c?c.titre:'Cours')}</span><span class="chip ${CHIP[x.v]}">${LBL[x.v]}</span></li>`;}).join('')}</ul>`:'<p class="help">Aucune absence ni aucun retard.</p>';
-  const byCHTML=Object.keys(byC).length?`<ul class="plist fiche-scroll">${Object.entries(byC).map(([cid,x])=>({c:byId(S.data.cours,cid),x})).sort((p,q)=>collator.compare(p.c?p.c.titre:'',q.c?q.c.titre:'')).map(({c,x})=>{const r=pct(x.P+x.R,x.n);return `<li><span>${esc(c?c.titre:'Cours supprimé')}<span class="muted sm"> · ${pl(x.n,'cours','cours')}${x.A+x.M?` · ${pl(x.A+x.M,'absence','absences')}`:''}${x.R?` · ${pl(x.R,'retard','retards')}`:''}</span></span><span class="chip ${r>=95?'ok':r>=90?'warn':'bad'}">${r} %</span></li>`;}).join('')}</ul>`:'<p class="help">Aucun cours noté pour l’instant.</p>';
-  // examens : résultats et à venir
-  const res=S.data.examens.filter(x=>x.groupe===e.groupe||(x.resultats&&x.resultats[e.id])).sort((p,q)=>String(q.date).localeCompare(String(p.date)));
-  const done=res.filter(x=>x.resultats&&x.resultats[e.id]);
-  const resHTML=done.length?`<ul class="plist">${done.map(x=>{const c=byId(S.data.cours,x.cours),v=x.resultats[e.id];return `<li><span>${x.date?esc(dayLabel(parse(x.date)))+' · ':''}${esc(c?c.titre:x.titre||'Examen')}</span><span class="chip ${v==='reussi'?'ok':'bad'}">${v==='reussi'?'Réussi':'Échec'}</span></li>`;}).join('')}</ul>`:'<p class="help">Aucun résultat inscrit.</p>';
-  const up=upcomingExams(x=>x.grp===e.groupe,4);
-  // la semaine de la classe
-  const wk=weekItems().filter(x=>x.grp===e.groupe&&x.kind!=='exam'&&!x.cancelled), chores=wk.filter(x=>choreOf(x)), nx=nextSession(x=>x.c.groupe===e.groupe);
-  const body=`<section class="panel"><h2>Informations</h2>${ficheFacts([['Classe',esc(gName(e.groupe))],['Numéro',e.numero!=null?esc(e.numero):''],['Fonction dans la classe',esc(e.fonction||'Aucune')],['Date de naissance',e.naissance?esc(longDate(parse(e.naissance)))+(age!=null?` <span class="muted">· ${age} ans</span>`:''):''],['Parent ou tuteur',esc(e.parent||'')],['Courriel du parent',e.courriel?`<a href="mailto:${esc(e.courriel)}">${esc(e.courriel)}</a>`:''],['Téléphone',e.telephone?`<a href="tel:${esc(e.telephone.replace(/\s+/g,''))}">${esc(e.telephone)}</a>`:''],['Suivi',e.notes?`<span class="pre">${esc(e.notes)}</span>`:'',true]])}</section>
-    <section class="panel"><h2>Présences depuis la rentrée</h2>${att}</section>
-    <section class="panel"><h2>Absences et retards</h2>${logHTML}</section>
-    <section class="panel"><h2>Présence par cours</h2>${byCHTML}</section>
-    <section class="panel"><h2>Examens</h2><h3 class="fiche-h3">Résultats</h3>${resHTML}<h3 class="fiche-h3">À venir</h3>${up.length?`<div class="list">${examRows(up,'admin')}</div>`:'<p class="help">Aucun examen prévu.</p>'}</section>
-    <section class="panel"><h2>Semaine de la classe</h2><p class="big">${wk.length}<span> cours</span></p><p class="help">${nx?`Prochain cours : ${esc(nx.s.c.titre)}, ${esc(dayLabel(parse(nx.s.date)).toLowerCase())} à ${fmtT(nx.s.start)}.`:'Aucun cours prévu prochainement.'}</p>${chores.length?`<h3 class="fiche-h3">Corvées de ménage</h3><ul class="acc-list">${chores.map(x=>`<li><span>${esc(dayLabel(parse(x.date)))} · ${fmtT(x.start)} – ${fmtT(x.end)}</span>${choreChip(x)}</li>`).join('')}</ul>`:''}</section>`;
-  return ficheShell('eleves',list,e,item,head,body);
+  const list=studentList(), s=studentStats(yearStart(),todayISO())[e.id], r=rateOf(s), age=ageOf(e.naissance);
+  const up=upcomingExams(x=>x.grp===e.groupe,6), nextEx=up[0];
+  const item=x=>`<span class="fl-name">${esc(x.nom)}</span><span class="fl-sub">${esc(gName(x.groupe))}${x.numero?` · n° ${esc(x.numero)}`:''}</span>`;
+  const chips=`<span class="chip">${esc(gName(e.groupe))}</span>${e.numero?`<span class="chip off">n° ${esc(e.numero)}</span>`:''}${e.fonction?`<span class="role-chip">${esc(e.fonction)}</span>`:''}${acctChip(e.id)}`;
+  const actions=`<button class="btn sm primary" type="button" id="fi-edit" data-act="st-edit" data-id="${esc(e.id)}">Modifier le dossier</button>${e.groupe?`<button class="btn sm" type="button" data-act="see-group" data-id="${esc(e.groupe)}">Horaire de la classe</button>`:''}${acctBtn(e.id,'student')}`;
+  const loaded=S.termLoaded, n=s?s.n:0;
+  const stats=[
+    ['Présence',!loaded?'…':n?`${r} %`:'—',n?(r>=95?'ok':r>=90?'warn':'bad'):''],
+    ['Absences',!loaded?'…':String(s?s.A+s.M:0),s&&s.A?'bad':''],
+    ['Retards',!loaded?'…':String(s?s.R:0),s&&s.R?'warn':''],
+    ['Prochain examen',nextEx?esc(`${dn(parse(nextEx.date))} ${fMonthS.format(parse(nextEx.date))}`):'Aucun','']
+  ];
+  const head=ficheHead(e.nom,chips,actions,stats);
+  const content=tab=>{
+    if(tab==='presences'){
+      if(!loaded) return '<section class="panel"><p class="help">Chargement des présences…</p></section>';
+      const log=s?s.log.slice().sort((a,b)=>b.date.localeCompare(a.date)):[];
+      const byC={};
+      for(const p of Object.values(S.data.presTerm)){const v=p&&p.statuts&&p.statuts[e.id];if(!v||!LBL[v])continue;const x=byC[p.cours]||(byC[p.cours]={P:0,A:0,R:0,M:0,n:0});x[v]++;x.n++;}
+      const per=Object.entries(byC).map(([cid,x])=>({c:byId(S.data.cours,cid),x})).sort((p,q)=>collator.compare(p.c?p.c.titre:'',q.c?q.c.titre:''));
+      return `<div class="fiche-two"><section class="panel"><h2>Absences et retards</h2>${log.length?rows(log.map(x=>{const c=byId(S.data.cours,x.cours);return `<li><span>${esc(dayLabel(parse(x.date)))}<span class="muted sm"> · ${esc(c?c.titre:'Cours')}</span></span><span class="chip ${CHIP[x.v]}">${LBL[x.v]}</span></li>`;})):'<p class="help">Aucune absence ni aucun retard depuis la rentrée.</p>'}</section>
+        <section class="panel"><h2>Par cours</h2>${per.length?rows(per.map(({c,x})=>{const rr=pct(x.P+x.R,x.n);return `<li><span>${esc(c?c.titre:'Cours supprimé')}</span><span class="chip ${rr>=95?'ok':rr>=90?'warn':'bad'}">${rr} %</span></li>`;})):'<p class="help">Aucun cours noté pour l’instant.</p>'}
+        <p class="help" style="margin-top:10px">${n?`${pl(n,'cours noté','cours notés')} depuis le ${esc(longDate(parse(yearStart())))}.`:''}</p></section></div>`;
+    }
+    if(tab==='examens'){
+      const done=S.data.examens.filter(x=>x.resultats&&x.resultats[e.id]).sort((p,q)=>String(q.date).localeCompare(String(p.date)));
+      return `<div class="fiche-two"><section class="panel"><h2>Résultats</h2>${done.length?rows(done.map(x=>{const c=byId(S.data.cours,x.cours),v=x.resultats[e.id];return `<li><span>${esc(c?c.titre:x.titre||'Examen')}<span class="muted sm"> · ${x.date?esc(dayLabel(parse(x.date))):''}</span></span><span class="chip ${v==='reussi'?'ok':'bad'}">${v==='reussi'?'Réussi':'Échec'}</span></li>`;})):'<p class="help">Aucun résultat inscrit.</p>'}</section>
+        <section class="panel"><h2>À venir</h2>${up.length?`<div class="list">${examRows(up,'admin')}</div>`:'<p class="help">Aucun examen prévu.</p>'}</section></div>`;
+    }
+    return `<section class="panel"><dl class="facts facts3">
+      <div><dt>Date de naissance</dt><dd>${e.naissance?esc(longDate(parse(e.naissance)))+(age!=null?` <span class="muted">(${age} ans)</span>`:''):'<span class="muted">—</span>'}</dd></div>
+      <div><dt>Parent ou tuteur</dt><dd>${e.parent?esc(e.parent):'<span class="muted">—</span>'}</dd></div>
+      <div><dt>Téléphone</dt><dd>${e.telephone?`<a href="tel:${esc(String(e.telephone).replace(/\s+/g,''))}">${esc(e.telephone)}</a>`:'<span class="muted">—</span>'}</dd></div>
+      <div><dt>Courriel du parent</dt><dd>${e.courriel?`<a href="mailto:${esc(e.courriel)}">${esc(e.courriel)}</a>`:'<span class="muted">—</span>'}</dd></div>
+      <div class="wide"><dt>Suivi</dt><dd>${e.notes?`<span class="pre">${esc(e.notes)}</span>`:'<span class="muted">Aucune note.</span>'}</dd></div></dl></section>`;
+  };
+  return ficheShell('eleves',list,e,item,head,[['dossier','Dossier'],['presences','Présences'],['examens','Examens']],content);
 }
 
 function staffFiche(){
   const p=byId(S.data.enseignants,S.pg.fiche);
   if(!p){S.pg.fiche=null;return staffPage();}
   const list=staff(), z=S.data.dossiers[p.id]||{}, st=p.statut||'Actif', teach=isTeacher(p);
-  const item=x=>`<span class="fl-name">${esc(x.nom)}</span><span class="fl-sub">${esc(x.fonction||'Enseignant')}${x.statut&&x.statut!=='Actif'?` · ${esc(x.statut)}`:''}</span>`;
-  const head=`<section class="panel fiche-head">${avHTML(p.nom,'','lg')}<div class="prof-id"><h2 id="fi-name">${esc(p.nom)}</h2><div class="prof-chips"><span class="chip">${esc(p.fonction||'Enseignant')}</span><span class="chip ${STATUTS[st]||'off'}">${esc(st)}</span>${acctChip(p.id)}</div></div>
-    <div class="fiche-act"><button class="btn sm primary" type="button" id="fi-edit" data-act="sf-edit" data-id="${esc(p.id)}">Modifier le dossier</button>${teach?`<button class="btn sm" type="button" data-act="see-teacher" data-id="${esc(p.id)}">Son horaire</button>`:''}${acctBtn(p.id,p.fonction&&!teach?'admin':'teacher')}</div></section>`;
-  const emb=z.embauche?parse(z.embauche):null, yrs=emb?Math.floor((Date.now()-emb.getTime())/(365.25*864e5)):null;
+  const item=x=>`<span class="fl-name">${esc(x.nom)}</span><span class="fl-sub">${esc(x.fonction||'Enseignant')}</span>`;
   const cs=S.data.cours.filter(c=>c.enseignant===p.id).sort((x,y)=>collator.compare(gName(x.groupe),gName(y.groupe))||collator.compare(x.titre,y.titre));
-  // cours regroupés par classe ; un clic sur la classe montre ses cours
   const byG={};for(const c of cs)(byG[c.groupe]=byG[c.groupe]||[]).push(c);
-  const og=S.pg.og||{};
-  const csHTML=cs.length?`<ul class="cg-list">${Object.entries(byG).sort((x,y)=>collator.compare(gName(x[0]),gName(y[0]))).map(([g,arr])=>{const h=arr.reduce((t,c)=>t+(+c.heures||0),0), open=!!og[g];
-    return `<li><button type="button" class="cg-head" id="cg-${esc(g)}" data-act="fi-og" data-g="${esc(g)}" aria-expanded="${open}"><span><b>${esc(gName(g))}</b><span class="muted sm"> · ${pl(arr.length,'cours','cours')}${h?` · ${h} h prévues`:''}</span></span>${icon('right')}</button>
-      ${open?`<ul class="plist cg-body">${arr.map(c=>`<li><button class="link" type="button" data-act="edit-course" data-id="${esc(c.id)}">${c.code?`<span class="muted">${esc(c.code)}</span> `:''}${esc(c.titre)}</button><span class="muted sm">${c.heures!=null&&c.heures!==''?esc(c.heures)+' h':''}</span></li>`).join('')}</ul>`:''}</li>`;}).join('')}</ul>`:'<p class="help">Aucun cours assigné.</p>';
   const wk=weekItems().filter(x=>x.kind!=='exam'&&!x.cancelled&&x.tch.includes(p.id));
   let late=0;for(const x of wk){const ai=attInfo(x);if(ai.state!=='done'&&ai.past)late++;}
-  const nx=nextSession(x=>x.c.enseignant===p.id);
-  // présences du personnel depuis la rentrée
-  const cnt={P:0,A:0,C:0,F:0}, off=[];
-  for(const [ds,doc] of Object.entries(S.data.staffPres)){if(ds<yearStart()||ds>todayISO())continue;const v=doc&&doc.statuts&&doc.statuts[p.id];if(!v||cnt[v]==null)continue;cnt[v]++;if(v!=='P')off.push([ds,v]);}
-  off.sort((x,y)=>y[0].localeCompare(x[0]));
+  const chips=`<span class="chip">${esc(p.fonction||'Enseignant')}</span><span class="chip ${STATUTS[st]||'off'}">${esc(st)}</span>${acctChip(p.id)}`;
+  const actions=`<button class="btn sm primary" type="button" id="fi-edit" data-act="sf-edit" data-id="${esc(p.id)}">Modifier le dossier</button>${teach?`<button class="btn sm" type="button" data-act="see-teacher" data-id="${esc(p.id)}">Son horaire</button>`:''}${acctBtn(p.id,p.fonction&&!teach?'admin':'teacher')}`;
+  const stats=teach?[['Cours',String(cs.length),''],['Classes',String(Object.keys(byG).length),''],['Cette semaine',pl(wk.length,'cours','cours'),''],['Présences à prendre',String(late),late?'warn':'']]
+    :[['Statut',esc(st),''],['Courriel',p.courriel?esc(p.courriel):'—','']];
+  const head=ficheHead(p.nom,chips,actions,stats);
   const SCH={P:'ok',A:'bad',C:'warn',F:'info'};
-  const surv=upcomingExams(x=>x.e&&x.e.surveillant===p.id,5);
-  const body=`<section class="panel"><h2>Informations</h2>${ficheFacts([['Fonction',esc(p.fonction||'Enseignant')],['Statut d’emploi',esc(st)],['Courriel',p.courriel?`<a href="mailto:${esc(p.courriel)}">${esc(p.courriel)}</a>`:''],['Téléphone',z.telephone?`<a href="tel:${esc(String(z.telephone).replace(/\s+/g,''))}">${esc(z.telephone)}</a>`:''],['Date d’embauche',emb?esc(longDate(emb))+(yrs!=null&&yrs>=1?` <span class="muted">· ${pl(yrs,'an','ans')}</span>`:''):''],['Remarques',z.notes?`<span class="pre">${esc(z.notes)}</span>`:'',true]])}</section>
-    ${teach?`<section class="panel"><h2>Cours assignés · ${cs.length}</h2>${csHTML}</section>
-    <section class="panel"><h2>Cette semaine</h2><p class="big">${wk.length}<span> cours</span></p><p class="help">${late?`<b class="need-t">${pl(late,'présence à prendre','présences à prendre')}</b> pour des cours passés. `:''}${nx?`Prochain cours : ${esc(nx.s.c.titre)} (${esc(gName(nx.s.c.groupe))}), ${esc(dayLabel(parse(nx.s.date)).toLowerCase())} à ${fmtT(nx.s.start)}.`:'Aucun cours prévu prochainement.'}</p></section>`:''}
-    <section class="panel"><h2>Présences du personnel</h2><div class="att-sum">${Object.entries(cnt).map(([k,n])=>`<span class="chip ${SCH[k]}">${n} ${SLBL[k].toLowerCase()}${n>1&&k!=='F'?'s':''}</span>`).join('')}</div><p class="help" style="margin-top:6px">Depuis le ${esc(longDate(parse(yearStart())))}.</p>${off.length?`<ul class="plist fiche-scroll" style="margin-top:8px">${off.map(([ds,v])=>`<li><span>${esc(dayLabel(parse(ds)))}</span><span class="chip ${SCH[v]}">${SLBL[v]}</span></li>`).join('')}</ul>`:''}</section>
-    ${surv.length?`<section class="panel"><h2>Examens à surveiller</h2><div class="list">${examRows(surv,'admin')}</div></section>`:''}`;
-  return ficheShell('personnel',list,p,item,head,body);
+  const tabs=[['dossier','Dossier']].concat(teach?[['cours','Cours']]:[],[['travail','Présences au travail']]);
+  const content=tab=>{
+    if(tab==='cours'){
+      const og=S.pg.og||{}, nx=nextSession(x=>x.c.enseignant===p.id), surv=upcomingExams(x=>x.e&&x.e.surveillant===p.id,5);
+      const groupsHTML=cs.length?`<ul class="cg-list">${Object.entries(byG).sort((x,y)=>collator.compare(gName(x[0]),gName(y[0]))).map(([g,arr])=>{const h=arr.reduce((t,c)=>t+(+c.heures||0),0), open=!!og[g];
+        return `<li><button type="button" class="cg-head" id="cg-${esc(g)}" data-act="fi-og" data-g="${esc(g)}" aria-expanded="${open}"><span><b>${esc(gName(g))}</b><span class="muted sm"> · ${pl(arr.length,'cours','cours')}${h?` · ${h} h prévues`:''}</span></span>${icon('right')}</button>
+        ${open?`<ul class="plist cg-body">${arr.map(c=>`<li><button class="link" type="button" data-act="edit-course" data-id="${esc(c.id)}">${c.code?`<span class="muted">${esc(c.code)}</span> `:''}${esc(c.titre)}</button><span class="muted sm">${c.heures!=null&&c.heures!==''?esc(c.heures)+' h':''}</span></li>`).join('')}</ul>`:''}</li>`;}).join('')}</ul>`:'<p class="help">Aucun cours assigné.</p>';
+      return `<div class="fiche-two"><section class="panel"><h2>Cours par classe</h2>${groupsHTML}</section>
+        <section class="panel"><h2>À venir</h2><p class="help">${nx?`Prochain cours : <b>${esc(nx.s.c.titre)}</b> (${esc(gName(nx.s.c.groupe))}), ${esc(dayLabel(parse(nx.s.date)).toLowerCase())} à ${fmtT(nx.s.start)}.`:'Aucun cours prévu prochainement.'}</p>
+        ${surv.length?`<h3 class="fiche-h3">Examens à surveiller</h3><div class="list">${examRows(surv,'admin')}</div>`:''}</section></div>`;
+    }
+    if(tab==='travail'){
+      const cnt={P:0,A:0,C:0,F:0}, off=[];
+      for(const [ds,doc] of Object.entries(S.data.staffPres)){if(ds<yearStart()||ds>todayISO())continue;const v=doc&&doc.statuts&&doc.statuts[p.id];if(!v||cnt[v]==null)continue;cnt[v]++;if(v!=='P')off.push([ds,v]);}
+      off.sort((x,y)=>y[0].localeCompare(x[0]));
+      return `<section class="panel"><div class="att-sum">${Object.entries(cnt).map(([k,v])=>`<span class="chip ${SCH[k]}">${v} ${SLBL[k].toLowerCase()}${v>1&&k!=='F'?'s':''}</span>`).join('')}</div>
+        <p class="help" style="margin:6px 0 10px">Depuis le ${esc(longDate(parse(yearStart())))}.</p>${off.length?rows(off.map(([ds,v])=>`<li><span>${esc(dayLabel(parse(ds)))}</span><span class="chip ${SCH[v]}">${SLBL[v]}</span></li>`)):'<p class="help">Aucune absence ni aucun congé.</p>'}</section>`;
+    }
+    const emb=z.embauche?parse(z.embauche):null, yrs=emb?Math.floor((Date.now()-emb.getTime())/(365.25*864e5)):null;
+    return `<section class="panel"><dl class="facts facts3">
+      <div><dt>Courriel</dt><dd>${p.courriel?`<a href="mailto:${esc(p.courriel)}">${esc(p.courriel)}</a>`:'<span class="muted">—</span>'}</dd></div>
+      <div><dt>Téléphone</dt><dd>${z.telephone?`<a href="tel:${esc(String(z.telephone).replace(/\s+/g,''))}">${esc(z.telephone)}</a>`:'<span class="muted">—</span>'}</dd></div>
+      <div><dt>Date d’embauche</dt><dd>${emb?esc(longDate(emb))+(yrs!=null&&yrs>=1?` <span class="muted">(${pl(yrs,'an','ans')})</span>`:''):'<span class="muted">—</span>'}</dd></div>
+      <div class="wide"><dt>Remarques</dt><dd>${z.notes?`<span class="pre">${esc(z.notes)}</span>`:'<span class="muted">Aucune remarque.</span>'}</dd></div></dl></section>`;
+  };
+  return ficheShell('personnel',list,p,item,head,tabs,content);
 }
 
 /* ---------- Pages : personnel ---------- */
@@ -2336,6 +2375,7 @@ document.addEventListener('click',async e=>{
     case 'staff':openFiche('personnel',b.dataset.id);break;
     case 'sf-edit':openStaff(b.dataset.id);break;
     case 'fi-back':closeFiche();break;
+    case 'fi-tab':S.pg.tab=b.dataset.v;render();break;
     case 'fi-og':{const og=Object.assign({},S.pg.og||{});og[b.dataset.g]=!og[b.dataset.g];S.pg.og=og;render();break;}
     case 'fi-step':ficheStep(+b.dataset.d);break;
     case 'fi-acct':openAccount(null,{draft:{uid:'',role:b.dataset.role,ref:b.dataset.id}});break;

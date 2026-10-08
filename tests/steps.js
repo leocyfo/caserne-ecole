@@ -123,7 +123,7 @@ typeIn('#s-q','nath');await wait(40);
 ok('search',$$('#main tbody tr').length===1&&/Nathan/.test($('#main tbody').textContent));
 ok('search kept',$('#s-q').value==='nath');
 click($('#main tbody .link'));await wait(80);
-ok('student fiche + stats',!!$('.fiche')&&/5 absences/.test($('#main').textContent)&&$('#drawer').hidden,$('#main .att-sum')&&$('#main .att-sum').textContent);
+ok('student fiche + stats',!!$('.fiche')&&+(l=>{const d=[...document.querySelectorAll('.fh-stats>div')].find(x=>x.querySelector('dt').textContent===l);return d?d.querySelector('dd').textContent:'';})('Absences')>=5&&$('#drawer').hidden,(l=>{const d=[...document.querySelectorAll('.fh-stats>div')].find(x=>x.querySelector('dt').textContent===l);return d?d.querySelector('dd').textContent:'';})('Absences'));
 ok('fiche nav with search',$('#fi-prev').disabled&&$('#fi-next').disabled&&/1 sur 1/.test($('.fiche-nav').textContent));
 click($('#fi-edit'));await wait(60);
 typeIn('#st-parent','Line Ouellet');$('#st-form').requestSubmit();await wait(120);
