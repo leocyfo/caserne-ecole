@@ -10,7 +10,7 @@
   window.claude={use:async n=>{const c=await ready;return n==='db'?c.db:n==='user'?c.user:null;}};
 
   let B=null, unwatch=null;
-  const st={view:'loading',err:'',info:'',busy:false,user:null,demande:null,vals:{role:'student'}};
+  const st={view:'loading',err:'',info:'',busy:false,user:null,demande:null,vals:{}};
   window.__AUTH={
     signOut:async()=>{try{if(B)await B.signOut();}catch(e){}if(!window.__NO_RELOAD)location.reload();},
     email:()=>st.user?st.user.email:''
@@ -76,7 +76,6 @@
   const side=`<aside class="g-side"><div class="g-brand">${logo}<span>Caserne-École<small>Académie des pompiers</small></span></div>
     <p>L’horaire des classes, les présences, les examens et les corvées, au même endroit.</p>
     <ul><li>Chaque élève voit son horaire et ses examens.</li><li>Chaque enseignant prend les présences de ses cours.</li><li>L’administration gère les classes, le personnel et les comptes.</li></ul></aside>`;
-  const ROLES=[['student','Élève'],['teacher','Enseignant'],['admin','Administration']];
   const v=k=>esc(st.vals[k]||'');
   const field=(id,label,type,extra)=>`<label class="g-field" for="g-${id}"><span>${label}</span><input id="g-${id}" name="${id}" type="${type}" value="${type==='password'?'':v(id)}" ${extra||''}></label>`;
   const msg=()=>(st.err?`<p class="g-err" role="alert">${esc(st.err)}</p>`:'')+(st.info?`<p class="g-info" role="status">${esc(st.info)}</p>`:'');
@@ -84,9 +83,8 @@
   const requestFields=withLogin=>`
     ${field('nom','Nom complet','text','autocomplete="name" maxlength="80" required')}
     ${withLogin?field('courriel','Courriel','email','autocomplete="email" maxlength="120" required')+field('mdp','Mot de passe (6 caractères ou plus)','password','autocomplete="new-password" minlength="6" required'):''}
-    <div class="g-row"><label class="g-field" for="g-role"><span>Je suis</span><select id="g-role" name="role">${ROLES.map(([k,l])=>`<option value="${k}"${st.vals.role===k?' selected':''}>${l}</option>`).join('')}</select></label>
-    ${field('classe','Classe (élèves)','text','maxlength="40" placeholder="Ex. 119"')}</div>
-    <label class="g-field" for="g-message"><span>Message à l’administration (facultatif)</span><textarea id="g-message" name="message" maxlength="400">${v('message')}</textarea></label>`;
+    <label class="g-field" for="g-message"><span>Message à l’administration (facultatif)</span><textarea id="g-message" name="message" maxlength="400" placeholder="Ex. : je commence à l’Académie cette semaine.">${v('message')}</textarea></label>
+    <p class="g-note">L’administration choisit votre rôle et votre classe en approuvant la demande.</p>`;
 
   const demo=()=>!!(B&&B.demo);
   const demoBox=()=>demo()?`<div class="g-demo" id="g-demo"><div><b>Démo</b> : connectez-vous en un clic avec un de ces comptes (mot de passe <code>demo123</code>).</div>
@@ -111,11 +109,10 @@
       <button class="g-btn" type="submit" id="g-setup"${dis()}>Créer le compte administrateur</button></form></div>`;
     if(s==='pending') return `<div class="g-main g-state"><span class="g-badge">En attente d’approbation</span><h1 id="g-title">Votre demande est envoyée</h1>
       <p class="g-sub" style="margin:0">L’administration doit approuver votre compte. Vous arriverez directement sur votre horaire dès qu’elle l’aura fait${st.user?`, en vous connectant avec ${esc(st.user.email)}`:''}.</p>
-      ${st.demande?`<p class="g-note">Demande : ${esc((ROLES.find(r=>r[0]===st.demande.role)||['',''])[1])}${st.demande.classe?` · classe ${esc(st.demande.classe)}`:''}</p>`:''}
       ${demo()?'<p class="g-info">Démo : pour approuver la demande, déconnectez-vous, connectez-vous avec le compte <b>Administration</b>, puis ouvrez le menu <b>Comptes</b>. Revenez ensuite avec votre nouveau compte.</p>':''}
       <div class="g-actions"><button class="g-btn alt" type="button" id="g-out" data-g="out">Se déconnecter</button></div></div>`;
     if(s==='refused') return `<div class="g-main g-state"><span class="g-badge bad">Demande refusée</span><h1 id="g-title">Votre demande n’a pas été acceptée</h1>
-      <p class="g-sub" style="margin:0">Communiquez avec l’administration de l’Académie, ou envoyez une nouvelle demande en précisant votre classe ou votre fonction.</p>
+      <p class="g-sub" style="margin:0">Communiquez avec l’administration de l’Académie, ou envoyez une nouvelle demande avec un message qui précise qui vous êtes.</p>
       <div class="g-actions"><button class="g-btn" type="button" id="g-again" data-g="again">Envoyer une nouvelle demande</button><button class="g-btn alt" type="button" data-g="out">Se déconnecter</button></div></div>`;
     if(s==='request-signed') return `<div class="g-main"><h1 id="g-title">Demander un compte</h1><p class="g-sub">Vous êtes connecté avec ${esc(st.user?st.user.email:'')}, mais aucun compte ne vous est encore attribué.</p>${msg()}
       <form class="g-form" id="g-form-request2" novalidate>${requestFields(false)}<button class="g-btn" type="submit" id="g-send2"${dis()}>Envoyer la demande</button></form>
@@ -163,7 +160,7 @@
       const acc=B&&B.demo&&B.demo.accounts[+b.dataset.i];if(!acc)return;
       await busy(()=>B.signIn(acc.email,acc.pw));
     }
-    else if(a==='again'){const dm=st.demande||{};st.vals.role=dm.role||'student';st.vals.nom=st.vals.nom||dm.nom||'';st.vals.classe=st.vals.classe||dm.classe||'';go('request-signed');}
+    else if(a==='again'){const dm=st.demande||{};st.vals.nom=st.vals.nom||dm.nom||'';st.vals.message=st.vals.message||dm.message||'';go('request-signed');}
     else if(a==='forgot'){
       const em=(root.querySelector('#g-courriel')||{}).value||'';
       if(!em.trim()){st.err='Entrez d’abord votre courriel, puis cliquez sur « Mot de passe oublié ».';st.info='';render();return;}
@@ -180,7 +177,6 @@
       if(!o.nom){st.err='Indiquez votre nom complet.';render();return;}
       if(!signed&&(!o.courriel||!o.mdp)){st.err='Indiquez votre courriel et un mot de passe.';render();return;}
       if(!signed&&o.mdp.length<6){st.err='Le mot de passe doit contenir au moins 6 caractères.';render();return;}
-      if(!setup&&o.role==='student'&&!o.classe){st.err='Indiquez votre classe (par exemple 119).';render();return;}
       await busy(async()=>{
         let u=st.user;
         suppress=true; // la nouvelle connexion est traitée ici, une fois la demande écrite
@@ -192,7 +188,7 @@
           await B.set('config/proprietaire',{uid:u.uid,cree:now});
           await B.set('comptes/'+u.uid,{role:'admin',ref:'',fiche:{nom:o.nom},maj:now});
         }else{
-          const d={nom:o.nom,courriel:u.email||o.courriel||'',role:o.role||'student',classe:o.classe||'',message:o.message||'',statut:'en attente',cree:now};
+          const d={nom:o.nom,courriel:u.email||o.courriel||'',message:o.message||'',statut:'en attente',cree:now};
           await B.set('demandes/'+u.uid,d);
         }
         }finally{suppress=false;}

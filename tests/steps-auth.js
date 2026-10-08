@@ -34,13 +34,12 @@ if(SC==='request'){
   click($('#g-tab-request'));await wait(80);
   ok('request form',!!$('#g-form-request'));
   type('#g-nom','Léa Tremblay');type('#g-courriel','lea@academie.test');type('#g-mdp','abc123');
-  $('#g-role').value='student';type('#g-classe','');submit('#g-form-request');await wait(150);
-  ok('class required',/classe/.test(($('.g-err')||{}).textContent||''));
-  type('#g-classe','119');type('#g-message','Je commence cette semaine.');submit('#g-form-request');
+  ok('no role or class to choose',!$('#g-role')&&!$('#g-classe')&&/choisit votre rôle et votre classe/.test($('#gate').textContent));
+  type('#g-message','Je commence cette semaine.');submit('#g-form-request');
   await until(()=>/En attente/.test($('#gate').textContent));
   const dem=[...store()].find(([k,v])=>k.startsWith('demandes/')&&v.nom==='Léa Tremblay');
   ok('pending screen',/En attente/.test($('#gate').textContent)&&/lea@academie.test/.test($('#gate').textContent));
-  ok('request stored',!!dem&&dem[1].statut==='en attente'&&dem[1].classe==='119'&&dem[1].role==='student'&&store().get('profils/'+dem[0].split('/')[1]).nom==='Léa Tremblay');
+  ok('request stored',!!dem&&dem[1].statut==='en attente'&&dem[1].message==='Je commence cette semaine.'&&!('role' in dem[1])&&!('classe' in dem[1])&&store().get('profils/'+dem[0].split('/')[1]).nom==='Léa Tremblay');
   // l’administration approuve : la personne entre sans recharger
   const uid=dem[0].split('/')[1];
   window.__mockSet('comptes/'+uid,{role:'student',ref:'el-119-12',fiche:{nom:'Léa Tremblay',groupe:'c119',numero:12,fonction:'',naissance:'',parent:'',courriel:'',telephone:''},maj:new Date().toISOString()});
@@ -67,9 +66,9 @@ if(SC==='refused'){
   ok('refused screen',/n’a pas été acceptée/.test($('#gate').textContent));
   click($('#g-again'));await wait(100);
   ok('new request form',!!$('#g-form-request2')&&$('#g-nom').value==='Bob Martin');
-  type('#g-classe','121');submit('#g-form-request2');
+  type('#g-message','Élève de la classe 121');submit('#g-form-request2');
   await until(()=>/En attente/.test($('#gate').textContent));
-  ok('request resent',store().get('demandes/u-bob').statut==='en attente'&&store().get('demandes/u-bob').classe==='121');
+  ok('request resent',store().get('demandes/u-bob').statut==='en attente'&&store().get('demandes/u-bob').message==='Élève de la classe 121');
 }
 if(SC==='demo-login'){
   await until(()=>!!$('#g-demo'));
@@ -82,7 +81,7 @@ if(SC==='demo-request'){
   await until(()=>!!$('#g-demo'));
   click($('#g-tab-request'));await wait(80);
   ok('demo request hint',/la demande reste dans ce navigateur/.test($('#gate').textContent));
-  type('#g-nom','Zoé Test');type('#g-courriel','zoe@exemple.ca');type('#g-mdp','abc123');$('#g-role').value='student';type('#g-classe','119');
+  type('#g-nom','Zoé Test');type('#g-courriel','zoe@exemple.ca');type('#g-mdp','abc123');
   submit('#g-form-request');
   await until(()=>/En attente/.test($('#gate').textContent));
   ok('demo pending hint',/compte Administration/.test($('#gate').textContent));

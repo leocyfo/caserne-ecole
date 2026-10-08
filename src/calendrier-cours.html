@@ -1294,7 +1294,7 @@ function accountsPage(){
   const seg=`<div class="seg" role="group" aria-label="Filtrer les comptes">${[['','Tous',all.length],['admin','Administrateurs',n('admin')],['teacher','Enseignants',n('teacher')],['student','Élèves',n('student')]].map(([k,l,c])=>`<button type="button" id="acf-${k||'all'}" data-act="ac-filter" data-v="${k}" aria-pressed="${r===k}">${l} ${c}</button>`).join('')}</div>`;
   const tb=`<div class="toolbar">${seg}<span class="grow"></span><button class="btn primary" type="button" id="ac-new" data-act="ac-new"${dis()}>${icon('plus')}Créer un compte</button></div>`;
   const dem=S.data.demandes.filter(x=>x.statut==='en attente').sort((a,b)=>String(a.cree||'').localeCompare(String(b.cree||'')));
-  const demHTML=dem.length?`<section class="panel" id="dem-panel"><h2>Demandes de compte · ${dem.length}</h2><ul class="dem-list">${dem.map(x=>`<li><span class="who">${avHTML(x.nom,'')}<span><b>${esc(x.nom||'Sans nom')}</b><small>${esc(x.courriel||'')}</small></span></span><span class="dem-what"><span class="chip ${ROLE_CHIP[x.role]||'off'}">${ROLE_LBL[x.role]||'Rôle à préciser'}</span>${x.classe?`<span class="muted sm">Classe ${esc(x.classe)}</span>`:''}${x.message?`<span class="dem-msg">« ${esc(x.message)} »</span>`:''}</span><span class="dem-act"><button class="btn sm primary" type="button" id="dm-ok-${esc(x.id)}" data-act="ac-approve" data-id="${esc(x.id)}"${dis()}>Approuver</button><button class="btn sm ghost" type="button" id="dm-no-${esc(x.id)}" data-act="ac-refuse" data-id="${esc(x.id)}"${dis()}>Refuser</button></span></li>`).join('')}</ul></section>`:'';
+  const demHTML=dem.length?`<section class="panel" id="dem-panel"><h2>Demandes de compte · ${dem.length}</h2><ul class="dem-list">${dem.map(x=>`<li><span class="who">${avHTML(x.nom,'')}<span><b>${esc(x.nom||'Sans nom')}</b><small>${esc(x.courriel||'')}</small></span></span><span class="dem-what">${x.message?`<span class="dem-msg">« ${esc(x.message)} »</span>`:'<span class="muted sm">Aucun message</span>'}</span><span class="dem-act"><button class="btn sm primary" type="button" id="dm-ok-${esc(x.id)}" data-act="ac-approve" data-id="${esc(x.id)}"${dis()}>Approuver</button><button class="btn sm ghost" type="button" id="dm-no-${esc(x.id)}" data-act="ac-refuse" data-id="${esc(x.id)}"${dis()}>Refuser</button></span></li>`).join('')}</ul></section>`:'';
   const how=siteMode()?`<section class="panel acc-how"><h2>Comment ça marche</h2><ol class="steps">
     <li><b>La personne va sur le site</b> et clique « Demander un compte » : nom, courriel, mot de passe, rôle et classe.</li>
     <li><b>Sa demande apparaît ici.</b> Approuvez-la en choisissant son rôle et sa fiche (dossier du personnel ou de l’élève).</li>
@@ -1324,7 +1324,12 @@ function openAccount(id,pre){
   if(pre) Object.assign(draft,pre.draft);
   openDrawer({kind:'acct',id:id||null,draft,q:'',hits:[],err:'',over:false,confirmDel:false,ex:!!(a&&a.exemple),demande:pre?pre.demande:null});
 }
-/* La fiche qui porte le même nom que la personne qui demande un compte */
+/* Rôle et fiche proposés pour une demande : la fiche d’élève ou du personnel qui porte le même nom */
+function guessAcct(x){
+  const s=guessRef('student',x);if(s)return {role:'student',ref:s};
+  const t=guessRef('teacher',x);if(t){const p=byId(S.data.enseignants,t);return {role:p&&!isTeacher(p)?'admin':'teacher',ref:t};}
+  return {role:'student',ref:''};
+}
 function guessRef(role,x){
   const same=(a,b)=>collator.compare(String(a||'').trim(),String(b||'').trim())===0;
   if(role==='student'){const e=S.data.eleves.find(e=>same(e.nom,x.nom));return e?e.id:'';}
@@ -1357,7 +1362,7 @@ function accountDrawer(){
     :`<option value="">${f.role==='admin'?'Aucune fiche':'Choisir l’enseignant'}</option>`+staff().filter(p=>f.role==='admin'||isTeacher(p)).map(p=>`<option value="${esc(p.id)}"${f.ref===p.id?' selected':''}>${esc(p.nom+mark(p.id))}</option>`).join('');
   const body=`<form id="ac-form" data-form="acct" novalidate>
     ${d.ex?'<div class="notice"><p>Compte d’exemple : choisissez la vraie personne à relier à cette fiche.</p></div>':''}
-    ${d.demande?`<div class="notice"><p><b>Demande de ${esc(d.demande.nom||'')}</b> : ${esc(ROLE_LBL[d.demande.role]||'rôle à préciser')}${d.demande.classe?`, classe ${esc(d.demande.classe)}`:''}. Vérifiez le rôle et la fiche, puis approuvez.</p></div>`:''}
+    ${d.demande?`<div class="notice"><p><b>Demande de ${esc(d.demande.nom||'')}</b>${d.demande.message?` : « ${esc(d.demande.message)} »`:''}. Choisissez son rôle et sa fiche (la fiche d’un élève donne sa classe), puis approuvez.</p></div>`:''}
     <section class="dr-sec"><h3>1. La personne</h3>${person}</section>
     <section class="dr-sec"><h3>2. Son rôle</h3>${roleSeg}${siteMode()?'':`<p class="help">Dans Partager, donnez-lui l’accès <b>${ACCESS[f.role]}</b>.</p>`}</section>
     <section class="dr-sec"><h3>3. Sa fiche</h3><label class="field"><span>${f.role==='student'?'Fiche de l’élève':f.role==='teacher'?'Fiche de l’enseignant':'Fiche du personnel (facultatif)'}</span><select id="ac-ref">${opts}</select></label>${f.role==='student'?'<p class="help">L’élève voit seulement sa propre fiche dans « Mon profil ».</p>':''}</section>
@@ -2096,7 +2101,7 @@ document.addEventListener('click',async e=>{
     case 'role':setRole(b.dataset.role);break;
     case 'demo-reset':if(window.__DEMO_RESET)window.__DEMO_RESET();break;
     case 'ac-new':openAccount(null);break;
-    case 'ac-approve':{const x=S.data.demandes.find(q=>q.id===b.dataset.id);if(!x)break;const role=ROLES.includes(x.role)?x.role:'student';openAccount(byId(S.data.comptes,x.id)?x.id:null,{draft:{uid:x.id,role,ref:guessRef(role,x)},demande:x});break;}
+    case 'ac-approve':{const x=S.data.demandes.find(q=>q.id===b.dataset.id);if(!x)break;const g=guessAcct(x);openAccount(byId(S.data.comptes,x.id)?x.id:null,{draft:{uid:x.id,role:g.role,ref:g.ref},demande:x});break;}
     case 'ac-refuse':{if(S.busy)break;const id=b.dataset.id;S.busy=true;render();await write(()=>col('demandes').doc(id).update({statut:'refusée',traitee:new Date().toISOString()}),'Demande refusée');S.busy=false;render();break;}
     case 'logout':if(window.__AUTH)window.__AUTH.signOut();break;
     case 'import-demo':importDemo();break;
