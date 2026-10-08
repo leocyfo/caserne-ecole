@@ -1,6 +1,6 @@
-# Calendrier des cours
+# Site Pompier School
 
-Gabarit de gestion scolaire pour l’Académie des pompiers : calendrier des classes, cours, élèves, personnel, présences, examens, calendrier scolaire, comptes et profils. Trois rôles : **Administrateur**, **Enseignant**, **Élève**.
+Le site de gestion scolaire de l’Académie des pompiers : calendrier des classes, cours, élèves, personnel, présences, examens, calendrier scolaire, comptes et profils. Trois rôles : **Administrateur**, **Enseignant**, **Élève**.
 
 ## Deux versions
 

@@ -7,7 +7,7 @@ node build-test.js; node build-ac.js; node build-lock.js
 $url = 'file:///' + ($PSScriptRoot -replace '\\', '/')
 $pages = @{ 'test.html' = 'out.html'; 'test-ac.html' = 'out-ac.html'; 'test-lock-s.html' = 'out-ls.html'; 'test-lock-t.html' = 'out-lt.html' }
 foreach ($p in $pages.Keys) {
-  $profil = Join-Path $env:TEMP ('calendrier-tests-' + [guid]::NewGuid())
+  $profil = Join-Path $env:TEMP ('pompier-school-tests-' + [guid]::NewGuid())
   & $chrome --headless=new --disable-gpu --no-first-run "--user-data-dir=$profil" --window-size=1440,1000 --virtual-time-budget=60000 --dump-dom "$url/$p" | Out-File -Encoding utf8 $pages[$p]
   Remove-Item -Recurse -Force $profil -ErrorAction SilentlyContinue
   $res = node build-test.js $pages[$p]
