@@ -1,4 +1,4 @@
-# Site Pompier School
+# Caserne-École
 
 Le site de gestion scolaire de l’Académie des pompiers : calendrier des classes, cours, élèves, personnel, présences, examens, calendrier scolaire, comptes et profils. Trois rôles : **Administrateur**, **Enseignant**, **Élève**.
 
