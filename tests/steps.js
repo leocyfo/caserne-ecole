@@ -134,6 +134,9 @@ ok('back to list',!$('.fiche')&&$$('#main tbody tr').length===1&&$('#s-q').value
 click($('#nav-personnel'));await wait(40);
 ok('staff table',$$('#main tbody tr').length===8);
 ok('private phone shown',/418 555-0110/.test($('#main').textContent));
+{const tr=$('#main tr.row-link');click(tr&&tr.children[2]);}await wait(80);
+ok('staff row click',!!$('.fiche')&&!!$('#fi-name'));
+click($('#fi-back'));await wait(80);
 click($('[data-act=new-staff]'));await wait(40);
 typeIn('#sf-nom','Paul Gendron');typeIn('#sf-tel','418 555-0199');$('#sf-form').requestSubmit();await wait(150);
 const pg=store().find(([k,v])=>k.startsWith('enseignants/')&&v.nom==='Paul Gendron');

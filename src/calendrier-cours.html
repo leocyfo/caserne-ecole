@@ -204,6 +204,9 @@ table.tbl{width:100%;border-collapse:collapse;min-width:640px}
 .tbl th{background:var(--head);color:var(--head-ink);font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;text-align:left;padding:11px 14px;border-bottom:1px solid #E0E8F0;white-space:nowrap}
 .tbl td{padding:10px 14px;border-bottom:1px solid var(--line-2);vertical-align:middle;font-size:14px}
 .tbl tr:last-child td{border-bottom:0}
+.tbl tr.row-link{cursor:pointer}
+.tbl tr.row-link:hover td{background:#F2F6FB}
+.tbl tr.row-link:hover .link{text-decoration:underline}
 .tbl .num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
 .tbl th.num{text-align:right}
 .tbl select{min-height:34px;font-size:13px}
@@ -1136,7 +1139,7 @@ function studentsPage(){
   const tb=`<div class="toolbar"><input class="search" id="s-q" type="search" placeholder="Rechercher un élève" aria-label="Rechercher un élève" autocomplete="off"><select id="s-g" aria-label="Classe"><option value="">Toutes les classes</option>${groups().map(x=>`<option value="${esc(x.id)}"${g===x.id?' selected':''}>${esc(x.nom)}</option>`).join('')}</select><span class="grow"></span><button class="btn primary" type="button" data-act="new-student">${icon('plus')}Ajouter un élève</button></div>`;
   if(!S.data.eleves.length) return tb+emptyBox('Aucun élève inscrit','Ajoutez des élèves un à la fois ici, ou collez une liste complète dans le menu Classes.');
   const body=els.map(e=>{const s=stats[e.id], r=rateOf(s);
-    return `<tr><td><button class="link" type="button" data-act="student" data-id="${esc(e.id)}">${esc(e.nom)}</button>${e.fonction?`<span class="role-chip">${esc(e.fonction)}</span>`:''}</td><td>${esc(gName(e.groupe))}${e.numero?`<span class="muted sm"> · n° ${esc(e.numero)}</span>`:''}</td><td class="num">${r==null?'<span class="muted">—</span>':`<span class="chip ${r>=95?'ok':r>=90?'warn':'bad'}">${r} %</span>`}</td><td class="num">${s?s.A+s.M:0}</td><td class="num">${s?s.R:0}</td><td>${esc(e.parent||'')}${e.telephone?`<div class="muted sm">${esc(e.telephone)}</div>`:''}</td></tr>`;}).join('');
+    return `<tr class="row-link" data-act="student" data-id="${esc(e.id)}"><td><button class="link" type="button" data-act="student" data-id="${esc(e.id)}">${esc(e.nom)}</button>${e.fonction?`<span class="role-chip">${esc(e.fonction)}</span>`:''}</td><td>${esc(gName(e.groupe))}${e.numero?`<span class="muted sm"> · n° ${esc(e.numero)}</span>`:''}</td><td class="num">${r==null?'<span class="muted">—</span>':`<span class="chip ${r>=95?'ok':r>=90?'warn':'bad'}">${r} %</span>`}</td><td class="num">${s?s.A+s.M:0}</td><td class="num">${s?s.R:0}</td><td>${esc(e.parent||'')}${e.telephone?`<div class="muted sm">${esc(e.telephone)}</div>`:''}</td></tr>`;}).join('');
   return tb+`<p class="summary"><span><b>${els.length}</b>${els.length>1?'élèves':'élève'}</span><span>Présences comptées depuis le ${esc(longDate(parse(from)))}</span>${S.termLoaded?'':'<span>Chargement des présences…</span>'}</p>
     <div class="tbl-wrap"><table class="tbl"><thead><tr><th>Élève</th><th>Classe</th><th class="num">Présence</th><th class="num">Absences</th><th class="num">Retards</th><th>Parent ou tuteur</th></tr></thead><tbody>${body||'<tr><td colspan="6" class="muted">Aucun élève ne correspond à la recherche.</td></tr>'}</tbody></table></div>`;
 }
@@ -1302,7 +1305,7 @@ function staffPage(){
   const tb=`<div class="toolbar"><p class="summary" style="margin:0"><span><b>${all.length}</b>membres</span><span><b>${nT}</b>${nT>1?'enseignants':'enseignant'}</span><span class="${nC?'need':''}"><b>${nC}</b>en congé</span></p><span class="grow"></span><button class="btn primary" type="button" data-act="new-staff">${icon('plus')}Ajouter un membre du personnel</button></div>`;
   if(!all.length) return tb+emptyBox('Aucun membre du personnel','Ajoutez les enseignants et le reste du personnel. Les enseignants pourront ensuite être assignés aux cours.');
   return tb+`<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Nom</th><th>Fonction</th><th>Statut</th><th>Courriel</th><th>Téléphone</th><th class="num">Cours</th><th class="num">Absences ce mois</th></tr></thead><tbody>${all.map(p=>{const dz=S.data.dossiers[p.id]||{}, st=p.statut||'Actif', nc=S.data.cours.filter(c=>c.enseignant===p.id).length;
-    return `<tr><td><button class="link" type="button" data-act="staff" data-id="${esc(p.id)}">${esc(p.nom)}</button></td><td>${esc(p.fonction||'Enseignant')}</td><td><span class="chip ${STATUTS[st]||'off'}">${esc(st)}</span></td><td>${esc(p.courriel||'—')}</td><td>${esc(dz.telephone||'—')}</td><td class="num">${nc}</td><td class="num">${abs[p.id]||0}</td></tr>`;}).join('')}</tbody></table></div>`;
+    return `<tr class="row-link" data-act="staff" data-id="${esc(p.id)}"><td><button class="link" type="button" data-act="staff" data-id="${esc(p.id)}">${esc(p.nom)}</button></td><td>${esc(p.fonction||'Enseignant')}</td><td><span class="chip ${STATUTS[st]||'off'}">${esc(st)}</span></td><td>${esc(p.courriel||'—')}</td><td>${esc(dz.telephone||'—')}</td><td class="num">${nc}</td><td class="num">${abs[p.id]||0}</td></tr>`;}).join('')}</tbody></table></div>`;
 }
 
 /* ---------- Pages : présences ---------- */
