@@ -6,7 +6,7 @@ if (-not $chrome) { throw 'Google Chrome est introuvable.' }
 node build-test.js; node build-ac.js; node build-lock.js; node build-auth.js | Out-Null
 $url = 'file:///' + ($PSScriptRoot -replace '\\', '/')
 $pages = [ordered]@{ 'test.html' = 'out.html'; 'test-ac.html' = 'out-ac.html'; 'test-lock-s.html' = 'out-ls.html'; 'test-lock-t.html' = 'out-lt.html' }
-foreach ($n in 'setup','request','approve','refused','signin') { $pages["test-auth-$n.html"] = "out-auth-$n.html" }
+foreach ($n in 'setup','request','approve','refused','signin','demo-login','demo-request') { $pages["test-auth-$n.html"] = "out-auth-$n.html" }
 foreach ($p in $pages.Keys) {
   $profil = Join-Path $env:TEMP ('caserne-ecole-tests-' + [guid]::NewGuid())
   & $chrome --headless=new --disable-gpu --no-first-run "--user-data-dir=$profil" --window-size=1440,1000 --virtual-time-budget=60000 --dump-dom "$url/$p" | Out-File -Encoding utf8 $pages[$p]

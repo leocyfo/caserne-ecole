@@ -19,4 +19,10 @@ for(const [name,sc] of Object.entries(SC)){
   const pre=`<script>try{localStorage.clear()}catch(e){}window.__SCENARIO=${JSON.stringify(name)};window.__AUTH_SEED=${JSON.stringify({users:sc.users,store:sc.store,signedIn:sc.signedIn})};${sc.seedGlobal?'window.__SEED='+JSON.stringify(JSON.parse(rd('seed-academy.json')))+';':''}</script>`;
   fs.writeFileSync(`test-auth-${name}.html`,'<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Caserne-École</title></head><body>'+pre+'<script>'+runtime+'</script><script>'+mock+'</script>'+page+'<script>'+steps+'</script></body></html>');
 }
-console.log(Object.keys(SC).map(n=>'test-auth-'+n+'.html').join(' '));
+// La démo : vrai écran de connexion + base gardée dans le navigateur
+const DEMO=fs.existsSync('../demo/connexion-demo.js')?'../demo/connexion-demo.js':'demo-auth.js';
+for(const name of ['demo-login','demo-request']){
+  const pre='<script>try{localStorage.clear()}catch(e){}window.__errs=[];addEventListener("error",e=>__errs.push(String(e.message)));addEventListener("unhandledrejection",e=>__errs.push("rej:"+String(e.reason&&(e.reason.message||e.reason.code)||e.reason)));window.__NO_RELOAD=true;window.__SCENARIO='+JSON.stringify(name)+';window.__SEED='+rd('seed-academy.json').trim()+';</script>';
+  fs.writeFileSync('test-auth-'+name+'.html','<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Caserne-École</title></head><body>'+pre+'<script>'+runtime+'</script><script>'+rd(DEMO)+'</script>'+page+'<script>'+steps+'</script></body></html>');
+}
+console.log(Object.keys(SC).concat(['demo-login','demo-request']).map(n=>'test-auth-'+n+'.html').join(' '));

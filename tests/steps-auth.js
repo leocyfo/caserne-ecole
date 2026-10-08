@@ -71,6 +71,24 @@ if(SC==='refused'){
   await until(()=>/En attente/.test($('#gate').textContent));
   ok('request resent',store().get('demandes/u-bob').statut==='en attente'&&store().get('demandes/u-bob').classe==='121');
 }
+if(SC==='demo-login'){
+  await until(()=>!!$('#g-demo'));
+  ok('demo box',$$('#g-demo button[data-g=demo]').length===3&&/demo123/.test($('#g-demo').textContent));
+  click($('#g-demo-2'));await until(()=>!gateOpen());await wait(700);
+  ok('student demo login',!gateOpen()&&/élève/i.test($('#ws-label').textContent)&&/Alexandre Beaulieu/.test($('#person').textContent)&&!$('#logout-btn').hidden);
+  ok('demo session kept',JSON.parse(localStorage.getItem('caserne-ecole-demo-v2')).cur==='demo-alexandre');
+}
+if(SC==='demo-request'){
+  await until(()=>!!$('#g-demo'));
+  click($('#g-tab-request'));await wait(80);
+  ok('demo request hint',/la demande reste dans ce navigateur/.test($('#gate').textContent));
+  type('#g-nom','Zoé Test');type('#g-courriel','zoe@exemple.ca');type('#g-mdp','abc123');$('#g-role').value='student';type('#g-classe','119');
+  submit('#g-form-request');
+  await until(()=>/En attente/.test($('#gate').textContent));
+  ok('demo pending hint',/compte Administration/.test($('#gate').textContent));
+  const saved=JSON.parse(localStorage.getItem('caserne-ecole-demo-v2'));
+  ok('demo request saved',saved.store.some(([p,v])=>p.startsWith('demandes/')&&v.nom==='Zoé Test'&&v.statut==='en attente')&&saved.users.some(u=>u.email==='zoe@exemple.ca'));
+}
 if(SC==='signin'){
   ok('login first',!!$('#g-form-login'));
   type('#g-courriel','philippe@academie.test');type('#g-mdp','prof123');submit('#g-form-login');

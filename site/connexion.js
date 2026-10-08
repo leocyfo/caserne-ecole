@@ -59,6 +59,12 @@
 .g-badge::before{content:"";width:8px;height:8px;border-radius:50%;background:currentColor}
 .g-actions{display:flex;flex-wrap:wrap;gap:10px}
 .g-spin{color:#5B6878;font-size:15px}
+.g-demo{display:flex;flex-direction:column;gap:9px;padding:12px 14px;border:1px dashed #B9C6D6;border-radius:10px;background:#F8FAFC;font-size:13.5px;color:#2C3B4F}
+.g-demo p{margin:0;color:#5B6878;font-size:12.5px;line-height:1.5}
+.g-demo-btns{display:flex;flex-wrap:wrap;gap:6px}
+.g-demo-btns button{border:1px solid #CBD5E1;background:#FFFFFF;border-radius:999px;padding:7px 12px;font:700 13px Arial,Helvetica,sans-serif;color:#142132;cursor:pointer}
+.g-demo-btns button:hover{border-color:#2C4F78;background:#EEF4FB}
+.g-demo code{font:700 12.5px Consolas,monospace;background:#E9EEF4;padding:1px 5px;border-radius:4px}
 .vh-g{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 @media (max-width:760px){.g-card{grid-template-columns:1fr}.g-side{padding:24px 22px;gap:14px}.g-side ul{display:none}.g-main{padding:24px 22px}.g-row{grid-template-columns:1fr}}`;
   const style=document.createElement('style');style.textContent=css;document.head.appendChild(style);
@@ -82,6 +88,10 @@
     ${field('classe','Classe (élèves)','text','maxlength="40" placeholder="Ex. 119"')}</div>
     <label class="g-field" for="g-message"><span>Message à l’administration (facultatif)</span><textarea id="g-message" name="message" maxlength="400">${v('message')}</textarea></label>`;
 
+  const demo=()=>!!(B&&B.demo);
+  const demoBox=()=>demo()?`<div class="g-demo" id="g-demo"><div><b>Démo</b> : connectez-vous en un clic avec un de ces comptes (mot de passe <code>demo123</code>).</div>
+    <div class="g-demo-btns">${B.demo.accounts.map((a,i)=>`<button type="button" id="g-demo-${i}" data-g="demo" data-i="${i}">${esc(a.label)}</button>`).join('')}</div>
+    <p>Les comptes et les données de la démo restent dans ce navigateur. N’entrez pas un vrai mot de passe. <button class="g-link" type="button" data-g="reset" style="font-size:12.5px">Réinitialiser la démo</button></p></div>`:'';
   function view(){
     const s=st.view;
     if(s==='loading') return `<div class="g-main"><p class="g-spin" role="status">Chargement…</p></div>`;
@@ -92,9 +102,9 @@
       if(s==='login') return `<div class="g-main"><h1 id="g-title">Connexion</h1><p class="g-sub">Entrez le courriel et le mot de passe de votre compte.</p>${tabs}${msg()}
         <form class="g-form" id="g-form-login" novalidate>${field('courriel','Courriel','email','autocomplete="email" required')}${field('mdp','Mot de passe','password','autocomplete="current-password" required')}
         <button class="g-btn" type="submit" id="g-login"${dis()}>Se connecter</button></form>
-        <button class="g-link" type="button" id="g-forgot" data-g="forgot">Mot de passe oublié ?</button></div>`;
+        <button class="g-link" type="button" id="g-forgot" data-g="forgot">Mot de passe oublié ?</button>${demoBox()}</div>`;
       return `<div class="g-main"><h1 id="g-title">Demander un compte</h1><p class="g-sub">L’administration de l’Académie approuve chaque demande. Vous pourrez ensuite vous connecter.</p>${tabs}${msg()}
-        <form class="g-form" id="g-form-request" novalidate>${requestFields(true)}<button class="g-btn" type="submit" id="g-send"${dis()}>Envoyer la demande</button></form></div>`;
+        ${demo()?'<p class="g-info">Démo : la demande reste dans ce navigateur. N’entrez pas un vrai mot de passe.</p>':''}<form class="g-form" id="g-form-request" novalidate>${requestFields(true)}<button class="g-btn" type="submit" id="g-send"${dis()}>Envoyer la demande</button></form></div>`;
     }
     if(s==='setup') return `<div class="g-main"><h1 id="g-title">Première installation</h1><p class="g-sub">Aucun administrateur n’est encore inscrit. Créez le compte de l’administration : vous pourrez ensuite approuver les demandes de compte.</p>${msg()}
       <form class="g-form" id="g-form-setup" novalidate>${field('nom','Nom complet','text','autocomplete="name" maxlength="80" required')}${field('courriel','Courriel','email','autocomplete="email" required')}${field('mdp','Mot de passe (6 caractères ou plus)','password','autocomplete="new-password" minlength="6" required')}
@@ -102,6 +112,7 @@
     if(s==='pending') return `<div class="g-main g-state"><span class="g-badge">En attente d’approbation</span><h1 id="g-title">Votre demande est envoyée</h1>
       <p class="g-sub" style="margin:0">L’administration doit approuver votre compte. Vous arriverez directement sur votre horaire dès qu’elle l’aura fait${st.user?`, en vous connectant avec ${esc(st.user.email)}`:''}.</p>
       ${st.demande?`<p class="g-note">Demande : ${esc((ROLES.find(r=>r[0]===st.demande.role)||['',''])[1])}${st.demande.classe?` · classe ${esc(st.demande.classe)}`:''}</p>`:''}
+      ${demo()?'<p class="g-info">Démo : pour approuver la demande, déconnectez-vous, connectez-vous avec le compte <b>Administration</b>, puis ouvrez le menu <b>Comptes</b>. Revenez ensuite avec votre nouveau compte.</p>':''}
       <div class="g-actions"><button class="g-btn alt" type="button" id="g-out" data-g="out">Se déconnecter</button></div></div>`;
     if(s==='refused') return `<div class="g-main g-state"><span class="g-badge bad">Demande refusée</span><h1 id="g-title">Votre demande n’a pas été acceptée</h1>
       <p class="g-sub" style="margin:0">Communiquez avec l’administration de l’Académie, ou envoyez une nouvelle demande en précisant votre classe ou votre fonction.</p>
@@ -133,6 +144,7 @@
     if(/invalid-email|missing-email/.test(c)) return 'Ce courriel n’est pas valide.';
     if(/too-many-requests/.test(c)) return 'Trop d’essais. Réessayez dans quelques minutes.';
     if(/network/.test(c)) return 'Pas de connexion internet. Vérifiez votre réseau et réessayez.';
+    if(c.includes('demo/no-email')) return 'Dans la démo, aucun courriel n’est envoyé : utilisez un des comptes de démo.';
     if(/permission|invalid_argument/.test(c)) return 'Action refusée par le site. Réessayez ou communiquez avec l’administration.';
     return 'Une erreur est survenue. Réessayez.';
   }
@@ -146,6 +158,11 @@
     if(a==='tab') go(b.dataset.v);
     else if(a==='out') window.__AUTH.signOut();
     else if(a==='reload') location.reload();
+    else if(a==='reset'){if(window.__DEMO_RESET)window.__DEMO_RESET();}
+    else if(a==='demo'){
+      const acc=B&&B.demo&&B.demo.accounts[+b.dataset.i];if(!acc)return;
+      await busy(()=>B.signIn(acc.email,acc.pw));
+    }
     else if(a==='again'){const dm=st.demande||{};st.vals.role=dm.role||'student';st.vals.nom=st.vals.nom||dm.nom||'';st.vals.classe=st.vals.classe||dm.classe||'';go('request-signed');}
     else if(a==='forgot'){
       const em=(root.querySelector('#g-courriel')||{}).value||'';
