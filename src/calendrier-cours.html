@@ -352,7 +352,8 @@ legend{font-size:13px;color:var(--ink-2);font-weight:600;padding:0 4px}
 .cc-title{display:flex;align-items:baseline;gap:6px;min-width:0}
 .week.compact .cc{display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:center;gap:3px 6px;padding:6px 9px 7px}
 .week.compact .cc-tags,.week.compact .cc-meta,.week.compact .cc-foot,.week.compact .cc-note{display:none}
-.week.compact .cc-top{grid-column:1;grid-row:1;justify-content:flex-start;flex-wrap:nowrap;gap:6px;min-width:0}
+.week.compact .cc-top{grid-column:1/3;grid-row:1;justify-content:flex-start;flex-wrap:nowrap;gap:6px;min-width:0}
+.week.compact .cc-tr{margin-left:0}
 .week.compact .cc-time{font-size:11.5px}
 .week.compact .cc-kind{padding:0 6px;font-size:10px;line-height:1.55}
 .week.compact .cc-title{grid-column:1/-1;grid-row:2;min-width:0}
@@ -477,13 +478,18 @@ legend{font-size:13px;color:var(--ink-2);font-weight:600;padding:0 4px}
 .lrow .cc-code,.nx-t .cc-code{color:var(--muted)}
 
 /* Corvée de ménage : bien visible partout (bande jaune, pastille, encadré) */
-.cc-chore{display:flex;align-items:center;gap:7px;margin:6px -11px -10px;padding:7px 11px;background:#FFE08A;color:#5A3E00;border-top:1px solid #F0C64A;border-radius:0 0 7px 7px;font-size:12.5px;font-weight:800}
-.cc-chore .ic{width:16px;height:16px;flex:none}
-.cc-chore.maybe{background:#FFF3CC;border-top-style:dashed}
-.cc.has-badge .cc-chore{margin:6px 0 0;border:0;border-radius:6px}
-.week.compact .cc-chore{grid-column:2;grid-row:1;margin:0;padding:0;width:20px;height:20px;justify-content:center;border:0;border-radius:5px}
-.week.compact .cc-chore>span{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
-.week.compact .cc-chore .ic{width:13px;height:13px}
+.cell-chore{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:8px;background:#FFE08A;color:#5A3E00;font-size:12.5px;line-height:1.25}
+.cell-chore .ic{width:17px;height:17px;flex:none}
+.cell-chore>span{min-width:0}
+.cell-chore b{display:block;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cell-chore small{display:block;font-size:11px;font-weight:700;opacity:.8}
+.cell-chore.maybe{background:#FFF3CC;box-shadow:inset 0 0 0 1px #E0B43A}
+.week.compact .cell-chore{padding:4px 8px;font-size:12px}
+.week.compact .cell-chore small{display:none}
+.cc-tr{display:inline-flex;align-items:center;gap:5px;margin-left:auto}
+.cc-chore-pill{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:5px;background:#FFE08A;color:#5A3E00}
+.cc-chore-pill.maybe{background:#FFF3CC}
+.cc-chore-pill .ic{width:13px;height:13px}
 .chore-chip{display:inline-flex;align-items:center;gap:5px;margin-left:8px;padding:2px 8px;border-radius:999px;background:#FFE08A;color:#5A3E00;font-size:11.5px;font-weight:800;line-height:1.3;vertical-align:1px;white-space:nowrap}
 .chore-chip .ic{width:13px;height:13px}
 .chore-chip.maybe{background:#FFF3CC;box-shadow:inset 0 0 0 1px #E0B43A}
@@ -876,9 +882,40 @@ function withAct(tags,k){const a=ACTIVITES.find(x=>x.k===k);return (a?a.tags:[])
 function periodSelect(id,debut,fin,attrs,custom){const p=custom?'autre':periodOf(debut,fin);return `<select id="${id}" ${attrs}>${PERIODES.map(x=>`<option value="${x.k}"${p===x.k?' selected':''}>${x.label}</option>`).join('')}<option value="autre"${p==='autre'?' selected':''}>${p==='autre'&&debut&&fin?`Heures précises (${fmtT(debut)} – ${fmtT(fin)})`:'Heures précises…'}</option></select>`;}
 const actSelect=(id,k,attrs)=>`<select id="${id}" ${attrs}>${ACTIVITES.map(x=>`<option value="${x.k}"${k===x.k?' selected':''}>${x.label}</option>`).join('')}</select>`;
 const CHORE_TAGS=new Set(['Ménage','Ménage ?']);
-const choreOf=s=>{if(!s||s.kind==='exam'||s.cancelled)return '';const t=tagsOf(s);return t.includes('Ménage')?'oui':t.includes('Ménage ?')?'maybe':'';};
-const choreChip=s=>{const k=choreOf(s);return k?`<span class="chore-chip${k==='maybe'?' maybe':''}" title="${k==='maybe'?'Corvée de ménage à confirmer':'Corvée de ménage'}">${icon('broom')}Ménage${k==='maybe'?' ?':''}</span>`:'';};
-const choreNote=s=>{const k=choreOf(s);return k?`<div class="chore-note${k==='maybe'?' maybe':''}">${icon('broom')}<p><b>Corvée de ménage${k==='maybe'?' à confirmer':''}</b>La classe ${k==='maybe'?'aura peut-être':'a'} la corvée de ménage pendant cette période.</p></div>`:'';};
+/* La corvée de ménage est pour toute la classe, toute la journée.
+   Elle est notée dans la classe (groupes/<id>.menage : liste de dates) ; les anciennes étiquettes « Ménage »
+   d’une séance de la classe ce jour-là comptent aussi. */
+let choreMemo=new Map();
+function choreDay(gid,date){
+  if(!gid||!date) return '';
+  const k=gid+'|'+date;if(choreMemo.has(k)) return choreMemo.get(k);
+  let r='';
+  const g=byId(S.data.groupes,gid);
+  if(g&&Array.isArray(g.menage)&&g.menage.includes(date)) r='oui';
+  else for(const x of sessionsOn(date)){
+    if(x.grp!==gid||x.kind==='exam'||x.cancelled) continue;
+    const t=tagsOf(x);if(t.includes('Ménage')){r='oui';break;}if(t.includes('Ménage ?'))r='maybe';
+  }
+  choreMemo.set(k,r);return r;
+}
+const choreOf=s=>!s||s.kind==='exam'||s.cancelled?'':choreDay(s.grp,s.date);
+async function setChoreDay(gid,date,on){
+  const g=byId(S.data.groupes,gid);if(!g||S.busy)return;
+  const days=new Set(Array.isArray(g.menage)?g.menage:[]);
+  if(on) days.add(date); else days.delete(date);
+  const jobs=[()=>col('groupes').doc(gid).update({menage:[...days].sort()})];
+  // en retirant la corvée, les anciennes étiquettes « Ménage » des séances de ce jour disparaissent aussi
+  if(!on) for(const c of S.data.cours.filter(c=>c.groupe===gid)){
+    if(!(c.extras||[]).some(x=>x.date===date&&(x.tags||[]).some(t=>CHORE_TAGS.has(t)))) continue;
+    const doc=courseDoc(c);doc.extras.forEach(x=>{if(x.date===date)x.tags=(x.tags||[]).filter(t=>!CHORE_TAGS.has(t));});
+    jobs.push(()=>col('cours').doc(c.id).set(doc));
+  }
+  S.busy=true;render();
+  await write(async()=>{for(const j of jobs)await j();},on?'Corvée de ménage ajoutée pour la journée':'Corvée de ménage retirée');
+  S.busy=false;render();
+}
+const choreChip=s=>{const k=choreOf(s);return k?`<span class="chore-chip${k==='maybe'?' maybe':''}" title="${k==='maybe'?'Corvée de ménage à confirmer':'Corvée de ménage de la classe, toute la journée'}">${icon('broom')}Ménage${k==='maybe'?' ?':''}</span>`:'';};
+const choreNote=s=>{const k=choreOf(s);return k?`<div class="chore-note${k==='maybe'?' maybe':''}">${icon('broom')}<p><b>Corvée de ménage${k==='maybe'?' à confirmer':''}</b>La classe ${k==='maybe'?'aura peut-être':'a'} la corvée de ménage toute la journée.</p></div>`:'';};
 const sessTone=s=>{for(const t of tagsOf(s)) if(TAGTONE[t]) return TAGTONE[t];return tone(s.c);};
 const tagChips=s=>tagsOf(s).map(t=>`<span class="chip ${TAGCHIP[t]||'off'}">${esc(t)}</span>`).join('');
 const datedOf=c=>(c&&c.extras||[]).filter(x=>!x.de);
@@ -934,8 +971,8 @@ function cardStatus(s,mode){
   const a=attInfo(s);
   return moved+(a.state==='done'?'<span class="cc-st ok">Présences faites</span>':a.state==='partial'?`<span class="cc-st warn">${a.marked}/${a.total} marqués</span>`:a.state==='todo'?'<span class="cc-st warn">Présences à faire</span>':'');
 }
-const cardTop=(time,kind)=>`<span class="cc-top"><span class="cc-time">${time}</span>${kind?`<span class="cc-kind">${esc(kind)}</span>`:''}</span>`;
-function cardHTML(s,mode){
+const cardTop=(time,kind,ch)=>`<span class="cc-top"><span class="cc-time">${time}</span><span class="cc-tr">${ch?`<span class="cc-chore-pill${ch==='maybe'?' maybe':''}" title="Corvée de ménage de la classe, toute la journée">${icon('broom')}<span class="vh">Corvée de ménage</span></span>`:''}${kind?`<span class="cc-kind">${esc(kind)}</span>`:''}</span></span>`;
+function cardHTML(s,mode,dayChore){
   if(s.kind==='exam'){
     const e=s.e, meta=metaFor(s,mode), ti=s.c?s.c.titre:(e.titre||'Examen');
     return `<button type="button" class="cc exam kx" data-act="exam" data-id="${esc(e.id)}" data-key="${esc(s.key)}" title="${esc(`Examen · ${ti} · ${fmtT(s.start)} – ${fmtT(s.end)}`)}" aria-label="${esc(`Examen, ${ti}, ${fmtT(s.start)} à ${fmtT(s.end)}${meta?', '+meta:''}`)}">
@@ -946,11 +983,11 @@ function cardHTML(s,mode){
   const st=s.cancelled||mode==='student'?'':attInfo(s).state, dot=st==='done'||st==='todo'||st==='partial'?` data-st="${st}"`:'';
   const stTxt=st==='done'?'présences faites':st==='partial'?'présences commencées':st==='todo'?'présences à faire':'';
   const badge=s.cancelled&&s.movedX?['info','Cours déplacé']:s.cancelled?['bad','Cours annulé']:profAbsent(s)?['bad','Prof. absent']:null;
-  const {kind,flags}=cardKind(tagsOf(s)), ch=choreOf(s), foot=s.cancelled?'':cardStatus(s,mode)+flags.filter(t=>!CHORE_TAGS.has(t)).map(t=>`<span class="cc-flag">${esc(t)}</span>`).join('');
+  const {kind,flags}=cardKind(tagsOf(s)), ch=dayChore?'':choreOf(s), foot=s.cancelled?'':cardStatus(s,mode)+flags.filter(t=>!CHORE_TAGS.has(t)).map(t=>`<span class="cc-flag">${esc(t)}</span>`).join('');
   const note=s.cancelled&&s.movedX?(s.movedX.date===s.date?movedLabel(s):`${movedLabel(s)}, ${momentIn(toMin(s.movedX.debut),toMin(s.movedX.fin)).replace(/^en /,'')}`):'';
   return `<button type="button" class="cc ${sessTone(s)}${s.cancelled?' cancelled':''}${badge?' has-badge':''}" data-act="sess" data-key="${esc(s.key)}" data-date="${s.date}" data-grp="${esc(s.grp||'')}"${dot}${drag?' data-drag="1"':''} title="${esc(`${c.titre} · ${fmtT(s.start)} – ${fmtT(s.end)}${meta?' · '+meta:''}${stTxt?' · '+stTxt:''}${drag?' · glisser pour déplacer':''}`)}" aria-label="${esc(`${c.titre}, ${fmtT(s.start)} à ${fmtT(s.end)}${meta?', '+meta:''}${s.cancelled?', '+(s.movedX?movedLabel(s):'annulé'):''}${ch?', corvée de ménage'+(ch==='maybe'?' à confirmer':''):''}`)}">
-    ${cardTop(momentOf(s),kind)}
-    <span class="cc-title"><span class="tstart">${fmtT(s.start)}</span><strong>${codeOf(c)}${esc(c.titre)}</strong></span>${meta?`<span class="cc-meta">${esc(meta)}</span>`:''}${note?`<span class="cc-note">${esc(note)}</span>`:''}${foot?`<span class="cc-foot">${foot}</span>`:''}${ch?`<span class="cc-chore${ch==='maybe'?' maybe':''}" title="${ch==='maybe'?'Corvée de ménage à confirmer':'Corvée de ménage'}">${icon('broom')}<span>Corvée de ménage${ch==='maybe'?' à confirmer':''}</span></span>`:''}${badge?`<span class="cc-badge ${badge[0]}">${badge[1]}</span>`:''}</button>`;
+    ${cardTop(momentOf(s),kind,ch)}
+    <span class="cc-title"><span class="tstart">${fmtT(s.start)}</span><strong>${codeOf(c)}${esc(c.titre)}</strong></span>${meta?`<span class="cc-meta">${esc(meta)}</span>`:''}${note?`<span class="cc-note">${esc(note)}</span>`:''}${foot?`<span class="cc-foot">${foot}</span>`:''}${badge?`<span class="cc-badge ${badge[0]}">${badge[1]}</span>`:''}</button>`;
 }
 function rowLabel(name){
   const m=/^(groupe|classe)\s+(.+)$/i.exec(String(name||''));
@@ -974,11 +1011,14 @@ function boardHTML(list,rows,mode,corner){
       ?`<div class="wk-row" role="row"><div class="wk-class pick${on?' on':''}" role="rowheader"><button type="button" class="wk-pick" id="pick-${esc(r.id)}" data-act="filt" data-v="${on?'':'g:'+esc(r.id)}" aria-pressed="${on}" title="${esc(on?'Revenir à toutes les classes':'Afficher seulement '+r.name)}">${rowLabel(r.name)}<span class="pick-hint">${on?'← Toutes':'Voir seulement cette classe'}</span></button></div>`
       :`<div class="wk-row" role="row"><div class="wk-class" role="rowheader">${rowLabel(r.name)}</div>`;
     for(let i=0;i<5;i++){
-      const ds=iso(addDays(S.week,i)), off=offDay(ds), items=list.filter(s=>s.date===ds&&r.match(s));
+      const ds=iso(addDays(S.week,i)), off=offDay(ds), items=list.filter(s=>s.date===ds&&r.match(s)), cg=mode==='admin'?r.id:mode==='student'?S.group:null;
       let inner;
       if(off) inner=`<div class="cc offday k7"><span class="cc-top"><span class="cc-kind">${off==='Hors année scolaire'?'Hors calendrier':'Congé'}</span></span><strong>${esc(off)}</strong><span class="cc-meta">Aucun cours</span></div>`;
       else if(!items.length) inner='<p class="cell-note">Aucun cours</p>';
-      else inner=items.map(s=>cardHTML(s,mode)).join('');
+      else inner=items.map(s=>cardHTML(s,mode,!!cg)).join('');
+      // la corvée de ménage : une bande pour la classe, toute la journée
+      const ch=cg&&!off?choreDay(cg,ds):'';
+      if(ch) inner=`<div class="cell-chore${ch==='maybe'?' maybe':''}" title="Corvée de ménage pour toute la classe, toute la journée${ch==='maybe'?' (à confirmer)':''}">${icon('broom')}<span><b>Corvée de ménage${ch==='maybe'?' ?':''}</b><small>toute la journée</small></span></div>`+inner;
       if(edit&&r.id&&!off) inner+=`<button type="button" class="cell-add" data-act="add-at" data-date="${ds}" data-g="${esc(r.id)}" aria-label="${esc(`Ajouter un cours pour ${r.name}, ${DAYS[i].toLowerCase()} ${dn(addDays(S.week,i))}`)}">+ Ajouter</button>`;
       h+=`<div class="wk-cell${ds===today?' is-today':''}${S.day===i?' sel':''}" role="cell"${edit&&r.id?` data-date="${ds}" data-grp="${esc(r.id)}"${off?' data-off="1"':''}`:''}>${inner}</div>`;
     }
@@ -1640,7 +1680,7 @@ function profilePage(){
     panels+=`<section class="panel"><h2>Mes informations</h2>${facts([['Classe',gName(gid)],['Numéro',rec.numero],['Fonction',rec.fonction||'Aucune'],['Date de naissance',rec.naissance?longDate(parse(rec.naissance)):''],['Parent ou tuteur',rec.parent],['Courriel',rec.courriel],['Téléphone',rec.telephone]])}</section>`;
     panels+=`<section class="panel"><h2>Ma semaine</h2><p class="big">${wk.length}<span> ${wk.length>1?'cours':'cours'}</span></p>
       <p class="help">${nx?`Prochain cours : ${esc(nx.s.c.titre)}, ${esc(sess(nx.s).toLowerCase())}.`:'Aucun cours prévu prochainement.'}</p>
-      ${chores.length?`<h2 style="margin-top:14px">Corvées de ménage</h2><ul class="acc-list">${chores.map(s=>`<li><span>${esc(sess(s))}</span>${choreChip(s)}</li>`).join('')}</ul>`:'<p class="help">Aucune corvée de ménage cette semaine.</p>'}</section>`;
+      ${chores.length?`<h2 style="margin-top:14px">Corvées de ménage</h2><ul class="acc-list">${[...new Set(chores.map(s=>s.date))].sort().map(ds=>`<li><span>${esc(dayLabel(parse(ds)))}</span><span class="muted sm">toute la journée</span></li>`).join('')}</ul>`:'<p class="help">Aucune corvée de ménage cette semaine.</p>'}</section>`;
     panels+=`<section class="panel"><h2>Prochains examens</h2>${ex.length?`<div class="list">${examRows(ex,'student')}</div>`:'<p class="help">Aucun examen prévu.</p>'}</section>`;
   }else if(r==='teacher'){
     const id=P.id, z=S.data.dossiers[id]||{}, cs=S.data.cours.filter(c=>c.enseignant===id);
@@ -1801,7 +1841,7 @@ function glide(el,b,keepH){
     n.addEventListener('transitionend',clear,{once:true});setTimeout(clear,340);
   });
 }
-function render(){ensureSel();renderSide();renderTop();renderNotices();renderHeading();renderMain();renderDrawer();}
+function render(){choreMemo=new Map();ensureSel();renderSide();renderTop();renderNotices();renderHeading();renderMain();renderDrawer();}
 let rq=false;
 function schedule(){if(rq)return;rq=true;setTimeout(()=>{rq=false;render();},16);}
 
@@ -1925,7 +1965,7 @@ function courseDrawer(){
       const pres=s.cancelled?'<span class="muted">Aucune : le cours est annulé.</span>':a.total?`<b>${a.marked} / ${a.total}</b> élèves marqués${a.marked?` <span class="muted">· ${['P','A','R','M'].filter(k=>cnt[k]).map(k=>pl(cnt[k],LBLS[k][0],LBLS[k][1])).join(' · ')}</span>`:a.past?' <span class="need-t">· à prendre</span>':''}`:'<span class="muted">Aucun élève dans la classe.</span>';
       sessBox=`<section class="sess-box"><div class="sb-head"><p class="per-lg">${esc(dayLabel(parse(s.date)))} · ${momentOf(s)}</p><div class="sb-chips">${kind?`<span class="chip ${sessTone(s)}">${esc(kind)}</span>`:''}${choreChip(s)}${status}</div></div>
         <dl class="facts sb-facts"><div><dt>Classe</dt><dd>${esc(gName(s.c.groupe))}</dd></div><div><dt>Enseignant</dt><dd>${esc(tName(s.c.enseignant))}</dd></div><div><dt>Local</dt><dd>${s.salle?esc(s.salle):'<span class="muted">—</span>'}</dd></div>${lab?`<div><dt>Séance</dt><dd>${esc(lab.replace(/^Séance /,''))}</dd></div>`:''}<div class="wide"><dt>Présences</dt><dd>${pres}</dd></div></dl>
-        <div class="row">${s.cancelled?'':`<button class="btn sm primary" type="button" data-act="goto-att">${a.state==='done'?'Voir les présences':'Prendre les présences'}</button><button class="btn sm" type="button" data-act="move-open">${icon('move')}Déplacer</button>`}<button class="btn sm" type="button" data-act="new-exam" data-cours="${esc(s.c.id)}" data-date="${esc(s.date)}">Planifier un examen</button><button class="btn sm${s.cancelled?'':' danger'}" type="button" data-act="s-cancel"${dis()}>${s.cancelled?'Rétablir ce cours':'Annuler ce cours seulement'}</button></div>${s.extra&&!s.cancelled?`<h3 class="sb-h3">Modifier cette séance</h3><div class="grid2"><label class="field"><span>Période</span>${periodSelect('sb-per',s.sl.debut,s.sl.fin,'data-sb="per"'+(S.busy?' disabled':''))}</label><label class="field"><span>Activité</span>${actSelect('sb-act',actOf(tagsOf(s)),'data-sb="act"'+(S.busy?' disabled':''))}</label></div><label class="chore-check"><input type="checkbox" id="sb-menage" data-sb="menage"${choreOf(s)?' checked':''}${S.busy?' disabled':''}>${icon('broom')}Corvée de ménage pour cette séance</label>`:''}</section><h3 class="dr-h3">Le cours, toutes les semaines</h3>`;
+        <div class="row">${s.cancelled?'':`<button class="btn sm primary" type="button" data-act="goto-att">${a.state==='done'?'Voir les présences':'Prendre les présences'}</button><button class="btn sm" type="button" data-act="move-open">${icon('move')}Déplacer</button>`}<button class="btn sm" type="button" data-act="new-exam" data-cours="${esc(s.c.id)}" data-date="${esc(s.date)}">Planifier un examen</button><button class="btn sm${s.cancelled?'':' danger'}" type="button" data-act="s-cancel"${dis()}>${s.cancelled?'Rétablir ce cours':'Annuler ce cours seulement'}</button></div>${s.extra&&!s.cancelled?`<h3 class="sb-h3">Modifier cette séance</h3><div class="grid2"><label class="field"><span>Période</span>${periodSelect('sb-per',s.sl.debut,s.sl.fin,'data-sb="per"'+(S.busy?' disabled':''))}</label><label class="field"><span>Activité</span>${actSelect('sb-act',actOf(tagsOf(s)),'data-sb="act"'+(S.busy?' disabled':''))}</label></div>`:''}${s.cancelled?'':`<label class="chore-check"><input type="checkbox" id="sb-menage" data-sb="menage"${choreOf(s)?' checked':''}${S.busy?' disabled':''}>${icon('broom')}Corvée de ménage pour ${esc(gName(s.grp))}, toute la journée du ${esc(dayLabel(parse(s.date)).toLowerCase())}</label>`}</section><h3 class="dr-h3">Le cours, toutes les semaines</h3>`;
     }
   }
   const gOpts='<option value="">Choisir une classe</option>'+groups().map(g=>`<option value="${esc(g.id)}"${f.groupe===g.id?' selected':''}>${esc(g.nom)}</option>`).join('');
@@ -2536,12 +2576,13 @@ document.addEventListener('change',async e=>{
     S.dr.err='';S.dr.warn=null;renderDrawer();
   }
   else if(t.dataset&&t.dataset.sb&&S.dr&&S.dr.kind==='course'&&S.dr.sess&&!S.busy){
-    const d=S.dr, se=findSess(d.sess.date,d.sess.key);if(!se||!se.extra)return;
+    const d=S.dr, se=findSess(d.sess.date,d.sess.key);if(!se)return;
+    if(t.dataset.sb==='menage'){await setChoreDay(se.grp,se.date,t.checked);return;}
+    if(!se.extra)return;
     if(t.dataset.sb==='per'&&t.value==='autre'){openMove(se.key,se.date,se.date,null);return;}
     const c=byId(S.data.cours,se.c.id);if(!c)return;
     const doc=courseDoc(c), x=doc.extras.find(e=>e.id===se.extra.id);if(!x)return;
-    if(t.dataset.sb==='menage'){x.tags=(x.tags||[]).filter(v=>!CHORE_TAGS.has(v));if(t.checked)x.tags.push('Ménage');}
-    else if(t.dataset.sb==='per'){const p=PERIODES.find(y=>y.k===t.value);x.debut=p.debut;x.fin=p.fin;}
+    if(t.dataset.sb==='per'){const p=PERIODES.find(y=>y.k===t.value);x.debut=p.debut;x.fin=p.fin;}
     else x.tags=withAct(x.tags,t.value);
     S.busy=true;renderDrawer();await write(()=>col('cours').doc(c.id).set(doc),'Séance modifiée');S.busy=false;render();
   }

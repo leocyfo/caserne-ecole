@@ -22,7 +22,7 @@ click($('#pick-c121'));await wait(80);
 ok('cards this week',$$('#main .week button.cc').length>=45,$$('#main .week button.cc').length);
 ok('type tags',$$('#main .week .cc-kind').some(x=>x.textContent==='Théorie')&&$$('#main .week .cc-kind').some(x=>x.textContent==='Pratique'));
 ok('one line per card top',$$('#main .week button.cc').every(x=>x.querySelectorAll('.cc-top').length===1&&!x.querySelector('.chip')));
-ok('status in foot',!!$('#main .week .cc-foot .cc-st.warn')&&$$('#main .week .cc-chore').some(x=>/Corvée de ménage/.test(x.textContent)));
+ok('status in foot',!!$('#main .week .cc-foot .cc-st.warn')&&$$('#main .week .cell-chore').some(x=>/Corvée de ménage/.test(x.textContent)));
 ok('menage tag',/Corvée de ménage/.test($('#main .week').textContent));
 const am=$('.cc[data-key="k119-m08_a20261006am_2026-10-06"]');
 {const c=$('.cc[data-key="k119-m08_a20261006am_2026-10-06"]');ok('card moment + code',!!c&&c.querySelector('.cc-time').textContent==='Avant-midi'&&/^M8 /.test(c.querySelector('strong').textContent)&&!/d h/.test(c.querySelector('.cc-top').textContent),c&&c.querySelector('strong').textContent);}
@@ -224,9 +224,9 @@ ok('back to 123 by token',$$('#main .wk-class').length===5&&Math.abs(top('c123')
 window.scrollTo(0,0);await wait(30);}
 /* MENAGE */
 {const am=$('.cc[data-key="k119-m08_a20261006am_2026-10-06"]');
-ok('chore strip',!!am&&/Corvée de ménage/.test((am.querySelector('.cc-chore')||{}).textContent||'')&&!$$('#main .cc-flag').some(x=>/Ménage/.test(x.textContent)),am&&am.textContent.replace(/\s+/g,' ').slice(0,140));}
+ok('chore once per class-day',$('.wk-cell[data-date="2026-10-06"][data-grp="c119"]').querySelectorAll('.cell-chore').length===1&&/toute la journée/.test($('.wk-cell[data-date="2026-10-06"][data-grp="c119"]').querySelector('.cell-chore').textContent)&&!!am&&!am.querySelector('.cc-chore-pill')&&!$$('#main .cc-flag').some(x=>/Ménage/.test(x.textContent)));}
 click($('#exp-btn'));await wait(400);
-{const c=$('#main .week.compact .cc-chore');ok('chore icon compact',!!c&&c.getBoundingClientRect().width<=24&&c.getBoundingClientRect().width>0);}
+{const c=$('#main .week.compact .cell-chore');ok('chore band compact',!!c&&c.getBoundingClientRect().height>0&&c.getBoundingClientRect().height<40);}
 {const c=$('.cc[data-key="k119-m08_a20261006am_2026-10-06"]');ok('compact shows moment + kind',!!c&&c.querySelector('.cc-time').textContent==='Avant-midi'&&getComputedStyle(c.querySelector('.cc-kind')).display!=='none'&&/Théorie/.test(c.querySelector('.cc-kind').textContent));}
 click($('#exp-btn'));await wait(400);
 click($('.cc[data-key="k119-m08_a20261006am_2026-10-06"]'));await wait(80);
@@ -234,15 +234,15 @@ ok('chore checkbox',!!$('#sb-menage')&&$('#sb-menage').checked);
 ok('session summary',/Marie Leduc/.test($('.sb-facts').textContent)&&$('.sb-facts').textContent.includes('9 / 12')&&/8\.1/.test($('.sb-facts').textContent)&&/Théorie/.test($('.sb-chips').textContent)&&/Modifier cette séance/.test($('.sess-box').textContent));
 const xam=()=>window.__store.get('cours/k119-m08').extras.find(x=>x.id==='a20261006am');
 click($('#sb-menage'));await wait(250);
-ok('chore removed',!xam().tags.includes('Ménage')&&xam().tags.includes('Théorie')&&!$('.cc[data-key="k119-m08_a20261006am_2026-10-06"] .cc-chore'),JSON.stringify(xam().tags));
+ok('chore removed for the day',!xam().tags.includes('Ménage')&&xam().tags.includes('Théorie')&&!(window.__store.get('groupes/c119').menage||[]).includes('2026-10-06')&&!$('.wk-cell[data-date="2026-10-06"][data-grp="c119"]').querySelector('.cell-chore'),JSON.stringify(xam().tags));
 click($('#sb-menage'));await wait(250);
-ok('chore added back',xam().tags.includes('Ménage')&&!!$('.cc[data-key="k119-m08_a20261006am_2026-10-06"] .cc-chore'),JSON.stringify(xam().tags));
+ok('chore added for the day',(window.__store.get('groupes/c119').menage||[]).includes('2026-10-06')&&$('.wk-cell[data-date="2026-10-06"][data-grp="c119"]').querySelectorAll('.cell-chore').length===1&&/toute la journée/.test($('#sb-menage').closest('label').textContent),JSON.stringify(window.__store.get('groupes/c119').menage));
 click($('#dr-close'));await wait(60);
 click($('[data-role=teacher]'));await wait(100);
-{const c=$('#main .week .cc-chore');ok('teacher sees chore',!!c);
+{const c=$('#main .week .cc-chore-pill');ok('teacher sees chore',!!c);
 if(c){click(c.closest('.cc'));await wait(100);ok('chore note in attendance',!!$('#drawer .chore-note')&&/Corvée de ménage/.test($('#drawer .chore-note').textContent));click($('#dr-close'));await wait(60);}}
 click($('[data-role=student]'));await wait(100);
-ok('student sees chore',$$('#main .week .cc-chore').length>0);
+ok('student sees chore',$$('#main .week .cell-chore').length>0&&!$('#main .week .cc-chore-pill'));
 click($('[data-role=admin]'));await wait(100);
 /* COMPTES */
 click($('#nav-comptes'));await wait(200);
