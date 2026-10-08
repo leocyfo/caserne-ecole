@@ -1,6 +1,7 @@
 (async()=>{
 const R=[];const ok=(name,cond,info)=>R.push((cond?'PASS ':'FAIL ')+name+(info!==undefined?' :: '+info:''));
 const wait=ms=>new Promise(r=>setTimeout(r,ms));const $=s=>document.querySelector(s);const $$=s=>[...document.querySelectorAll(s)];
+const S_page=()=>($('#nav [aria-current=page]')||{}).dataset?$('#nav [aria-current=page]').dataset.page:'';
 const click=el=>{if(!el)throw new Error('missing element');el.click();};
 const ptr=(type,x,y,target)=>(target||window).dispatchEvent(new PointerEvent(type,{bubbles:true,cancelable:true,clientX:x,clientY:y,button:0,buttons:type==='pointerup'?0:1,pointerType:'mouse',isPrimary:true}));
 const center=el=>{const r=el.getBoundingClientRect();return [r.left+r.width/2,r.top+Math.min(r.height/2,30)];};
@@ -120,9 +121,35 @@ ok('roles in class list',/Capitaine/.test($('#main').textContent));
 click($('#nav-eleves'));await wait(80);
 ok('12 students',$$('#main tbody tr').length===12);
 ok('captain chip',$$('#main .role-chip').some(x=>x.textContent==='Capitaine'));
-click($$('#main tbody .link').find(x=>/Camille/.test(x.textContent)));await wait(60);
-ok('student role + note',$('#st-fonc').value==='Lieutenant 1'&&/Cravate oubliée/.test($('#st-notes').value));
-click($('#dr-close'));await wait(30);
+window.scrollTo(0,300);await wait(30);const listY=window.scrollY;
+click($$('#main tbody .link').find(x=>/Camille/.test(x.textContent)));await wait(80);
+ok('student fiche',/Camille Bergeron/.test($('#fi-name').textContent)&&/Lieutenant 1/.test($('.fiche-head').textContent)&&/Cravate oubliée/.test($('#main').textContent)&&$$('.fiche-list .fl-item').length===12);
+ok('fiche full info',['Informations','Présences depuis la rentrée','Absences et retards','Présence par cours','Examens','Semaine de la classe','Compte'].every(h=>$$('.fiche-main .panel h2').some(x=>x.textContent.startsWith(h))));
+click($('#fi-next'));await wait(80);
+ok('fiche next',/Émilie Côté/.test($('#fi-name').textContent)&&$('#fl-el-119-04').getAttribute('aria-current')==='true');
+document.dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowLeft',bubbles:true}));await wait(80);
+ok('fiche arrow key',/Camille Bergeron/.test($('#fi-name').textContent));
+click($('#fl-el-119-12'));await wait(80);
+ok('fiche list switch',/Léa Tremblay/.test($('#fi-name').textContent)&&!$('#fi-next').disabled);
+click($('#fl-el-119-05'));await wait(80);
+ok('fiche last',/William Deschamps/.test($('#fi-name').textContent)&&$('#fi-next').disabled&&/12 sur 12/.test($('.fiche-nav').textContent));
+click($('#fi-edit'));await wait(60);
+ok('edit from fiche',!$('#drawer').hidden&&$('#st-nom').value==='William Deschamps');
+click($('#dr-close'));await wait(40);
+document.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}));await wait(80);
+ok('fiche escape back',!$('.fiche')&&$$('#main tbody tr').length===12&&Math.abs(window.scrollY-listY)<5&&listY>0,Math.round(listY)+' -> '+Math.round(window.scrollY));
+// personnel
+click($('#nav-personnel'));await wait(80);
+click($$('#main tbody .link').find(x=>/Marie Leduc/.test(x.textContent)));await wait(80);
+ok('staff fiche',/Marie Leduc/.test($('#fi-name').textContent)&&/Cours assignés/.test($('#main').textContent)&&$$('.cg-head').length>=2&&/Qualifiée/.test($('#main').textContent));
+click($('#cg-c119'));await wait(80);
+ok('staff courses by class',$('#cg-c119').getAttribute('aria-expanded')==='true'&&$$('.cg-body li').length>5);
+click($('#fi-next'));await wait(80);
+ok('staff fiche next',/Philippe Roy/.test($('#fi-name').textContent));
+click($$('.fiche-act button').find(x=>/Son horaire/.test(x.textContent)));await wait(150);
+ok('staff to schedule',S_page()==='calendar'&&$('#fm-e').getAttribute('aria-pressed')==='true'&&$('#fc-e-proy').getAttribute('aria-pressed')==='true');
+click($('#fc-all'));await wait(60);click($('#fm-g'));await wait(60);
+click($('#nav-eleves'));await wait(80);
 // examens
 click($('#nav-examens'));await wait(60);
 ok('exams list',$$('#main [data-act=sess-at]').length>0,($('#main .summary')||{}).textContent);
@@ -225,7 +252,7 @@ ok('teacher account saved',(window.__store.get('comptes/u2')||{}).role==='teache
 ok('accounts table grows',$$('#main .tbl tbody tr').length===10&&/Julie Tremblay/.test($('#main .tbl').textContent));
 // la fiche suit les modifications du dossier
 click($('#nav-eleves'));await wait(150);
-click($('[data-act=student][data-id="el-119-05"]'));await wait(100);
+click($('[data-act=student][data-id="el-119-05"]'));await wait(100);click($('#fi-edit'));await wait(80);
 {const i=$('#st-nom');i.value='Florence Morin-Test';i.dispatchEvent(new Event('input',{bubbles:true}));}
 click($('#drawer button.primary[type=submit]'));await wait(300);
 ok('fiche synced',window.__store.get('comptes/u3').fiche.nom==='Florence Morin-Test',window.__store.get('comptes/u3').fiche.nom);

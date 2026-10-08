@@ -122,10 +122,14 @@ ok('students table',$$('#main tbody tr').length===20,$$('#main tbody tr').length
 typeIn('#s-q','nath');await wait(40);
 ok('search',$$('#main tbody tr').length===1&&/Nathan/.test($('#main tbody').textContent));
 ok('search kept',$('#s-q').value==='nath');
-click($('#main tbody .link'));await wait(60);
-ok('student drawer + stats',/5 absences/.test($('#drawer').textContent),$('#drawer .att-sum')&&$('#drawer .att-sum').textContent);
+click($('#main tbody .link'));await wait(80);
+ok('student fiche + stats',!!$('.fiche')&&/5 absences/.test($('#main').textContent)&&$('#drawer').hidden,$('#main .att-sum')&&$('#main .att-sum').textContent);
+ok('fiche nav with search',$('#fi-prev').disabled&&$('#fi-next').disabled&&/1 sur 1/.test($('.fiche-nav').textContent));
+click($('#fi-edit'));await wait(60);
 typeIn('#st-parent','Line Ouellet');$('#st-form').requestSubmit();await wait(120);
-ok('student saved',window.__store.get('eleves/el-301-06').parent==='Line Ouellet');
+ok('student saved',window.__store.get('eleves/el-301-06').parent==='Line Ouellet'&&/Line Ouellet/.test($('#main').textContent));
+click($('#fi-back'));await wait(80);
+ok('back to list',!$('.fiche')&&$$('#main tbody tr').length===1&&$('#s-q').value==='nath');
 // personnel
 click($('#nav-personnel'));await wait(40);
 ok('staff table',$$('#main tbody tr').length===8);
