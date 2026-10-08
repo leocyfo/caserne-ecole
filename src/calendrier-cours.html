@@ -1172,22 +1172,29 @@ function ficheShell(kind,list,cur,listItem,head,body){
   return `<div class="fiche"><aside class="fiche-list" aria-label="${kind==='eleves'?'Élèves':'Personnel'}">${filt}<ul>${list.map(x=>`<li><button type="button" class="fl-item" id="fl-${esc(x.id)}" data-act="${kind==='eleves'?'student':'staff'}" data-id="${esc(x.id)}" aria-current="${x.id===cur.id}">${listItem(x)}</button></li>`).join('')||'<li class="muted sm" style="padding:12px">Aucun résultat.</li>'}</ul></aside>
     <div class="fiche-main">${nav}${head}<div class="fiche-grid">${body}</div></div></div>`;
 }
-function acctPanel(id,role){
-  const a=acctOfRef(id), p=a&&!a.exemple?profOf(a.id):null;
-  if(a&&!a.exemple) needProfiles([a.id]);
-  const who=a?(a.exemple?'Compte d’exemple (aucune personne reliée)':esc((p&&p.name)||(siteMode()?'Compte du site':'Accès claude.ai'))):'';
-  return `<section class="panel"><h2>Compte</h2>${a?ficheFacts([['Rôle',ROLE_LBL[a.role]],['Relié à',who],['Mis à jour',a.maj?esc(longDate(new Date(a.maj))):'']])+`<div class="row" style="margin-top:12px"><button class="btn sm" type="button" data-act="ac-edit" data-id="${esc(a.id)}">Modifier le compte</button></div>`
-    :`<p class="help">Aucun compte n’est relié à cette fiche : la personne ne peut pas encore se connecter à son horaire.</p><div class="row" style="margin-top:10px"><button class="btn sm" type="button" id="fi-new-acct" data-act="fi-acct" data-role="${role}" data-id="${esc(id)}"${dis()}>${icon('plus')}Créer son compte</button></div>`}</section>`;
+/* Compte de la personne, affiché dans l’en-tête de sa fiche */
+function acctChip(id){
+  const a=acctOfRef(id);
+  if(!a) return '<span class="chip off" id="fi-acct-chip" title="La personne ne peut pas encore se connecter à son horaire.">Sans compte</span>';
+  const p=a.exemple?null:profOf(a.id);
+  if(!a.exemple) needProfiles([a.id]);
+  const who=a.exemple?'compte d’exemple':((p&&p.name)||(siteMode()?'compte du site':'accès claude.ai'));
+  return `<span class="chip ok" id="fi-acct-chip" title="${esc('Compte '+ROLE_LBL[a.role]+(a.maj?' · mis à jour le '+longDate(new Date(a.maj)):''))}">Compte ${esc(ROLE_LBL[a.role].toLowerCase())} · ${esc(who)}</span>`;
+}
+function acctBtn(id,role){
+  const a=acctOfRef(id);
+  return a?`<button class="btn sm" type="button" id="fi-acct-btn" data-act="ac-edit" data-id="${esc(a.id)}">Modifier le compte</button>`
+    :`<button class="btn sm" type="button" id="fi-acct-btn" data-act="fi-acct" data-role="${role}" data-id="${esc(id)}"${dis()}>${icon('plus')}Créer son compte</button>`;
 }
 
 function studentFiche(){
   const e=byId(S.data.eleves,S.pg.fiche);
   if(!e){S.pg.fiche=null;return studentsPage();}
-  const list=studentList(), stats=studentStats(yearStart(),todayISO()), s=stats[e.id], r=rateOf(s), a=acctOfRef(e.id);
+  const list=studentList(), stats=studentStats(yearStart(),todayISO()), s=stats[e.id], r=rateOf(s);
   const item=x=>{const rr=rateOf(stats[x.id]);return `<span class="fl-name">${esc(x.nom)}</span><span class="fl-sub">${esc(gName(x.groupe))}${x.numero?` · n° ${esc(x.numero)}`:''}${rr==null?'':`<span class="fl-rate ${rr>=95?'ok':rr>=90?'warn':'bad'}">${rr} %</span>`}</span>`;};
   const age=ageOf(e.naissance);
-  const head=`<section class="panel fiche-head">${avHTML(e.nom,'','lg')}<div class="prof-id"><h2 id="fi-name">${esc(e.nom)}</h2><div class="prof-chips"><span class="chip">${esc(gName(e.groupe))}</span>${e.numero?`<span class="chip off">n° ${esc(e.numero)}</span>`:''}${e.fonction?`<span class="role-chip">${esc(e.fonction)}</span>`:''}<span class="chip ${a?'ok':'off'}">${a?'Compte relié':'Sans compte'}</span></div></div>
-    <div class="fiche-act"><button class="btn sm primary" type="button" id="fi-edit" data-act="st-edit" data-id="${esc(e.id)}">Modifier le dossier</button>${e.groupe?`<button class="btn sm" type="button" data-act="see-group" data-id="${esc(e.groupe)}">Horaire de la classe</button>`:''}</div></section>`;
+  const head=`<section class="panel fiche-head">${avHTML(e.nom,'','lg')}<div class="prof-id"><h2 id="fi-name">${esc(e.nom)}</h2><div class="prof-chips"><span class="chip">${esc(gName(e.groupe))}</span>${e.numero?`<span class="chip off">n° ${esc(e.numero)}</span>`:''}${e.fonction?`<span class="role-chip">${esc(e.fonction)}</span>`:''}${acctChip(e.id)}</div></div>
+    <div class="fiche-act"><button class="btn sm primary" type="button" id="fi-edit" data-act="st-edit" data-id="${esc(e.id)}">Modifier le dossier</button>${e.groupe?`<button class="btn sm" type="button" data-act="see-group" data-id="${esc(e.groupe)}">Horaire de la classe</button>`:''}${acctBtn(e.id,'student')}</div></section>`;
   // présences, par cours
   const byC={};
   for(const p of Object.values(S.data.presTerm)){const v=p&&p.statuts&&p.statuts[e.id];if(!v||!LBL[v])continue;const x=byC[p.cours]||(byC[p.cours]={P:0,A:0,R:0,M:0,n:0});if(x[v]!=null){x[v]++;x.n++;}}
@@ -1210,18 +1217,17 @@ function studentFiche(){
     <section class="panel"><h2>Absences et retards</h2>${logHTML}</section>
     <section class="panel"><h2>Présence par cours</h2>${byCHTML}</section>
     <section class="panel"><h2>Examens</h2><h3 class="fiche-h3">Résultats</h3>${resHTML}<h3 class="fiche-h3">À venir</h3>${up.length?`<div class="list">${examRows(up,'admin')}</div>`:'<p class="help">Aucun examen prévu.</p>'}</section>
-    <section class="panel"><h2>Semaine de la classe</h2><p class="big">${wk.length}<span> cours</span></p><p class="help">${nx?`Prochain cours : ${esc(nx.s.c.titre)}, ${esc(dayLabel(parse(nx.s.date)).toLowerCase())} à ${fmtT(nx.s.start)}.`:'Aucun cours prévu prochainement.'}</p>${chores.length?`<h3 class="fiche-h3">Corvées de ménage</h3><ul class="acc-list">${chores.map(x=>`<li><span>${esc(dayLabel(parse(x.date)))} · ${fmtT(x.start)} – ${fmtT(x.end)}</span>${choreChip(x)}</li>`).join('')}</ul>`:''}</section>
-    ${acctPanel(e.id,'student')}`;
+    <section class="panel"><h2>Semaine de la classe</h2><p class="big">${wk.length}<span> cours</span></p><p class="help">${nx?`Prochain cours : ${esc(nx.s.c.titre)}, ${esc(dayLabel(parse(nx.s.date)).toLowerCase())} à ${fmtT(nx.s.start)}.`:'Aucun cours prévu prochainement.'}</p>${chores.length?`<h3 class="fiche-h3">Corvées de ménage</h3><ul class="acc-list">${chores.map(x=>`<li><span>${esc(dayLabel(parse(x.date)))} · ${fmtT(x.start)} – ${fmtT(x.end)}</span>${choreChip(x)}</li>`).join('')}</ul>`:''}</section>`;
   return ficheShell('eleves',list,e,item,head,body);
 }
 
 function staffFiche(){
   const p=byId(S.data.enseignants,S.pg.fiche);
   if(!p){S.pg.fiche=null;return staffPage();}
-  const list=staff(), z=S.data.dossiers[p.id]||{}, st=p.statut||'Actif', a=acctOfRef(p.id), teach=isTeacher(p);
+  const list=staff(), z=S.data.dossiers[p.id]||{}, st=p.statut||'Actif', teach=isTeacher(p);
   const item=x=>`<span class="fl-name">${esc(x.nom)}</span><span class="fl-sub">${esc(x.fonction||'Enseignant')}${x.statut&&x.statut!=='Actif'?` · ${esc(x.statut)}`:''}</span>`;
-  const head=`<section class="panel fiche-head">${avHTML(p.nom,'','lg')}<div class="prof-id"><h2 id="fi-name">${esc(p.nom)}</h2><div class="prof-chips"><span class="chip">${esc(p.fonction||'Enseignant')}</span><span class="chip ${STATUTS[st]||'off'}">${esc(st)}</span><span class="chip ${a?'ok':'off'}">${a?'Compte relié':'Sans compte'}</span></div></div>
-    <div class="fiche-act"><button class="btn sm primary" type="button" id="fi-edit" data-act="sf-edit" data-id="${esc(p.id)}">Modifier le dossier</button>${teach?`<button class="btn sm" type="button" data-act="see-teacher" data-id="${esc(p.id)}">Son horaire</button>`:''}</div></section>`;
+  const head=`<section class="panel fiche-head">${avHTML(p.nom,'','lg')}<div class="prof-id"><h2 id="fi-name">${esc(p.nom)}</h2><div class="prof-chips"><span class="chip">${esc(p.fonction||'Enseignant')}</span><span class="chip ${STATUTS[st]||'off'}">${esc(st)}</span>${acctChip(p.id)}</div></div>
+    <div class="fiche-act"><button class="btn sm primary" type="button" id="fi-edit" data-act="sf-edit" data-id="${esc(p.id)}">Modifier le dossier</button>${teach?`<button class="btn sm" type="button" data-act="see-teacher" data-id="${esc(p.id)}">Son horaire</button>`:''}${acctBtn(p.id,p.fonction&&!teach?'admin':'teacher')}</div></section>`;
   const emb=z.embauche?parse(z.embauche):null, yrs=emb?Math.floor((Date.now()-emb.getTime())/(365.25*864e5)):null;
   const cs=S.data.cours.filter(c=>c.enseignant===p.id).sort((x,y)=>collator.compare(gName(x.groupe),gName(y.groupe))||collator.compare(x.titre,y.titre));
   // cours regroupés par classe ; un clic sur la classe montre ses cours
@@ -1243,8 +1249,7 @@ function staffFiche(){
     ${teach?`<section class="panel"><h2>Cours assignés · ${cs.length}</h2>${csHTML}</section>
     <section class="panel"><h2>Cette semaine</h2><p class="big">${wk.length}<span> cours</span></p><p class="help">${late?`<b class="need-t">${pl(late,'présence à prendre','présences à prendre')}</b> pour des cours passés. `:''}${nx?`Prochain cours : ${esc(nx.s.c.titre)} (${esc(gName(nx.s.c.groupe))}), ${esc(dayLabel(parse(nx.s.date)).toLowerCase())} à ${fmtT(nx.s.start)}.`:'Aucun cours prévu prochainement.'}</p></section>`:''}
     <section class="panel"><h2>Présences du personnel</h2><div class="att-sum">${Object.entries(cnt).map(([k,n])=>`<span class="chip ${SCH[k]}">${n} ${SLBL[k].toLowerCase()}${n>1&&k!=='F'?'s':''}</span>`).join('')}</div><p class="help" style="margin-top:6px">Depuis le ${esc(longDate(parse(yearStart())))}.</p>${off.length?`<ul class="plist fiche-scroll" style="margin-top:8px">${off.map(([ds,v])=>`<li><span>${esc(dayLabel(parse(ds)))}</span><span class="chip ${SCH[v]}">${SLBL[v]}</span></li>`).join('')}</ul>`:''}</section>
-    ${surv.length?`<section class="panel"><h2>Examens à surveiller</h2><div class="list">${examRows(surv,'admin')}</div></section>`:''}
-    ${acctPanel(p.id,p.fonction&&!teach?'admin':'teacher')}`;
+    ${surv.length?`<section class="panel"><h2>Examens à surveiller</h2><div class="list">${examRows(surv,'admin')}</div></section>`:''}`;
   return ficheShell('personnel',list,p,item,head,body);
 }
 
