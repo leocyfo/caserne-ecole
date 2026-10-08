@@ -86,7 +86,7 @@ ok('compact hides meta',!metaVisible());
 await wait(400);
 const h2=$('#main .week').getBoundingClientRect().height;
 ok('compact smaller',h2<h1*0.75,Math.round(h1)+' -> '+Math.round(h2));
-ok('compact start time',getComputedStyle($('#main .week .tstart')).display!=='none');
+ok('compact time range',getComputedStyle($('#main .week .cc-time')).display!=='none'&&/–/.test($('#main .week .cc-time').textContent));
 ok('status dot',!!$('#main .week .cc[data-st="done"]'));
 document.body.dispatchEvent(new KeyboardEvent('keydown',{key:'+',bubbles:true}));await wait(400);
 ok('plus key expands',!$('#main .week.compact')&&metaVisible());

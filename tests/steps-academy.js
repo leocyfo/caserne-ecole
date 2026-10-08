@@ -25,6 +25,7 @@ ok('one line per card top',$$('#main .week button.cc').every(x=>x.querySelectorA
 ok('status in foot',!!$('#main .week .cc-foot .cc-st.warn')&&$$('#main .week .cc-chore').some(x=>/Corvée de ménage/.test(x.textContent)));
 ok('menage tag',/Corvée de ménage/.test($('#main .week').textContent));
 const am=$('.cc[data-key="k119-m08_a20261006am_2026-10-06"]');
+ok('card session label',/Séance 8.1/.test(($('.cc[data-key="k119-m08_a20261006am_2026-10-06"] .cc-meta')||{}).textContent||''));
 ok('119 AM today',!!am&&/9\/12 marqués/.test(am.textContent),am&&am.textContent.replace(/\s+/g,' ').slice(0,120));
 ok('exam doc on board',$$('#main .cc.exam').some(x=>/Métier et formation/.test(x.textContent)));
 // exam drawer with results
@@ -225,9 +226,11 @@ window.scrollTo(0,0);await wait(30);}
 ok('chore strip',!!am&&/Corvée de ménage/.test((am.querySelector('.cc-chore')||{}).textContent||'')&&!$$('#main .cc-flag').some(x=>/Ménage/.test(x.textContent)),am&&am.textContent.replace(/\s+/g,' ').slice(0,140));}
 click($('#exp-btn'));await wait(400);
 {const c=$('#main .week.compact .cc-chore');ok('chore icon compact',!!c&&c.getBoundingClientRect().width<=24&&c.getBoundingClientRect().width>0);}
+{const c=$('.cc[data-key="k119-m08_a20261006am_2026-10-06"]');ok('compact shows range + kind',!!c&&/8 h – 11 h/.test(c.querySelector('.cc-time').textContent)&&getComputedStyle(c.querySelector('.cc-kind')).display!=='none'&&/Théorie/.test(c.querySelector('.cc-kind').textContent));}
 click($('#exp-btn'));await wait(400);
 click($('.cc[data-key="k119-m08_a20261006am_2026-10-06"]'));await wait(80);
 ok('chore checkbox',!!$('#sb-menage')&&$('#sb-menage').checked);
+ok('session summary',/Marie Leduc/.test($('.sb-facts').textContent)&&$('.sb-facts').textContent.includes('9 / 12')&&/8\.1/.test($('.sb-facts').textContent)&&/Théorie/.test($('.sb-chips').textContent)&&/Modifier cette séance/.test($('.sess-box').textContent));
 const xam=()=>window.__store.get('cours/k119-m08').extras.find(x=>x.id==='a20261006am');
 click($('#sb-menage'));await wait(250);
 ok('chore removed',!xam().tags.includes('Ménage')&&xam().tags.includes('Théorie')&&!$('.cc[data-key="k119-m08_a20261006am_2026-10-06"] .cc-chore'),JSON.stringify(xam().tags));
