@@ -403,6 +403,14 @@ legend{font-size:13px;color:var(--ink-2);font-weight:600;padding:0 4px}
 .acc-list li:first-child{border-top:0}
 
 .need-t{color:var(--warn)}
+.dem-list{list-style:none;margin:0;padding:0}
+.dem-list li{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1.4fr) auto;gap:10px 16px;align-items:center;padding:10px 0;border-top:1px solid var(--line-2)}
+.dem-list li:first-child{border-top:0;padding-top:2px}
+.dem-what{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;min-width:0}
+.dem-msg{flex-basis:100%;color:var(--muted);font-size:13px;font-style:italic;overflow-wrap:anywhere}
+.dem-act{display:flex;gap:6px}
+.side-out{margin-top:0}
+@media (max-width:760px){.dem-list li{grid-template-columns:1fr}}
 
 /* Corvée de ménage : bien visible partout (bande jaune, pastille, encadré) */
 .cc-chore{display:flex;align-items:center;gap:7px;margin:6px -11px -10px;padding:7px 11px;background:#FFE08A;color:#5A3E00;border-top:1px solid #F0C64A;border-radius:0 0 7px 7px;font-size:12.5px;font-weight:800}
@@ -569,6 +577,7 @@ body.is-dragging .cell-add{opacity:0!important}
     <div class="ws-label" id="ws-label">Espace administrateur</div>
     <ul class="nav" id="nav"></ul>
     <button type="button" class="side-toggle" id="side-toggle" data-act="side" aria-expanded="true" title="Réduire le menu"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m11 17-5-5 5-5M18 17l-5-5 5-5"/></svg><span>Réduire le menu</span></button>
+    <button type="button" class="side-toggle side-out" id="logout-btn" data-act="logout" title="Se déconnecter" hidden><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg><span>Se déconnecter</span></button>
     <div class="person" id="person"></div>
   </aside>
   <div class="content">
@@ -663,7 +672,7 @@ const S={
   conn:'loading', canAdmin:null, canWrite:null,
   me:{id:null,name:'',avatarUrl:''}, isOwner:false, myAcct:null, peers:[],
   loaded:{}, busy:false, confirmClear:false, termKey:'', termLoaded:false,
-  data:{comptes:[],config:null,cours:[],enseignants:[],dossiers:{},groupes:[],eleves:[],examens:[],presences:{},presTerm:{},staffPres:{},absProfs:{}},
+  data:{comptes:[],demandes:[],config:null,cours:[],enseignants:[],dossiers:{},groupes:[],eleves:[],examens:[],presences:{},presTerm:{},staffPres:{},absProfs:{}},
   dr:null
 };
 let DB=null, unsubPres=null, unsubTerm=null, uidSeq=0;
@@ -954,6 +963,7 @@ function adminMain(){
     const can=S.canAdmin!==false;
     return `<div class="empty"><h2>Aucun cours pour l’instant</h2><p>Préparez l’horaire de la session en trois étapes.</p>
       <ol class="steps"><li><b>Classes et élèves.</b> Créez vos classes, puis collez la liste des élèves de chacune.</li><li><b>Personnel.</b> Ajoutez chaque enseignant qui donne des cours.</li><li><b>Cours.</b> Planifiez chaque cours avec sa classe, son enseignant et ses périodes de la semaine.</li></ol>
+      ${can&&siteMode()?`<p class="help">Ou partez de l’exemple : l’horaire 2026–2027 des classes 119 à 123, avec leurs enseignants et leurs élèves.</p><div class="row" style="margin-bottom:10px"><button class="btn" type="button" id="import-demo" data-act="import-demo"${dis()}>Charger l’exemple de l’Académie</button></div>`:''}
       ${can?`<div class="row"><button class="btn" type="button" data-act="nav" data-page="classes">Gérer les classes</button><button class="btn primary" type="button" data-act="new-course">${icon('plus')}Planifier un cours</button></div>`:''}</div>`;
   }
   const f=S.filtre, list=filterItems(weekItems(),'admin');
@@ -1216,8 +1226,8 @@ function paramsPage(){
     ${comps().length?`<div class="tbl-wrap"><table class="tbl" style="min-width:420px"><thead><tr><th class="num">N°</th><th>Nom du cours</th><th class="num">Heures</th><th></th></tr></thead><tbody>${comps().map(k=>`<tr><td class="num">${esc(k.code)}</td><td>${esc(k.nom)}</td><td class="num">${k.heures?esc(k.heures)+' h':'—'}</td><td class="num"><button type="button" class="x" data-act="p-del-comp" data-code="${esc(k.code)}" aria-label="${esc('Retirer '+k.nom)}"${dis()}>×</button></td></tr>`).join('')}</tbody></table></div>`:'<p class="help">Aucun nom de cours pour l’instant.</p>'}
     <form class="inline-add" data-form="p-add-comp"><label class="field" style="flex:0 1 90px"><span>N°</span><input type="number" id="p-kcode" min="1" step="1" inputmode="numeric"></label><label class="field"><span>Nom du cours</span><input id="p-knom" maxlength="90" autocomplete="off"></label><label class="field" style="flex:0 1 110px"><span>Heures</span><input type="number" id="p-kh" min="0" step="1" inputmode="numeric"></label><button class="btn" type="submit"${dis()}>Ajouter</button></form>
     <p class="help">Un numéro déjà utilisé remplace le nom existant.</p></section>
-  <section class="dr-sec"><h2 class="sec-title">Qui voit quoi</h2><p class="help">Chaque profil suit le niveau de partage de cette page dans claude.ai. Reliez ensuite chaque personne à sa fiche dans le menu <b>Comptes</b> : elle arrivera directement sur son horaire et son profil.</p>
-    <ul class="access"><li><b>Éditeur</b><span>Administrateur : tous les menus, y compris les dossiers et les présences du personnel.</span></li><li><b>Contributeur</b><span>Enseignant : son horaire, les présences de ses cours et les examens de ses cours.</span></li><li><b>Lecteur</b><span>Élève : l’horaire et les examens de sa classe, et le calendrier scolaire. Les listes d’élèves, les présences et les dossiers du personnel lui restent cachés.</span></li></ul></section>
+  <section class="dr-sec"><h2 class="sec-title">Qui voit quoi</h2>${siteMode()?'<p class="help">Chaque personne a son compte sur le site, approuvé dans le menu <b>Comptes</b>. Son rôle décide de ce qu’elle voit.</p><ul class="access"><li><b>Administrateur</b><span>Tous les menus, y compris les comptes, les dossiers et les présences du personnel.</span></li><li><b>Enseignant</b><span>Son horaire, les présences de ses cours et les examens de ses cours.</span></li><li><b>Élève</b><span>L’horaire et les examens de sa classe, et le calendrier scolaire. Les listes d’élèves, les présences et les dossiers du personnel lui restent cachés.</span></li></ul></section>':`<p class="help">Chaque profil suit le niveau de partage de cette page dans claude.ai. Reliez ensuite chaque personne à sa fiche dans le menu <b>Comptes</b> : elle arrivera directement sur son horaire et son profil.</p>
+    <ul class="access"><li><b>Éditeur</b><span>Administrateur : tous les menus, y compris les dossiers et les présences du personnel.</span></li><li><b>Contributeur</b><span>Enseignant : son horaire, les présences de ses cours et les examens de ses cours.</span></li><li><b>Lecteur</b><span>Élève : l’horaire et les examens de sa classe, et le calendrier scolaire. Les listes d’élèves, les présences et les dossiers du personnel lui restent cachés.</span></li></ul></section>`}
   ${n?`<section class="dr-sec"><h2 class="sec-title">Données d’exemple</h2><p class="help">${pl(n,'élément d’exemple est encore présent','éléments d’exemple sont encore présents')}.</p><div class="row"><button class="btn sm danger" type="button" data-act="clear-ex"${dis()}>Effacer les exemples</button></div></section>`:''}</section>`;
 }
 
@@ -1227,6 +1237,8 @@ function paramsPage(){
    l’administration les lit et les écrit tous. La fiche copiée permet à l’élève de voir
    ses informations sans avoir accès aux dossiers des autres élèves. */
 let USER=null, ROOM;
+/* Sur le site (hors claude.ai), la connexion se fait par courriel et les comptes naissent d’une demande. */
+const siteMode=()=>!!window.__AUTH;
 const ROLES=['admin','teacher','student'];
 const ROLE_CHIP={admin:'k2',teacher:'k0',student:'k6'};
 const ACCESS={admin:'Éditeur',teacher:'Contributeur',student:'Lecteur'};
@@ -1281,27 +1293,42 @@ function accountsPage(){
   const n=k=>all.filter(a=>a.role===k).length;
   const seg=`<div class="seg" role="group" aria-label="Filtrer les comptes">${[['','Tous',all.length],['admin','Administrateurs',n('admin')],['teacher','Enseignants',n('teacher')],['student','Élèves',n('student')]].map(([k,l,c])=>`<button type="button" id="acf-${k||'all'}" data-act="ac-filter" data-v="${k}" aria-pressed="${r===k}">${l} ${c}</button>`).join('')}</div>`;
   const tb=`<div class="toolbar">${seg}<span class="grow"></span><button class="btn primary" type="button" id="ac-new" data-act="ac-new"${dis()}>${icon('plus')}Créer un compte</button></div>`;
-  const how=`<section class="panel acc-how"><h2>Comment ça marche</h2><ol class="steps">
+  const dem=S.data.demandes.filter(x=>x.statut==='en attente').sort((a,b)=>String(a.cree||'').localeCompare(String(b.cree||'')));
+  const demHTML=dem.length?`<section class="panel" id="dem-panel"><h2>Demandes de compte · ${dem.length}</h2><ul class="dem-list">${dem.map(x=>`<li><span class="who">${avHTML(x.nom,'')}<span><b>${esc(x.nom||'Sans nom')}</b><small>${esc(x.courriel||'')}</small></span></span><span class="dem-what"><span class="chip ${ROLE_CHIP[x.role]||'off'}">${ROLE_LBL[x.role]||'Rôle à préciser'}</span>${x.classe?`<span class="muted sm">Classe ${esc(x.classe)}</span>`:''}${x.message?`<span class="dem-msg">« ${esc(x.message)} »</span>`:''}</span><span class="dem-act"><button class="btn sm primary" type="button" id="dm-ok-${esc(x.id)}" data-act="ac-approve" data-id="${esc(x.id)}"${dis()}>Approuver</button><button class="btn sm ghost" type="button" id="dm-no-${esc(x.id)}" data-act="ac-refuse" data-id="${esc(x.id)}"${dis()}>Refuser</button></span></li>`).join('')}</ul></section>`:'';
+  const how=siteMode()?`<section class="panel acc-how"><h2>Comment ça marche</h2><ol class="steps">
+    <li><b>La personne va sur le site</b> et clique « Demander un compte » : nom, courriel, mot de passe, rôle et classe.</li>
+    <li><b>Sa demande apparaît ici.</b> Approuvez-la en choisissant son rôle et sa fiche (dossier du personnel ou de l’élève).</li>
+    <li><b>C’est prêt.</b> Elle se connecte et arrive directement sur son horaire et son profil.</li></ol></section>`
+  :`<section class="panel acc-how"><h2>Comment ça marche</h2><ol class="steps">
     <li><b>Partagez la page</b> avec la personne (bouton Partager de claude.ai) : <b>Éditeur</b> pour l’administration, <b>Contributeur</b> pour les enseignants, <b>Lecteur</b> pour les élèves.</li>
     <li><b>Créez son compte ici</b> : la personne, son rôle et sa fiche (dossier du personnel ou de l’élève).</li>
     <li><b>C’est prêt.</b> En ouvrant la page, elle arrive directement sur son horaire et son profil.</li></ol></section>`;
+  const share=!siteMode();
   const list=all.filter(a=>!r||a.role===r).sort((x,y)=>ROLES.indexOf(x.role)-ROLES.indexOf(y.role)||collator.compare(ficheName(x),ficheName(y)));
   const rows=list.map(a=>{
     const rec=acctRec(a);let who;
     if(a.exemple) who=`${avHTML(ficheName(a)||'?','')}<span><b>Compte d’exemple</b><small>Aucune personne reliée</small></span>`;
-    else{const p=profOf(a.id);who=`${avHTML((p&&p.name)||'?',p?p.avatarUrl:'')}<span><b>${p?esc(p.name||'Personne non identifiée'):'Chargement…'}${a.id===S.me.id?' (vous)':''}</b><small>${p&&p.guest?'Invitée de l’extérieur':'Accès claude.ai'}</small></span>`;}
+    else{const p=profOf(a.id);who=`${avHTML((p&&p.name)||'?',p?p.avatarUrl:'')}<span><b>${p?esc(p.name||'Personne non identifiée'):'Chargement…'}${a.id===S.me.id?' (vous)':''}</b><small>${p&&p.guest?'Invitée de l’extérieur':share?'Accès claude.ai':'Compte du site'}</small></span>`;}
     const fiche=a.role==='admin'&&!a.ref?'<span class="muted">Aucune fiche</span>':rec.nom?`${esc(rec.nom)}${a.role==='student'&&rec.groupe?`<span class="muted sm"> · ${esc(gName(rec.groupe))}</span>`:''}`:'<span class="muted">Fiche supprimée</span>';
-    return `<tr><td><span class="who">${who}</span></td><td><span class="chip ${ROLE_CHIP[a.role]}">${ROLE_LBL[a.role]}</span></td><td>${fiche}</td><td>${ACCESS[a.role]}</td><td class="num"><button class="btn sm" type="button" id="ac-edit-${esc(a.id)}" data-act="ac-edit" data-id="${esc(a.id)}">Modifier</button></td></tr>`;
+    return `<tr><td><span class="who">${who}</span></td><td><span class="chip ${ROLE_CHIP[a.role]}">${ROLE_LBL[a.role]}</span></td><td>${fiche}</td>${share?`<td>${ACCESS[a.role]}</td>`:''}<td class="num"><button class="btn sm" type="button" id="ac-edit-${esc(a.id)}" data-act="ac-edit" data-id="${esc(a.id)}">Modifier</button></td></tr>`;
   }).join('');
   const linked=new Set(all.map(a=>a.ref).filter(Boolean));
   const noT=teachers().filter(t=>!linked.has(t.id)).length, noE=S.data.eleves.filter(e=>!linked.has(e.id)).length;
-  const table=all.length?`<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Personne</th><th>Rôle</th><th>Fiche</th><th>Accès dans Partager</th><th class="num"><span class="vh">Actions</span></th></tr></thead><tbody>${rows||'<tr><td colspan="5" class="muted">Aucun compte de ce type.</td></tr>'}</tbody></table></div>`
+  const table=all.length?`<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Personne</th><th>Rôle</th><th>Fiche</th>${share?'<th>Accès dans Partager</th>':''}<th class="num"><span class="vh">Actions</span></th></tr></thead><tbody>${rows||'<tr><td colspan="${share?5:4}" class="muted">Aucun compte de ce type.</td></tr>'}</tbody></table></div>`
     :emptyBox('Aucun compte pour l’instant','Créez le compte de chaque personne qui utilise la page : elle arrivera directement sur son horaire et son profil.');
-  return tb+how+table+(all.length?`<p class="help">${noT||noE?`Sans compte : ${pl(noT,'enseignant','enseignants')} et ${pl(noE,'élève','élèves')}.`:'Chaque enseignant et chaque élève a son compte.'}</p>`:'');
+  return tb+demHTML+how+table+(all.length?`<p class="help">${noT||noE?`Sans compte : ${pl(noT,'enseignant','enseignants')} et ${pl(noE,'élève','élèves')}.`:'Chaque enseignant et chaque élève a son compte.'}</p>`:'');
 }
-function openAccount(id){
+function openAccount(id,pre){
   const a=id?byId(S.data.comptes,id):null;
-  openDrawer({kind:'acct',id:id||null,draft:{uid:a&&!a.exemple?a.id:'',role:a?a.role:'student',ref:a?a.ref||'':''},q:'',hits:[],err:'',over:false,confirmDel:false,ex:!!(a&&a.exemple)});
+  const draft={uid:a&&!a.exemple?a.id:'',role:a?a.role:'student',ref:a?a.ref||'':''};
+  if(pre) Object.assign(draft,pre.draft);
+  openDrawer({kind:'acct',id:id||null,draft,q:'',hits:[],err:'',over:false,confirmDel:false,ex:!!(a&&a.exemple),demande:pre?pre.demande:null});
+}
+/* La fiche qui porte le même nom que la personne qui demande un compte */
+function guessRef(role,x){
+  const same=(a,b)=>collator.compare(String(a||'').trim(),String(b||'').trim())===0;
+  if(role==='student'){const e=S.data.eleves.find(e=>same(e.nom,x.nom));return e?e.id:'';}
+  const p=S.data.enseignants.find(p=>same(p.nom,x.nom));return p?p.id:'';
 }
 function accountDrawer(){
   const d=S.dr, f=d.draft, all=S.data.comptes;
@@ -1311,16 +1338,17 @@ function accountDrawer(){
   let person;
   if(f.uid){
     const p=profOf(f.uid)||{}, o=has(f.uid);
-    person=`<div class="pick-sel" id="ac-person">${avHTML(p.name||'?',p.avatarUrl||'')}<span><b>${esc(p.name||'Personne choisie')}${f.uid===S.me.id?' (vous)':''}</b><small>${o?`A déjà un compte : ${ROLE_LBL[o.role]}`:'Accès claude.ai'}</small></span><button class="btn sm ghost" type="button" id="ac-change" data-act="ac-change">Changer</button></div>`;
+    const dm=d.demande&&d.demande.id===f.uid?d.demande:null, nm=p.name||(dm&&dm.nom)||'Personne choisie';
+    person=`<div class="pick-sel" id="ac-person">${avHTML(nm,p.avatarUrl||'')}<span><b>${esc(nm)}${f.uid===S.me.id?' (vous)':''}</b><small>${o?`A déjà un compte : ${ROLE_LBL[o.role]}`:siteMode()?esc((dm&&dm.courriel)||'Compte du site'):'Accès claude.ai'}</small></span><button class="btn sm ghost" type="button" id="ac-change" data-act="ac-change">Changer</button></div>`;
   }else{
     const btn=(id,sub)=>{const p=profOf(id)||{};return `<li><button type="button" class="pick-person" id="pk-${esc(id)}" data-act="ac-pick" data-uid="${esc(id)}">${avHTML(p.name||'?',p.avatarUrl||'')}<span><b>${esc(p.name||'Personne sans nom')}${id===S.me.id?' (vous)':''}</b><small>${esc(sub)}</small></span></button></li>`;};
     const seen=new Set(), here=S.peers.filter(p=>!seen.has(p.by)&&seen.add(p.by));
     const tag=(id,dflt)=>{const o=has(id);return o?`A déjà un compte : ${ROLE_LBL[o.role]}`:dflt;};
     const hereHTML=ROOM===undefined?'<p class="help">Recherche des personnes connectées…</p>':!ROOM?'<p class="help">La liste des personnes connectées n’est pas disponible dans cette fenêtre.</p>'
       :here.length?`<ul class="pick-list">${here.map(p=>btn(p.by,tag(p.by,p.isMe?'Vous':'A la page ouverte en ce moment'))).join('')}</ul>`:'<p class="help">Personne n’a la page ouverte. Demandez à la personne de l’ouvrir : elle apparaîtra ici.</p>';
-    person=`<div class="field"><span>Personnes qui ont la page ouverte</span>${hereHTML}</div>
-      <label class="field"><span>Ou cherchez dans votre organisation</span><input id="ac-q" type="search" placeholder="Nom ou courriel" autocomplete="off"></label>
-      ${d.q.trim()?(d.hits.length?`<ul class="pick-list">${d.hits.map(h=>btn(h.id,tag(h.id,h.guest?'Invitée de l’extérieur':'Membre de l’organisation'))).join('')}</ul>`:'<p class="help">Aucune personne trouvée. Si elle ne fait pas partie de votre organisation, demandez-lui d’ouvrir la page.</p>'):''}`;
+    person=`${siteMode()?'':`<div class="field"><span>Personnes qui ont la page ouverte</span>${hereHTML}</div>`}
+      <label class="field"><span>${siteMode()?'Cherchez une personne inscrite sur le site':'Ou cherchez dans votre organisation'}</span><input id="ac-q" type="search" placeholder="Nom ou courriel" autocomplete="off"></label>
+      ${d.q.trim()?(d.hits.length?`<ul class="pick-list">${d.hits.map(h=>btn(h.id,tag(h.id,h.guest?'Invitée de l’extérieur':'Membre de l’organisation'))).join('')}</ul>`:(siteMode()?'<p class="help">Aucune personne trouvée. Demandez-lui de cliquer « Demander un compte » sur le site.</p>':'<p class="help">Aucune personne trouvée. Si elle ne fait pas partie de votre organisation, demandez-lui d’ouvrir la page.</p>')):''}`;
   }
   const roleSeg=`<div class="seg" role="group" aria-label="Rôle">${ROLES.map(k=>`<button type="button" id="ac-role-${k}" data-act="ac-role" data-v="${k}" aria-pressed="${f.role===k}">${ROLE_LBL[k]}</button>`).join('')}</div>`;
   const used=new Set(all.filter(a=>a.ref&&a.id!==d.id).map(a=>a.ref)), mark=id=>used.has(id)?' (a déjà un compte)':'';
@@ -1329,13 +1357,14 @@ function accountDrawer(){
     :`<option value="">${f.role==='admin'?'Aucune fiche':'Choisir l’enseignant'}</option>`+staff().filter(p=>f.role==='admin'||isTeacher(p)).map(p=>`<option value="${esc(p.id)}"${f.ref===p.id?' selected':''}>${esc(p.nom+mark(p.id))}</option>`).join('');
   const body=`<form id="ac-form" data-form="acct" novalidate>
     ${d.ex?'<div class="notice"><p>Compte d’exemple : choisissez la vraie personne à relier à cette fiche.</p></div>':''}
+    ${d.demande?`<div class="notice"><p><b>Demande de ${esc(d.demande.nom||'')}</b> : ${esc(ROLE_LBL[d.demande.role]||'rôle à préciser')}${d.demande.classe?`, classe ${esc(d.demande.classe)}`:''}. Vérifiez le rôle et la fiche, puis approuvez.</p></div>`:''}
     <section class="dr-sec"><h3>1. La personne</h3>${person}</section>
-    <section class="dr-sec"><h3>2. Son rôle</h3>${roleSeg}<p class="help">Dans Partager, donnez-lui l’accès <b>${ACCESS[f.role]}</b>.</p></section>
+    <section class="dr-sec"><h3>2. Son rôle</h3>${roleSeg}${siteMode()?'':`<p class="help">Dans Partager, donnez-lui l’accès <b>${ACCESS[f.role]}</b>.</p>`}</section>
     <section class="dr-sec"><h3>3. Sa fiche</h3><label class="field"><span>${f.role==='student'?'Fiche de l’élève':f.role==='teacher'?'Fiche de l’enseignant':'Fiche du personnel (facultatif)'}</span><select id="ac-ref">${opts}</select></label>${f.role==='student'?'<p class="help">L’élève voit seulement sa propre fiche dans « Mon profil ».</p>':''}</section>
     ${d.err?`<p class="form-err" role="alert">${esc(d.err)}</p>`:''}</form>`;
   const foot=d.confirmDel
     ?`<p>Supprimer ce compte ? La personne garde son accès à la page, mais n’arrivera plus directement sur son profil.</p><button class="btn danger" type="button" id="ac-del-yes" data-act="ac-del-yes"${dis()}>Supprimer</button><button class="btn ghost" type="button" data-act="ac-del-no">Annuler</button>`
-    :`<button class="btn primary" type="submit" form="ac-form" id="ac-save"${dis()}>${d.id?'Enregistrer':'Créer le compte'}</button>${d.id?'<button class="btn ghost" type="button" id="ac-del" data-act="ac-del">Supprimer le compte</button>':''}`;
+    :`<button class="btn primary" type="submit" form="ac-form" id="ac-save"${dis()}>${d.demande?'Approuver et créer le compte':d.id?'Enregistrer':'Créer le compte'}</button>${d.id?'<button class="btn ghost" type="button" id="ac-del" data-act="ac-del">Supprimer le compte</button>':''}`;
   return dTop('Compte',d.id?'Modifier le compte':'Nouveau compte','Reliez une personne à son rôle et à sa fiche.')+`<div class="dr-body">${body}</div><div class="dr-foot">${foot}</div>`;
 }
 async function saveAccount(){
@@ -1346,7 +1375,7 @@ async function saveAccount(){
   if(o&&o.id!==d.id&&!d.over){d.over=true;d.err=`Cette personne a déjà un compte (${ROLE_LBL[o.role]}). Enregistrez de nouveau pour le remplacer.`;renderDrawer();return;}
   const doc={role:f.role,ref:f.ref||'',fiche:ficheOf(f.role,f.ref),maj:new Date().toISOString()};
   S.busy=true;d.err='';renderDrawer();
-  const ok=await write(async()=>{await col('comptes').doc(f.uid).set(doc);if(d.id&&d.id!==f.uid)await col('comptes').doc(d.id).delete();},d.id?'Compte enregistré':'Compte créé');
+  const ok=await write(async()=>{await col('comptes').doc(f.uid).set(doc);if(d.id&&d.id!==f.uid)await col('comptes').doc(d.id).delete();if(d.demande&&d.demande.id===f.uid)await col('demandes').doc(f.uid).update({statut:'approuvée',traitee:new Date().toISOString()});},d.demande?'Demande approuvée':d.id?'Compte enregistré':'Compte créé');
   S.busy=false;if(ok&&S.dr===d)S.dr=null;render();
 }
 
@@ -1357,7 +1386,7 @@ function profilePage(){
   if(r==='student'&&(rec.groupe||S.group)) chips.push(`<span class="chip">${esc(gName(rec.groupe||S.group))}</span>`);
   if(r==='student'&&rec.fonction) chips.push(`<span class="role-chip">${esc(rec.fonction)}</span>`);
   if(r!=='student'&&rec.fonction&&rec.fonction!=='Enseignant') chips.push(`<span class="chip">${esc(rec.fonction)}</span>`);
-  const note=a?`Compte relié à votre accès claude.ai${S.me.name&&S.me.name!==P.name?` (${esc(S.me.name)})`:''}.`
+  const note=a&&siteMode()?`Connecté avec ${esc((window.__AUTH.email&&window.__AUTH.email())||'votre courriel')}.`:a?`Compte relié à votre accès claude.ai${S.me.name&&S.me.name!==P.name?` (${esc(S.me.name)})`:''}.`
     :r==='admin'?(S.me.name?`Connecté avec l’accès claude.ai de ${esc(S.me.name)}.`:'Administration de l’établissement.')
     :'Aperçu : aucun compte n’est relié à votre accès. L’administration relie les comptes dans le menu Comptes.';
   let pick='';
@@ -1366,7 +1395,7 @@ function profilePage(){
       :groups().map(g=>{const els=studentsOf(g.id);return els.length?`<optgroup label="${esc(g.nom)}">${els.map(e=>`<option value="${esc(e.id)}"${e.id===S.student?' selected':''}>${esc(e.nom)}</option>`).join('')}</optgroup>`:'';}).join('');
     if(o) pick=`<label class="field pf-pick"><span>Voir le profil de</span><select id="pf-who">${o}</select></label>`;
   }
-  const head=`<section class="panel prof-head">${avHTML(P.name,own?S.me.avatarUrl:'','lg')}<div class="prof-id"><h2 id="pf-name">${esc(P.name)}</h2><div class="prof-chips">${chips.join('')}</div><p class="help">${note}</p></div>${pick}</section>`;
+  const head=`<section class="panel prof-head">${avHTML(P.name,own?S.me.avatarUrl:'','lg')}<div class="prof-id"><h2 id="pf-name">${esc(P.name)}</h2><div class="prof-chips">${chips.join('')}</div><p class="help">${note}</p>${siteMode()?'<button class="btn sm" type="button" id="pf-logout" data-act="logout">Se déconnecter</button>':''}</div>${pick}</section>`;
   const facts=rows=>`<dl class="facts">${rows.map(([k,v])=>`<div><dt>${k}</dt><dd>${v!=null&&v!==''?esc(v):'<span class="muted">—</span>'}</dd></div>`).join('')}</dl>`;
   const sess=s=>`${dayLabel(parse(s.date))} · ${fmtT(s.start)} – ${fmtT(s.end)}`;
   let panels='', warn='';
@@ -1436,6 +1465,7 @@ function renderSide(){
   setHTML($('#brand-text'),sp>0?`${esc(nom.slice(0,sp))}<small>${esc(nom.slice(sp+1))}</small>`:esc(nom));
   $('#ws-label').textContent='Espace '+(S.role==='admin'?'administrateur':S.role==='teacher'?'enseignant':'élève');
   $('.app').classList.toggle('side-mini',S.sideMini);
+  $('#logout-btn').hidden=!siteMode();
   const tg=$('#side-toggle'), tl=S.sideMini?'Afficher le menu':'Réduire le menu';
   tg.setAttribute('aria-expanded',String(!S.sideMini));tg.title=tl;tg.querySelector('span').textContent=tl;
   setHTML($('#nav'),NAV[S.role].map(([k,l,i])=>`<li><button type="button" id="nav-${k}" title="${l}" data-act="nav" data-page="${k}"${S.page===k?' aria-current="page"':''}>${icon(i)}<span>${l}</span></button></li>`).join(''));
@@ -2028,6 +2058,15 @@ async function runAll(fns,okMsg){
 const col=n=>DB.collection(n);
 const configDoc=()=>{const c=Object.assign({nom:'',annee:'',debut:'',fin:'',conges:[],etapes:[],competences:[]},S.data.config||{});c.conges=[...(c.conges||[])];c.etapes=[...(c.etapes||[])];c.competences=(c.competences||[]).map(k=>Object.assign({},k));return c;};
 async function saveConfig(c,msg){S.busy=true;render();const ok=await write(()=>DB.doc('config/ecole').set(c),msg);S.busy=false;render();return ok;}
+async function importDemo(){
+  if(S.busy)return;
+  if(!window.__SEED){
+    try{await new Promise((res,rej)=>{const x=document.createElement('script');x.src='demo/donnees.js';x.onload=res;x.onerror=rej;document.head.appendChild(x);});}
+    catch(e){toast('Impossible de charger l’exemple. Vérifiez votre connexion.','bad');return;}
+  }
+  const docs=(window.__SEED||[]).filter(d=>d&&d.path&&!/^comptes\//.test(d.path));
+  await runAll(docs.map(d=>()=>DB.doc(d.path).set(d.data)),`Exemple chargé : ${pl(docs.length,'élément','éléments')}`);
+}
 async function clearExamples(){
   const fns=[];
   for(const k of ['comptes','cours','eleves','enseignants','groupes','examens']) for(const d of S.data[k]) if(d.exemple) fns.push(()=>col(k).doc(d.id).delete());
@@ -2057,6 +2096,10 @@ document.addEventListener('click',async e=>{
     case 'role':setRole(b.dataset.role);break;
     case 'demo-reset':if(window.__DEMO_RESET)window.__DEMO_RESET();break;
     case 'ac-new':openAccount(null);break;
+    case 'ac-approve':{const x=S.data.demandes.find(q=>q.id===b.dataset.id);if(!x)break;const role=ROLES.includes(x.role)?x.role:'student';openAccount(byId(S.data.comptes,x.id)?x.id:null,{draft:{uid:x.id,role,ref:guessRef(role,x)},demande:x});break;}
+    case 'ac-refuse':{if(S.busy)break;const id=b.dataset.id;S.busy=true;render();await write(()=>col('demandes').doc(id).update({statut:'refusée',traitee:new Date().toISOString()}),'Demande refusée');S.busy=false;render();break;}
+    case 'logout':if(window.__AUTH)window.__AUTH.signOut();break;
+    case 'import-demo':importDemo();break;
     case 'ac-edit':openAccount(b.dataset.id);break;
     case 'ac-filter':pg.r=b.dataset.v;render();break;
     case 'ac-pick':if(d&&d.kind==='acct'){d.draft.uid=b.dataset.uid;d.over=false;d.err='';renderDrawer();}break;
@@ -2372,6 +2415,7 @@ function subscribe(){
   col('profs-absents').onSnapshot(q=>{const m={};for(const d of q.docs)m[d.id]=(d.data().ids||[]);S.data.absProfs=m;schedule();},()=>{});
   col('presences-personnel').onSnapshot(q=>{const m={};for(const d of q.docs)m[d.id]=d.data();S.data.staffPres=m;schedule();},()=>{});
   if(S.me.id) DB.doc('comptes/'+S.me.id).onSnapshot(x=>{S.myAcct=x.exists?Object.assign({},x.data(),{id:x.id}):null;schedule();},()=>{});
+  if(S.canAdmin!==false) col('demandes').onSnapshot(q=>{S.data.demandes=q.docs.map(d=>Object.assign({},d.data(),{id:d.id}));schedule();},()=>{S.data.demandes=[];});
   if(S.canAdmin!==false) col('comptes').onSnapshot(q=>{S.data.comptes=q.docs.map(d=>Object.assign({},d.data(),{id:d.id}));schedule();},()=>{S.data.comptes=[];});
   subWeek();
 }

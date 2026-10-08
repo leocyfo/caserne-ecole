@@ -1,0 +1,56 @@
+rules_version = '2';
+// Caserne-École : qui peut lire et modifier quoi.
+// À coller dans la console Firebase : Firestore Database → Règles → Publier.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function ownerDoc() { return /databases/$(database)/documents/config/proprietaire; }
+    function isOwner() { return signedIn() && exists(ownerDoc()) && get(ownerDoc()).data.uid == request.auth.uid; }
+    function acctDoc() { return /databases/$(database)/documents/comptes/$(request.auth.uid); }
+    function hasAcct() { return signedIn() && exists(acctDoc()); }
+    function role() { return hasAcct() ? get(acctDoc()).data.role : ''; }
+    function isAdmin() { return isOwner() || role() == 'admin'; }
+    function isStaff() { return isAdmin() || role() == 'teacher'; }
+    function member() { return isOwner() || hasAcct(); }
+    function self(uid) { return signedIn() && request.auth.uid == uid; }
+
+    // Le premier compte créé devient le propriétaire (administrateur) ; ensuite, plus personne.
+    match /config/proprietaire {
+      allow read: if true;
+      allow create: if signedIn() && !exists(ownerDoc()) && request.resource.data.uid == request.auth.uid;
+      allow update, delete: if false;
+    }
+    match /config/ecole { allow read: if member(); allow write: if isAdmin(); }
+
+    match /groupes/{id} { allow read: if member(); allow write: if isAdmin(); }
+    match /cours/{id} { allow read: if member(); allow write: if isAdmin(); }
+    match /enseignants/{id} { allow read: if member(); allow write: if isAdmin(); }
+    match /profs-absents/{id} { allow read: if member(); allow write: if isAdmin(); }
+    match /examens/{id} { allow read: if member(); allow write: if isStaff(); }
+
+    // Listes d’élèves et présences : enseignants et administration seulement
+    match /eleves/{id} { allow read: if isStaff(); allow write: if isAdmin(); }
+    match /presences/{id} { allow read, write: if isStaff(); }
+
+    // Dossiers et présences du personnel : administration seulement
+    match /dossiers-personnel/{id} { allow read, write: if isAdmin(); }
+    match /presences-personnel/{id} { allow read, write: if isAdmin(); }
+
+    // Comptes : chacun lit le sien ; l’administration les gère tous
+    match /comptes/{uid} {
+      allow read: if isAdmin() || self(uid);
+      allow write: if isAdmin();
+    }
+    // Demandes de compte : chacun envoie la sienne ; l’administration l’approuve ou la refuse
+    match /demandes/{uid} {
+      allow read: if isAdmin() || self(uid);
+      allow create, update: if isAdmin() || (self(uid) && request.resource.data.statut == 'en attente');
+      allow delete: if isAdmin();
+    }
+    // Nom et courriel de chaque personne inscrite
+    match /profils/{uid} {
+      allow read: if isAdmin() || self(uid);
+      allow write: if self(uid) || isAdmin();
+    }
+  }
+}
