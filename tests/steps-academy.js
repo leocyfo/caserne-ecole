@@ -224,6 +224,7 @@ ok('back to 123 by token',$$('#main .wk-class').length===5&&Math.abs(top('c123')
 window.scrollTo(0,0);await wait(30);}
 /* MENAGE */
 {const am=$('.cc[data-key="k119-m08_a20261006am_2026-10-06"]');
+ok('chore fills the day',$('.wk-cell[data-date="2026-10-06"][data-grp="c119"]').classList.contains('chore')&&getComputedStyle($('.wk-cell[data-date="2026-10-06"][data-grp="c119"]')).backgroundColor==='rgb(255, 224, 138)'&&!$('.wk-cell[data-date="2026-10-07"][data-grp="c119"]').classList.contains('chore'));
 ok('chore once per class-day',$('.wk-cell[data-date="2026-10-06"][data-grp="c119"]').querySelectorAll('.cell-chore').length===1&&/toute la journée/.test($('.wk-cell[data-date="2026-10-06"][data-grp="c119"]').querySelector('.cell-chore').textContent)&&!!am&&!am.querySelector('.cc-chore-pill')&&!$$('#main .cc-flag').some(x=>/Ménage/.test(x.textContent)));}
 click($('#exp-btn'));await wait(400);
 {const c=$('#main .week.compact .cell-chore');ok('chore band compact',!!c&&c.getBoundingClientRect().height>0&&c.getBoundingClientRect().height<40);}

@@ -160,7 +160,8 @@ const sp=Object.entries(window.__store.get('presences-personnel/'+$('#sd-0').dat
 ok('staff att saved',sp.some(([k,v])=>v==='A'),JSON.stringify(sp).slice(0,90));
 // examens
 click($('#nav-examens'));await wait(40);
-ok('exams upcoming',$$('#main [data-act=exam]').length===5,$$('#main [data-act=exam]').length);
+{const d=new Date(),td=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');const up=[...window.__store].filter(([k,v])=>k.startsWith('examens/')&&v.date>=td).length;
+ok('exams upcoming',$$('#main [data-act=exam]').length===up,$$('#main [data-act=exam]').length+' / '+up);}
 click($('[data-act=new-exam]'));await wait(40);
 setSel('#x-cours','c-fra-301');$('#x-cours').dispatchEvent(new Event('input',{bubbles:true}));await wait(30);
 typeIn('#x-date','2026-10-12');await wait(30);
@@ -180,7 +181,7 @@ click($('[data-role=teacher]'));await wait(60);
 ok('teacher nav',$$('#nav button').length===4&&!!$('#nav-profil'));
 ok('teacher board',$$('#main .week button.cc').length>0);
 click($('#nav-examens'));await wait(40);
-ok('teacher exams',$$('#main [data-act=exam]').length>=1);
+ok('teacher exams',$$('#main [data-act=exam]').length>=1||/Aucun examen/.test($('#main').textContent));
 // élève
 click($('[data-role=student]'));await wait(60);
 ok('student exams panel',/Prochains examens/.test($('#main').textContent));

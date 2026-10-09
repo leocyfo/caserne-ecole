@@ -480,6 +480,11 @@ legend{font-size:13px;color:var(--ink-2);font-weight:600;padding:0 4px}
 /* Corvée de ménage : bien visible partout (bande jaune, pastille, encadré) */
 .cell-chore{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:8px;background:#FFE08A;color:#5A3E00;font-size:12.5px;line-height:1.25}
 .cell-chore .ic{width:17px;height:17px;flex:none}
+.wk-cell.chore{background:#FFE08A}
+.wk-cell.chore.maybe{background:#FFF3CC}
+.wk-cell.chore .cell-chore{background:none;box-shadow:none;padding:2px 2px 0}
+.wk-cell.chore .cell-add{border-color:#C9A227;color:#5A3E00}
+.wk-cell.chore.drop-ok{background:#EEF5FF}
 .cell-chore>span{min-width:0}
 .cell-chore b{display:block;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .cell-chore small{display:block;font-size:11px;font-weight:700;opacity:.8}
@@ -1020,7 +1025,7 @@ function boardHTML(list,rows,mode,corner){
       const ch=cg&&!off?choreDay(cg,ds):'';
       if(ch) inner=`<div class="cell-chore${ch==='maybe'?' maybe':''}" title="Corvée de ménage pour toute la classe, toute la journée${ch==='maybe'?' (à confirmer)':''}">${icon('broom')}<span><b>Corvée de ménage${ch==='maybe'?' ?':''}</b><small>toute la journée</small></span></div>`+inner;
       if(edit&&r.id&&!off) inner+=`<button type="button" class="cell-add" data-act="add-at" data-date="${ds}" data-g="${esc(r.id)}" aria-label="${esc(`Ajouter un cours pour ${r.name}, ${DAYS[i].toLowerCase()} ${dn(addDays(S.week,i))}`)}">+ Ajouter</button>`;
-      h+=`<div class="wk-cell${ds===today?' is-today':''}${S.day===i?' sel':''}" role="cell"${edit&&r.id?` data-date="${ds}" data-grp="${esc(r.id)}"${off?' data-off="1"':''}`:''}>${inner}</div>`;
+      h+=`<div class="wk-cell${ds===today?' is-today':''}${S.day===i?' sel':''}${ch?' chore'+(ch==='maybe'?' maybe':''):''}" role="cell"${edit&&r.id?` data-date="${ds}" data-grp="${esc(r.id)}"${off?' data-off="1"':''}`:''}>${inner}</div>`;
     }
     h+='</div>';
   }
