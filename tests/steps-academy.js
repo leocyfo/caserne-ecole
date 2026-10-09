@@ -201,6 +201,17 @@ ok('3 teachers',$$('#main tbody tr').length===3&&/Marie Leduc/.test($('#main').t
 // présences
 click($('#nav-presences'));await wait(150);
 ok('presences page',$$('.kpi').length===4,$$('.kpi b').map(x=>x.textContent).join('|'));
+ok('att cards',$$('.att-card').length===5&&/%/.test($('#ac-c119 .att-rate').textContent),$('#ac-c119 .att-rate').textContent);
+click($('#ac-c119'));await wait(100);
+ok('att class fiche',/Classe 119/.test($('#fi-name').textContent)&&$$('.fiche-tabs button').length===3&&$$('.fiche-body tbody tr').length===12&&$$('.fh-stats>div').length===5);
+click($('#fi-tab-cours'));await wait(60);
+ok('att by course',$$('.fiche-body tbody tr').length>0);
+click($('#fi-tab-rattraper'));await wait(60);
+ok('att to catch up',$$('.fiche-body [data-act=open-att]').length>0||/Toutes les présences/.test($('.fiche-body').textContent));
+click($('#pp-annee'));await wait(100);
+ok('att period in fiche',$('#pp-annee').getAttribute('aria-pressed')==='true'&&!!$('#fi-name'));
+click($('#fi-back'));await wait(100);
+ok('att back',$$('.att-card').length===5);
 /* ABS */
 click($('#pt-personnel'));await wait(60);
 click($('#sp-e-mleduc-A'));await wait(30);
