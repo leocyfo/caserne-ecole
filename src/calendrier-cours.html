@@ -473,6 +473,46 @@ legend{font-size:13px;color:var(--ink-2);font-weight:600;padding:0 4px}
   .cl-prin[data-l]::before{margin-bottom:0}
 }
 .cl-add{margin-bottom:0}
+/* Examens : tableau de bord */
+.xm-tiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:14px}
+.xm-tile{display:flex;flex-direction:column;align-items:flex-start;gap:4px;min-width:0;padding:14px 18px;background:var(--surface);border:1px solid var(--line);border-radius:12px;text-align:left;color:var(--ink);cursor:pointer;transition:border-color .12s,box-shadow .12s}
+.xm-tile:hover{border-color:var(--line-strong)}
+.xm-tile[aria-pressed="true"]{border-color:var(--role);box-shadow:inset 0 -3px 0 var(--role)}
+.xm-tile .lbl{font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.xm-tile b{font-size:30px;line-height:1.1;color:var(--ink);font-variant-numeric:tabular-nums}
+.xm-tile b.ok{color:var(--ok)}.xm-tile b.warn{color:var(--warn)}.xm-tile b.bad{color:var(--bad)}
+.xm-tile small{font-size:13px;color:var(--muted);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.xm-h{margin:18px 0 10px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--eyebrow)}
+.xm-cols{display:grid;align-items:center;column-gap:18px}
+.xm-up{grid-template-columns:52px minmax(0,2.4fr) 58px minmax(0,1fr) 130px}
+.xm-todo{grid-template-columns:52px minmax(0,2.4fr) 58px minmax(0,1.1fr) 170px}
+.xm-rep{grid-template-columns:minmax(0,1.5fr) minmax(0,2fr) 84px minmax(0,1.2fr) 160px}
+.xm-done{grid-template-columns:52px minmax(0,2.4fr) 58px minmax(0,1.1fr) 130px}
+.xm-me{grid-template-columns:52px minmax(0,2.4fr) minmax(0,1fr) 150px}
+.xm-hd{padding:11px 22px;background:var(--head);border-bottom:1px solid var(--line);color:var(--head-ink);font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;white-space:nowrap}
+.xm-hd .r{text-align:right}
+.xm-row{padding:12px 22px;border-top:1px solid var(--line-2)}
+.xm-hd+.xm-row{border-top:0}
+.xm-row.go{cursor:pointer;transition:background-color .12s}
+.xm-row.go:hover{background:var(--surface-2)}
+.xm-row:focus-visible{outline:3px solid var(--focus);outline-offset:-3px}
+.xm-d{width:52px;height:58px;border-radius:12px;background:var(--role-bg);color:var(--role);display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.05}
+.xm-d b{font-size:21px;font-variant-numeric:tabular-nums}
+.xm-d small{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+.xm-d.hot{background:#9F2D35;color:#FFFFFF}
+.xm-d.rep{background:var(--info-bg);color:var(--info)}
+.xm-t{display:flex;flex-direction:column;gap:3px;min-width:0}
+.xm-t b{font-size:16px;line-height:1.25;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.xm-t b .cc-code{color:var(--muted)}
+.xm-t small{font-size:13px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.xm-m{font-size:14px;color:var(--ink-2)}
+.xm-end{display:flex;justify-content:flex-end}
+.xm-p b{font-size:20px}
+.xm-who{display:flex;align-items:center;gap:12px;min-width:0}
+.st-num.sm{width:30px;height:30px;border-radius:8px;font-size:13px;flex:none}
+.xr .att-list li{gap:12px}
+@container (max-width:720px){.xm-cols{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px}.xm-hd.xm-cols{display:none}.xm-cols>.xm-p{flex:1 1 120px}.xm-cols>.xm-t,.xm-cols>.xm-who{flex:1 1 calc(100% - 90px)}.xm-end{margin-left:auto}}
+@media (max-width:900px){.xm-tiles{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .cl-num.lg{width:72px;height:72px;border-radius:16px;font-size:24px}
 .cl-num.sm{width:34px;height:34px;border-radius:9px;font-size:13px}
 .fl-row{display:flex;align-items:center;gap:10px;min-width:0}
@@ -977,7 +1017,7 @@ function examItem(e){
 function weekItems(){
   let out=[];const from=iso(S.week), to=iso(addDays(S.week,4));
   for(let i=0;i<5;i++) out=out.concat(sessionsOn(iso(addDays(S.week,i))));
-  out=out.concat(S.data.examens.filter(e=>e.date>=from&&e.date<=to).map(examItem));
+  out=out.concat(S.data.examens.filter(e=>!e.seance&&e.date>=from&&e.date<=to).map(examItem));
   return out.sort((x,y)=>x.date.localeCompare(y.date)||x.start-y.start||(x.kind==='exam'?-1:1));
 }
 function isPast(s){const t=todayISO();return s.date<t||(s.date===t&&s.start<=nowMin());}
@@ -1329,11 +1369,11 @@ function sessionExamItems(){
     if(!(x.tags||[]).some(t=>t==='Examen'||t==='Reprise')) continue;
     if((c.annulees||[]).includes(`${x.date}@${x.id}`)||offDay(x.date)) continue;
     const a=toMin(x.debut), b=toMin(x.fin);
-    out.push({kind:'exam',fromSess:true,key:`${c.id}_${x.id}_${x.date}`,e:{id:'',titre:x.label&&x.label.toLowerCase()!==String(c.titre).toLowerCase()?'Examen '+x.label:'Examen',date:x.date,debut:x.debut,fin:x.fin,salle:x.salle||'',surveillant:''},c,date:x.date,start:a,end:b,grp:c.groupe,tch:[c.enseignant],salle:String(x.salle||c.salle||'').trim()});
+    out.push({kind:'exam',fromSess:true,rep:!(x.tags||[]).includes('Examen'),key:`${c.id}_${x.id}_${x.date}`,e:{id:'',titre:x.label&&x.label.toLowerCase()!==String(c.titre).toLowerCase()?'Examen '+x.label:'Examen',date:x.date,debut:x.debut,fin:x.fin,salle:x.salle||'',surveillant:''},c,date:x.date,start:a,end:b,grp:c.groupe,tch:[c.enseignant],salle:String(x.salle||c.salle||'').trim()});
   }
   return out;
 }
-const allExamItems=()=>S.data.examens.map(examItem).concat(sessionExamItems());
+const allExamItems=()=>S.data.examens.filter(e=>!e.seance).map(examItem).concat(sessionExamItems());
 const examAct=x=>x.fromSess?`data-act="sess-at" data-key="${esc(x.key)}" data-date="${x.date}"`:`data-act="exam" data-id="${esc(x.e.id)}"`;
 function upcomingExams(filter,n){const t=todayISO();return allExamItems().filter(x=>x.date>=t&&filter(x)).sort((a,b)=>a.date.localeCompare(b.date)||a.start-b.start).slice(0,n);}
 function examRows(items,mode){
@@ -1577,7 +1617,7 @@ function studentFiche(){
     }
     if(tab==='examens'){
       const done=S.data.examens.filter(x=>x.resultats&&x.resultats[e.id]).sort((p,q)=>String(q.date).localeCompare(String(p.date)));
-      return `<div class="fiche-two"><section class="panel"><h2>Résultats</h2>${done.length?rows(done.map(x=>{const c=byId(S.data.cours,x.cours),v=x.resultats[e.id];return `<li><span>${esc(c?c.titre:x.titre||'Examen')}<span class="muted sm"> · ${x.date?esc(dayLabel(parse(x.date))):''}</span></span><span class="chip ${v==='reussi'?'ok':'bad'}">${v==='reussi'?'Réussi':'Échec'}</span></li>`;})):'<p class="help">Aucun résultat inscrit.</p>'}</section>
+      return `<div class="fiche-two"><section class="panel"><h2>Résultats</h2>${done.length?rows(done.map(x=>{const c=byId(S.data.cours,x.cours),v=x.resultats[e.id];return `<li><span>${esc(c?c.titre:x.titre||'Examen')}<span class="muted sm"> · ${x.date?esc(dayLabel(parse(x.date))):''}</span></span><span class="chip ${(RES[v]||RES.echec)[0]}">${(RES[v]||RES.echec)[1]}</span></li>`;})):'<p class="help">Aucun résultat inscrit.</p>'}</section>
         <section class="panel"><h2>À venir</h2>${up.length?`<div class="list">${examRows(up,'admin')}</div>`:'<p class="help">Aucun examen prévu.</p>'}</section></div>`;
     }
     return `<section class="panel"><dl class="facts facts3">
@@ -1685,27 +1725,117 @@ function attStaff(tabs){
 }
 
 /* ---------- Pages : examens ---------- */
+/* Résultats : réussi, échec, absent (à reprendre) et réussi en reprise */
+const RES={reussi:['ok','Réussi'],echec:['bad','Échec'],absent:['warn','Absent'],reprise:['info','Réussi en reprise']};
+const resOk=v=>v==='reussi'||v==='reprise', resKo=v=>v==='echec'||v==='absent';
+const sxId=key=>'sx-'+String(key).replace(/[^A-Za-z0-9_-]/g,'-');
+const elNum=e=>e&&e.numero!=null&&e.numero!==''&&!isNaN(+e.numero)?+e.numero:1e9;
+const byElNum=(a,b)=>elNum(a)-elNum(b)||collator.compare(a.nom||'',b.nom||'');
 function canEditExam(e){
   if(S.role==='admin') return S.canAdmin!==false;
   if(S.role==='teacher'){if(!e)return true;const c=byId(S.data.cours,e.cours);return (c&&c.enseignant===S.teacher)||e.surveillant===S.teacher;}
   return false;
 }
+const canEditItem=x=>x.fromSess?(S.role==='admin'?S.canAdmin!==false:S.role==='teacher'&&!!x.c&&x.c.enseignant===S.teacher):canEditExam(x.e);
+/* Tous les examens de l’année avec leurs résultats : fiche d’examen, ou résultats rattachés à une séance « Examen » de l’horaire */
+function examBoard(filter){
+  const bySe={};for(const d of S.data.examens) if(d.seance) bySe[d.seance]=d;
+  const items=allExamItems().filter(filter).map(x=>{
+    const doc=x.fromSess?bySe[x.key]||null:x.e, res=(doc&&doc.resultats)||{}, els=studentsOf(x.grp);
+    let ok=0,ko=0,got=0;for(const e of els){const v=res[e.id];if(!v)continue;got++;if(resOk(v))ok++;else if(resKo(v))ko++;}
+    return Object.assign(x,{doc,res,els,ok,ko,got,past:isPast(x)});
+  });
+  const asc=(a,b)=>a.date.localeCompare(b.date)||a.start-b.start, desc=(a,b)=>-asc(a,b);
+  const up=items.filter(x=>!x.past&&(!x.rep||x.els.length)).sort(asc), graded=items.filter(x=>x.past&&!x.rep&&x.els.length);
+  const todo=graded.filter(x=>x.got<x.els.length).sort(desc), done=graded.filter(x=>x.got).sort(desc);
+  const reps=[];for(const x of graded) for(const e of x.els) if(resKo(x.res[e.id])) reps.push({x,e,v:x.res[e.id]});
+  reps.sort((a,b)=>collator.compare(gName(a.x.grp),gName(b.x.grp))||asc(a.x,b.x)||byElNum(a.e,b.e));
+  let ok=0,got=0;for(const x of done){ok+=x.ok;got+=x.ok+x.ko;}
+  return {items,up,todo,done,reps,rate:got?Math.round(ok/got*100):null,got};
+}
+/* Prochaine journée de reprise de chaque classe */
+function nextReprises(){const t=todayISO(),m={};for(const x of allExamItems().filter(x=>x.rep&&!isPast(x)).sort((a,b)=>a.date.localeCompare(b.date)||a.start-b.start)) if(!m[x.grp]) m[x.grp]=x;return m;}
+const passCls=r=>r==null?'':r>=90?'ok':r>=75?'warn':'bad';
+const xNum=g=>String(gName(g)).replace(/^(Classe|Groupe)\s+/i,'').slice(0,4);
+const xDate=(x,cls)=>{const d=parse(x.date);return `<span class="xm-d${cls?' '+cls:''}" aria-hidden="true"><small>${WD[d.getDay()].slice(0,3)}</small><b>${d.getDate()}</b><small>${fMonthS.format(d).replace('.','')}</small></span>`;};
+const xTitle=x=>x.rep?esc(x.c&&!/^reprise$/i.test(String(x.c.titre).trim())?x.c.titre:'Journée de reprise'):`${x.c?codeOf(x.c):''}${esc(x.c?x.c.titre:x.e.titre||'Examen')}`;
+const xSub=x=>esc([x.c&&!x.rep&&x.e.titre&&x.e.titre!=='Examen'?x.e.titre:'',x.salle?'Local '+x.salle:'',x.e.surveillant?'Surveillance : '+shortName(tName(x.e.surveillant)):''].filter(Boolean).join(' · '));
+const xWhen=x=>{const k=daysBetween(todayISO(),x.date);return `<span class="chip ${x.rep?'info':k<=2?'exam':'off'}">${k<=0?'Aujourd’hui':k===1?'Demain':k<14?'Dans '+k+' jours':'Dans '+Math.round(k/7)+' semaines'}</span>`;};
+const xCls=x=>`<span class="cl-num sm" title="${esc(gName(x.grp))}">${esc(xNum(x.grp))}</span>`;
+const xRow=(cls,act,cells,label)=>`<article class="xm-row xm-cols ${cls}${act?' go':''}"${act?` ${act} tabindex="0" role="button" aria-label="${esc(label)}"`:''}>${cells}</article>`;
+const xList=(cls,head,rows)=>`<div class="cl-list xm-list"><div class="xm-hd xm-cols ${cls}" aria-hidden="true">${head.map(h=>`<span${h[1]?` class="${h[1]}"`:''}>${h[0]}</span>`).join('')}</div>${rows}</div>`;
+const xLabel=x=>`${x.rep?'Journée de reprise':(x.c?x.c.titre:x.e.titre||'Examen')} · ${dayLabel(parse(x.date))} · ${gName(x.grp)}`;
+/* Ouvrir un examen : la fiche pour un examen planifié, sinon les résultats de la séance (ou la séance si elle n’a pas encore eu lieu) */
+const xOpen=x=>!x.fromSess?`data-act="exam" data-id="${esc(x.e.id)}"`:x.past&&!x.rep&&x.els&&x.els.length?`data-act="x-open" data-key="${esc(x.key)}"`:examAct(x);
+
 function examsPage(){
-  const st=S.pg, past=!!st.past, t=todayISO(), g=st.g||'';
-  let items=allExamItems();
-  if(S.role==='teacher') items=items.filter(x=>x.tch.includes(S.teacher));
-  else if(S.role==='student') items=items.filter(x=>x.grp===S.group);
-  else if(g) items=items.filter(x=>x.grp===g);
-  items=items.filter(x=>past?x.date<t:x.date>=t).sort((a,b)=>past?(b.date.localeCompare(a.date)||b.start-a.start):(a.date.localeCompare(b.date)||a.start-b.start));
-  const seg=`<div class="seg" role="group" aria-label="Examens"><button type="button" id="xp-0" data-act="pg-set" data-k="past" data-v="" aria-pressed="${!past}">À venir</button><button type="button" id="xp-1" data-act="pg-set" data-k="past" data-v="1" aria-pressed="${past}">Passés</button></div>`;
+  const st=S.pg, g=st.g||'';
+  if(S.role==='student') return studentExams();
+  const filter=S.role==='teacher'?x=>x.tch.includes(S.teacher):g?x=>x.grp===g:()=>true;
+  const B=examBoard(filter), tab=['up','todo','reps','done'].includes(st.xt)?st.xt:'up', nr=nextReprises();
   const sel=S.role==='admin'?`<select id="x-g" aria-label="Classe"><option value="">Toutes les classes</option>${groups().map(x=>`<option value="${esc(x.id)}"${g===x.id?' selected':''}>${esc(x.nom)}</option>`).join('')}</select>`:identitySelect();
   const can=canEditExam(null)&&S.conn==='shared';
-  const tb=`<div class="toolbar">${seg}${sel}<span class="grow"></span>${can?`<button class="btn primary" type="button" data-act="new-exam">${icon('plus')}Planifier un examen</button>`:''}</div>`;
-  if(!items.length) return tb+emptyBox(past?'Aucun examen passé':'Aucun examen à venir',S.role==='student'?'Les examens de votre classe apparaîtront ici dès qu’ils seront planifiés.':'Planifiez un examen : il apparaîtra aussi dans l’horaire de la semaine de la classe concernée.');
-  const lim=+st.lim||30, more=items.length-lim;
-  const byDate={};for(const x of items.slice(0,lim))(byDate[x.date]||(byDate[x.date]=[])).push(x);
-  return tb+`<p class="summary"><span><b>${items.length}</b>${items.length>1?'examens':'examen'} ${past?'passés':'à venir'}</span></p>`+'<section class="panel">'+Object.entries(byDate).map(([ds,xs])=>{const k=daysBetween(t,ds);
-    return `<div class="dgroup"><div class="dhead">${esc(dayLabel(parse(ds)))}${past?'':`<span class="chip ${k<=2?'exam':'off'}">${k===0?'Aujourd’hui':k===1?'Demain':'Dans '+k+' jours'}</span>`}</div><div class="list">${xs.map(x=>`<button type="button" class="lrow" ${examAct(x)}><span class="when">${momentShort(x)}</span><span class="what"><span class="ti">${x.c?codeOf(x.c):''}${esc(x.c?x.c.titre:x.e.titre)}${x.c?` <span class="muted" style="font-weight:400">· ${esc(x.e.titre)}</span>`:''}</span><span class="sub">${esc([gName(x.grp),x.salle?'Local '+x.salle:'',x.e.surveillant?'Surveillance : '+tName(x.e.surveillant):''].filter(Boolean).join(' · '))}</span></span>${x.c&&x.c.code?`<span class="chip ${tone(x.c)}">${esc(x.c.code)}</span>`:''}</button>`).join('')}</div></div>`;}).join('')+(more>0?`<div class="row" style="margin-top:12px"><button class="btn" type="button" data-act="pg-set" data-k="lim" data-v="${lim+30}">Afficher ${Math.min(30,more)} examens de plus</button><span class="muted sm">${more} autres</span></div>`:'')+'</section>';
+  const tb=`<div class="toolbar">${sel}<span class="grow"></span>${can?`<button class="btn primary" type="button" data-act="new-exam">${icon('plus')}Planifier un examen</button>`:''}</div>`;
+  const nx=B.up.find(x=>!x.rep), nStud=new Set(B.reps.map(r=>r.e.id)).size;
+  const tile=(k,lbl,val,cls,sub)=>`<button type="button" class="xm-tile" id="xt-${k}" data-act="pg-set" data-k="xt" data-v="${k}" aria-pressed="${tab===k}"><span class="lbl">${lbl}</span><b class="${cls}">${val}</b><small>${sub}</small></button>`;
+  const tiles=`<div class="xm-tiles" role="group" aria-label="Tableau des examens">
+    ${tile('up','À venir',B.up.filter(x=>!x.rep).length,'',nx?'Prochain : '+esc(WD[parse(nx.date).getDay()].slice(0,3).toLowerCase()+'. '+dn(parse(nx.date))+' '+fMonthS.format(parse(nx.date))):'Aucun examen prévu')}
+    ${tile('todo','Résultats à entrer',B.todo.length,B.todo.length?'warn':'',B.todo.length?(B.todo.length>1?'examens passés':'examen passé'):'Tout est à jour')}
+    ${tile('reps','Reprises à faire',B.reps.length,B.reps.length?'bad':'',B.reps.length?pl(nStud,'élève','élèves'):'Aucune reprise')}
+    ${tile('done','Taux de réussite',B.rate==null?'—':B.rate+' %',passCls(B.rate),B.got?pl(B.got,'résultat','résultats'):'Aucun résultat')}
+  </div>`;
+  let body='';
+  if(tab==='up'){
+    const lim=+st.lim||25, list=B.up.slice(0,lim), pend={};for(const r of B.reps)pend[r.x.grp]=(pend[r.x.grp]||0)+1;
+    body=list.length?xList('xm-up',[['Date'],['Examen'],['Classe'],['Moment'],['','r']],list.map(x=>{const k=daysBetween(todayISO(),x.date);
+      const sub=x.rep?(pend[x.grp]&&nr[x.grp]&&nr[x.grp].key===x.key?`${pl(pend[x.grp],'reprise à faire','reprises à faire')} dans cette classe`:'Reprise des examens manqués ou échoués'):xSub(x);
+      return xRow('xm-up'+(x.rep?' is-rep':''),xOpen(x),`${xDate(x,x.rep?'rep':k<=2?'hot':'')}<div class="xm-t"><b>${xTitle(x)}</b>${sub?`<small>${sub}</small>`:''}</div>${xCls(x)}<span class="xm-m">${esc(momentOf(x))}</span><div class="xm-end">${x.rep?'<span class="chip info">Reprise</span>':xWhen(x)}</div>`,xLabel(x));}).join(''))
+      +(B.up.length>lim?`<div class="row" style="margin-top:12px"><button class="btn" type="button" data-act="pg-set" data-k="lim" data-v="${lim+25}">Afficher plus (${B.up.length-lim})</button></div>`:'')
+      :`<section class="panel"><p class="help">Aucun examen à venir.</p></section>`;
+  }else if(tab==='todo'){
+    body=B.todo.length?xList('xm-todo',[['Date'],['Examen'],['Classe'],['Résultats entrés'],['','r']],B.todo.map(x=>{const p=Math.round(x.got/x.els.length*100);
+      return xRow('xm-todo',xOpen(x),`${xDate(x,'')}<div class="xm-t"><b>${xTitle(x)}</b><small>${esc(dayLabel(parse(x.date)))} · ${esc(momentOf(x))}</small></div>${xCls(x)}<div class="cl-big xm-p"><b>${x.got} / ${x.els.length}</b><div class="meter" aria-hidden="true"><i style="width:${p}%"></i></div></div><div class="xm-end">${canEditItem(x)?'<span class="btn sm">Entrer les résultats</span>':'<span class="chip warn">À entrer</span>'}</div>`,'Entrer les résultats : '+xLabel(x));}).join(''))
+      :`<div class="cl-list"><p class="miss-ok"><span class="chip ok">À jour</span>Tous les résultats des examens passés sont entrés.</p></div>`;
+  }else if(tab==='reps'){
+    body=B.reps.length?xList('xm-rep',[['Élève'],['Examen'],['Résultat'],['Prochaine reprise'],['','r']],B.reps.map(({x,e,v})=>{const n=nr[x.grp], d=parse(x.date);
+      return xRow('xm-rep',xOpen(x),`<div class="xm-who"><span class="st-num sm" aria-hidden="true">${e.numero!=null&&e.numero!==''?esc(e.numero):'—'}</span><span class="xm-t"><b>${esc(e.nom)}</b><small>${esc(gName(x.grp))}</small></span></div><div class="xm-t"><b>${xTitle(x)}</b><small>${esc(WD[d.getDay()]+' '+dn(d)+' '+fMonthS.format(d))}</small></div><div><span class="chip ${RES[v][0]}">${RES[v][1]}</span></div><span class="xm-m">${n?esc(WD[parse(n.date).getDay()]+' '+dn(parse(n.date))+' '+fMonthS.format(parse(n.date))):'<span class="muted">À planifier</span>'}</span><div class="xm-end">${canEditItem(x)?`<button class="btn sm" type="button" data-act="x-rep" data-key="${esc(x.key)}" data-el="${esc(e.id)}"${dis()}>Réussi en reprise</button>`:''}</div>`,`${e.nom} · ${xLabel(x)}`);}).join(''))
+      :`<div class="cl-list"><p class="miss-ok"><span class="chip ok">À jour</span>Aucune reprise à faire.</p></div>`;
+  }else{
+    body=B.done.length?xList('xm-done',[['Date'],['Examen'],['Classe'],['Réussite'],['','r']],B.done.map(x=>{const t=x.ok+x.ko, r=t?Math.round(x.ok/t*100):null, c=passCls(r);
+      return xRow('xm-done',xOpen(x),`${xDate(x,'')}<div class="xm-t"><b>${xTitle(x)}</b><small>${esc(dayLabel(parse(x.date)))}</small></div>${xCls(x)}<div class="cl-big xm-p ${c}"><b>${x.ok} / ${t}</b><div class="meter ${c}" aria-hidden="true"><i style="width:${r||0}%"></i></div></div><div class="xm-end">${x.ko?`<span class="chip bad">${pl(x.ko,'à reprendre','à reprendre')}</span>`:'<span class="chip ok">Tous réussis</span>'}</div>`,xLabel(x));}).join(''))
+      :`<section class="panel"><p class="help">Aucun résultat pour l’instant.</p></section>`;
+  }
+  return tb+tiles+body;
+}
+/* Élève : ses prochains examens, ses résultats et ses reprises */
+function studentExams(){
+  const sid=S.student, me=byId(S.data.eleves,sid), B=examBoard(x=>x.grp===S.group), nr=nextReprises();
+  const mine=B.items.filter(x=>x.past&&!x.rep&&x.res[sid]).sort((a,b)=>b.date.localeCompare(a.date)||b.start-a.start);
+  const todo=mine.filter(x=>resKo(x.res[sid])), n=nr[S.group];
+  const up=B.up.slice(0,6);
+  const tb=`<div class="toolbar">${identitySelect()}</div>`;
+  const note=todo.length?`<div class="notice warn"><p><b>${pl(todo.length,'reprise à faire','reprises à faire')}</b> : ${todo.map(x=>esc((x.c&&x.c.code?x.c.code+' ':'')+(x.c?x.c.titre:'Examen'))).join(', ')}.${n?` Prochaine journée de reprise : ${esc(dayLabel(parse(n.date)).toLowerCase())}.`:''}</p></div>`:'';
+  const upH=up.length?xList('xm-me',[['Date'],['Examen'],['Moment'],['','r']],up.map(x=>{const k=daysBetween(todayISO(),x.date);return xRow('xm-me',examAct(x),`${xDate(x,x.rep?'rep':k<=2?'hot':'')}<div class="xm-t"><b>${xTitle(x)}</b>${xSub(x)?`<small>${xSub(x)}</small>`:''}</div><span class="xm-m">${esc(momentOf(x))}</span><div class="xm-end">${x.rep?'<span class="chip info">Reprise</span>':xWhen(x)}</div>`,xLabel(x));}).join('')):`<section class="panel"><p class="help">Les examens de votre classe apparaîtront ici dès qu’ils seront planifiés.</p></section>`;
+  const resH=!me?'':mine.length?xList('xm-me',[['Date'],['Examen'],['Moment'],['Résultat','r']],mine.map(x=>{const v=x.res[sid];return xRow('xm-me','',`${xDate(x,'')}<div class="xm-t"><b>${xTitle(x)}</b></div><span class="xm-m">${esc(momentOf(x))}</span><div class="xm-end"><span class="chip ${RES[v][0]}">${RES[v][1]}</span></div>`,'');}).join('')):`<section class="panel"><p class="help">Aucun résultat pour l’instant.</p></section>`;
+  return tb+note+`<h2 class="xm-h">Prochains examens</h2>${upH}${me?`<h2 class="xm-h">Mes résultats</h2>${resH}`:''}`;
+}
+/* Ouvre les résultats d’une séance « Examen » de l’horaire */
+function openSessExam(key){
+  const x=allExamItems().find(k=>k.key===key);if(!x)return;
+  if(!x.fromSess) return openExam(x.e.id);
+  const doc=S.data.examens.find(d=>d.seance===key)||null;
+  openDrawer({kind:'exam',id:doc?doc.id:null,sess:key,draft:{resultats:Object.assign({},(doc&&doc.resultats)||{}),groupe:x.grp},err:'',warn:null,confirmDel:false});
+}
+/* Inscrit un seul résultat (ex. « Réussi en reprise ») sans ouvrir l’examen */
+async function setExamResult(key,el,v){
+  const x=allExamItems().find(k=>k.key===key);if(!x||S.busy)return;
+  const doc=x.fromSess?S.data.examens.find(d=>d.seance===key)||null:x.e;
+  const id=doc?doc.id:sxId(key);
+  const base=doc?Object.assign({},doc):{seance:key,cours:x.c?x.c.id:'',groupe:x.grp,titre:x.e.titre||'Examen',date:x.date,debut:x.e.debut||'',fin:x.e.fin||''};
+  delete base.id;base.resultats=Object.assign({},base.resultats||{},{[el]:v});base.maj=new Date().toISOString();
+  S.busy=true;render();
+  await write(()=>col('examens').doc(id).set(base),v==='reprise'?'Reprise réussie inscrite':'Résultat inscrit');
+  S.busy=false;render();
 }
 
 /* ---------- Pages : calendrier scolaire ---------- */
@@ -2044,12 +2174,12 @@ const HEAD={
   classes:['Classes','Les élèves, les présences et les cours de chaque classe.'],
   eleves:['Élèves','Les dossiers des élèves et le suivi de leurs présences.'],
   personnel:['Personnel','Les dossiers du personnel, leur statut et leurs présences.'],
-  examens:['Examens','Les examens planifiés pour chaque classe.'],
+  examens:['Examens','Les examens à venir, les résultats à entrer et les reprises.'],
   annee:['Calendrier scolaire','La rentrée, les étapes, les congés et les examens de l’année.'],
   params:['Paramètres','L’établissement, l’année scolaire et les accès.']
 };
 function renderHeading(){
-  const h=S.page==='calendar'?HEAD[S.role]:HEAD[S.page];
+  const h=S.page==='calendar'?HEAD[S.role]:S.page==='examens'&&S.role==='student'?['Mes examens','Vos prochains examens, vos résultats et vos reprises.']:HEAD[S.page];
   const show=demoHidden()?`<button type="button" class="demo-show" id="demo-show" data-act="demo" title="Réafficher le bandeau des profils et des données d’exemple">${icon('eye')}Afficher le bandeau</button>`:'';
   const sub=S.page==='calendar'?'':`<p>${h[1]}</p>`;
   setHTML($('#heading'),`<div><h1>${h[0]}</h1>${sub}</div>${show?`<div class="head-side">${show}</div>`:''}`);
@@ -2328,7 +2458,7 @@ function moveWarnings(s,t,toDate,a,b){
     if(o.grp===s.grp) w.push(`${gName(s.grp)} a déjà ${o.c.titre} ${momentIn(o.start,o.end)}. Glissez plutôt sur ce cours pour les échanger.`);
     else if(s.c.enseignant&&o.c.enseignant===s.c.enseignant) w.push(`${tName(s.c.enseignant)} donne déjà ${o.c.titre} (${gName(o.grp)}) ${momentIn(o.start,o.end)}.`);
   }
-  for(const e of S.data.examens) if(e.date===toDate&&e.groupe===s.grp&&toMin(e.debut)<b&&a<toMin(e.fin)) w.push(`${gName(s.grp)} a un examen (${e.titre||'examen'}) ${momentIn(toMin(e.debut),toMin(e.fin))}.`);
+  for(const e of S.data.examens) if(!e.seance&&e.date===toDate&&e.groupe===s.grp&&toMin(e.debut)<b&&a<toMin(e.fin)) w.push(`${gName(s.grp)} a un examen (${e.titre||'examen'}) ${momentIn(toMin(e.debut),toMin(e.fin))}.`);
   return w;
 }
 function moveDrawer(){
@@ -2433,6 +2563,13 @@ function fillExamFromCourse(f,all){
 }
 function examDrawer(){
   const d=S.dr, f=d.draft, e=d.id?byId(S.data.examens,d.id):null;
+  if(d.sess){
+    const x=allExamItems().find(k=>k.key===d.sess);if(!x) return goneHTML('Examen');
+    const can=canEditItem(x);
+    const body=`<form id="x-form" data-form="exam" novalidate><dl class="facts"><div><dt>Quand</dt><dd>${esc(dayLabel(parse(x.date)))}, ${esc(momentOf(x).toLowerCase())}</dd></div><div><dt>Classe</dt><dd>${esc(gName(x.grp))}</dd></div><div><dt>Enseignant</dt><dd>${x.c&&x.c.enseignant?esc(tName(x.c.enseignant)):'—'}</dd></div></dl>${examResultsHTML(f,can)||'<p class="help">Aucun élève dans cette classe.</p>'}${d.err?`<p class="form-err" role="alert">${esc(d.err)}</p>`:''}</form>`;
+    const foot=can?`<button class="btn primary" type="submit" form="x-form"${dis()}>Enregistrer les résultats</button><button class="btn ghost" type="button" data-act="sess-at" data-key="${esc(x.key)}" data-date="${x.date}">Voir la séance</button>`:'';
+    return dTop('Résultats de l’examen',xTitle(x),esc(x.e.titre&&x.e.titre!=='Examen'?x.e.titre:''))+`<div class="dr-body">${body}</div>${foot?`<div class="dr-foot">${foot}</div>`:''}`;
+  }
   if(d.id&&!e) return goneHTML('Examen');
   if(!canEditExam(e)){
     const x=examItem(e);
@@ -2448,7 +2585,7 @@ function examDrawer(){
     <div class="grid2"><label class="field"><span>Titre de l’examen</span><input id="x-titre" data-f="titre" value="${esc(f.titre)}" maxlength="80" placeholder="Examen de mi-étape" autocomplete="off"></label><label class="field"><span>Classe</span><select id="x-groupe" data-f="groupe"${f.cours?' disabled':''}>${gOpts}</select></label></div>
     <div class="grid3"><label class="field"><span>Date</span><input type="date" id="x-date" data-f="date" value="${esc(f.date)}"></label><label class="field"><span>Début</span><input type="time" id="x-debut" data-f="debut" value="${esc(f.debut)}" step="300"></label><label class="field"><span>Fin</span><input type="time" id="x-fin" data-f="fin" value="${esc(f.fin)}" step="300"></label></div>
     <div class="grid2"><label class="field"><span>Local</span><input id="x-salle" data-f="salle" value="${esc(f.salle)}" maxlength="40" autocomplete="off"></label><label class="field"><span>Surveillance</span><select id="x-surv" data-f="surveillant">${sOpts}</select></label></div>
-    ${examResultsHTML(f)}
+    ${examResultsHTML(f,true)}
     <label class="field"><span>À savoir pour les élèves</span><textarea id="x-notes" data-f="notes" rows="2" placeholder="Matière couverte, matériel permis…">${esc(f.notes)}</textarea></label>
     <p class="help">En choisissant un cours et une date, l’heure et le local de ce cours sont proposés.</p>
     ${d.warn?`<div class="notice warn"><p><b>Conflit d’examens.</b></p><ul>${d.warn.map(w=>`<li>${esc(w)}</li>`).join('')}</ul></div>`:''}
@@ -2461,6 +2598,15 @@ function examDrawer(){
 async function saveExam(force){
   const d=S.dr, f=d.draft;if(S.busy)return;
   const err=m=>{d.err=m;renderDrawer();};
+  if(d.sess){
+    const x=allExamItems().find(k=>k.key===d.sess);if(!x) return err('Cet examen n’existe plus.');
+    const cur=S.data.examens.find(k=>k.seance===d.sess)||null, res={};
+    for(const el of studentsOf(x.grp)) if(f.resultats&&f.resultats[el.id]) res[el.id]=f.resultats[el.id];
+    const doc=Object.assign({},cur||{},{seance:x.key,cours:x.c?x.c.id:'',groupe:x.grp,titre:x.e.titre||'Examen',date:x.date,debut:x.e.debut||'',fin:x.e.fin||'',resultats:res,maj:new Date().toISOString()});delete doc.id;
+    S.busy=true;d.err='';renderDrawer();
+    const ok=await write(()=>col('examens').doc(cur?cur.id:sxId(x.key)).set(doc),'Résultats enregistrés');
+    S.busy=false;if(ok&&S.dr===d)S.dr=null;render();return;
+  }
   if(S.role==='teacher'&&!f.cours) return err('Choisissez le cours visé par l’examen.');
   if(!f.groupe) return err('Choisissez la classe qui passe l’examen.');
   if(!f.date) return err('Indiquez la date de l’examen.');
@@ -2472,7 +2618,7 @@ async function saveExam(force){
   if(isNaN(a)||isNaN(b)) return err('Indiquez l’heure de début et de fin.');
   if(b<=a) return err('L’examen se termine avant de commencer.');
   if(!force){
-    const w=S.data.examens.filter(x=>x.id!==d.id&&x.date===f.date&&x.groupe===f.groupe&&toMin(x.debut)<b&&a<toMin(x.fin)).map(x=>`${gName(f.groupe)} a déjà « ${x.titre||'un examen'} » ${momentIn(toMin(x.debut),toMin(x.fin))}.`);
+    const w=S.data.examens.filter(x=>!x.seance&&x.id!==d.id&&x.date===f.date&&x.groupe===f.groupe&&toMin(x.debut)<b&&a<toMin(x.fin)).map(x=>`${gName(f.groupe)} a déjà « ${x.titre||'un examen'} » ${momentIn(toMin(x.debut),toMin(x.fin))}.`);
     if(w.length){d.warn=w;d.err='';renderDrawer();return;}
   }
   const res={};for(const el of studentsOf(f.groupe)) if(f.resultats&&f.resultats[el.id]) res[el.id]=f.resultats[el.id];
@@ -2485,13 +2631,16 @@ async function saveExam(force){
   render();
 }
 
-function examResultsHTML(f){
-  const els=f.groupe?studentsOf(f.groupe):[];
+function examResultsHTML(f,can){
+  const els=f.groupe?studentsOf(f.groupe).slice().sort(byElNum):[];
   if(!els.length) return '';
-  const r=f.resultats||{}, ok=els.filter(e=>r[e.id]==='reussi').length, ko=els.filter(e=>r[e.id]==='echec').length;
-  return `<fieldset><legend>Résultats</legend><div class="att-sum">${ok?`<span class="chip ok">${pl(ok,'réussite','réussites')}</span>`:''}${ko?`<span class="chip bad">${pl(ko,'échec','échecs')}</span>`:''}${els.length-ok-ko?`<span class="chip off">${els.length-ok-ko} sans résultat</span>`:''}</div><ul class="att-list">${els.map(e=>`<li><span class="nm">${esc(e.nom)}</span><span class="att-btns" role="group" aria-label="${esc('Résultat de '+e.nom)}"><button type="button" class="ab ab-P" id="xr-${esc(e.id)}-r" data-act="x-res" data-el="${esc(e.id)}" data-v="reussi" aria-pressed="${r[e.id]==='reussi'}">Réussi</button><button type="button" class="ab ab-A" id="xr-${esc(e.id)}-e" data-act="x-res" data-el="${esc(e.id)}" data-v="echec" aria-pressed="${r[e.id]==='echec'}">Échec</button></span></li>`).join('')}</ul></fieldset>`;
+  const r=f.resultats||{}, cnt={reussi:0,reprise:0,echec:0,absent:0};for(const e of els){const v=r[e.id];if(cnt[v]!=null)cnt[v]++;}
+  const none=els.length-cnt.reussi-cnt.reprise-cnt.echec-cnt.absent;
+  const sum=`<div class="att-sum">${cnt.reussi?`<span class="chip ok">${pl(cnt.reussi,'réussite','réussites')}</span>`:''}${cnt.reprise?`<span class="chip info">${pl(cnt.reprise,'réussi en reprise','réussis en reprise')}</span>`:''}${cnt.echec?`<span class="chip bad">${pl(cnt.echec,'échec','échecs')}</span>`:''}${cnt.absent?`<span class="chip warn">${pl(cnt.absent,'absent','absents')}</span>`:''}${none?`<span class="chip off">${none} sans résultat</span>`:''}</div>`;
+  const btn=(e,v,k,cls,l)=>`<button type="button" class="ab ${cls}" id="xr-${esc(e.id)}-${k}" data-act="x-res" data-el="${esc(e.id)}" data-v="${v}" aria-pressed="${r[e.id]===v}">${l}</button>`;
+  const li=e=>{const v=r[e.id];return `<li><span class="st-num sm" aria-hidden="true">${e.numero!=null&&e.numero!==''?esc(e.numero):'—'}</span><span class="nm">${esc(e.nom)}${v==='reprise'?'<small>Réussi en reprise</small>':''}</span>${can?`<span class="att-btns" role="group" aria-label="${esc('Résultat de '+e.nom)}">${btn(e,'reussi','r','ab-P','Réussi')}${btn(e,'echec','e','ab-A','Échec')}${btn(e,'absent','a','ab-R','Absent')}</span>`:v?`<span class="chip ${RES[v][0]}">${RES[v][1]}</span>`:'<span class="chip off">—</span>'}</li>`;};
+  return `<fieldset class="xr"><legend>Résultats</legend>${sum}<ul class="att-list">${els.map(li).join('')}</ul>${can&&none?'<div class="row" style="margin-top:10px"><button class="btn sm" type="button" data-act="x-res-all">Marquer les autres réussis</button></div>':''}</fieldset>`;
 }
-
 /* Dossier d’un élève */
 function openStudent(id){
   const e=id?byId(S.data.eleves,id):null;
@@ -2699,6 +2848,9 @@ document.addEventListener('click',async e=>{
     case 'exam':openExam(b.dataset.id);break;
     case 'sess-at':{const s=findSess(b.dataset.date,b.dataset.key);if(!s)break;const base={key:s.key,coursId:s.c.id,slotId:s.sl.id,date:s.date};
       if(S.role==='admin')openCourse(s.c.id,{key:s.key,date:s.date,slotId:s.sl.id});else if(S.role==='teacher'&&!s.cancelled)openDrawer(Object.assign({kind:'att',dirty:false,draft:{statuts:{},note:''}},base));else openDrawer(Object.assign({kind:'info'},base));break;}
+    case 'x-res-all':{if(!d||d.kind!=='exam')break;const r=d.draft.resultats||(d.draft.resultats={});for(const el of studentsOf(d.draft.groupe))if(!r[el.id])r[el.id]='reussi';renderDrawer();break;}
+    case 'x-open':openSessExam(b.dataset.key);break;
+    case 'x-rep':await setExamResult(b.dataset.key,b.dataset.el,'reprise');break;
     case 'x-res':{if(!d||d.kind!=='exam')break;const r=d.draft.resultats||(d.draft.resultats={}),id=b.dataset.el,v=b.dataset.v;if(r[id]===v)delete r[id];else r[id]=v;renderDrawer();break;}
     case 'new-exam':openExam(null,b.dataset.cours?{cours:b.dataset.cours,date:b.dataset.date||''}:null);break;
     case 'student':openFiche('eleves',b.dataset.id);break;
@@ -2883,6 +3035,7 @@ document.addEventListener('change',async e=>{
 });
 $('#scrim').addEventListener('click',()=>closeDrawer());
 document.addEventListener('keydown',e=>{
+  if((e.key==='Enter'||e.key===' ')&&e.target&&e.target.classList&&e.target.classList.contains('xm-row')&&e.target.dataset.act){e.preventDefault();e.target.click();return;}
   if((e.key==='Enter'||e.key===' ')&&e.target&&e.target.classList&&e.target.classList.contains('st-row')){e.preventDefault();openFiche('eleves',e.target.dataset.id);return;}
   if((e.key==='Enter'||e.key===' ')&&e.target&&e.target.classList&&e.target.classList.contains('cl-row')){e.preventDefault();openFiche('classes',e.target.dataset.id);return;}
   if(e.key==='Escape'&&DRAG){e.preventDefault();endDrag(false);return;}

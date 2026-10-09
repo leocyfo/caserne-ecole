@@ -199,6 +199,21 @@ ok('exams list',$$('#main [data-act=sess-at]').length>0,($('#main .summary')||{}
 click($('#main [data-act=sess-at]'));await wait(50);
 ok('session exam opens course',!!($('#c-nom-sel')||$('#c-titre')));
 click($('#dr-close'));await wait(30);
+ok('exam tiles',$$('.xm-tile').length===4&&$('#xt-up').getAttribute('aria-pressed')==='true'&&!!$('.xm-hd'));
+click($('#xt-todo'));await wait(60);
+{const n=$$('#main [data-act=x-open]').length;ok('results to enter',n>=1&&/[1-9]/.test($('#xt-todo b').textContent),n);}
+click($('#main [data-act=x-open]'));await wait(80);
+ok('results drawer',/Résultats de l’examen/.test($('#drawer').textContent)&&$$('#drawer [data-act=x-res]').length===36,$$('#drawer [data-act=x-res]').length);
+click($('[data-act=x-res-all]'));await wait(30);
+$('#x-form').requestSubmit();await wait(250);
+{const full=[...window.__store.keys()].filter(k=>k.startsWith('examens/sx-')&&Object.keys(window.__store.get(k).resultats||{}).length===12);ok('session results saved',full.length>=9,full.length);}
+click($('#xt-reps'));await wait(60);
+{const n=$$('#main [data-act=x-rep]').length;ok('reprises list',n>=4,n);
+ const b=$('#main [data-act=x-rep]'),key=b.dataset.key,el=b.dataset.el;click(b);await wait(250);
+ const doc=[...window.__store.values()].find(v=>v&&v.seance===key)||[...window.__store.entries()].filter(([k])=>k.startsWith('examens/')).map(([k,v])=>v).find(v=>v.resultats&&v.resultats[el]==='reprise');
+ ok('reprise marked',$$('#main [data-act=x-rep]').length===n-1&&!!doc&&doc.resultats[el]==='reprise',$$('#main [data-act=x-rep]').length+' / '+n);}
+click($('#xt-done'));await wait(60);
+ok('results list',$$('#main .xm-done.xm-row').length>=8&&/%/.test($('#xt-done b').textContent),$$('#main .xm-done.xm-row').length);
 // calendrier scolaire
 click($('#nav-annee'));await wait(50);
 ok('year noel',/Congé de Noël/.test($('#main').textContent)&&/15 juin 2027/.test($('#main').textContent));
@@ -230,6 +245,8 @@ click($('[data-role=teacher]'));await wait(80);
 ok('teacher board',$$('#main .week button.cc').length>0,$$('#main .week button.cc').length);
 click($('[data-role=student]'));await wait(80);
 ok('student board',$$('#main .week button.cc').length>0&&/Prochains examens/.test($('#main').textContent));
+click($('#nav-examens'));await wait(80);
+ok('student exams page',/Prochains examens/.test($('#main').textContent)&&!$('.xm-tile')&&!$('[data-act=x-rep]'));
 /* DEMO */
 {const st=document.createElement('style');st.textContent='.demo,.demo.is-hidden{transition:none!important}';document.head.appendChild(st);}
 click($('[data-role=admin]'));await wait(80);

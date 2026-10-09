@@ -165,7 +165,7 @@ const sp=Object.entries(window.__store.get('presences-personnel/'+$('#sd-0').dat
 ok('staff att saved',sp.some(([k,v])=>v==='A'),JSON.stringify(sp).slice(0,90));
 // examens
 click($('#nav-examens'));await wait(40);
-{const d=new Date(),td=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');const up=[...window.__store].filter(([k,v])=>k.startsWith('examens/')&&v.date>=td).length;
+{const d=new Date(),td=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');const nm=d.getHours()*60+d.getMinutes(),up=Math.min(25,[...window.__store].filter(([k,v])=>k.startsWith('examens/')&&!v.seance&&(v.date>td||(v.date===td&&(+String(v.debut).slice(0,2)*60+ +String(v.debut).slice(3,5))>nm))).length);
 ok('exams upcoming',$$('#main [data-act=exam]').length===up,$$('#main [data-act=exam]').length+' / '+up);}
 click($('[data-act=new-exam]'));await wait(40);
 setSel('#x-cours','c-fra-301');$('#x-cours').dispatchEvent(new Event('input',{bubbles:true}));await wait(30);
