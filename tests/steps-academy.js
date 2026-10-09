@@ -19,14 +19,14 @@ ok('row unpick',$$('#main .wk-class').length===5&&!$('.fchip')&&!$('#class-token
 click($('#fm-e'));await wait(40);click($('#pick-c121'));await wait(80);
 ok('row pick from teacher mode',$$('#main .wk-class').length===1&&$('#fm-g').getAttribute('aria-pressed')==='true');
 click($('#pick-c121'));await wait(80);
-ok('cards this week',$$('#main .week button.cc').length>=45,$$('#main .week button.cc').length);
+ok('cards this week',$$('#main .week button.cc').length>=25,$$('#main .week button.cc').length);
 ok('type tags',$$('#main .week .cc-kind').some(x=>x.textContent==='Théorie')&&$$('#main .week .cc-kind').some(x=>x.textContent==='Pratique'));
 ok('one line per card top',$$('#main .week button.cc').every(x=>x.querySelectorAll('.cc-top').length===1&&!x.querySelector('.chip')));
 ok('status in foot',!!$('#main .week .cc-foot .cc-st.warn')&&$$('#main .week .cell-chore').some(x=>/Corvée de ménage/.test(x.textContent)));
 ok('menage tag',/Corvée de ménage/.test($('#main .week').textContent));
 const am=$('.cc[data-key="k119-m08_a20261006am_2026-10-06"]');
-{const c=$('.cc[data-key="k119-m08_a20261006am_2026-10-06"]');ok('card moment + code',!!c&&c.querySelector('.cc-time').textContent==='Avant-midi'&&/^M8 /.test(c.querySelector('strong').textContent)&&!/d h/.test(c.querySelector('.cc-top').textContent),c&&c.querySelector('strong').textContent);}
-ok('card session label',/Séance 8.1/.test(($('.cc[data-key="k119-m08_a20261006am_2026-10-06"] .cc-meta')||{}).textContent||''));
+{const c=$('.cc[data-key="k119-m08_a20261006am_2026-10-06"]');ok('card moment + code',!!c&&c.querySelector('.cc-time').textContent==='Toute la journée'&&/^M8 /.test(c.querySelector('strong').textContent)&&!/\d h/.test(c.querySelector('.cc-top').textContent),c&&c.querySelector('strong').textContent);}
+ok('card session label',/Séances 8\.1 et 8\.2/.test(($('.cc[data-key="k119-m08_a20261006am_2026-10-06"] .cc-meta')||{}).textContent||''));
 ok('119 AM today',!!am&&/9\/12 marqués/.test(am.textContent),am&&am.textContent.replace(/\s+/g,' ').slice(0,120));
 {const ex=$$('#main .week .cc.kx:not(.has-badge)'),th=$('#main .week .cc.k0');ok('exams dark',ex.length>2&&ex.every(x=>getComputedStyle(x).backgroundColor==='rgb(159, 45, 53)')&&!!th&&getComputedStyle(th).backgroundColor!=='rgb(159, 45, 53)',ex.length);}
 ok('exam doc on board',$$('#main .cc.exam').some(x=>/Métier et formation/.test(x.textContent)));
@@ -86,7 +86,7 @@ ok('name list',!!$('#c-nom-sel')&&$$('#c-nom-sel option').length===27&&!$('#c-pr
 const pre=$('#c-nom-sel');pre.value='7';pre.dispatchEvent(new Event('change',{bubbles:true}));await wait(40);
 ok('name fills',!$('#c-titre')&&/Autopompe/.test($('#dr-title').textContent+$('#c-nom-sel').selectedOptions[0].textContent)&&$('#c-code').value==='M7'&&$('#c-heures').value==='45',$('#c-code').value+'|'+$('#c-heures').value);
 ok('name stays selected',$('#c-nom-sel').value==='7');
-ok('default period',$('#c-p-0').value==='am'&&!$('#c-d-0')&&$('#c-a-0').value==='theorie',$('#c-p-0').value);
+ok('default period',$('#c-p-0').value==='jour'&&!$('#c-d-0')&&$('#c-a-0').value==='theorie',$('#c-p-0').value);
 const ns=$('#c-nom-sel');ns.value='__autre';ns.dispatchEvent(new Event('change',{bubbles:true}));await wait(40);
 ok('other name field',!!$('#c-titre')&&$('#c-titre').value==='');
 click($('#dr-close'));await wait(40);
@@ -105,15 +105,21 @@ const ps2=$('#c-p-0');ps2.value='autre';ps2.dispatchEvent(new Event('change',{bu
 ok('precise hours',!!$('#c-d-0')&&$('#c-d-0').value==='12:00'&&$('#c-f-0').value==='15:00');
 ok('activity list',$$('#c-a-0 option').length===9&&$('#c-a-0').value==='theorie',$$('#c-a-0 option').map(o=>o.textContent).join('|'));
 click($('#dr-close'));await wait(40);
-click($('.cc[data-key="k119-m08_a20261006pm_2026-10-06"]'));await wait(60);
-ok('session period/activity',!!$('#sb-per')&&$('#sb-per').value==='pm'&&$('#sb-act').value==='theorie',($('#sb-per')||{}).value+'|'+($('#sb-act')||{}).value);
-const sa=$('#sb-act');sa.value='pratique';sa.dispatchEvent(new Event('change',{bubbles:true}));await wait(150);
-const xpm=()=>window.__store.get('cours/k119-m08').extras.find(x=>x.id==='a20261006pm');
+click($('.cc[data-key="k119-m08_a20261006am_2026-10-06"]'));await wait(60);
+ok('session period/activity',!!$('#sb-per')&&$('#sb-per').value==='jour'&&$('#sb-act').value==='theorie'&&/Toute la journée/.test($('#sb-per').selectedOptions[0].textContent),($('#sb-per')||{}).value+'|'+($('#sb-act')||{}).value);
+{const sa=$('#sb-act');sa.value='pratique';sa.dispatchEvent(new Event('change',{bubbles:true}));}await wait(150);
+const xpm=()=>window.__store.get('cours/k119-m08').extras.find(x=>x.id==='a20261006am');
 ok('activity saved',xpm().tags[0]==='Pratique'&&xpm().tags.includes('Ménage'),JSON.stringify(xpm().tags));
-const sp=$('#sb-per');sp.value='am';sp.dispatchEvent(new Event('change',{bubbles:true}));await wait(150);
-ok('period saved',xpm().debut==='08:00'&&xpm().fin==='11:00');
+{const sp=$('#sb-per');sp.value='pm';sp.dispatchEvent(new Event('change',{bubbles:true}));}await wait(150);
+ok('period saved',xpm().debut==='12:00'&&xpm().fin==='15:00');
 click($('#dr-close'));await wait(40);
-ok('card shows pratique',/Pratique/.test(($('.cc[data-key="k119-m08_a20261006pm_2026-10-06"]')||{}).textContent||''));
+ok('card shows pratique',/Pratique/.test(($('.cc[data-key="k119-m08_a20261006am_2026-10-06"]')||{}).textContent||'')&&/Après-midi/.test(($('.cc[data-key="k119-m08_a20261006am_2026-10-06"] .cc-time')||{}).textContent||''));
+// remettre la séance comme avant : Théorie, toute la journée
+click($('.cc[data-key="k119-m08_a20261006am_2026-10-06"]'));await wait(60);
+{const sa=$('#sb-act');sa.value='theorie';sa.dispatchEvent(new Event('change',{bubbles:true}));}await wait(150);
+{const sp=$('#sb-per');sp.value='jour';sp.dispatchEvent(new Event('change',{bubbles:true}));}await wait(150);
+ok('session restored',xpm().tags[0]==='Théorie'&&xpm().debut==='08:00'&&xpm().fin==='15:00');
+click($('#dr-close'));await wait(40);
 // classes
 click($('#nav-classes'));await wait(50);
 ok('5 classes',$$('.t-card').length===5);
@@ -227,7 +233,7 @@ window.scrollTo(0,0);await wait(30);}
 click($('#vw-jour'));await wait(150);
 ok('day view',!!$('.day-board')&&$$('.day-board .wk-day').length===5&&$$('.day-board .wk-class').length===1&&$('#vw-jour').getAttribute('aria-pressed')==='true');
 for(let i=0;i<6&&!/6 oct/.test($('.day-head').textContent);i++){click($('#w-prev'));await wait(80);}
-ok('day view tuesday',/mardi/i.test($('.day-head').textContent)&&$$('.day-board .wk-cell.chore').length>=1&&$$('.day-board .cc').length>=8,$('.day-head').textContent+' / '+$$('.day-board .cc').length);
+ok('day view tuesday',/mardi/i.test($('.day-head').textContent)&&$$('.day-board .wk-cell.chore').length>=1&&$$('.day-board .cc').length>=5,$('.day-head').textContent+' / '+$$('.day-board .cc').length);
 ok('day view no drag',!$('.day-board .cc[data-drag]'));
 click($('#dpick-c119'));await wait(100);
 ok('day view isolate',$$('.day-board .wk-day').length===1&&/Toutes/.test($('.day-board .wk-day').textContent));
@@ -260,7 +266,7 @@ ok('chore fills the day',$('.wk-cell[data-date="2026-10-06"][data-grp="c119"]').
 ok('chore once per class-day',$('.wk-cell[data-date="2026-10-06"][data-grp="c119"]').querySelectorAll('.cell-chore').length===1&&/toute la journée/.test($('.wk-cell[data-date="2026-10-06"][data-grp="c119"]').querySelector('.cell-chore').textContent)&&!!am&&!am.querySelector('.cc-chore-pill')&&!$$('#main .cc-flag').some(x=>/Ménage/.test(x.textContent)));}
 click($('#exp-btn'));await wait(400);
 {const c=$('#main .week.compact .cell-chore');ok('chore band compact',!!c&&c.getBoundingClientRect().height>0&&c.getBoundingClientRect().height<40);}
-{const c=$('.cc[data-key="k119-m08_a20261006am_2026-10-06"]');ok('compact shows moment + kind',!!c&&c.querySelector('.cc-time').textContent==='Avant-midi'&&getComputedStyle(c.querySelector('.cc-kind')).display!=='none'&&/Théorie/.test(c.querySelector('.cc-kind').textContent));}
+{const c=$('.cc[data-key="k119-m08_a20261006am_2026-10-06"]');ok('compact shows moment + kind',!!c&&c.querySelector('.cc-time').textContent==='Toute la journée'&&getComputedStyle(c.querySelector('.cc-kind')).display!=='none'&&/Théorie/.test(c.querySelector('.cc-kind').textContent));}
 click($('#exp-btn'));await wait(400);
 click($('.cc[data-key="k119-m08_a20261006am_2026-10-06"]'));await wait(80);
 ok('chore checkbox',!!$('#sb-menage')&&$('#sb-menage').checked);

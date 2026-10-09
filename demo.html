@@ -905,6 +905,8 @@ function statusChip0(s,mode){
 function sessLabel(s){
   const l=s&&s.extra&&s.extra.label?String(s.extra.label).trim():'';
   if(!l||l.toLowerCase()===String(s.c&&s.c.titre||'').toLowerCase()) return '';
+  const r=/^(\d+(?:[.,]\d+)*)\s*[–-]\s*(\d+(?:[.,]\d+)*)$/.exec(l);
+  if(r) return `Séances ${r[1]} et ${r[2]}`;
   return /^\d+([.,]\d+)*$/.test(l)?'Séance '+l:l;
 }
 function metaFor(s,mode){
@@ -922,7 +924,7 @@ const TAGCHIP={Pratique:'ok',Théorie:'info',Examen:'bad',Reprise:'bad',Simulati
 const TAGTONE={Pratique:'k6',Théorie:'k0',Examen:'kx',Reprise:'kx',Simulation:'k2',Stage:'k5',Visite:'k4',Musée:'k4',Congé:'k7'};
 const tagsOf=s=>(s.extra&&s.extra.tags)||(s.sl&&s.sl.type?withAct([],s.sl.type):[]);
 /* Période et activité d’une séance, comme dans le formulaire du site de l’Académie */
-const PERIODES=[{k:'am',label:'Avant-midi',debut:'08:00',fin:'11:00'},{k:'pm',label:'Après-midi',debut:'12:00',fin:'15:00'}];
+const PERIODES=[{k:'am',label:'Avant-midi',debut:'08:00',fin:'11:00'},{k:'pm',label:'Après-midi',debut:'12:00',fin:'15:00'},{k:'jour',label:'Toute la journée',debut:'08:00',fin:'15:00'}];
 const ACTIVITES=[{k:'theorie',label:'Théorie',tags:['Théorie']},{k:'pratique',label:'Pratique',tags:['Pratique']},{k:'examen',label:'Examen / reprise',tags:['Examen']},{k:'examen-t',label:'Examen théorique',tags:['Examen','Théorie']},{k:'examen-p',label:'Examen pratique',tags:['Examen','Pratique']},{k:'simulation',label:'Simulation',tags:['Simulation']},{k:'conge',label:'Congé / journée spéciale',tags:['Congé']},{k:'stage',label:'Stage',tags:['Stage']},{k:'activite',label:'Activité',tags:[]}];
 const ACT_TAGS=new Set(['Théorie','Pratique','Examen','Reprise','Simulation','Congé','Stage']);
 const periodOf=(debut,fin)=>{const p=PERIODES.find(x=>x.debut===debut&&x.fin===fin);return p?p.k:'autre';};
@@ -2026,7 +2028,7 @@ function nextColor(){const used=S.data.cours.map(c=>+c.couleur||0);for(let i=0;i
 function openCourse(id,sess,preset){
   const c=id?byId(S.data.cours,id):null;
   const draft=c?{heures:c.heures!=null?String(c.heures):'',titre:c.titre||'',code:c.code||'',couleur:+c.couleur||0,groupe:c.groupe||'',enseignant:c.enseignant||'',salle:c.salle||'',du:c.du||'',au:c.au||'',creneaux:activeSlots(c).map(s=>({type:s.type||'activite',id:s.id,jour:String(s.jour),debut:s.debut||'',fin:s.fin||'',salle:s.salle||'',du:s.du||'',au:s.au||''}))}
-    :{heures:'',titre:'',code:'',couleur:nextColor(),groupe:S.filtre.startsWith('g:')?S.filtre.slice(2):((groups()[0]||{}).id||''),enseignant:S.filtre.startsWith('e:')?S.filtre.slice(2):'',salle:'',du:'',au:'',creneaux:[(()=>{const [a,b]=(periodOptions()[0]||'08:15-09:30').split('-');return {id:slotId(),jour:'1',debut:a,fin:b,salle:'',type:'theorie'};})()]};
+    :{heures:'',titre:'',code:'',couleur:nextColor(),groupe:S.filtre.startsWith('g:')?S.filtre.slice(2):((groups()[0]||{}).id||''),enseignant:S.filtre.startsWith('e:')?S.filtre.slice(2):'',salle:'',du:'',au:'',creneaux:[(()=>{const [a,b]=(commonPeriod()||periodOptions()[0]||'08:15-09:30').split('-');return {id:slotId(),jour:'1',debut:a,fin:b,salle:'',type:'theorie'};})()]};
   if(preset) Object.assign(draft,preset);
   openDrawer({kind:'course',id:id||null,sess:sess||null,draft,err:'',warn:null,confirmDel:false});
 }
@@ -2058,7 +2060,7 @@ function courseDrawer(){
       const status=s.cancelled?(s.movedX?`<span class="chip info">${esc(movedLabel(s))}</span>`:'<span class="chip bad">Cours annulé</span>'):profAbsent(s)?'<span class="chip bad">Prof. absent</span>':'';
       const pres=s.cancelled?'<span class="muted">Aucune : le cours est annulé.</span>':a.total?`<b>${a.marked} / ${a.total}</b> élèves marqués${a.marked?` <span class="muted">· ${['P','A','R','M'].filter(k=>cnt[k]).map(k=>pl(cnt[k],LBLS[k][0],LBLS[k][1])).join(' · ')}</span>`:a.past?' <span class="need-t">· à prendre</span>':''}`:'<span class="muted">Aucun élève dans la classe.</span>';
       sessBox=`<section class="sess-box"><div class="sb-head"><p class="per-lg">${esc(dayLabel(parse(s.date)))} · ${momentOf(s)}</p><div class="sb-chips">${kind?`<span class="chip ${sessTone(s)}">${esc(kind)}</span>`:''}${choreChip(s)}${status}</div></div>
-        <dl class="facts sb-facts"><div><dt>Classe</dt><dd>${esc(gName(s.c.groupe))}</dd></div><div><dt>Enseignant</dt><dd>${esc(tName(s.c.enseignant))}</dd></div><div><dt>Local</dt><dd>${s.salle?esc(s.salle):'<span class="muted">—</span>'}</dd></div>${lab?`<div><dt>Séance</dt><dd>${esc(lab.replace(/^Séance /,''))}</dd></div>`:''}<div class="wide"><dt>Présences</dt><dd>${pres}</dd></div></dl>
+        <dl class="facts sb-facts"><div><dt>Classe</dt><dd>${esc(gName(s.c.groupe))}</dd></div><div><dt>Enseignant</dt><dd>${esc(tName(s.c.enseignant))}</dd></div><div><dt>Local</dt><dd>${s.salle?esc(s.salle):'<span class="muted">—</span>'}</dd></div>${lab?`<div><dt>${/^Séances /.test(lab)?'Séances':'Séance'}</dt><dd>${esc(lab.replace(/^Séances? /,''))}</dd></div>`:''}<div class="wide"><dt>Présences</dt><dd>${pres}</dd></div></dl>
         <div class="row">${s.cancelled?'':`<button class="btn sm primary" type="button" data-act="goto-att">${a.state==='done'?'Voir les présences':'Prendre les présences'}</button><button class="btn sm" type="button" data-act="move-open">${icon('move')}Déplacer</button>`}<button class="btn sm" type="button" data-act="new-exam" data-cours="${esc(s.c.id)}" data-date="${esc(s.date)}">Planifier un examen</button><button class="btn sm${s.cancelled?'':' danger'}" type="button" data-act="s-cancel"${dis()}>${s.cancelled?'Rétablir ce cours':'Annuler ce cours seulement'}</button></div>${s.extra&&!s.cancelled?`<h3 class="sb-h3">Modifier cette séance</h3><div class="grid2"><label class="field"><span>Période</span>${periodSelect('sb-per',s.sl.debut,s.sl.fin,'data-sb="per"'+(S.busy?' disabled':''))}</label><label class="field"><span>Activité</span>${actSelect('sb-act',actOf(tagsOf(s)),'data-sb="act"'+(S.busy?' disabled':''))}</label></div>`:''}${s.cancelled?'':`<label class="chore-check"><input type="checkbox" id="sb-menage" data-sb="menage"${choreOf(s)?' checked':''}${S.busy?' disabled':''}>${icon('broom')}Corvée de ménage pour ${esc(gName(s.grp))}, toute la journée du ${esc(dayLabel(parse(s.date)).toLowerCase())}</label>`}</section><h3 class="dr-h3">Le cours, toutes les semaines</h3>`;
     }
   }
@@ -2126,6 +2128,13 @@ async function saveCourse(force){
 }
 
 /* Déplacer ou échanger des cours */
+/* La période la plus utilisée dans l’horaire : proposée par défaut pour un nouveau cours */
+function commonPeriod(){
+  const n=new Map();
+  for(const c of S.data.cours) for(const x of activeSlots(c).concat(datedOf(c))){if(x.debut&&x.fin){const k=x.debut+'-'+x.fin;n.set(k,(n.get(k)||0)+1);}}
+  let best='',m=0;for(const [k,v] of n) if(v>m){best=k;m=v;}
+  return best;
+}
 function periodOptions(extra){
   const m=new Map();
   for(const c of S.data.cours) for(const s of activeSlots(c).concat(datedOf(c))){const k=s.debut+'-'+s.fin;if(s.debut&&s.fin&&!m.has(k))m.set(k,toMin(s.debut));}
@@ -2170,7 +2179,7 @@ function moveDrawer(){
     eyebrow='Déplacer un cours';title=esc(s.c.titre);
     const mon=monday(src);
     const dayOpts=[0,1,2,3,4].map(i=>{const x=addDays(mon,i),ds=iso(x),o=offDay(ds);return `<option value="${ds}"${ds===d.toDate?' selected':''}${o?' disabled':''}>${esc(dayLabel(x))}${o?' ('+esc(o)+')':''}</option>`;}).join('');
-    const timeOpts=periodOptions(d.time).map(k=>{const [x,y]=k.split('-'),p=PERIODES.find(z=>z.debut===x&&z.fin===y);return `<option value="${k}"${k===d.time?' selected':''}>${p?p.label+' ('+fmtT(x)+' – '+fmtT(y)+')':fmtT(x)+' – '+fmtT(y)}</option>`;}).join('');
+    const timeOpts=periodOptions(d.time).map(k=>{const [x,y]=k.split('-'),p=PERIODES.find(z=>z.debut===x&&z.fin===y);return `<option value="${k}"${k===d.time?' selected':''}>${p?p.label:moment(toMin(x),toMin(y))+' ('+fmtT(x)+' – '+fmtT(y)+')'}</option>`;}).join('');
     body=`<div class="mv-route"><div class="mv-box"><small>De</small><b>${esc(dayLabel(src))}</b><span>${momentOf(s)}</span></div><span class="mv-arrow" aria-hidden="true">→</span><div class="mv-box"><small>Vers</small><b>${esc(dayLabel(to))}</b><span>${moment(a,b)}</span></div></div>
       <div class="grid2"><label class="field"><span>Jour</span><select id="mv-day" data-mv="toDate">${dayOpts}</select></label><label class="field"><span>Période</span><select id="mv-time" data-mv="time">${timeOpts}</select></label></div>`;
   }
