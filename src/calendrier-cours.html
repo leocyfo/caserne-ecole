@@ -425,25 +425,53 @@ legend{font-size:13px;color:var(--ink-2);font-weight:600;padding:0 4px}
 
 .need-t{color:var(--warn)}
 /* Classes : cartes */
-.cl-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,330px),1fr));gap:14px}
-.t-card.cl-card{display:flex;flex-direction:column;gap:14px;padding:18px 20px;background:var(--surface);border:1px solid var(--line);border-radius:12px;cursor:pointer;transition:border-color .15s,box-shadow .15s}
-.cl-card:hover,.cl-card:focus-visible{border-color:#B9CBE0;box-shadow:0 4px 14px rgba(20,33,50,.08)}
-.cl-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
-.cl-top .ic{width:18px;height:18px;color:var(--muted);flex:none;margin-top:4px}
-.cl-name h3{margin:0;font-size:20px;line-height:1.2;color:var(--ink)}
-.cl-name p{margin:3px 0 0;font-size:13px;color:var(--muted)}
-.cl-prin{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:9px;background:var(--surface-2);cursor:default}
-.cl-prin label{display:flex;flex-direction:column;gap:2px;flex:1;min-width:0;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
-.cl-prin select{min-height:32px;font-size:14px;font-weight:700;text-transform:none;letter-spacing:0;color:var(--ink);border:0;background:transparent;padding:0;cursor:pointer}
-.cl-stats{display:grid;grid-template-columns:repeat(3,1fr);margin:0;gap:8px}
-.cl-stats dt{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted)}
-.cl-stats dd{margin:2px 0 0;font-size:22px;font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums}
-.cl-stats dd.ok{color:var(--ok)}.cl-stats dd.warn{color:var(--warn)}.cl-stats dd.bad{color:var(--bad)}
-.cl-prog-top{display:flex;justify-content:space-between;font-size:12.5px;color:var(--muted);margin-bottom:5px}
-.cl-prog-top b{color:var(--ink)}
-.cl-prog .meter{margin-bottom:4px}
-.cl-prog small{font-size:12px;color:var(--muted)}
-.cl-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding-top:12px;border-top:1px solid var(--line-2)}
+.cl-list{container-type:inline-size;background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.cl-cols{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1.6fr) 64px minmax(0,1fr) minmax(0,.9fr) 124px 132px;align-items:center;column-gap:18px}
+.cl-hd{padding:11px 22px;background:var(--head);border-bottom:1px solid var(--line);color:var(--head-ink);font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;white-space:nowrap}
+.cl-hd .n{text-align:center}
+.cl-row{padding:16px 22px;border-top:1px solid var(--line-2);cursor:pointer;transition:background-color .12s}
+.cl-hd+.cl-row{border-top:0}
+.cl-row:hover{background:var(--surface-2)}
+.cl-row:focus-visible{outline:3px solid var(--focus);outline-offset:-3px}
+.cl-c{display:flex;align-items:center;gap:12px;min-width:0}
+.cl-num{width:48px;height:48px;border-radius:12px;background:var(--role);color:#FFFFFF;display:grid;place-items:center;flex:none;font-size:18px;font-weight:700;font-variant-numeric:tabular-nums}
+.cl-name{display:flex;flex-direction:column;gap:3px;min-width:0}
+.cl-name b{font-size:18px;line-height:1.2;color:var(--ink);white-space:nowrap}
+.cl-name small{font-size:13px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cl-prin{display:flex;align-items:center;gap:10px;min-width:0;cursor:default}
+.cl-prin .av{width:36px;height:36px;font-size:12.5px}
+.cl-prin .av.none{background:var(--off-bg);color:var(--off)}
+.cl-prin select{flex:1 1 0;min-width:0;width:auto;min-height:36px;font-size:15px;font-weight:700;color:var(--ink);border:1px solid transparent;border-radius:8px;background-color:transparent;padding:0 20px 0 6px;margin-left:-6px;cursor:pointer;text-overflow:ellipsis}
+.cl-prin select:hover,.cl-prin select:focus{border-color:var(--line-strong);background-color:var(--surface)}
+.cl-prin b{font-size:15px;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cl-prin .none-t{color:var(--muted);font-weight:400}
+.cl-n{text-align:center;font-size:24px;font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums}
+.cl-n.zero{color:var(--muted)}
+.cl-big{display:flex;flex-direction:column;gap:7px;min-width:0}
+.cl-big b{font-size:24px;line-height:1;color:var(--ink);font-variant-numeric:tabular-nums}
+.cl-big .meter{margin:0;height:8px}
+.cl-big.ok b{color:var(--ok)}.cl-big.warn b{color:var(--warn)}.cl-big.bad b{color:var(--bad)}
+.cl-big .none{color:var(--muted);font-weight:400}
+.cl-st .chip{font-size:13px;padding:5px 10px;border-radius:7px}
+.cl-go{display:flex;align-items:center;justify-content:flex-end;gap:10px}
+.cl-go>.ic{width:18px;height:18px;color:var(--muted);flex:none}
+.cl-row [data-l]::before{display:none}
+/* largeur moyenne : l’avancement se retire et le bouton Horaire devient une icône */
+@container (max-width:1180px){
+  .cl-cols{grid-template-columns:minmax(0,1.4fr) minmax(0,1.6fr) 64px minmax(0,1fr) 124px 44px}
+  .cl-adv,.cl-go-t,.cl-go>.ic{display:none}
+  .cl-go .btn{padding-inline:9px}
+}
+/* petit écran : chaque classe devient une carte */
+@container (max-width:880px){
+  .cl-hd{display:none}
+  .cl-cols{grid-template-columns:1fr 1fr;grid-template-areas:"c c" "p p" "n s" "r a" "go go";row-gap:14px}
+  .cl-c{grid-area:c}.cl-prin{grid-area:p;flex-wrap:wrap;row-gap:6px}.cl-n{grid-area:n;text-align:left}.cl-st{grid-area:s}.cl-rate{grid-area:r}.cl-adv{grid-area:a;display:flex}.cl-go{grid-area:go;justify-content:space-between}
+  .cl-go-t,.cl-go>.ic{display:inline}
+  .cl-go .btn{padding-inline:12px}
+  .cl-row [data-l]::before{content:attr(data-l);display:block;flex-basis:100%;margin-bottom:6px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+  .cl-prin[data-l]::before{margin-bottom:0}
+}
 .cl-add{margin-bottom:0}
 .stackf{display:flex;flex-direction:column;gap:12px}
 .att-rate{display:flex;align-items:baseline;gap:8px}
@@ -458,7 +486,7 @@ legend{font-size:13px;color:var(--ink-2);font-weight:600;padding:0 4px}
 .kpi b.ok{color:var(--ok)}.kpi b.warn{color:var(--warn)}.kpi b.bad{color:var(--bad)}
 .fiche-act .seg{margin-right:4px}
 .av.cl-av{background:var(--role);font-size:20px;letter-spacing:.02em}
-@media (prefers-reduced-motion: reduce){.t-card.cl-card{transition:none}}
+@media (prefers-reduced-motion: reduce){.cl-row{transition:none}}
 .t-prin{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:var(--ink-2)}
 .t-prin select{min-height:34px;font-size:13px}
 .row-prin{display:block;margin-top:4px;font-size:12px;font-weight:600;color:#60758F}
@@ -676,6 +704,10 @@ body.is-dragging .cell-add{opacity:0!important}
   .side-mini .side-toggle{padding:8px 10px}
   .side-mini .side-toggle>span{position:static;width:auto;height:auto;overflow:visible;clip:auto}
   .side-mini .side-toggle .ic{transform:rotate(-90deg)}
+  .sidebar .side-toggle.side-out{right:16px;padding:8px 10px}
+  .sidebar .side-toggle.side-out>span{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+  .sidebar .side-out .ic,.side-mini .sidebar .side-out .ic{transform:none}
+  .sidebar:has(.side-out:not([hidden])) #side-toggle{right:64px}
   .nav{flex-direction:row;flex-wrap:wrap;gap:6px}
   .nav button{width:auto;padding:8px 12px;font-size:14px}
   .nav button[aria-current="page"]::after{display:none}
@@ -1307,17 +1339,25 @@ function classesPage(){
   const add=st.adding?`<section class="panel cl-add"><form class="inline-add" data-form="m-add-group"><label class="field"><span>Nom de la nouvelle classe</span><input id="m-gname" maxlength="60" placeholder="Ex. Classe 124" autocomplete="off"></label><button class="btn primary" type="submit"${dis()}>Ajouter</button><button class="btn ghost" type="button" data-act="m-adding">Annuler</button></form></section>`:'';
   const tb=`<div class="toolbar"><p class="summary" style="margin:0"><span><b>${gs.length}</b>${gs.length>1?'classes':'classe'}</span><span><b>${S.data.eleves.length}</b>${S.data.eleves.length>1?'élèves':'élève'}</span></p><span class="grow"></span>${periodSeg(per)}${isAdmin()&&!st.adding?`<button class="btn primary" type="button" id="m-add-open" data-act="m-adding">${icon('plus')}Ajouter une classe</button>`:''}</div>`;
   if(!gs.length) return tb+add+(st.adding?'':emptyBox('Aucune classe pour l’instant','Ajoutez une classe, puis inscrivez ses élèves et planifiez ses cours.'));
-  const cards=gs.map(g=>{
-    const x=classAtt(g.id,from,to,stats,sess), nc=S.data.cours.filter(c=>c.groupe===g.id).length, pr=classProgress(g.id), pid=principalOf(g.id), c=rateCls(x.rate);
-    return `<article class="t-card cl-card" id="cl-${esc(g.id)}" data-act="class" data-id="${esc(g.id)}" tabindex="0" role="button" aria-label="${esc('Ouvrir '+g.nom)}">
-      <div class="cl-top"><div class="cl-name"><h3>${esc(g.nom)}</h3>${g.description?`<p>${esc(g.description)}</p>`:''}</div>${icon('right')}</div>
-      <div class="cl-prin" data-act="stop">${avHTML(pid?tName(pid):'?','')}<label><span>Prof principal</span><select id="m-pr-${esc(g.id)}" data-gp="${esc(g.id)}"${isAdmin()?'':' disabled'}${dis()}><option value="">Aucun</option>${ts.map(t=>`<option value="${esc(t.id)}"${g.principal===t.id?' selected':''}>${esc(t.nom)}</option>`).join('')}</select></label></div>
-      <dl class="cl-stats"><div><dt>Élèves</dt><dd>${x.els.length}</dd></div><div><dt>Présence</dt><dd class="${c}">${!S.termLoaded?'…':x.rate==null?'—':x.rate+' %'}</dd></div><div><dt>Cours</dt><dd>${nc}</dd></div></dl>
-      ${pr.total?`<div class="cl-prog"><div class="cl-prog-top"><span>Avancement de l’année</span><b>${pr.pct} %</b></div><div class="meter" aria-hidden="true"><i style="width:${pr.pct}%"></i></div></div>`:''}
-      <div class="cl-foot">${x.missing.length?`<span class="chip warn">${pl(x.missing.length,'présence à rattraper','présences à rattraper')}</span>`:S.termLoaded&&x.past&&x.els.length?'<span class="chip ok">Présences à jour</span>':'<span></span>'}<button class="btn sm" type="button" data-act="see-group" data-id="${esc(g.id)}">Voir l’horaire</button></div>
+  const rows=gs.map(g=>{
+    const x=classAtt(g.id,from,to,stats,sess), pr=classProgress(g.id), pid=principalOf(g.id), c=rateCls(x.rate), n=x.els.length;
+    const num=String(g.nom).replace(/^(Classe|Groupe)\s+/i,'').slice(0,4);
+    const prin=isAdmin()?`<label class="vh" for="m-pr-${esc(g.id)}">${esc('Prof principal de '+g.nom)}</label><select id="m-pr-${esc(g.id)}" data-gp="${esc(g.id)}"${dis()}><option value="">Aucun prof principal</option>${ts.map(t=>`<option value="${esc(t.id)}"${g.principal===t.id?' selected':''}>${esc(t.nom)}</option>`).join('')}</select>`:pid?`<b>${esc(tName(pid))}</b>`:'<b class="none-t">Aucun</b>';
+    const rate=!S.termLoaded?'<b class="none">…</b>':x.rate==null?'<b class="none">—</b>':`<b>${x.rate} %</b><div class="meter ${c}" aria-hidden="true"><i style="width:${x.rate}%"></i></div>`;
+    const adv=pr.total?`<b>${pr.pct} %</b><div class="meter" aria-hidden="true"><i style="width:${pr.pct}%"></i></div>`:'<b class="none">—</b>';
+    const state=!n?'<span class="chip off">Aucun élève</span>':!S.termLoaded?'':x.missing.length?`<span class="chip warn" title="${esc(pl(x.missing.length,'cours sans présences','cours sans présences'))}">${x.missing.length} à rattraper</span>`:x.past?'<span class="chip ok">À jour</span>':'';
+    return `<article class="cl-row cl-cols" id="cl-${esc(g.id)}" data-act="class" data-id="${esc(g.id)}" tabindex="0" role="button" aria-label="${esc('Ouvrir '+g.nom)}">
+      <div class="cl-c"><span class="cl-num" aria-hidden="true">${esc(num)}</span><span class="cl-name"><b>${esc(g.nom)}</b>${g.description?`<small>${esc(g.description)}</small>`:''}</span></div>
+      <div class="cl-prin" data-act="stop" data-l="Prof principal">${pid?avHTML(tName(pid),''):'<span class="av none" aria-hidden="true">?</span>'}${prin}</div>
+      <div class="cl-n${n?'':' zero'}" data-l="Élèves">${n}</div>
+      <div class="cl-big cl-rate ${c}" data-l="Présence">${rate}</div>
+      <div class="cl-big cl-adv" data-l="Avancement">${adv}</div>
+      <div class="cl-st" data-l="Suivi des présences">${state}</div>
+      <div class="cl-go"><button class="btn sm" type="button" data-act="see-group" data-id="${esc(g.id)}" title="Voir l’horaire" aria-label="${esc('Horaire de '+g.nom)}">${icon('cal')}<span class="cl-go-t">Horaire</span></button>${icon('right')}</div>
     </article>`;
   }).join('');
-  return tb+add+`<div class="cl-grid">${cards}</div>`;
+  const hd='<div class="cl-hd cl-cols" aria-hidden="true"><span>Classe</span><span>Prof principal</span><span class="n">Élèves</span><span>Présence</span><span class="cl-adv">Avancement</span><span>Suivi</span><span></span></div>';
+  return tb+add+`<div class="cl-list">${hd}${rows}</div>`;
 }
 function classFiche(){
   const g=byId(S.data.groupes,S.pg.fiche);
@@ -2782,7 +2822,7 @@ document.addEventListener('change',async e=>{
 });
 $('#scrim').addEventListener('click',()=>closeDrawer());
 document.addEventListener('keydown',e=>{
-  if((e.key==='Enter'||e.key===' ')&&e.target&&e.target.classList&&e.target.classList.contains('cl-card')){e.preventDefault();openFiche('classes',e.target.dataset.id);return;}
+  if((e.key==='Enter'||e.key===' ')&&e.target&&e.target.classList&&e.target.classList.contains('cl-row')){e.preventDefault();openFiche('classes',e.target.dataset.id);return;}
   if(e.key==='Escape'&&DRAG){e.preventDefault();endDrag(false);return;}
   if(e.key==='Escape'&&S.dr){e.preventDefault();closeDrawer();return;}
   if(!S.dr&&S.pg&&S.pg.fiche&&(S.page==='eleves'||S.page==='personnel'||S.page==='classes')&&!e.altKey&&!e.ctrlKey&&!e.metaKey&&!/^(INPUT|SELECT|TEXTAREA)$/.test((e.target&&e.target.tagName)||'')){

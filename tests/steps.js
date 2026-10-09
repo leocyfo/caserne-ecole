@@ -111,8 +111,8 @@ ok('exam drawer',$('#x-titre')&&$('#x-titre').value==='Oral en anglais');
 click($('#dr-close'));await wait(30);
 // classes
 click($('#nav-classes'));await wait(40);
-ok('classes page',$$('.t-card').length===2);
-click($('.cl-card[data-id="g-301"]'));await wait(80);click($('#fi-tab-cours'));await wait(60);
+ok('classes page',$$('.cl-row').length===2&&!!$('.cl-hd'));
+click($('#cl-g-301'));await wait(80);click($('#fi-tab-cours'));await wait(60);
 ok('class courses table',$$('select[data-assign]').length===6);
 const sel=$('select[data-assign="c-mat-301"]');sel.value='e-roy';sel.dispatchEvent(new Event('change',{bubbles:true}));await wait(120);
 ok('assign teacher',window.__store.get('cours/c-mat-301').enseignant==='e-roy');
@@ -143,9 +143,9 @@ const pg=store().find(([k,v])=>k.startsWith('enseignants/')&&v.nom==='Paul Gendr
 ok('staff added',!!pg&&window.__store.get('dossiers-personnel/'+pg[0].split('/')[1]).telephone==='418 555-0199');
 // présences (dans les classes)
 click($('#nav-classes'));await wait(120);
-ok('class att cards',$$('.cl-card').length===2&&/Présence/.test($('#cl-g-301 .cl-stats').textContent)&&!$('.att-card')&&!!$('#pp-mois'));
+ok('class att cards',$$('.cl-row').length===2&&/Présence/.test($('.cl-hd').textContent)&&!!$('#cl-g-301 .cl-rate')&&!$('.att-card')&&!!$('#pp-mois'));
 click($('#pp-annee'));await wait(40);
-ok('class att rate',/%/.test($('#cl-g-301 .cl-stats').textContent),$('#cl-g-301 .cl-stats').textContent);
+ok('class att rate',/%/.test($('#cl-g-301 .cl-rate').textContent),$('#cl-g-301 .cl-rate').textContent);
 click($('#cl-g-301'));await wait(100);
 ok('class att table',$$('.fiche-tabs button').length===4&&$$('.fiche-body tbody tr').some(r=>/Nathan Ouellet/.test(r.textContent))&&/Absences/.test($('.fiche-body thead').textContent)&&$('#pp-annee').getAttribute('aria-pressed')==='true');
 click($('#fi-tab-rattraper'));await wait(60);

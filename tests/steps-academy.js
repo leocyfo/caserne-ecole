@@ -122,8 +122,8 @@ ok('session restored',xpm().tags[0]==='Théorie'&&xpm().debut==='08:00'&&xpm().f
 click($('#dr-close'));await wait(40);
 // classes
 click($('#nav-classes'));await wait(50);
-ok('5 classes',$$('.t-card').length===5);
-ok('class cards',$$('.cl-card').length===5&&/12/.test($('#cl-c119 .cl-stats').textContent)&&!!$('#cl-c119 .cl-prog')&&!!$('#m-pr-c119'));
+ok('5 classes',$$('.cl-row').length===5);
+ok('class rows',$$('.cl-row').length===5&&$('#cl-c119 .cl-n').textContent.trim()==='12'&&!!$('#cl-c119 .cl-adv .meter')&&!!$('#m-pr-c119')&&/Aucun élève/.test($('#cl-c120 .cl-st').textContent));
 click($('#cl-c119'));await wait(80);
 ok('class fiche',/Classe 119/.test($('#fi-name').textContent)&&$$('.fiche-tabs button').length===4&&$$('.fh-stats>div').length===5&&$$('.fiche-list .fl-item').length===5);
 ok('roles in class list',/Capitaine/.test($('#main').textContent)&&$$('.fiche-body tbody tr').length===12);
@@ -138,7 +138,7 @@ click($('#m-add-open'));await wait(60);
 $('#m-gname').value='Classe 124';$('[data-form=m-add-group]').requestSubmit();await wait(300);
 ok('class added opens fiche',/Classe 124/.test(($('#fi-name')||{}).textContent||''));
 click($('#fi-tab-reglages'));await wait(60);click($('[data-act=m-ask]'));await wait(60);click($('[data-act=m-del-g]'));await wait(350);
-ok('class deleted',!$$('.cl-card').some(x=>/Classe 124/.test(x.textContent))&&![...window.__store.keys()].some(k=>k.startsWith('groupes/')&&window.__store.get(k).nom==='Classe 124')&&$$('.cl-card').length===5);
+ok('class deleted',!$$('.cl-row').some(x=>/Classe 124/.test(x.textContent))&&![...window.__store.keys()].some(k=>k.startsWith('groupes/')&&window.__store.get(k).nom==='Classe 124')&&$$('.cl-row').length===5);
 // élèves
 click($('#nav-eleves'));await wait(80);
 ok('12 students',$$('#main tbody tr').length===12);
@@ -201,7 +201,7 @@ ok('3 teachers',$$('#main tbody tr').length===3&&/Marie Leduc/.test($('#main').t
 // présences (dans les classes)
 ok('no presences menu',!$('#nav-presences'));
 click($('#nav-classes'));await wait(150);
-ok('att cards',$$('.cl-card').length===5&&!$('.att-card')&&/%/.test($('#cl-c119 .cl-stats').textContent),$('#cl-c119 .cl-stats').textContent);
+ok('att cards',$$('.cl-row').length===5&&!$('.att-card')&&/%/.test($('#cl-c119 .cl-rate').textContent),$('#cl-c119 .cl-rate').textContent);
 click($('#cl-c119'));await wait(100);
 ok('att class fiche',/Classe 119/.test($('#fi-name').textContent)&&$$('.fiche-tabs button').length===4&&$$('.fiche-body tbody tr').length===12&&$$('.fh-stats>div').length===5&&/Présence/.test($('.fh-stats').textContent));
 click($('#fi-tab-rattraper'));await wait(60);
@@ -209,7 +209,7 @@ ok('att to catch up',$$('.fiche-body [data-act=open-att]').length>0||/Toutes les
 click($('#pp-annee'));await wait(100);
 ok('att period in fiche',$('#pp-annee').getAttribute('aria-pressed')==='true'&&!!$('#fi-name'));
 click($('#fi-back'));await wait(100);
-ok('att back',$$('.cl-card').length===5);
+ok('att back',$$('.cl-row').length===5);
 /* ABS */
 click($('#nav-personnel'));await wait(60);
 click($('#pt-personnel'));await wait(60);
