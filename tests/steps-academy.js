@@ -28,6 +28,7 @@ const am=$('.cc[data-key="k119-m08_a20261006am_2026-10-06"]');
 {const c=$('.cc[data-key="k119-m08_a20261006am_2026-10-06"]');ok('card moment + code',!!c&&c.querySelector('.cc-time').textContent==='Avant-midi'&&/^M8 /.test(c.querySelector('strong').textContent)&&!/d h/.test(c.querySelector('.cc-top').textContent),c&&c.querySelector('strong').textContent);}
 ok('card session label',/Séance 8.1/.test(($('.cc[data-key="k119-m08_a20261006am_2026-10-06"] .cc-meta')||{}).textContent||''));
 ok('119 AM today',!!am&&/9\/12 marqués/.test(am.textContent),am&&am.textContent.replace(/\s+/g,' ').slice(0,120));
+{const ex=$$('#main .week .cc.kx:not(.has-badge)'),th=$('#main .week .cc.k0');ok('exams dark',ex.length>2&&ex.every(x=>getComputedStyle(x).backgroundColor==='rgb(159, 45, 53)')&&!!th&&getComputedStyle(th).backgroundColor!=='rgb(159, 45, 53)',ex.length);}
 ok('exam doc on board',$$('#main .cc.exam').some(x=>/Métier et formation/.test(x.textContent)));
 // exam drawer with results
 click($$('#main .cc.exam').find(x=>/Métier et formation/.test(x.textContent)));await wait(50);
