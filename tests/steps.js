@@ -112,7 +112,7 @@ click($('#dr-close'));await wait(30);
 // classes
 click($('#nav-classes'));await wait(40);
 ok('classes page',$$('.t-card').length===2);
-click($('[data-act=m-open][data-id="g-301"]'));await wait(40);
+click($('.cl-card[data-id="g-301"]'));await wait(80);click($('#fi-tab-cours'));await wait(60);
 ok('class courses table',$$('select[data-assign]').length===6);
 const sel=$('select[data-assign="c-mat-301"]');sel.value='e-roy';sel.dispatchEvent(new Event('change',{bubbles:true}));await wait(120);
 ok('assign teacher',window.__store.get('cours/c-mat-301').enseignant==='e-roy');

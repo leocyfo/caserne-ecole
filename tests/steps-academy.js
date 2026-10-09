@@ -123,9 +123,22 @@ click($('#dr-close'));await wait(40);
 // classes
 click($('#nav-classes'));await wait(50);
 ok('5 classes',$$('.t-card').length===5);
-click($('[data-act=m-open][data-id="c119"]'));await wait(50);
+ok('class cards',$$('.cl-card').length===5&&/12/.test($('#cl-c119 .cl-stats').textContent)&&!!$('#cl-c119 .cl-prog')&&!!$('#m-pr-c119'));
+click($('#cl-c119'));await wait(80);
+ok('class fiche',/Classe 119/.test($('#fi-name').textContent)&&$$('.fiche-tabs button').length===3&&$$('.fh-stats>div').length===5&&$$('.fiche-list .fl-item').length===5);
+ok('roles in class list',/Capitaine/.test($('#main').textContent)&&$$('.fiche-body tbody tr').length===12);
+click($('#fi-tab-cours'));await wait(60);
 ok('hours column',$$('.tbl td .chip').some(x=>/\/ 75 h/.test(x.textContent)),$$('.tbl td .chip').slice(0,3).map(x=>x.textContent).join('|'));
-ok('roles in class list',/Capitaine/.test($('#main').textContent));
+click($('#fi-tab-reglages'));await wait(60);
+$('#m-gdesc').value='Intervention en sécurité incendie (groupe A)';
+$('[data-form=m-save-group]').requestSubmit();await wait(250);
+ok('class saved',window.__store.get('groupes/c119').description==='Intervention en sécurité incendie (groupe A)');
+click($('#fi-back'));await wait(80);
+click($('#m-add-open'));await wait(60);
+$('#m-gname').value='Classe 124';$('[data-form=m-add-group]').requestSubmit();await wait(300);
+ok('class added opens fiche',/Classe 124/.test(($('#fi-name')||{}).textContent||''));
+click($('#fi-tab-reglages'));await wait(60);click($('[data-act=m-ask]'));await wait(60);click($('[data-act=m-del-g]'));await wait(350);
+ok('class deleted',!$$('.cl-card').some(x=>/Classe 124/.test(x.textContent))&&![...window.__store.keys()].some(k=>k.startsWith('groupes/')&&window.__store.get(k).nom==='Classe 124')&&$$('.cl-card').length===5);
 // élèves
 click($('#nav-eleves'));await wait(80);
 ok('12 students',$$('#main tbody tr').length===12);

@@ -436,6 +436,30 @@ legend{font-size:13px;color:var(--ink-2);font-weight:600;padding:0 4px}
 .acc-list li:first-child{border-top:0}
 
 .need-t{color:var(--warn)}
+/* Classes : cartes */
+.cl-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,330px),1fr));gap:14px}
+.t-card.cl-card{display:flex;flex-direction:column;gap:14px;padding:18px 20px;background:var(--surface);border:1px solid var(--line);border-radius:12px;cursor:pointer;transition:border-color .15s,box-shadow .15s}
+.cl-card:hover,.cl-card:focus-visible{border-color:#B9CBE0;box-shadow:0 4px 14px rgba(20,33,50,.08)}
+.cl-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.cl-top .ic{width:18px;height:18px;color:var(--muted);flex:none;margin-top:4px}
+.cl-name h3{margin:0;font-size:20px;line-height:1.2;color:var(--ink)}
+.cl-name p{margin:3px 0 0;font-size:13px;color:var(--muted)}
+.cl-prin{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:9px;background:var(--surface-2);cursor:default}
+.cl-prin label{display:flex;flex-direction:column;gap:2px;flex:1;min-width:0;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.cl-prin select{min-height:32px;font-size:14px;font-weight:700;text-transform:none;letter-spacing:0;color:var(--ink);border:0;background:transparent;padding:0;cursor:pointer}
+.cl-stats{display:grid;grid-template-columns:repeat(3,1fr);margin:0;gap:8px}
+.cl-stats dt{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted)}
+.cl-stats dd{margin:2px 0 0;font-size:22px;font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums}
+.cl-stats dd.ok{color:var(--ok)}.cl-stats dd.warn{color:var(--warn)}.cl-stats dd.bad{color:var(--bad)}
+.cl-prog-top{display:flex;justify-content:space-between;font-size:12.5px;color:var(--muted);margin-bottom:5px}
+.cl-prog-top b{color:var(--ink)}
+.cl-prog .meter{margin-bottom:4px}
+.cl-prog small{font-size:12px;color:var(--muted)}
+.cl-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding-top:12px;border-top:1px solid var(--line-2)}
+.cl-add{margin-bottom:0}
+.stackf{display:flex;flex-direction:column;gap:12px}
+.av.cl-av{background:var(--role);font-size:20px;letter-spacing:.02em}
+@media (prefers-reduced-motion: reduce){.t-card.cl-card{transition:none}}
 .t-prin{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:var(--ink-2)}
 .t-prin select{min-height:34px;font-size:13px}
 .row-prin{display:block;margin-top:4px;font-size:12px;font-weight:600;color:#60758F}
@@ -1259,24 +1283,76 @@ function studentMain(){
 /* ---------- Pages : classes ---------- */
 const dis=()=>S.busy?' disabled':'';
 function confirmBox(text,yesAct,id){return `<div class="confirm"><p>${text}</p><div class="row"><button class="btn sm danger" type="button" data-act="${yesAct}" data-id="${esc(id)}"${dis()}>Supprimer</button><button class="btn sm ghost" type="button" data-act="m-ask-no">Annuler</button></div></div>`;}
+/* ---------- Classes : cartes, puis fiche de la classe en pleine page ---------- */
+/* Avancement de l’année d’une classe : séances déjà passées sur toutes les séances à l’horaire */
+function classProgress(gid){
+  const t=todayISO();let total=0,done=0;
+  for(const c of S.data.cours.filter(c=>c.groupe===gid)) for(const x of datedOf(c)){
+    if((c.annulees||[]).includes(`${x.date}@${x.id}`)||offDay(x.date)) continue;
+    total++;if(x.date<t)done++;
+  }
+  return {total,done,pct:total?Math.round(done/total*100):null};
+}
+/* Taux de présence d’une classe depuis la rentrée */
+function classRate(gid,stats){
+  let ok=0,n=0;for(const e of studentsOf(gid)){const s=stats[e.id];if(s){ok+=s.P+s.R;n+=s.n;}}
+  return n?Math.round(ok/n*100):null;
+}
+const rateCls=r=>r==null?'':r>=95?'ok':r>=90?'warn':'bad';
 function classesPage(){
-  const st=S.pg, gs=groups(), ts=teachers();
-  let h=`<section class="panel"><form class="inline-add" data-form="m-add-group"><label class="field"><span>Nouvelle classe</span><input id="m-gname" maxlength="60" placeholder="Ex. Groupe 303" autocomplete="off"></label><button class="btn primary" type="submit"${dis()}>${icon('plus')}Ajouter la classe</button></form></section>`;
-  if(!gs.length) return h+'<p class="help">Aucune classe pour l’instant. Ajoutez-en une, puis inscrivez ses élèves.</p>';
-  h+='<div class="stack">'+gs.map(g=>{
-    const els=studentsOf(g.id), cs=S.data.cours.filter(c=>c.groupe===g.id).sort((a,b)=>collator.compare(a.titre||'',b.titre||''));
-    const per=cs.reduce((n,c)=>n+activeSlots(c).length,0), nDated=cs.reduce((n,c)=>n+datedOf(c).length,0), open=st.open===g.id, conf=st.ask===g.id, unassigned=cs.filter(c=>!byId(S.data.enseignants,c.enseignant)).length;
-    return `<div class="t-card"><div class="t-head"><div class="t-name"><span class="nm">${esc(g.nom)}</span><span class="muted sm">${pl(els.length,'élève inscrit','élèves inscrits')} · ${cs.length} cours · ${nDated?pl(nDated,'séance à l’horaire','séances à l’horaire'):pl(per,'période','périodes')+' par semaine'}${unassigned?` · <b style="color:var(--warn)">${unassigned} sans enseignant</b>`:''}</span></div>
-      <div class="row"><label class="t-prin"><span>Prof principal</span><select id="m-pr-${esc(g.id)}" data-gp="${esc(g.id)}"${isAdmin()?'':' disabled'}${dis()}><option value="">Aucun</option>${ts.map(t=>`<option value="${esc(t.id)}"${g.principal===t.id?' selected':''}>${esc(t.nom)}</option>`).join('')}</select></label><button class="btn sm" type="button" data-act="see-group" data-id="${esc(g.id)}">Voir l’horaire</button><button class="btn sm" type="button" id="m-open-${esc(g.id)}" data-act="m-open" data-id="${esc(g.id)}" aria-expanded="${open}">${open?'Fermer':'Gérer'}</button><button class="btn sm ghost" type="button" data-act="m-ask" data-id="${esc(g.id)}">Supprimer</button></div></div>
-      ${conf?confirmBox(`Supprimer ${esc(g.nom)} et ${pl(els.length,'élève','élèves')} ? Ses cours resteront à l’horaire, sans classe.`,'m-del-g',g.id):''}
-      ${open?`<section class="dr-sec"><h3>Cours et enseignants</h3>
-        ${cs.length?`<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Cours</th><th class="num">Séances</th><th class="num">Heures</th><th>Enseignant</th><th>Local</th><th></th></tr></thead><tbody>${cs.map(c=>`<tr><td><span class="row" style="gap:6px;flex-wrap:nowrap">${c.code?`<span class="chip ${tone(c)}">${esc(c.code)}</span>`:''}<b>${esc(c.titre)}</b></span></td><td class="num">${courseLoad(c).label}</td><td class="num">${courseLoad(c).hours}</td><td><select data-assign="${esc(c.id)}" aria-label="${esc('Enseignant de '+c.titre)}"${dis()}><option value="">À assigner</option>${ts.map(t=>`<option value="${esc(t.id)}"${c.enseignant===t.id?' selected':''}>${esc(t.nom)}</option>`).join('')}</select></td><td>${esc(c.salle||'—')}</td><td class="num"><button class="btn sm ghost" type="button" data-act="edit-course" data-id="${esc(c.id)}">Modifier</button></td></tr>`).join('')}</tbody></table></div>`:'<p class="help">Aucun cours pour cette classe.</p>'}
-        <div><button class="btn sm" type="button" data-act="new-course" data-g="${esc(g.id)}">${icon('plus')}Planifier un cours pour ${esc(g.nom)}</button></div></section>
-      <section class="dr-sec"><h3>Élèves inscrits</h3>
-        <ul class="plist">${els.map(e=>`<li><span><button class="link" type="button" data-act="student" data-id="${esc(e.id)}">${esc(e.nom)}</button>${e.fonction?`<span class="role-chip">${esc(e.fonction)}</span>`:''}</span><button type="button" class="x" data-act="m-del-el" data-id="${esc(e.id)}" aria-label="${esc('Retirer '+e.nom)}"${dis()}>×</button></li>`).join('')||'<li class="muted">Aucun élève pour l’instant.</li>'}</ul>
-        <form data-form="m-add-els" data-g="${esc(g.id)}"><label class="field"><span>Inscrire des élèves, un nom par ligne</span><textarea id="m-bulk-${esc(g.id)}" rows="3" placeholder="Prénom Nom"></textarea></label><div class="row"><button class="btn sm" type="submit"${dis()}>Inscrire les élèves</button></div></form></section>`:''}
-    </div>`;}).join('')+'</div>';
-  return h;
+  if(S.pg.fiche) return classFiche();
+  const st=S.pg, gs=groups(), ts=teachers(), stats=studentStats(yearStart(),todayISO());
+  const add=st.adding?`<section class="panel cl-add"><form class="inline-add" data-form="m-add-group"><label class="field"><span>Nom de la nouvelle classe</span><input id="m-gname" maxlength="60" placeholder="Ex. Classe 124" autocomplete="off"></label><button class="btn primary" type="submit"${dis()}>Ajouter</button><button class="btn ghost" type="button" data-act="m-adding">Annuler</button></form></section>`:'';
+  const tb=`<div class="toolbar"><p class="summary" style="margin:0"><span><b>${gs.length}</b>${gs.length>1?'classes':'classe'}</span><span><b>${S.data.eleves.length}</b>${S.data.eleves.length>1?'élèves':'élève'}</span></p><span class="grow"></span>${isAdmin()&&!st.adding?`<button class="btn primary" type="button" id="m-add-open" data-act="m-adding">${icon('plus')}Ajouter une classe</button>`:''}</div>`;
+  if(!gs.length) return tb+add+(st.adding?'':emptyBox('Aucune classe pour l’instant','Ajoutez une classe, puis inscrivez ses élèves et planifiez ses cours.'));
+  const cards=gs.map(g=>{
+    const els=studentsOf(g.id), nc=S.data.cours.filter(c=>c.groupe===g.id).length, pr=classProgress(g.id), r=classRate(g.id,stats), ex=upcomingExams(x=>x.grp===g.id,1)[0];
+    const pid=principalOf(g.id);
+    return `<article class="t-card cl-card" id="cl-${esc(g.id)}" data-act="class" data-id="${esc(g.id)}" tabindex="0" role="button" aria-label="${esc('Ouvrir '+g.nom)}">
+      <div class="cl-top"><div class="cl-name"><h3>${esc(g.nom)}</h3>${g.description?`<p>${esc(g.description)}</p>`:''}</div>${icon('right')}</div>
+      <div class="cl-prin" data-act="stop">${avHTML(pid?tName(pid):'?','')}<label><span>Prof principal</span><select id="m-pr-${esc(g.id)}" data-gp="${esc(g.id)}"${isAdmin()?'':' disabled'}${dis()}><option value="">Aucun</option>${ts.map(t=>`<option value="${esc(t.id)}"${g.principal===t.id?' selected':''}>${esc(t.nom)}</option>`).join('')}</select></label></div>
+      <dl class="cl-stats"><div><dt>Élèves</dt><dd>${els.length}</dd></div><div><dt>Cours</dt><dd>${nc}</dd></div><div><dt>Présence</dt><dd class="${rateCls(r)}">${r==null?'—':r+' %'}</dd></div></dl>
+      ${pr.total?`<div class="cl-prog"><div class="cl-prog-top"><span>Avancement de l’année</span><b>${pr.pct} %</b></div><div class="meter" role="img" aria-label="${pr.pct} % des séances passées"><i style="width:${pr.pct}%"></i></div><small>${pr.done} / ${pl(pr.total,'séance','séances')}</small></div>`:''}
+      <div class="cl-foot"><span class="muted sm">${ex?`Prochain examen : <b>${esc(dn(parse(ex.date))+' '+fMonthS.format(parse(ex.date)))}</b> · ${esc(ex.c?ex.c.titre:ex.e.titre)}`:'Aucun examen prévu'}</span><button class="btn sm" type="button" data-act="see-group" data-id="${esc(g.id)}">Voir l’horaire</button></div>
+    </article>`;
+  }).join('');
+  return tb+add+`<div class="cl-grid">${cards}</div>`;
+}
+function classFiche(){
+  const g=byId(S.data.groupes,S.pg.fiche);
+  // une classe qui vient d’être ajoutée arrive un instant plus tard
+  if(!g&&S.pg.justAdded===S.pg.fiche) return '<p class="help">Ouverture de la classe…</p>';
+  if(!g){S.pg.fiche=null;return classesPage();}
+  if(S.pg.justAdded===g.id) S.pg.justAdded=null;
+  const list=groups(), ts=teachers(), stats=studentStats(yearStart(),todayISO()), els=studentsOf(g.id);
+  const cs=S.data.cours.filter(c=>c.groupe===g.id).sort((a,b)=>collator.compare(a.code||'',b.code||'')||collator.compare(a.titre||'',b.titre||''));
+  const pr=classProgress(g.id), r=classRate(g.id,stats), ex=upcomingExams(x=>x.grp===g.id,1)[0], pid=principalOf(g.id);
+  const item=x=>`<span class="fl-name">${esc(x.nom)}</span><span class="fl-sub">${pl(studentsOf(x.id).length,'élève','élèves')}${principalOf(x.id)?' · '+esc(shortName(tName(principalOf(x.id)))):''}</span>`;
+  const chips=`${g.description?`<span class="chip off">${esc(g.description)}</span>`:''}<span class="chip ${pid?'k0':'off'}">${pid?'Prof principal · '+esc(tName(pid)):'Sans prof principal'}</span>`;
+  const actions=`<button class="btn sm primary" type="button" data-act="see-group" data-id="${esc(g.id)}">Voir l’horaire</button>${isAdmin()?`<button class="btn sm" type="button" data-act="new-course" data-g="${esc(g.id)}">${icon('plus')}Planifier un cours</button>`:''}`;
+  const stat=[['Élèves',String(els.length),''],['Cours',String(cs.length),''],['Présence',r==null?'—':r+' %',rateCls(r)],['Avancement',pr.pct==null?'—':pr.pct+' %',''],['Prochain examen',ex?esc(dn(parse(ex.date))+' '+fMonthS.format(parse(ex.date))):'Aucun','']];
+  const num=String(g.nom).replace(/^(Classe|Groupe)\s+/i,'').slice(0,4);
+  const head=ficheHead(g.nom,chips,actions,stat,`<span class="av lg cl-av" aria-hidden="true">${esc(num)}</span>`);
+  const content=tab=>{
+    if(tab==='cours'){
+      return `<section class="panel">${cs.length?`<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Cours</th><th class="num">Séances</th><th class="num">Heures</th><th>Enseignant</th><th>Local</th><th></th></tr></thead><tbody>${cs.map(c=>`<tr><td><span class="row" style="gap:6px;flex-wrap:nowrap">${c.code?`<span class="chip ${tone(c)}">${esc(c.code)}</span>`:''}<b>${esc(c.titre)}</b></span></td><td class="num">${courseLoad(c).label}</td><td class="num">${courseLoad(c).hours}</td><td><select data-assign="${esc(c.id)}" aria-label="${esc('Enseignant de '+c.titre)}"${dis()}><option value="">À assigner</option>${ts.map(t=>`<option value="${esc(t.id)}"${c.enseignant===t.id?' selected':''}>${esc(t.nom)}</option>`).join('')}</select></td><td>${esc(c.salle||'—')}</td><td class="num"><button class="btn sm ghost" type="button" data-act="edit-course" data-id="${esc(c.id)}">Modifier</button></td></tr>`).join('')}</tbody></table></div>`:'<p class="help">Aucun cours pour cette classe.</p>'}
+        ${isAdmin()?`<div class="row" style="margin-top:12px"><button class="btn sm" type="button" data-act="new-course" data-g="${esc(g.id)}">${icon('plus')}Planifier un cours pour ${esc(g.nom)}</button></div>`:''}</section>`;
+    }
+    if(tab==='reglages'){
+      const conf=S.pg.ask===g.id;
+      return `<div class="fiche-two"><section class="panel"><h2>La classe</h2><form class="stackf" data-form="m-save-group" data-g="${esc(g.id)}">
+          <label class="field"><span>Nom</span><input id="m-gnom" value="${esc(g.nom)}" maxlength="60" autocomplete="off"></label>
+          <label class="field"><span>Description</span><input id="m-gdesc" value="${esc(g.description||'')}" maxlength="120" placeholder="Ex. Intervention en sécurité incendie" autocomplete="off"></label>
+          <label class="field"><span>Prof principal</span><select id="m-pr-fiche" data-gp="${esc(g.id)}"${dis()}><option value="">Aucun</option>${ts.map(t=>`<option value="${esc(t.id)}"${g.principal===t.id?' selected':''}>${esc(t.nom)}</option>`).join('')}</select></label>
+          <div class="row"><button class="btn primary" type="submit"${dis()}>Enregistrer</button></div></form></section>
+        <section class="panel"><h2>Supprimer la classe</h2><p class="help">Ses ${pl(els.length,'élève est retiré','élèves sont retirés')} de l’école. Ses cours restent à l’horaire, sans classe.</p>
+          ${conf?confirmBox(`Supprimer ${esc(g.nom)} et ${pl(els.length,'élève','élèves')} ?`,'m-del-g',g.id):`<div class="row" style="margin-top:10px"><button class="btn sm danger" type="button" data-act="m-ask" data-id="${esc(g.id)}"${dis()}>Supprimer la classe</button></div>`}</section></div>`;
+    }
+    const rows=els.map(e=>{const rr=rateOf(stats[e.id]);return `<tr class="row-link" data-act="student" data-id="${esc(e.id)}"><td><button class="link" type="button" data-act="student" data-id="${esc(e.id)}">${esc(e.nom)}</button>${e.fonction?`<span class="role-chip">${esc(e.fonction)}</span>`:''}</td><td class="num">${e.numero!=null?esc(e.numero):'—'}</td><td class="num">${rr==null?'<span class="muted">—</span>':`<span class="chip ${rateCls(rr)}">${rr} %</span>`}</td><td class="num"><button type="button" class="x" data-act="m-del-el" data-id="${esc(e.id)}" aria-label="${esc('Retirer '+e.nom)}" title="Retirer de la classe"${dis()}>×</button></td></tr>`;}).join('');
+    return `<div class="fiche-two"><section class="panel">${els.length?`<div class="tbl-wrap"><table class="tbl" style="min-width:0"><thead><tr><th>Élève</th><th class="num">N°</th><th class="num">Présence</th><th class="num"><span class="vh">Retirer</span></th></tr></thead><tbody>${rows}</tbody></table></div>`:'<p class="help">Aucun élève pour l’instant.</p>'}</section>
+      ${isAdmin()?`<section class="panel"><h2>Inscrire des élèves</h2><form data-form="m-add-els" data-g="${esc(g.id)}"><label class="field"><span>Un nom par ligne</span><textarea id="m-bulk-${esc(g.id)}" rows="6" placeholder="Prénom Nom"></textarea></label><div class="row" style="margin-top:8px"><button class="btn sm" type="submit"${dis()}>Inscrire les élèves</button></div></form></section>`:''}</div>`;
+  };
+  return ficheShell('classes',list,g,item,head,[['eleves','Élèves'],['cours','Cours'],['reglages','Réglages']],content);
 }
 
 function courseLoad(c){
@@ -1318,7 +1394,7 @@ function openFiche(page,id){
   if(S.page!==page){
     S.page=page;S.pg={};
     if(page==='eleves'){const e=byId(S.data.eleves,id);if(e&&from==='classes')S.pg.g=e.groupe;}
-    if(page==='eleves'||page==='presences')ensureTerm();
+    if(page==='eleves'||page==='presences'||page==='classes')ensureTerm();
   }else if(!S.pg.fiche) S.pg.listY=window.scrollY;
   S.pg.fiche=id;S.pg.from=from;S.dr=null;
   render();window.scrollTo({top:0});
@@ -1329,7 +1405,7 @@ function closeFiche(){
   S.pg.fiche=null;render();window.scrollTo({top:y});
 }
 function ficheStep(d){
-  const list=S.page==='eleves'?studentList():staff(), i=list.findIndex(x=>x.id===S.pg.fiche), n=list[i+d];
+  const list=S.page==='eleves'?studentList():S.page==='classes'?groups():staff(), i=list.findIndex(x=>x.id===S.pg.fiche), n=list[i+d];
   if(n){S.pg.fiche=n.id;render();window.scrollTo({top:0});const b=$(d<0?'#fi-prev':'#fi-next');if(b&&!b.disabled)b.focus({preventScroll:true});}
 }
 const ageOf=d=>{if(!d)return null;const b=parse(d),t=new Date();let a=t.getFullYear()-b.getFullYear();if(t.getMonth()<b.getMonth()||(t.getMonth()===b.getMonth()&&t.getDate()<b.getDate()))a--;return a>=0&&a<120?a:null;};
@@ -1338,7 +1414,7 @@ function ficheFacts(rows){return `<dl class="facts">${rows.map(([k,v,wide])=>`<d
 function ficheShell(kind,list,cur,listItem,head,tabs,content){
   const i=list.findIndex(x=>x.id===cur.id), prev=list[i-1], next=list[i+1];
   const from=S.pg.from&&S.pg.from!==S.page?S.pg.from:null;
-  const backLbl=from==='classes'?'Retour aux classes':from==='presences'?'Retour aux présences':kind==='eleves'?'Retour à la liste des élèves':'Retour à la liste du personnel';
+  const backLbl=from==='classes'?'Retour aux classes':from==='presences'?'Retour aux présences':kind==='eleves'?'Retour à la liste des élèves':kind==='classes'?'Retour aux classes':'Retour à la liste du personnel';
   const filt=kind==='eleves'?`<div class="fl-tools"><input class="search" id="s-q" type="search" placeholder="Rechercher" aria-label="Rechercher un élève" autocomplete="off" value="${esc(S.pg.q||'')}"><select id="s-g" aria-label="Classe"><option value="">Toutes les classes</option>${groups().map(x=>`<option value="${esc(x.id)}"${S.pg.g===x.id?' selected':''}>${esc(x.nom)}</option>`).join('')}</select></div>`:'';
   const nav=`<div class="fiche-nav"><button class="btn sm" type="button" id="fi-back" data-act="fi-back">${icon('left')}${backLbl}</button><span class="grow"></span>
     ${i>=0?`<span class="muted sm">${i+1} sur ${list.length}</span>`:''}
@@ -1346,7 +1422,7 @@ function ficheShell(kind,list,cur,listItem,head,tabs,content){
     <button class="btn sm" type="button" id="fi-next" data-act="fi-step" data-d="1"${next?` title="${esc(next.nom)} (→)"`:' disabled'}><span class="fi-lbl">${next?esc(next.nom):'Suivant'}</span>${icon('right')}</button></div>`;
   const tab=S.pg.tab&&tabs.some(t=>t[0]===S.pg.tab)?S.pg.tab:tabs[0][0];
   const tabBar=`<div class="seg fiche-tabs" role="group" aria-label="Sections de la fiche">${tabs.map(([k,l])=>`<button type="button" id="fi-tab-${k}" data-act="fi-tab" data-v="${k}" aria-pressed="${k===tab}">${l}</button>`).join('')}</div>`;
-  return `<div class="fiche"><aside class="fiche-list" aria-label="${kind==='eleves'?'Élèves':'Personnel'}">${filt}<ul>${list.map(x=>`<li><button type="button" class="fl-item" id="fl-${esc(x.id)}" data-act="${kind==='eleves'?'student':'staff'}" data-id="${esc(x.id)}" aria-current="${x.id===cur.id}">${listItem(x)}</button></li>`).join('')||'<li class="muted sm" style="padding:12px">Aucun résultat.</li>'}</ul></aside>
+  return `<div class="fiche"><aside class="fiche-list" aria-label="${kind==='eleves'?'Élèves':kind==='classes'?'Classes':'Personnel'}">${filt}<ul>${list.map(x=>`<li><button type="button" class="fl-item" id="fl-${esc(x.id)}" data-act="${kind==='eleves'?'student':kind==='classes'?'class':'staff'}" data-id="${esc(x.id)}" aria-current="${x.id===cur.id}">${listItem(x)}</button></li>`).join('')||'<li class="muted sm" style="padding:12px">Aucun résultat.</li>'}</ul></aside>
     <div class="fiche-main">${nav}${head}${tabBar}<div class="fiche-body">${content(tab)}</div></div></div>`;
 }
 /* Compte de la personne, affiché dans l’en-tête de sa fiche */
@@ -1365,7 +1441,7 @@ function acctBtn(id,role){
 }
 
 /* En-tête : identité, actions, puis quelques chiffres clés */
-const ficheHead=(name,chips,actions,stats)=>`<section class="panel fiche-head"><div class="fh-top">${avHTML(name,'','lg')}<div class="prof-id"><h2 id="fi-name">${esc(name)}</h2><div class="prof-chips">${chips}</div></div><div class="fiche-act">${actions}</div></div>
+const ficheHead=(name,chips,actions,stats,av)=>`<section class="panel fiche-head"><div class="fh-top">${av||avHTML(name,'','lg')}<div class="prof-id"><h2 id="fi-name">${esc(name)}</h2><div class="prof-chips">${chips}</div></div><div class="fiche-act">${actions}</div></div>
   <dl class="fh-stats">${stats.map(([k,v,cls])=>`<div><dt>${k}</dt><dd${cls?` class="${cls}"`:''}>${v}</dd></div>`).join('')}</dl></section>`;
 const rows=items=>items.length?`<ul class="plist">${items.join('')}</ul>`:'';
 
@@ -2463,7 +2539,7 @@ async function clearExamples(){
 /* ---------- Événements ---------- */
 function setWeek(d){S.week=d;S.day=defaultDay();subWeek();render();}
 function setRole(r){if(r===S.role)return;S.role=r;S.page='calendar';S.pg={};S.dr=null;S.confirmClear=false;savePrefs();render();}
-function goPage(p){S.page=p;S.pg={};if(p==='eleves'||p==='presences')ensureTerm();render();window.scrollTo({top:0});}
+function goPage(p){S.page=p;S.pg={};if(p==='eleves'||p==='presences'||p==='classes')ensureTerm();render();window.scrollTo({top:0});}
 function openSession(key,date){
   const s=date?findSess(date,key):weekItems().find(x=>x.key===key);if(!s)return;
   const base={key,coursId:s.c.id,slotId:s.sl.id,date:s.date};
@@ -2581,11 +2657,13 @@ document.addEventListener('click',async e=>{
       if(i>=0)arr.splice(i,1);else arr.push(tag);
       S.busy=true;renderDrawer();await write(()=>col('cours').doc(c.id).update({annulees:arr}),i>=0?'Cours rétabli':'Cours annulé pour cette date');S.busy=false;render();break;}
     /* classes */
-    case 'm-open':pg.open=pg.open===b.dataset.id?null:b.dataset.id;render();break;
+    case 'class':openFiche('classes',b.dataset.id);break;
+    case 'stop':break;
+    case 'm-adding':pg.adding=!pg.adding;render();if(pg.adding){const x=$('#m-gname');if(x)x.focus();}break;
     case 'm-ask':pg.ask=b.dataset.id;render();break;
     case 'm-ask-no':pg.ask=null;render();break;
     case 'm-del-el':{if(S.busy)break;S.busy=true;render();await write(()=>col('eleves').doc(b.dataset.id).delete(),'Élève retiré');S.busy=false;render();break;}
-    case 'm-del-g':{const id=b.dataset.id;const fns=studentsOf(id).map(e=>()=>col('eleves').doc(e.id).delete());fns.push(()=>col('groupes').doc(id).delete());pg.ask=null;await runAll(fns,'Classe supprimée');break;}
+    case 'm-del-g':{const id=b.dataset.id;pg.justAdded=null;const fns=studentsOf(id).map(e=>()=>col('eleves').doc(e.id).delete());fns.push(()=>col('groupes').doc(id).delete());pg.ask=null;await runAll(fns,'Classe supprimée');break;}
     /* calendrier scolaire */
     case 'p-del-comp':{if(S.busy)break;const c=configDoc();c.competences=c.competences.filter(k=>String(k.code)!==b.dataset.code);await saveConfig(c,'Nom de cours retiré');break;}
     case 'p-del-conge':case 'p-del-etape':{if(S.busy)break;const c=configDoc(),k=a==='p-del-conge'?'conges':'etapes';c[k].splice(+b.dataset.i,1);await saveConfig(c,'Retiré du calendrier');break;}
@@ -2605,7 +2683,13 @@ document.addEventListener('submit',async e=>{
     if(S.data.groupes.some(g=>collator.compare(g.nom,nom)===0)){toast('Cette classe existe déjà.','bad');return;}
     const id=genId('g');i.value='';
     S.busy=true;render();const ok=await write(()=>col('groupes').doc(id).set({nom}),'Classe ajoutée');S.busy=false;
-    if(ok)S.pg.open=id;else i.value=nom;render();return;
+    if(ok){S.pg.adding=false;S.pg.fiche=id;S.pg.justAdded=id;S.pg.tab='eleves';}else i.value=nom;render();return;
+  }
+  if(k==='m-save-group'){
+    const gid=f.dataset.g, nom=($('#m-gnom')||{}).value||'', desc=($('#m-gdesc')||{}).value||'';
+    if(!nom.trim()){toast('Indiquez le nom de la classe.','bad');return;}
+    if(S.data.groupes.some(g=>g.id!==gid&&collator.compare(g.nom,nom.trim())===0)){toast('Une autre classe porte déjà ce nom.','bad');return;}
+    S.busy=true;render();await write(()=>col('groupes').doc(gid).update({nom:nom.trim(),description:desc.trim()}),'Classe enregistrée');S.busy=false;render();return;
   }
   if(k==='m-add-els'){
     const gid=f.dataset.g, t=document.getElementById('m-bulk-'+gid);if(!t)return;
@@ -2706,9 +2790,10 @@ document.addEventListener('change',async e=>{
 });
 $('#scrim').addEventListener('click',()=>closeDrawer());
 document.addEventListener('keydown',e=>{
+  if((e.key==='Enter'||e.key===' ')&&e.target&&e.target.classList&&e.target.classList.contains('cl-card')){e.preventDefault();openFiche('classes',e.target.dataset.id);return;}
   if(e.key==='Escape'&&DRAG){e.preventDefault();endDrag(false);return;}
   if(e.key==='Escape'&&S.dr){e.preventDefault();closeDrawer();return;}
-  if(!S.dr&&S.pg&&S.pg.fiche&&(S.page==='eleves'||S.page==='personnel')&&!e.altKey&&!e.ctrlKey&&!e.metaKey&&!/^(INPUT|SELECT|TEXTAREA)$/.test((e.target&&e.target.tagName)||'')){
+  if(!S.dr&&S.pg&&S.pg.fiche&&(S.page==='eleves'||S.page==='personnel'||S.page==='classes')&&!e.altKey&&!e.ctrlKey&&!e.metaKey&&!/^(INPUT|SELECT|TEXTAREA)$/.test((e.target&&e.target.tagName)||'')){
     if(e.key==='ArrowLeft'){e.preventDefault();ficheStep(-1);return;}
     if(e.key==='ArrowRight'){e.preventDefault();ficheStep(1);return;}
     if(e.key==='Escape'){e.preventDefault();closeFiche();return;}
