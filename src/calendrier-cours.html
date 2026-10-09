@@ -447,6 +447,10 @@ legend{font-size:13px;color:var(--ink-2);font-weight:600;padding:0 4px}
 .cl-add{margin-bottom:0}
 .stackf{display:flex;flex-direction:column;gap:12px}
 .att-rate{display:flex;align-items:baseline;gap:8px}
+.att-sum-line{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;margin:0;font-size:15px;color:var(--ink-2)}
+.att-sum-line b{font-size:20px}
+.att-sum-line b.ok{color:var(--ok)}.att-sum-line b.warn{color:var(--warn)}.att-sum-line b.bad{color:var(--bad)}
+.att-miss{align-self:flex-start}
 .att-rate b{font-size:34px;line-height:1;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink)}
 .att-rate b.ok{color:var(--ok)}.att-rate b.warn{color:var(--warn)}.att-rate b.bad{color:var(--bad)}
 .att-rate span{font-size:13px;color:var(--muted)}
@@ -1436,7 +1440,7 @@ function acctBtn(id,role){
 }
 
 /* En-tête : identité, actions, puis quelques chiffres clés */
-const ficheHead=(name,chips,actions,stats,av)=>`<section class="panel fiche-head"><div class="fh-top">${av||avHTML(name,'','lg')}<div class="prof-id"><h2 id="fi-name">${esc(name)}</h2><div class="prof-chips">${chips}</div></div><div class="fiche-act">${actions}</div></div>
+const ficheHead=(name,chips,actions,stats,av)=>`<section class="panel fiche-head"><div class="fh-top">${av||avHTML(name,'','lg')}<div class="prof-id"><h2 id="fi-name">${esc(name)}</h2>${chips?`<div class="prof-chips">${chips}</div>`:''}</div><div class="fiche-act">${actions}</div></div>
   <dl class="fh-stats">${stats.map(([k,v,cls])=>`<div><dt>${k}</dt><dd${cls?` class="${cls}"`:''}>${v}</dd></div>`).join('')}</dl></section>`;
 const rows=items=>items.length?`<ul class="plist">${items.join('')}</ul>`:'';
 
@@ -1560,52 +1564,39 @@ function attStudents(tabs){
   const head=`<div class="toolbar">${tabs}<span class="grow"></span>${periodSeg(per)}</div>`;
   if(!S.termLoaded) return head+'<div class="empty"><p>Chargement des présences…</p></div>';
   const stats=studentStats(from,to), sess=sessionsBetween(from,to).filter(s=>!s.cancelled&&isPast(s));
-  let P=0,A=0,R=0,M=0,N=0;for(const s of Object.values(stats)){P+=s.P;A+=s.A;R+=s.R;M+=s.M;N+=s.n;}
+  let P=0,R=0,N=0;for(const s of Object.values(stats)){P+=s.P;R+=s.R;N+=s.n;}
   const per_g=groups().map(g=>({g,x:classAtt(g.id,from,to,stats,sess)}));
-  const missing=per_g.flatMap(y=>y.x.missing).sort((a,b)=>b.date.localeCompare(a.date)||b.start-a.start);
-  const rate=N?Math.round((P+R)/N*100):null;
-  const kpis=`<div class="kpis"><div class="kpi"><span>Taux de présence</span><b class="${rateCls(rate)}">${rate==null?'—':rate+' %'}</b><small>${pl(N,'présence notée','présences notées')}</small></div><div class="kpi${A?' need':''}"><span>Absences</span><b>${A}</b><small>${M} ${M>1?'motivées':'motivée'} en plus</small></div><div class="kpi"><span>Retards</span><b>${R}</b></div><div class="kpi${missing.length?' need':''}"><span>Cours sans présences</span><b>${missing.length}</b><small>sur ${pl(sess.length,'cours donné','cours donnés')}</small></div></div>`;
-  const cards=per_g.map(({g,x})=>{const pid=principalOf(g.id), c=rateCls(x.rate);
+  const miss=per_g.reduce((n,y)=>n+y.x.missing.length,0), rate=N?Math.round((P+R)/N*100):null;
+  const sum=`<p class="att-sum-line">Présence globale <b class="${rateCls(rate)}">${rate==null?'—':rate+' %'}</b>${miss?`<span class="chip warn">${pl(miss,'cours sans présences','cours sans présences')}</span>`:'<span class="chip ok">Toutes les présences sont prises</span>'}</p>`;
+  const cards=per_g.map(({g,x})=>{const c=rateCls(x.rate);
     return `<article class="t-card cl-card att-card" id="ac-${esc(g.id)}" data-act="att-class" data-id="${esc(g.id)}" tabindex="0" role="button" aria-label="${esc('Présences de '+g.nom)}">
-      <div class="cl-top"><div class="cl-name"><h3>${esc(g.nom)}</h3><p>${pid?'Prof principal · '+esc(tName(pid)):pl(x.els.length,'élève','élèves')}</p></div>${icon('right')}</div>
+      <div class="cl-top"><div class="cl-name"><h3>${esc(g.nom)}</h3></div>${icon('right')}</div>
       <div class="att-rate"><b class="${c}">${x.rate==null?'—':x.rate+' %'}</b><span>${x.rate==null?'aucune présence notée':'de présence'}</span></div>
-      <div class="meter ${c}" role="img" aria-label="${x.rate==null?'Aucune présence':x.rate+' % de présence'}"><i style="width:${x.rate||0}%"></i></div>
-      <dl class="cl-stats"><div><dt>Absences</dt><dd>${x.A+x.M}</dd></div><div><dt>Retards</dt><dd>${x.R}</dd></div><div><dt>Cours complétés</dt><dd>${x.done} / ${x.past}</dd></div></dl>
-      <div class="cl-foot">${x.missing.length?`<span class="chip warn">${pl(x.missing.length,'présence à rattraper','présences à rattraper')}</span>`:'<span class="chip ok">Présences à jour</span>'}<span class="muted sm">${pl(x.els.length,'élève','élèves')}</span></div>
+      <div class="meter ${c}" aria-hidden="true"><i style="width:${x.rate||0}%"></i></div>
+      ${x.missing.length?`<span class="chip warn att-miss">${pl(x.missing.length,'présence à rattraper','présences à rattraper')}</span>`:''}
     </article>`;}).join('');
-  const watch=Object.entries(stats).map(([id,s])=>({e:byId(S.data.eleves,id),s})).filter(x=>x.e&&(x.s.A+x.s.M>=3||(x.s.n>=5&&rateOf(x.s)<90))).sort((a,b)=>(b.s.A+b.s.M)-(a.s.A+a.s.M)).slice(0,8);
-  const miss=missing.slice(0,8);
-  return head+kpis+(cards?`<div class="cl-grid">${cards}</div>`:'<p class="help">Aucune classe.</p>')+`<div class="fiche-two">
-    <section class="panel"><h2>Présences à rattraper</h2>${miss.length?`<div class="list">${miss.map(missRow).join('')}</div>${missing.length>8?`<p class="help">Et ${missing.length-8} autres.</p>`:''}`:'<p class="help">Toutes les présences de la période sont prises.</p>'}</section>
-    <section class="panel"><h2>Élèves à surveiller</h2>${watch.length?`<div class="list">${watch.map(x=>`<button type="button" class="lrow" data-act="student" data-id="${esc(x.e.id)}" style="grid-template-columns:minmax(0,1fr) auto"><span class="what"><span class="ti">${esc(x.e.nom)}</span><span class="sub">${esc(gName(x.e.groupe))} · ${pl(x.s.A+x.s.M,'absence','absences')} · ${pl(x.s.R,'retard','retards')}</span></span><span class="chip ${rateOf(x.s)>=90?'warn':'bad'}">${rateOf(x.s)} %</span></button>`).join('')}</div>`:'<p class="help">Aucun élève avec 3 absences ou plus, ni sous 90 % de présence.</p>'}</section></div>`;
+  return head+sum+(cards?`<div class="cl-grid">${cards}</div>`:'<p class="help">Aucune classe.</p>');
 }
-/* Fiche des présences d’une classe */
+/* Fiche des présences d’une classe : l’essentiel, les élèves les moins présents en premier */
 function attClassFiche(){
   const g=byId(S.data.groupes,S.pg.fiche);
   if(!g){S.pg.fiche=null;return attendancePage();}
   const per=S.pg.period||'mois', [from,to]=periodRange(per);
   if(!S.termLoaded) return '<div class="empty"><p>Chargement des présences…</p></div>';
   const stats=studentStats(from,to), sess=sessionsBetween(from,to).filter(s=>!s.cancelled&&isPast(s)), x=classAtt(g.id,from,to,stats,sess);
-  const list=groups(), pid=principalOf(g.id);
-  const item=y=>{const r=classAtt(y.id,from,to,stats,sess).rate;return `<span class="fl-name">${esc(y.nom)}</span><span class="fl-sub">${pl(studentsOf(y.id).length,'élève','élèves')}${r==null?'':`<span class="fl-rate ${rateCls(r)}">${r} %</span>`}</span>`;};
-  const chips=`<span class="chip ${pid?'k0':'off'}">${pid?'Prof principal · '+esc(tName(pid)):'Sans prof principal'}</span><span class="chip off">${per==='semaine'?'Cette semaine':per==='mois'?'Ce mois':'Depuis la rentrée'}</span>`;
+  const list=groups();
+  const item=y=>`<span class="fl-name">${esc(y.nom)}</span>`;
   const actions=`${periodSeg(per)}<button class="btn sm" type="button" data-act="class" data-id="${esc(g.id)}">Voir la classe</button>`;
-  const stat=[['Présence',x.rate==null?'—':x.rate+' %',rateCls(x.rate)],['Absences',String(x.A),x.A?'bad':''],['Motivées',String(x.M),''],['Retards',String(x.R),x.R?'warn':''],['Cours complétés',`${x.done} / ${x.past}`,x.missing.length?'warn':'']];
+  const stat=[['Présence',x.rate==null?'—':x.rate+' %',rateCls(x.rate)],['Absences',String(x.A+x.M),x.A?'bad':''],['Retards',String(x.R),x.R?'warn':''],['À rattraper',String(x.missing.length),x.missing.length?'warn':'']];
   const num=String(g.nom).replace(/^(Classe|Groupe)\s+/i,'').slice(0,4);
-  const head=ficheHead(g.nom,chips,actions,stat,`<span class="av lg cl-av" aria-hidden="true">${esc(num)}</span>`);
+  const head=ficheHead(g.nom,'',actions,stat,`<span class="av lg cl-av" aria-hidden="true">${esc(num)}</span>`);
   const content=tab=>{
-    if(tab==='cours'){
-      const byC={};
-      for(const s of sess.filter(s=>s.grp===g.id)){const b=byC[s.c.id]||(byC[s.c.id]={c:s.c,past:0,done:0,P:0,A:0,R:0,M:0,n:0});b.past++;const a=attInfo(s);if(a.state==='done')b.done++;}
-      for(const p of Object.values(S.data.presTerm)){if(!p||p.groupe!==g.id||p.date<from||p.date>to||!byC[p.cours])continue;const b=byC[p.cours];for(const v of Object.values(p.statuts||{}))if(b[v]!=null){b[v]++;b.n++;}}
-      const rows=Object.values(byC).sort((a,b)=>collator.compare(a.c.code||'',b.c.code||'')||collator.compare(a.c.titre,b.c.titre)).map(b=>{const r=b.n?Math.round((b.P+b.R)/b.n*100):null;return `<tr><td>${codeOf(b.c)}<b>${esc(b.c.titre)}</b></td><td class="num">${r==null?'<span class="muted">—</span>':`<span class="chip ${rateCls(r)}">${r} %</span>`}</td><td class="num">${b.A+b.M}</td><td class="num">${b.R}</td><td class="num">${b.done} / ${b.past}</td></tr>`;}).join('');
-      return `<section class="panel">${rows?`<div class="tbl-wrap"><table class="tbl" style="min-width:0"><thead><tr><th>Cours</th><th class="num">Présence</th><th class="num">Absences</th><th class="num">Retards</th><th class="num">Cours complétés</th></tr></thead><tbody>${rows}</tbody></table></div>`:'<p class="help">Aucun cours donné pendant cette période.</p>'}</section>`;
-    }
     if(tab==='rattraper') return `<section class="panel">${x.missing.length?`<div class="list">${x.missing.map(missRow).join('')}</div>`:'<p class="help">Toutes les présences de la période sont prises.</p>'}</section>`;
-    const rows=x.els.map(e=>{const s=stats[e.id],r=rateOf(s);return `<tr class="row-link" data-act="student" data-id="${esc(e.id)}"><td><button class="link" type="button" data-act="student" data-id="${esc(e.id)}">${esc(e.nom)}</button>${e.fonction?`<span class="role-chip">${esc(e.fonction)}</span>`:''}</td><td class="num">${r==null?'<span class="muted">—</span>':`<span class="chip ${rateCls(r)}">${r} %</span>`}</td><td class="num">${s?s.A:0}</td><td class="num">${s?s.M:0}</td><td class="num">${s?s.R:0}</td><td class="num">${s?s.n:0}</td></tr>`;}).join('');
-    return `<section class="panel">${rows?`<div class="tbl-wrap"><table class="tbl" style="min-width:0"><thead><tr><th>Élève</th><th class="num">Présence</th><th class="num">Absences</th><th class="num">Motivées</th><th class="num">Retards</th><th class="num">Cours notés</th></tr></thead><tbody>${rows}</tbody></table></div>`:'<p class="help">Aucun élève dans cette classe.</p>'}</section>`;
+    const els=x.els.slice().sort((a,b)=>{const ra=rateOf(stats[a.id]),rb=rateOf(stats[b.id]);return (ra==null?101:ra)-(rb==null?101:rb)||collator.compare(a.nom,b.nom);});
+    const rows=els.map(e=>{const s=stats[e.id],r=rateOf(s);return `<tr class="row-link" data-act="student" data-id="${esc(e.id)}"><td><button class="link" type="button" data-act="student" data-id="${esc(e.id)}">${esc(e.nom)}</button></td><td class="num">${r==null?'<span class="muted">—</span>':`<span class="chip ${rateCls(r)}">${r} %</span>`}</td><td class="num">${s?s.A+s.M:0}</td><td class="num">${s?s.R:0}</td></tr>`;}).join('');
+    return `<section class="panel">${rows?`<p class="help" style="margin-bottom:10px">Les élèves les moins présents en premier.</p><div class="tbl-wrap"><table class="tbl" style="min-width:0"><thead><tr><th>Élève</th><th class="num">Présence</th><th class="num">Absences</th><th class="num">Retards</th></tr></thead><tbody>${rows}</tbody></table></div>`:'<p class="help">Aucun élève dans cette classe.</p>'}</section>`;
   };
-  return ficheShell('presences',list,g,item,head,[['eleves','Élèves'],['cours','Cours'],['rattraper',`À rattraper${x.missing.length?' · '+x.missing.length:''}`]],content);
+  return ficheShell('presences',list,g,item,head,[['eleves','Élèves'],['rattraper',`À rattraper${x.missing.length?' · '+x.missing.length:''}`]],content);
 }
 
 function staffDraft(){

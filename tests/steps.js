@@ -143,14 +143,17 @@ const pg=store().find(([k,v])=>k.startsWith('enseignants/')&&v.nom==='Paul Gendr
 ok('staff added',!!pg&&window.__store.get('dossiers-personnel/'+pg[0].split('/')[1]).telephone==='418 555-0199');
 // présences
 click($('#nav-presences'));await wait(120);
-ok('att kpis',$$('.kpi').length===4,$$('.kpi b').map(x=>x.textContent).join('|'));
+ok('att summary',!!$('.att-sum-line')&&$$('.att-card').length===2&&!$('.kpi'));
 click($('#pp-annee'));await wait(40);
-ok('watch list',/Nathan Ouellet/.test($('#main').textContent));
+click($('#ac-g-301'));await wait(100);
+ok('watch list',/Nathan Ouellet/.test(($('.fiche-body tbody tr')||{}).textContent||''),($('.fiche-body tbody tr')||{}).textContent);
+click($('#fi-tab-rattraper'));await wait(60);
 ok('missing list',$$('[data-act=open-att]').length>=3,$$('[data-act=open-att]').length);
 click($('[data-act=open-att]'));await wait(60);
 ok('open missing att',$$('.att-list li').length===10);
 click($('[data-act=att-all]'));await wait(20);click($('[data-act=att-save]'));await wait(150);
 click($('#dr-close'));await wait(30);
+click($('#fi-back'));await wait(60);
 click($('#pt-personnel'));await wait(40);
 ok('staff att list',$$('.att-list li').length>=8,$$('.att-list li').length);
 click($('#sd-0'));await wait(30);
