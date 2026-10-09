@@ -222,6 +222,19 @@ window.scrollTo(0,0);await wait(30);
 click($('#tok-clear'));await wait(150);
 ok('back to 123 by token',$$('#main .wk-class').length===5&&Math.abs(top('c123')-t0)<2,Math.round(t0)+' -> '+Math.round(top('c123')));
 window.scrollTo(0,0);await wait(30);}
+/* JOUR */
+click($('#vw-jour'));await wait(150);
+ok('day view',!!$('.day-board')&&$$('.day-board .wk-day').length===5&&$$('.day-board .wk-class').length===1&&$('#vw-jour').getAttribute('aria-pressed')==='true');
+for(let i=0;i<6&&!/6 oct/.test($('.day-head').textContent);i++){click($('#w-prev'));await wait(80);}
+ok('day view tuesday',/mardi/i.test($('.day-head').textContent)&&$$('.day-board .wk-cell.chore').length>=1&&$$('.day-board .cc').length>=8,$('.day-head').textContent+' / '+$$('.day-board .cc').length);
+ok('day view no drag',!$('.day-board .cc[data-drag]'));
+click($('#dpick-c119'));await wait(100);
+ok('day view isolate',$$('.day-board .wk-day').length===1&&/Toutes/.test($('.day-board .wk-day').textContent));
+click($('#dpick-c119'));await wait(100);
+click($('#w-next'));await wait(80);
+ok('day view next',/mercredi/i.test($('.day-head').textContent)&&$$('.day-board .wk-day').length===5);
+click($('#vw-semaine'));await wait(150);
+ok('back to week',!$('.day-board')&&$$('#main .week .wk-day').length===5);
 /* MENAGE */
 {const am=$('.cc[data-key="k119-m08_a20261006am_2026-10-06"]');
 ok('chore fills the day',$('.wk-cell[data-date="2026-10-06"][data-grp="c119"]').classList.contains('chore')&&getComputedStyle($('.wk-cell[data-date="2026-10-06"][data-grp="c119"]')).backgroundColor==='rgb(255, 224, 138)'&&!$('.wk-cell[data-date="2026-10-07"][data-grp="c119"]').classList.contains('chore'));

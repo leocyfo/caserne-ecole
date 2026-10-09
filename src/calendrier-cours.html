@@ -148,6 +148,15 @@ select,.search{min-height:40px;border:1px solid var(--line);border-radius:6px;ba
 .wk-day.is-today{box-shadow:inset 0 -3px var(--today)}
 .wk-class{background:var(--surface-2);border-bottom:1px solid var(--line-2);padding:12px;display:flex;flex-direction:column;color:var(--row-ink);font-weight:700;font-size:17px;line-height:1.2;min-width:0;overflow-wrap:anywhere}
 .wk-class small{color:#60758F;font-size:11px;font-weight:500;margin-bottom:2px}
+.day-head{font-size:16px}
+.day-head small{text-transform:capitalize;font-size:12px;font-weight:700}
+.day-head.is-today{box-shadow:inset 3px 0 var(--today)}
+.wk-day.day-col{padding:0}
+.day-pick{display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;height:100%;padding:12px 6px;border:0;background:none;font:inherit;font-weight:700;color:inherit;cursor:pointer}
+.day-pick:hover{background:#E4ECF6}
+.day-pick small{font-size:11px;font-weight:600;margin-top:2px}
+.wk-day.day-col.on{background:#E8F0FA;box-shadow:inset 0 -3px var(--role)}
+.wk-day-range{min-width:190px;text-transform:none}
 .wk-cell{border-bottom:1px solid var(--line-2);border-left:1px solid var(--line-2);padding:8px;display:flex;flex-direction:column;gap:8px;min-width:0}
 .wk-cell.is-today{background:#F9FBFF}
 .week>.wk-row:last-child>*{border-bottom:0}
@@ -741,7 +750,7 @@ let prefs={};
 try{prefs=JSON.parse(localStorage.getItem(PREF)||'{}')||{};}catch(e){prefs={};}
 const S={
   role:['admin','teacher','student'].includes(prefs.role)?prefs.role:'admin',
-  teacher:prefs.teacher||'', group:prefs.group||'', student:prefs.student||'', filtre:prefs.filtre||'', fmode:prefs.fmode==='e'?'e':'g', compact:prefs.compact===true, sideMini:prefs.sideMini===true, demoHidden:prefs.demoHidden===true,
+  teacher:prefs.teacher||'', group:prefs.group||'', student:prefs.student||'', filtre:prefs.filtre||'', fmode:prefs.fmode==='e'?'e':'g', compact:prefs.compact===true, view:prefs.view==='jour'?'jour':'semaine', dayDate:'', sideMini:prefs.sideMini===true, demoHidden:prefs.demoHidden===true,
   page:'calendar', pg:{},
   week:monday(new Date()), day:0,
   conn:'loading', canAdmin:null, canWrite:null,
@@ -751,7 +760,7 @@ const S={
   dr:null
 };
 let DB=null, unsubPres=null, unsubTerm=null, uidSeq=0;
-function savePrefs(){try{localStorage.setItem(PREF,JSON.stringify({role:S.role,teacher:S.teacher,group:S.group,student:S.student,filtre:S.filtre,fmode:S.fmode,compact:S.compact,sideMini:S.sideMini,demoHidden:S.demoHidden}));}catch(e){}}
+function savePrefs(){try{localStorage.setItem(PREF,JSON.stringify({role:S.role,teacher:S.teacher,group:S.group,student:S.student,filtre:S.filtre,fmode:S.fmode,compact:S.compact,view:S.view,sideMini:S.sideMini,demoHidden:S.demoHidden}));}catch(e){}}
 
 const byId=(arr,id)=>arr.find(x=>x.id===id);
 const cfg=()=>Object.assign({nom:'',annee:'',debut:'',fin:'',conges:[],etapes:[],competences:[]},S.data.config||{});
@@ -1003,10 +1012,36 @@ function daytabsHTML(){
   for(let i=0;i<5;i++){const d=addDays(S.week,i);h+=`<button type="button" id="day-${i}" data-act="day" data-i="${i}" aria-pressed="${S.day===i}" class="${iso(d)===today?'is-today':''}"><span>${DAYS[i].slice(0,3).toLowerCase()}.</span><strong>${d.getDate()}</strong></button>`;}
   return h+'</div>';
 }
+function expBtn(){
+  const lbl=S.compact?'Agrandir : voir l’enseignant, le local et les présences de chaque cours (touche +)':'Réduire : deux lignes par cours pour tout voir d’un coup d’œil (touche −)';
+  return `<button type="button" class="expander" id="exp-btn" data-act="toggle-size" aria-expanded="${!S.compact}" aria-label="${lbl}" title="${lbl}"><svg aria-hidden="true" viewBox="0 0 10 12" class="exp-arrow"><path d="M1 0.5 9.5 6 1 11.5Z" fill="currentColor"/></svg><span class="lbl">${S.compact?'Agrandir les cours':'Réduire les cours'}</span></button>`;
+}
+/* Vue « Jour » : les classes en colonnes, la journée en ligne */
+function dayBoardHTML(list,cols){
+  const ds=S.dayDate, d=parse(ds), off=offDay(ds), today=todayISO(), edit=isAdmin()&&S.conn==='shared';
+  let h=`<div class="boardbox">${expBtn()}<div class="week day-board${S.compact?' compact':''}" style="grid-template-columns:118px repeat(${cols.length},minmax(0,1fr))" role="table" aria-label="${esc('Horaire du '+dayLabel(d).toLowerCase())}"><div class="wk-row wk-head" role="row"><div class="wk-corner" role="columnheader">Journée</div>`;
+  for(const g of cols){
+    const on=S.filtre==='g:'+g.id;
+    h+=g.id?`<div class="wk-day day-col${on?' on':''}" role="columnheader"><button type="button" class="day-pick" id="dpick-${esc(g.id)}" data-act="filt" data-v="${on?'':'g:'+esc(g.id)}" aria-pressed="${on}" title="${esc(on?'Revenir à toutes les classes':'Afficher seulement '+g.name)}">${esc(g.name)}${on?'<small>← Toutes</small>':''}</button></div>`
+      :`<div class="wk-day" role="columnheader">${esc(g.name)}</div>`;
+  }
+  h+=`</div><div class="wk-row" role="row"><div class="wk-class day-head${ds===today?' is-today':''}" role="rowheader"><small>${esc(WD[d.getDay()])}</small>${dn(d)} ${esc(fMonthS.format(d))}</div>`;
+  for(const g of cols){
+    const items=list.filter(x=>x.date===ds&&g.match(x));
+    let inner;
+    if(off) inner=`<div class="cc offday k7"><span class="cc-top"><span class="cc-kind">${off==='Hors année scolaire'?'Hors calendrier':'Congé'}</span></span><strong>${esc(off)}</strong><span class="cc-meta">Aucun cours</span></div>`;
+    else if(!items.length) inner='<p class="cell-note">Aucun cours</p>';
+    else inner=items.map(x=>cardHTML(x,'admin',!!g.id)).join('').replace(/ data-drag="1"/g,'');
+    const ch=g.id&&!off?choreDay(g.id,ds):'';
+    if(ch) inner=`<div class="cell-chore${ch==='maybe'?' maybe':''}" title="Corvée de ménage pour toute la classe, toute la journée">${icon('broom')}<span><b>Corvée de ménage${ch==='maybe'?' ?':''}</b><small>toute la journée</small></span></div>`+inner;
+    if(edit&&g.id&&!off) inner+=`<button type="button" class="cell-add" data-act="add-at" data-date="${ds}" data-g="${esc(g.id)}" aria-label="${esc('Ajouter un cours pour '+g.name)}">+ Ajouter</button>`;
+    h+=`<div class="wk-cell${ds===today?' is-today':''}${ch?' chore'+(ch==='maybe'?' maybe':''):''}" role="cell">${inner}</div>`;
+  }
+  return h+'</div></div></div>';
+}
 function boardHTML(list,rows,mode,corner){
   const today=todayISO();
-  const lbl=S.compact?'Agrandir : voir l’heure de fin, l’enseignant, le local et les présences de chaque cours (touche +)':'Réduire : une ligne par cours pour voir toute la semaine d’un coup d’œil (touche −)';
-  let h=`<div class="boardbox"><button type="button" class="expander" id="exp-btn" data-act="toggle-size" aria-expanded="${!S.compact}" aria-label="${lbl}" title="${lbl}"><svg aria-hidden="true" viewBox="0 0 10 12" class="exp-arrow"><path d="M1 0.5 9.5 6 1 11.5Z" fill="currentColor"/></svg><span class="lbl">${S.compact?'Agrandir les cours':'Réduire les cours'}</span></button><div class="week${S.compact?' compact':''}" role="table" aria-label="Horaire du lundi au vendredi"><div class="wk-row wk-head" role="row"><div class="wk-corner" role="columnheader">${esc(corner||'')}</div>`;
+  let h=`<div class="boardbox">${expBtn()}<div class="week${S.compact?' compact':''}" role="table" aria-label="Horaire du lundi au vendredi"><div class="wk-row wk-head" role="row"><div class="wk-corner" role="columnheader">${esc(corner||'')}</div>`;
   for(let i=0;i<5;i++){const d=addDays(S.week,i);h+=`<div class="wk-day${iso(d)===today?' is-today':''}" role="columnheader">${DAYS[i]} ${dn(d)} ${fMonthS.format(d)}</div>`;}
   h+='</div>';
   const edit=mode==='admin'&&isAdmin()&&S.conn==='shared';
@@ -1054,11 +1089,22 @@ function schoolWeek(){
 }
 function rangeLabel(m){const f=addDays(m,4);return m.getMonth()===f.getMonth()?`${dn(m)} – ${dn(f)} ${fMonth.format(f)}`:`${dn(m)} ${fMonthS.format(m)} – ${dn(f)} ${fMonthS.format(f)}`;}
 /* Barre de contrôle : semaine, regroupement, retard des présences et action, sur une seule ligne. */
+/* Jours de classe : on saute la fin de semaine */
+const weekday=d=>{d=new Date(d);while(d.getDay()===0||d.getDay()===6)d=addDays(d,1);return iso(d);};
+function setDay(ds){S.dayDate=ds;const m=monday(parse(ds));if(iso(m)!==iso(S.week)){S.week=m;S.day=defaultDay();subWeek();}render();}
+function stepDay(k){let d=parse(S.dayDate||todayISO());do{d=addDays(d,k);}while(d.getDay()===0||d.getDay()===6);setDay(iso(d));}
+const dayMode=()=>S.role==='admin'&&S.view==='jour';
+/* Premier jour affiché : aujourd’hui (ou le vendredi en fin de semaine), sinon le lundi de la semaine affichée */
+const initDay=()=>{const t=new Date(),j=t.getDay();return isCurWeek()?(j===0||j===6?iso(addDays(S.week,4)):iso(t)):iso(S.week);};
 function toolbarHTML(){
   const ready=S.conn==='shared'&&allLoaded(), n=schoolWeek(), r=rangeLabel(S.week);
   const tip=`${r} ${S.week.getFullYear()}${n?` · semaine ${n} de l’année`:''}${isCurWeek()?' · cette semaine':''}`;
   const nav=`<div class="wk" role="group" aria-label="Semaine affichée"><button type="button" id="w-prev" data-act="prev" aria-label="Semaine précédente" title="Semaine précédente (←)">${icon('left')}</button><div class="wk-range" title="${esc(tip)}">${r}</div><button type="button" id="w-next" data-act="next" aria-label="Semaine suivante" title="Semaine suivante (→)">${icon('right')}</button></div>`
     +(isCurWeek()?'':'<button type="button" class="today-btn" id="w-today" data-act="today">Aujourd’hui</button>');
+  const dd=dayMode()?parse(S.dayDate):null;
+  const navDay=dd?`<div class="wk" role="group" aria-label="Jour affiché"><button type="button" id="w-prev" data-act="prev" aria-label="Jour précédent" title="Jour précédent (←)">${icon('left')}</button><div class="wk-range wk-day-range">${esc(WD[dd.getDay()])} ${dn(dd)} ${esc(fMonth.format(dd))}</div><button type="button" id="w-next" data-act="next" aria-label="Jour suivant" title="Jour suivant (→)">${icon('right')}</button></div>`
+    +(S.dayDate===weekday(new Date())?'':'<button type="button" class="today-btn" id="w-today" data-act="today">Aujourd’hui</button>'):'';
+  const viewSeg=S.role==='admin'?`<div class="seg sm" role="group" aria-label="Affichage"><button type="button" id="vw-semaine" data-act="view" data-v="semaine" aria-pressed="${!dayMode()}">Semaine</button><button type="button" id="vw-jour" data-act="view" data-v="jour" aria-pressed="${dayMode()}">Jour</button></div>`:'';
   let mid='',right='';
   if(S.role==='admin'){
     if(S.data.cours.length&&ready) mid=viewSelHTML();
@@ -1066,7 +1112,7 @@ function toolbarHTML(){
     if(late) right+=`<button type="button" class="late" id="late-pill" data-act="nav" data-page="presences" title="Cours passés de la semaine dont les présences n’ont pas été prises. Ouvrir le suivi des présences.">${late} ${late>1?'présences en retard':'présence en retard'}</button>`;
     if(ready&&S.canAdmin!==false) right+=`<button class="btn primary" type="button" data-act="new-course">${icon('plus')}Planifier un cours</button>`;
   }else right=identitySelect();
-  return `<section class="ctl" aria-label="Affichage de l’horaire">${nav}${mid?'<span class="vsep" aria-hidden="true"></span>'+mid:''}<span class="grow"></span>${right}</section>`;
+  return `<section class="ctl" aria-label="Affichage de l’horaire">${dd?navDay:nav}${viewSeg}${mid?'<span class="vsep" aria-hidden="true"></span>'+mid:''}<span class="grow"></span>${right}</section>`;
 }
 function viewSelHTML(){
   const mode=S.fmode, f=S.filtre;
@@ -1101,6 +1147,12 @@ function adminMain(){
   }
   let done=0,late=0,cancel=0,live=0,exams=0;
   for(const s of list){if(s.kind==='exam'){exams++;continue;}const a=attInfo(s);if(a.state==='cancelled')cancel++;else{live++;if(a.state==='done')done++;else if(a.past)late++;}}
+  if(S.view==='jour'){
+    const dl=list.filter(x=>x.date===S.dayDate);
+    let dlate=0;for(const x of dl){if(x.kind==='exam')continue;const a=attInfo(x);if(a.state!=='cancelled'&&a.state!=='done'&&a.past)dlate++;}
+    S._stats={live:0,exams:0,cancel:0,done:0,late:dlate};
+    return dayBoardHTML(list,rows);
+  }
   S._stats={live,exams,cancel,done,late};
   return daytabsHTML()+boardHTML(list,rows,'admin','Classe');
 }
@@ -1724,6 +1776,7 @@ const NAV={
   student:[['calendar','Mon horaire','cal'],['examens','Examens','exam'],['annee','Calendrier scolaire','year'],['profil','Mon profil','user']]
 };
 function ensureSel(){
+  if(S.view==='jour'&&(!S.dayDate||iso(monday(parse(S.dayDate)))!==iso(S.week))) S.dayDate=initDay();
   const vis=visibleRoles();
   if(!vis.includes(S.role)) S.role=vis[0];
   if(!NAV[S.role].some(n=>n[0]===S.page)&&S.page!=='profil') S.page='calendar';
@@ -2393,9 +2446,10 @@ document.addEventListener('click',async e=>{
     case 'ac-del-no':if(d){d.confirmDel=false;renderDrawer();}break;
     case 'ac-del-yes':{if(!d||S.busy)break;S.busy=true;renderDrawer();const ok=await write(()=>col('comptes').doc(d.id).delete(),'Compte supprimé');S.busy=false;if(ok&&S.dr===d)S.dr=null;render();break;}
     case 'nav':goPage(b.dataset.page);break;
-    case 'prev':setWeek(addDays(S.week,-7));break;
-    case 'next':setWeek(addDays(S.week,7));break;
-    case 'today':setWeek(monday(new Date()));break;
+    case 'prev':if(dayMode())stepDay(-1);else setWeek(addDays(S.week,-7));break;
+    case 'next':if(dayMode())stepDay(1);else setWeek(addDays(S.week,7));break;
+    case 'today':if(dayMode())setDay(weekday(new Date()));else setWeek(monday(new Date()));break;
+    case 'view':{const v=b.dataset.v==='jour'?'jour':'semaine';if(v===S.view)break;S.view=v;if(v==='jour')S.dayDate=initDay();savePrefs();render();break;}
     case 'day':S.day=+b.dataset.i;render();break;
     case 'sess':openSession(b.dataset.key);break;
     case 'open-att':ensureTerm();openSession(b.dataset.key,b.dataset.date);break;
@@ -2610,8 +2664,8 @@ document.addEventListener('keydown',e=>{
   }
   if(S.dr||S.page!=='calendar'||e.altKey||e.ctrlKey||e.metaKey) return;
   if(/^(INPUT|SELECT|TEXTAREA)$/.test((e.target&&e.target.tagName)||'')) return;
-  if(e.key==='ArrowLeft'&&!e.shiftKey){e.preventDefault();setWeek(addDays(S.week,-7));}
-  else if(e.key==='ArrowRight'&&!e.shiftKey){e.preventDefault();setWeek(addDays(S.week,7));}
+  if(e.key==='ArrowLeft'&&!e.shiftKey){e.preventDefault();if(dayMode())stepDay(-1);else setWeek(addDays(S.week,-7));}
+  else if(e.key==='ArrowRight'&&!e.shiftKey){e.preventDefault();if(dayMode())stepDay(1);else setWeek(addDays(S.week,7));}
   else if((e.key==='+'||e.key==='=')&&S.compact){S.compact=false;savePrefs();render();}
   else if((e.key==='-'||e.key==='_')&&!S.compact){S.compact=true;savePrefs();render();}
 });
