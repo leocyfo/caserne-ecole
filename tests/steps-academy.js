@@ -235,6 +235,24 @@ click($('#w-next'));await wait(80);
 ok('day view next',/mercredi/i.test($('.day-head').textContent)&&$$('.day-board .wk-day').length===5);
 click($('#vw-semaine'));await wait(150);
 ok('back to week',!$('.day-board')&&$$('#main .week .wk-day').length===5);
+/* PRINCIPAL */
+click($('#nav-classes'));await wait(120);
+ok('principal select',$('#m-pr-c119').value==='e-mleduc'&&$('#m-pr-c121').value==='e-sgagnon');
+{const s=$('#m-pr-c121');s.value='e-proy';s.dispatchEvent(new Event('change',{bubbles:true}));}await wait(250);
+ok('principal saved',window.__store.get('groupes/c121').principal==='e-proy');
+{const s=$('#m-pr-c121');s.value='e-sgagnon';s.dispatchEvent(new Event('change',{bubbles:true}));}await wait(250);
+click($('#nav-calendar'));await wait(120);
+ok('principal on board',/M\. Leduc/.test($('#pick-c119').textContent)&&/S\. Gagnon/.test($('#pick-c121').textContent));
+click($('#nav-personnel'));await wait(120);
+ok('principal in staff list',/Principal · 119/.test($('#main').textContent));
+click($$('#main tbody .link').find(x=>/Marie Leduc/.test(x.textContent)));await wait(100);
+ok('principal on staff fiche',/Prof principal · Classe 119/.test($('.fiche-head').textContent)&&/Prof principal · Classe 122/.test($('.fiche-head').textContent));
+click($('#fi-back'));await wait(80);
+click($('#nav-eleves'));await wait(120);
+click($('#main tr.row-link[data-id="el-119-01"]'));await wait(100);
+ok('principal on student fiche',/Prof principal/.test($('.fiche-body').textContent)&&/Marie Leduc/.test($('.fiche-body').textContent));
+click($('#fi-back'));await wait(80);
+click($('#nav-calendar'));await wait(120);
 /* MENAGE */
 {const am=$('.cc[data-key="k119-m08_a20261006am_2026-10-06"]');
 ok('chore fills the day',$('.wk-cell[data-date="2026-10-06"][data-grp="c119"]').classList.contains('chore')&&getComputedStyle($('.wk-cell[data-date="2026-10-06"][data-grp="c119"]')).backgroundColor==='rgb(255, 224, 138)'&&!$('.wk-cell[data-date="2026-10-07"][data-grp="c119"]').classList.contains('chore'));

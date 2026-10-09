@@ -436,6 +436,11 @@ legend{font-size:13px;color:var(--ink-2);font-weight:600;padding:0 4px}
 .acc-list li:first-child{border-top:0}
 
 .need-t{color:var(--warn)}
+.t-prin{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:var(--ink-2)}
+.t-prin select{min-height:34px;font-size:13px}
+.row-prin{display:block;margin-top:4px;font-size:12px;font-weight:600;color:#60758F}
+.col-prin{display:block;font-size:11.5px;font-weight:600;color:#60758F;margin-top:2px}
+.prin-chip{background:#E3EEFB;color:#275F9D}
 /* Fiches en pleine page : liste à gauche, fiche à droite */
 .fiche{display:grid;grid-template-columns:250px minmax(0,1fr);gap:16px;align-items:start}
 .fiche-list{position:sticky;top:12px;max-height:calc(100vh - 24px);display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--line);border-radius:9px;overflow:hidden}
@@ -782,6 +787,9 @@ const isTeacher=p=>!p.fonction||p.fonction==='Enseignant';
 const teachers=()=>staff().filter(p=>isTeacher(p)&&p.statut!=='Inactif');
 const groups=()=>sortByName(S.data.groupes);
 const studentsOf=gid=>sortByName(S.data.eleves.filter(e=>e.groupe===gid));
+/* Prof principal : assigné à une classe ; les autres profs donnent seulement des cours */
+const principalOf=gid=>{const g=byId(S.data.groupes,gid);return g&&g.principal&&byId(S.data.enseignants,g.principal)?g.principal:'';};
+const principalClasses=tid=>groups().filter(g=>g.principal===tid);
 const tName=id=>(byId(S.data.enseignants,id)||{}).nom||'Enseignant à assigner';
 const gName=id=>(byId(S.data.groupes,id)||{}).nom||'Sans classe';
 const shortName=n=>{const p=String(n||'').trim().split(/\s+/);return p.length>1?`${p[0][0]}. ${p.slice(1).join(' ')}`:(n||'');};
@@ -1034,7 +1042,7 @@ function dayBoardHTML(list,cols){
   let h=`<div class="boardbox">${expBtn()}<div class="week day-board${S.compact?' compact':''}" style="grid-template-columns:118px repeat(${cols.length},minmax(0,1fr))" role="table" aria-label="${esc('Horaire du '+dayLabel(d).toLowerCase())}"><div class="wk-row wk-head" role="row"><div class="wk-corner" role="columnheader">Journée</div>`;
   for(const g of cols){
     const on=S.filtre==='g:'+g.id;
-    h+=g.id?`<div class="wk-day day-col${on?' on':''}" role="columnheader"><button type="button" class="day-pick" id="dpick-${esc(g.id)}" data-act="filt" data-v="${on?'':'g:'+esc(g.id)}" aria-pressed="${on}" title="${esc(on?'Revenir à toutes les classes':'Afficher seulement '+g.name)}">${esc(g.name)}${on?'<small>← Toutes</small>':''}</button></div>`
+    h+=g.id?`<div class="wk-day day-col${on?' on':''}" role="columnheader"><button type="button" class="day-pick" id="dpick-${esc(g.id)}" data-act="filt" data-v="${on?'':'g:'+esc(g.id)}" aria-pressed="${on}" title="${esc(on?'Revenir à toutes les classes':'Afficher seulement '+g.name)}">${esc(g.name)}${principalOf(g.id)?`<small class="col-prin" title="Prof principal">${esc(shortName(tName(principalOf(g.id))))}</small>`:''}${on?'<small>← Toutes</small>':''}</button></div>`
       :`<div class="wk-day" role="columnheader">${esc(g.name)}</div>`;
   }
   h+=`</div><div class="wk-row" role="row"><div class="wk-class day-head${ds===today?' is-today':''}" role="rowheader"><small>${esc(WD[d.getDay()])}</small>${dn(d)} ${esc(fMonthS.format(d))}</div>`;
@@ -1060,7 +1068,7 @@ function boardHTML(list,rows,mode,corner){
   for(const r of rows){
     const on=S.filtre==='g:'+r.id;
     h+=mode==='admin'&&r.id
-      ?`<div class="wk-row" role="row"><div class="wk-class pick${on?' on':''}" role="rowheader"><button type="button" class="wk-pick" id="pick-${esc(r.id)}" data-act="filt" data-v="${on?'':'g:'+esc(r.id)}" aria-pressed="${on}" title="${esc(on?'Revenir à toutes les classes':'Afficher seulement '+r.name)}">${rowLabel(r.name)}<span class="pick-hint">${on?'← Toutes':'Voir seulement cette classe'}</span></button></div>`
+      ?`<div class="wk-row" role="row"><div class="wk-class pick${on?' on':''}" role="rowheader"><button type="button" class="wk-pick" id="pick-${esc(r.id)}" data-act="filt" data-v="${on?'':'g:'+esc(r.id)}" aria-pressed="${on}" title="${esc(on?'Revenir à toutes les classes':'Afficher seulement '+r.name)}">${rowLabel(r.name)}${principalOf(r.id)?`<span class="row-prin" title="Prof principal">${esc(shortName(tName(principalOf(r.id))))}</span>`:''}<span class="pick-hint">${on?'← Toutes':'Voir seulement cette classe'}</span></button></div>`
       :`<div class="wk-row" role="row"><div class="wk-class" role="rowheader">${rowLabel(r.name)}</div>`;
     for(let i=0;i<5;i++){
       const ds=iso(addDays(S.week,i)), off=offDay(ds), items=list.filter(s=>s.date===ds&&r.match(s)), cg=mode==='admin'?r.id:mode==='student'?S.group:null;
@@ -1242,7 +1250,7 @@ function classesPage(){
     const els=studentsOf(g.id), cs=S.data.cours.filter(c=>c.groupe===g.id).sort((a,b)=>collator.compare(a.titre||'',b.titre||''));
     const per=cs.reduce((n,c)=>n+activeSlots(c).length,0), nDated=cs.reduce((n,c)=>n+datedOf(c).length,0), open=st.open===g.id, conf=st.ask===g.id, unassigned=cs.filter(c=>!byId(S.data.enseignants,c.enseignant)).length;
     return `<div class="t-card"><div class="t-head"><div class="t-name"><span class="nm">${esc(g.nom)}</span><span class="muted sm">${pl(els.length,'élève inscrit','élèves inscrits')} · ${cs.length} cours · ${nDated?pl(nDated,'séance à l’horaire','séances à l’horaire'):pl(per,'période','périodes')+' par semaine'}${unassigned?` · <b style="color:var(--warn)">${unassigned} sans enseignant</b>`:''}</span></div>
-      <div class="row"><button class="btn sm" type="button" data-act="see-group" data-id="${esc(g.id)}">Voir l’horaire</button><button class="btn sm" type="button" id="m-open-${esc(g.id)}" data-act="m-open" data-id="${esc(g.id)}" aria-expanded="${open}">${open?'Fermer':'Gérer'}</button><button class="btn sm ghost" type="button" data-act="m-ask" data-id="${esc(g.id)}">Supprimer</button></div></div>
+      <div class="row"><label class="t-prin"><span>Prof principal</span><select id="m-pr-${esc(g.id)}" data-gp="${esc(g.id)}"${isAdmin()?'':' disabled'}${dis()}><option value="">Aucun</option>${ts.map(t=>`<option value="${esc(t.id)}"${g.principal===t.id?' selected':''}>${esc(t.nom)}</option>`).join('')}</select></label><button class="btn sm" type="button" data-act="see-group" data-id="${esc(g.id)}">Voir l’horaire</button><button class="btn sm" type="button" id="m-open-${esc(g.id)}" data-act="m-open" data-id="${esc(g.id)}" aria-expanded="${open}">${open?'Fermer':'Gérer'}</button><button class="btn sm ghost" type="button" data-act="m-ask" data-id="${esc(g.id)}">Supprimer</button></div></div>
       ${conf?confirmBox(`Supprimer ${esc(g.nom)} et ${pl(els.length,'élève','élèves')} ? Ses cours resteront à l’horaire, sans classe.`,'m-del-g',g.id):''}
       ${open?`<section class="dr-sec"><h3>Cours et enseignants</h3>
         ${cs.length?`<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Cours</th><th class="num">Séances</th><th class="num">Heures</th><th>Enseignant</th><th>Local</th><th></th></tr></thead><tbody>${cs.map(c=>`<tr><td><span class="row" style="gap:6px;flex-wrap:nowrap">${c.code?`<span class="chip ${tone(c)}">${esc(c.code)}</span>`:''}<b>${esc(c.titre)}</b></span></td><td class="num">${courseLoad(c).label}</td><td class="num">${courseLoad(c).hours}</td><td><select data-assign="${esc(c.id)}" aria-label="${esc('Enseignant de '+c.titre)}"${dis()}><option value="">À assigner</option>${ts.map(t=>`<option value="${esc(t.id)}"${c.enseignant===t.id?' selected':''}>${esc(t.nom)}</option>`).join('')}</select></td><td>${esc(c.salle||'—')}</td><td class="num"><button class="btn sm ghost" type="button" data-act="edit-course" data-id="${esc(c.id)}">Modifier</button></td></tr>`).join('')}</tbody></table></div>`:'<p class="help">Aucun cours pour cette classe.</p>'}
@@ -1377,6 +1385,7 @@ function studentFiche(){
         <section class="panel"><h2>À venir</h2>${up.length?`<div class="list">${examRows(up,'admin')}</div>`:'<p class="help">Aucun examen prévu.</p>'}</section></div>`;
     }
     return `<section class="panel"><dl class="facts facts3">
+      <div><dt>Prof principal</dt><dd>${principalOf(e.groupe)?esc(tName(principalOf(e.groupe))):'<span class="muted">—</span>'}</dd></div>
       <div><dt>Date de naissance</dt><dd>${e.naissance?esc(longDate(parse(e.naissance)))+(age!=null?` <span class="muted">(${age} ans)</span>`:''):'<span class="muted">—</span>'}</dd></div>
       <div><dt>Parent ou tuteur</dt><dd>${e.parent?esc(e.parent):'<span class="muted">—</span>'}</dd></div>
       <div><dt>Téléphone</dt><dd>${e.telephone?`<a href="tel:${esc(String(e.telephone).replace(/\s+/g,''))}">${esc(e.telephone)}</a>`:'<span class="muted">—</span>'}</dd></div>
@@ -1390,12 +1399,12 @@ function staffFiche(){
   const p=byId(S.data.enseignants,S.pg.fiche);
   if(!p){S.pg.fiche=null;return staffPage();}
   const list=staff(), z=S.data.dossiers[p.id]||{}, st=p.statut||'Actif', teach=isTeacher(p);
-  const item=x=>`<span class="fl-name">${esc(x.nom)}</span><span class="fl-sub">${esc(x.fonction||'Enseignant')}</span>`;
+  const item=x=>{const pc=principalClasses(x.id);return `<span class="fl-name">${esc(x.nom)}</span><span class="fl-sub">${esc(x.fonction||'Enseignant')}${pc.length?` · principal ${esc(pc.map(g=>g.nom.replace(/^(Classe|Groupe)\s+/i,'')).join(', '))}`:''}</span>`;};
   const cs=S.data.cours.filter(c=>c.enseignant===p.id).sort((x,y)=>collator.compare(gName(x.groupe),gName(y.groupe))||collator.compare(x.titre,y.titre));
   const byG={};for(const c of cs)(byG[c.groupe]=byG[c.groupe]||[]).push(c);
   const wk=weekItems().filter(x=>x.kind!=='exam'&&!x.cancelled&&x.tch.includes(p.id));
   let late=0;for(const x of wk){const ai=attInfo(x);if(ai.state!=='done'&&ai.past)late++;}
-  const chips=`<span class="chip">${esc(p.fonction||'Enseignant')}</span><span class="chip ${STATUTS[st]||'off'}">${esc(st)}</span>${acctChip(p.id)}`;
+  const chips=`<span class="chip">${esc(p.fonction||'Enseignant')}</span>${principalClasses(p.id).map(g=>`<span class="chip k0">Prof principal · ${esc(g.nom)}</span>`).join('')}<span class="chip ${STATUTS[st]||'off'}">${esc(st)}</span>${acctChip(p.id)}`;
   const actions=`<button class="btn sm primary" type="button" id="fi-edit" data-act="sf-edit" data-id="${esc(p.id)}">Modifier le dossier</button>${teach?`<button class="btn sm" type="button" data-act="see-teacher" data-id="${esc(p.id)}">Son horaire</button>`:''}${acctBtn(p.id,p.fonction&&!teach?'admin':'teacher')}`;
   const stats=teach?[['Cours',String(cs.length),''],['Classes',String(Object.keys(byG).length),''],['Cette semaine',pl(wk.length,'cours','cours'),''],['Présences à prendre',String(late),late?'warn':'']]
     :[['Statut',esc(st),''],['Courriel',p.courriel?esc(p.courriel):'—','']];
@@ -1439,7 +1448,7 @@ function staffPage(){
   const tb=`<div class="toolbar"><p class="summary" style="margin:0"><span><b>${all.length}</b>membres</span><span><b>${nT}</b>${nT>1?'enseignants':'enseignant'}</span><span class="${nC?'need':''}"><b>${nC}</b>en congé</span></p><span class="grow"></span><button class="btn primary" type="button" data-act="new-staff">${icon('plus')}Ajouter un membre du personnel</button></div>`;
   if(!all.length) return tb+emptyBox('Aucun membre du personnel','Ajoutez les enseignants et le reste du personnel. Les enseignants pourront ensuite être assignés aux cours.');
   return tb+`<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Nom</th><th>Fonction</th><th>Statut</th><th>Courriel</th><th>Téléphone</th><th class="num">Cours</th><th class="num">Absences ce mois</th></tr></thead><tbody>${all.map(p=>{const dz=S.data.dossiers[p.id]||{}, st=p.statut||'Actif', nc=S.data.cours.filter(c=>c.enseignant===p.id).length;
-    return `<tr class="row-link" data-act="staff" data-id="${esc(p.id)}"><td><button class="link" type="button" data-act="staff" data-id="${esc(p.id)}">${esc(p.nom)}</button></td><td>${esc(p.fonction||'Enseignant')}</td><td><span class="chip ${STATUTS[st]||'off'}">${esc(st)}</span></td><td>${esc(p.courriel||'—')}</td><td>${esc(dz.telephone||'—')}</td><td class="num">${nc}</td><td class="num">${abs[p.id]||0}</td></tr>`;}).join('')}</tbody></table></div>`;
+    return `<tr class="row-link" data-act="staff" data-id="${esc(p.id)}"><td><button class="link" type="button" data-act="staff" data-id="${esc(p.id)}">${esc(p.nom)}</button></td><td>${esc(p.fonction||'Enseignant')}${principalClasses(p.id).map(g=>`<span class="role-chip prin-chip">Principal · ${esc(g.nom.replace(/^(Classe|Groupe)\s+/i,''))}</span>`).join('')}</td><td><span class="chip ${STATUTS[st]||'off'}">${esc(st)}</span></td><td>${esc(p.courriel||'—')}</td><td>${esc(dz.telephone||'—')}</td><td class="num">${nc}</td><td class="num">${abs[p.id]||0}</td></tr>`;}).join('')}</tbody></table></div>`;
 }
 
 /* ---------- Pages : présences ---------- */
@@ -1746,7 +1755,7 @@ function profilePage(){
   if(r==='student'){
     const gid=rec.groupe||S.group, wk=weekItems().filter(s=>s.grp===gid&&s.kind!=='exam'&&!s.cancelled);
     const chores=wk.filter(s=>choreOf(s)), nx=nextSession(s=>s.c.groupe===gid), ex=upcomingExams(x=>x.grp===gid,4);
-    panels+=`<section class="panel"><h2>Mes informations</h2>${facts([['Classe',gName(gid)],['Numéro',rec.numero],['Fonction',rec.fonction||'Aucune'],['Date de naissance',rec.naissance?longDate(parse(rec.naissance)):''],['Parent ou tuteur',rec.parent],['Courriel',rec.courriel],['Téléphone',rec.telephone]])}</section>`;
+    panels+=`<section class="panel"><h2>Mes informations</h2>${facts([['Classe',gName(gid)],['Prof principal',principalOf(gid)?tName(principalOf(gid)):''],['Numéro',rec.numero],['Fonction',rec.fonction||'Aucune'],['Date de naissance',rec.naissance?longDate(parse(rec.naissance)):''],['Parent ou tuteur',rec.parent],['Courriel',rec.courriel],['Téléphone',rec.telephone]])}</section>`;
     panels+=`<section class="panel"><h2>Ma semaine</h2><p class="big">${wk.length}<span> ${wk.length>1?'cours':'cours'}</span></p>
       <p class="help">${nx?`Prochain cours : ${esc(nx.s.c.titre)}, ${esc(sess(nx.s).toLowerCase())}.`:'Aucun cours prévu prochainement.'}</p>
       ${chores.length?`<h2 style="margin-top:14px">Corvées de ménage</h2><ul class="acc-list">${[...new Set(chores.map(s=>s.date))].sort().map(ds=>`<li><span>${esc(dayLabel(parse(ds)))}</span><span class="muted sm">toute la journée</span></li>`).join('')}</ul>`:'<p class="help">Aucune corvée de ménage cette semaine.</p>'}</section>`;
@@ -1758,7 +1767,7 @@ function profilePage(){
     let late=0;for(const s of wk){const x=attInfo(s);if(x.state!=='done'&&x.past)late++;}
     const nx=nextSession(s=>s.c.enseignant===id);
     panels+=`<section class="panel"><h2>Mes informations</h2>${facts([['Fonction',rec.fonction||'Enseignant'],['Statut',rec.statut||'Actif'],['Courriel',rec.courriel],['Téléphone',z.telephone||rec.telephone]])}</section>`;
-    panels+=`<section class="panel"><h2>Mes classes</h2>${Object.keys(byG).length?`<ul class="acc-list">${Object.entries(byG).sort((x,y)=>collator.compare(gName(x[0]),gName(y[0]))).map(([g,n])=>`<li><span>${esc(gName(g))}</span><span class="muted">${pl(n,'cours','cours')}</span></li>`).join('')}</ul>`:'<p class="help">Aucun cours assigné pour l’instant.</p>'}</section>`;
+    panels+=`<section class="panel"><h2>Mes classes</h2>${Object.keys(byG).length?`<ul class="acc-list">${Object.entries(byG).sort((x,y)=>collator.compare(gName(x[0]),gName(y[0]))).map(([g,n])=>`<li><span>${esc(gName(g))}${principalOf(g)===id?' <span class="chip k0">Prof principal</span>':''}</span><span class="muted">${pl(n,'cours','cours')}</span></li>`).join('')}</ul>`:'<p class="help">Aucun cours assigné pour l’instant.</p>'}</section>`;
     panels+=`<section class="panel"><h2>Ma semaine</h2><p class="big">${wk.length}<span> cours</span></p><p class="help">${late?`<b class="need-t">${pl(late,'présence à prendre','présences à prendre')}</b> pour des cours passés. `:''}${nx?`Prochain cours : ${esc(nx.s.c.titre)}, ${esc(sess(nx.s).toLowerCase())}.`:'Aucun cours prévu prochainement.'}</p></section>`;
     if(a&&S.canWrite===false) warn='<div class="notice warn"><p>Votre accès à cette page ne permet pas encore d’enregistrer les présences. Demandez à l’administration l’accès <b>Contributeur</b> dans Partager.</p></div>';
   }else{
@@ -2633,6 +2642,12 @@ document.addEventListener('input',e=>{
 });
 document.addEventListener('change',async e=>{
   const t=e.target;
+  if(t.dataset&&t.dataset.gp){
+    const gid=t.dataset.gp, v=t.value;if(S.busy)return;
+    S.busy=true;render();
+    await write(()=>col('groupes').doc(gid).update({principal:v}),v?`${tName(v)} est prof principal de ${gName(gid)}`:`${gName(gid)} n’a plus de prof principal`);
+    S.busy=false;render();return;
+  }
   if(t.id==='ac-ref'&&S.dr&&S.dr.kind==='acct'){S.dr.draft.ref=t.value;S.dr.err='';renderDrawer();return;}
   if(t.id==='pf-who'){if(S.role==='teacher')S.teacher=t.value;else{S.student=t.value;const e=byId(S.data.eleves,t.value);if(e)S.group=e.groupe;}savePrefs();render();return;}
   if(t.id==='f-filtre'){S.filtre=t.value;savePrefs();render();}
