@@ -12,7 +12,7 @@ const store=()=>[...window.__store.entries()];
 try{
 await wait(400);
 ok('banner',/Horaire partagé/.test($('#banner-text').textContent));
-ok('nav admin 9',$$('#nav button').length===9&&!!$('#nav-comptes'));
+ok('nav admin 8',$$('#nav button').length===8&&!!$('#nav-comptes')&&!$('#nav-presences'));
 ok('board',$$('#main .week button.cc').length===41,$$('#main .week button.cc').length);
 ok('exam card on board',$$('#main .cc.exam').length===1);
 /* DND */
@@ -141,12 +141,13 @@ click($('[data-act=new-staff]'));await wait(40);
 typeIn('#sf-nom','Paul Gendron');typeIn('#sf-tel','418 555-0199');$('#sf-form').requestSubmit();await wait(150);
 const pg=store().find(([k,v])=>k.startsWith('enseignants/')&&v.nom==='Paul Gendron');
 ok('staff added',!!pg&&window.__store.get('dossiers-personnel/'+pg[0].split('/')[1]).telephone==='418 555-0199');
-// présences
-click($('#nav-presences'));await wait(120);
-ok('att summary',!!$('.att-sum-line')&&$$('.att-card').length===2&&!$('.kpi'));
+// présences (dans les classes)
+click($('#nav-classes'));await wait(120);
+ok('class att cards',$$('.cl-card').length===2&&/Présence/.test($('#cl-g-301 .cl-stats').textContent)&&!$('.att-card')&&!!$('#pp-mois'));
 click($('#pp-annee'));await wait(40);
-click($('#ac-g-301'));await wait(100);
-ok('watch list',/Nathan Ouellet/.test(($('.fiche-body tbody tr')||{}).textContent||''),($('.fiche-body tbody tr')||{}).textContent);
+ok('class att rate',/%/.test($('#cl-g-301 .cl-stats').textContent),$('#cl-g-301 .cl-stats').textContent);
+click($('#cl-g-301'));await wait(100);
+ok('class att table',$$('.fiche-tabs button').length===4&&$$('.fiche-body tbody tr').some(r=>/Nathan Ouellet/.test(r.textContent))&&/Absences/.test($('.fiche-body thead').textContent)&&$('#pp-annee').getAttribute('aria-pressed')==='true');
 click($('#fi-tab-rattraper'));await wait(60);
 ok('missing list',$$('[data-act=open-att]').length>=3,$$('[data-act=open-att]').length);
 click($('[data-act=open-att]'));await wait(60);
@@ -154,6 +155,7 @@ ok('open missing att',$$('.att-list li').length===10);
 click($('[data-act=att-all]'));await wait(20);click($('[data-act=att-save]'));await wait(150);
 click($('#dr-close'));await wait(30);
 click($('#fi-back'));await wait(60);
+click($('#nav-personnel'));await wait(60);
 click($('#pt-personnel'));await wait(40);
 ok('staff att list',$$('.att-list li').length>=8,$$('.att-list li').length);
 click($('#sd-0'));await wait(30);

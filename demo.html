@@ -505,6 +505,8 @@ legend{font-size:13px;color:var(--ink-2);font-weight:600;padding:0 4px}
 .fiche-tabs button{padding:9px 18px;font-size:14px}
 .fiche-body{min-width:0}
 .fiche-two{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,360px),1fr));gap:14px;align-items:start}
+.fiche-two.wide{grid-template-columns:minmax(0,2fr) minmax(260px,1fr)}
+@media (max-width:900px){.fiche-two.wide{grid-template-columns:1fr}}
 .facts3{grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
 .fiche .plist{max-height:420px;overflow-y:auto}
 .panel.fiche-head .prof-id h2{margin:0;font-size:24px;font-weight:700;line-height:1.2;letter-spacing:0;text-transform:none;color:var(--ink)}
@@ -1181,7 +1183,7 @@ function toolbarHTML(){
   if(S.role==='admin'){
     if(S.data.cours.length&&ready) mid=viewSelHTML();
     const late=S._stats?S._stats.late:0;
-    if(late) right+=`<button type="button" class="late" id="late-pill" data-act="nav" data-page="presences" title="Cours passés de la semaine dont les présences n’ont pas été prises. Ouvrir le suivi des présences.">${late} ${late>1?'présences en retard':'présence en retard'}</button>`;
+    if(late) right+=`<button type="button" class="late" id="late-pill" data-act="nav" data-page="classes" title="Cours passés de la semaine dont les présences n’ont pas été prises. Ouvrir les classes.">${late} ${late>1?'présences en retard':'présence en retard'}</button>`;
     if(ready&&S.canAdmin!==false) right+=`<button class="btn primary" type="button" data-act="new-course">${icon('plus')}Planifier un cours</button>`;
   }else right=identitySelect();
   return `<section class="ctl" aria-label="Affichage de l’horaire">${dd?navDay:nav}${viewSeg}${mid?'<span class="vsep" aria-hidden="true"></span>'+mid:''}<span class="grow"></span>${right}</section>`;
@@ -1218,10 +1220,10 @@ function adminMain(){
     if(!rows.length) rows=[{id:null,name:f?'Aucun cours':'Tous les cours',match:()=>true}];
   }
   let done=0,late=0,cancel=0,live=0,exams=0;
-  for(const s of list){if(s.kind==='exam'){exams++;continue;}const a=attInfo(s);if(a.state==='cancelled')cancel++;else{live++;if(a.state==='done')done++;else if(a.past)late++;}}
+  for(const s of list){if(s.kind==='exam'){exams++;continue;}const a=attInfo(s);if(a.state==='cancelled')cancel++;else{live++;if(a.state==='done')done++;else if(a.past&&a.total)late++;}}
   if(S.view==='jour'){
     const dl=list.filter(x=>x.date===S.dayDate);
-    let dlate=0;for(const x of dl){if(x.kind==='exam')continue;const a=attInfo(x);if(a.state!=='cancelled'&&a.state!=='done'&&a.past)dlate++;}
+    let dlate=0;for(const x of dl){if(x.kind==='exam')continue;const a=attInfo(x);if(a.state!=='cancelled'&&a.state!=='done'&&a.past&&a.total)dlate++;}
     S._stats={live:0,exams:0,cancel:0,done:0,late:dlate};
     return dayBoardHTML(list,rows);
   }
@@ -1312,19 +1314,19 @@ function classRate(gid,stats){
 const rateCls=r=>r==null?'':r>=95?'ok':r>=90?'warn':'bad';
 function classesPage(){
   if(S.pg.fiche) return classFiche();
-  const st=S.pg, gs=groups(), ts=teachers(), stats=studentStats(yearStart(),todayISO());
+  const st=S.pg, gs=groups(), ts=teachers(), per=st.period||'mois', [from,to]=periodRange(per);
+  const stats=studentStats(from,to), sess=S.termLoaded?sessionsBetween(from,to).filter(s=>!s.cancelled&&isPast(s)):[];
   const add=st.adding?`<section class="panel cl-add"><form class="inline-add" data-form="m-add-group"><label class="field"><span>Nom de la nouvelle classe</span><input id="m-gname" maxlength="60" placeholder="Ex. Classe 124" autocomplete="off"></label><button class="btn primary" type="submit"${dis()}>Ajouter</button><button class="btn ghost" type="button" data-act="m-adding">Annuler</button></form></section>`:'';
-  const tb=`<div class="toolbar"><p class="summary" style="margin:0"><span><b>${gs.length}</b>${gs.length>1?'classes':'classe'}</span><span><b>${S.data.eleves.length}</b>${S.data.eleves.length>1?'élèves':'élève'}</span></p><span class="grow"></span>${isAdmin()&&!st.adding?`<button class="btn primary" type="button" id="m-add-open" data-act="m-adding">${icon('plus')}Ajouter une classe</button>`:''}</div>`;
+  const tb=`<div class="toolbar"><p class="summary" style="margin:0"><span><b>${gs.length}</b>${gs.length>1?'classes':'classe'}</span><span><b>${S.data.eleves.length}</b>${S.data.eleves.length>1?'élèves':'élève'}</span></p><span class="grow"></span>${periodSeg(per)}${isAdmin()&&!st.adding?`<button class="btn primary" type="button" id="m-add-open" data-act="m-adding">${icon('plus')}Ajouter une classe</button>`:''}</div>`;
   if(!gs.length) return tb+add+(st.adding?'':emptyBox('Aucune classe pour l’instant','Ajoutez une classe, puis inscrivez ses élèves et planifiez ses cours.'));
   const cards=gs.map(g=>{
-    const els=studentsOf(g.id), nc=S.data.cours.filter(c=>c.groupe===g.id).length, pr=classProgress(g.id), r=classRate(g.id,stats), ex=upcomingExams(x=>x.grp===g.id,1)[0];
-    const pid=principalOf(g.id);
+    const x=classAtt(g.id,from,to,stats,sess), nc=S.data.cours.filter(c=>c.groupe===g.id).length, pr=classProgress(g.id), pid=principalOf(g.id), c=rateCls(x.rate);
     return `<article class="t-card cl-card" id="cl-${esc(g.id)}" data-act="class" data-id="${esc(g.id)}" tabindex="0" role="button" aria-label="${esc('Ouvrir '+g.nom)}">
       <div class="cl-top"><div class="cl-name"><h3>${esc(g.nom)}</h3>${g.description?`<p>${esc(g.description)}</p>`:''}</div>${icon('right')}</div>
       <div class="cl-prin" data-act="stop">${avHTML(pid?tName(pid):'?','')}<label><span>Prof principal</span><select id="m-pr-${esc(g.id)}" data-gp="${esc(g.id)}"${isAdmin()?'':' disabled'}${dis()}><option value="">Aucun</option>${ts.map(t=>`<option value="${esc(t.id)}"${g.principal===t.id?' selected':''}>${esc(t.nom)}</option>`).join('')}</select></label></div>
-      <dl class="cl-stats"><div><dt>Élèves</dt><dd>${els.length}</dd></div><div><dt>Cours</dt><dd>${nc}</dd></div><div><dt>Présence</dt><dd class="${rateCls(r)}">${r==null?'—':r+' %'}</dd></div></dl>
-      ${pr.total?`<div class="cl-prog"><div class="cl-prog-top"><span>Avancement de l’année</span><b>${pr.pct} %</b></div><div class="meter" role="img" aria-label="${pr.pct} % des séances passées"><i style="width:${pr.pct}%"></i></div><small>${pr.done} / ${pl(pr.total,'séance','séances')}</small></div>`:''}
-      <div class="cl-foot"><span class="muted sm">${ex?`Prochain examen : <b>${esc(dn(parse(ex.date))+' '+fMonthS.format(parse(ex.date)))}</b> · ${esc(ex.c?ex.c.titre:ex.e.titre)}`:'Aucun examen prévu'}</span><button class="btn sm" type="button" data-act="see-group" data-id="${esc(g.id)}">Voir l’horaire</button></div>
+      <dl class="cl-stats"><div><dt>Élèves</dt><dd>${x.els.length}</dd></div><div><dt>Présence</dt><dd class="${c}">${!S.termLoaded?'…':x.rate==null?'—':x.rate+' %'}</dd></div><div><dt>Cours</dt><dd>${nc}</dd></div></dl>
+      ${pr.total?`<div class="cl-prog"><div class="cl-prog-top"><span>Avancement de l’année</span><b>${pr.pct} %</b></div><div class="meter" aria-hidden="true"><i style="width:${pr.pct}%"></i></div></div>`:''}
+      <div class="cl-foot">${x.missing.length?`<span class="chip warn">${pl(x.missing.length,'présence à rattraper','présences à rattraper')}</span>`:S.termLoaded&&x.past&&x.els.length?'<span class="chip ok">Présences à jour</span>':'<span></span>'}<button class="btn sm" type="button" data-act="see-group" data-id="${esc(g.id)}">Voir l’horaire</button></div>
     </article>`;
   }).join('');
   return tb+add+`<div class="cl-grid">${cards}</div>`;
@@ -1335,16 +1337,18 @@ function classFiche(){
   if(!g&&S.pg.justAdded===S.pg.fiche) return '<p class="help">Ouverture de la classe…</p>';
   if(!g){S.pg.fiche=null;return classesPage();}
   if(S.pg.justAdded===g.id) S.pg.justAdded=null;
-  const list=groups(), ts=teachers(), stats=studentStats(yearStart(),todayISO()), els=studentsOf(g.id);
+  const list=groups(), ts=teachers(), per=S.pg.period||'mois', [from,to]=periodRange(per);
+  const stats=studentStats(from,to), sess=S.termLoaded?sessionsBetween(from,to).filter(s=>!s.cancelled&&isPast(s)):[], x=classAtt(g.id,from,to,stats,sess), els=x.els;
   const cs=S.data.cours.filter(c=>c.groupe===g.id).sort((a,b)=>collator.compare(a.code||'',b.code||'')||collator.compare(a.titre||'',b.titre||''));
-  const pr=classProgress(g.id), r=classRate(g.id,stats), ex=upcomingExams(x=>x.grp===g.id,1)[0], pid=principalOf(g.id);
-  const item=x=>`<span class="fl-name">${esc(x.nom)}</span><span class="fl-sub">${pl(studentsOf(x.id).length,'élève','élèves')}${principalOf(x.id)?' · '+esc(shortName(tName(principalOf(x.id)))):''}</span>`;
+  const pr=classProgress(g.id), ex=upcomingExams(y=>y.grp===g.id,1)[0], pid=principalOf(g.id);
+  const item=y=>`<span class="fl-name">${esc(y.nom)}</span><span class="fl-sub">${pl(studentsOf(y.id).length,'élève','élèves')}${principalOf(y.id)?' · '+esc(shortName(tName(principalOf(y.id)))):''}</span>`;
   const chips=`${g.description?`<span class="chip off">${esc(g.description)}</span>`:''}<span class="chip ${pid?'k0':'off'}">${pid?'Prof principal · '+esc(tName(pid)):'Sans prof principal'}</span>`;
-  const actions=`<button class="btn sm primary" type="button" data-act="see-group" data-id="${esc(g.id)}">Voir l’horaire</button>${isAdmin()?`<button class="btn sm" type="button" data-act="new-course" data-g="${esc(g.id)}">${icon('plus')}Planifier un cours</button>`:''}`;
-  const stat=[['Élèves',String(els.length),''],['Cours',String(cs.length),''],['Présence',r==null?'—':r+' %',rateCls(r)],['Avancement',pr.pct==null?'—':pr.pct+' %',''],['Prochain examen',ex?esc(dn(parse(ex.date))+' '+fMonthS.format(parse(ex.date))):'Aucun','']];
+  const actions=`${periodSeg(per)}<button class="btn sm primary" type="button" data-act="see-group" data-id="${esc(g.id)}">Voir l’horaire</button>`;
+  const stat=[['Élèves',String(els.length),''],['Présence',!S.termLoaded?'…':x.rate==null?'—':x.rate+' %',rateCls(x.rate)],['À rattraper',String(x.missing.length),x.missing.length?'warn':''],['Avancement',pr.pct==null?'—':pr.pct+' %',''],['Prochain examen',ex?esc(dn(parse(ex.date))+' '+fMonthS.format(parse(ex.date))):'Aucun','']];
   const num=String(g.nom).replace(/^(Classe|Groupe)\s+/i,'').slice(0,4);
   const head=ficheHead(g.nom,chips,actions,stat,`<span class="av lg cl-av" aria-hidden="true">${esc(num)}</span>`);
   const content=tab=>{
+    if(tab==='rattraper') return `<section class="panel">${!S.termLoaded?'<p class="help">Chargement des présences…</p>':x.missing.length?`<div class="list">${x.missing.map(missRow).join('')}</div>`:'<p class="help">Toutes les présences de la période sont prises.</p>'}</section>`;
     if(tab==='cours'){
       return `<section class="panel">${cs.length?`<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Cours</th><th class="num">Séances</th><th class="num">Heures</th><th>Enseignant</th><th>Local</th><th></th></tr></thead><tbody>${cs.map(c=>`<tr><td><span class="row" style="gap:6px;flex-wrap:nowrap">${c.code?`<span class="chip ${tone(c)}">${esc(c.code)}</span>`:''}<b>${esc(c.titre)}</b></span></td><td class="num">${courseLoad(c).label}</td><td class="num">${courseLoad(c).hours}</td><td><select data-assign="${esc(c.id)}" aria-label="${esc('Enseignant de '+c.titre)}"${dis()}><option value="">À assigner</option>${ts.map(t=>`<option value="${esc(t.id)}"${c.enseignant===t.id?' selected':''}>${esc(t.nom)}</option>`).join('')}</select></td><td>${esc(c.salle||'—')}</td><td class="num"><button class="btn sm ghost" type="button" data-act="edit-course" data-id="${esc(c.id)}">Modifier</button></td></tr>`).join('')}</tbody></table></div>`:'<p class="help">Aucun cours pour cette classe.</p>'}
         ${isAdmin()?`<div class="row" style="margin-top:12px"><button class="btn sm" type="button" data-act="new-course" data-g="${esc(g.id)}">${icon('plus')}Planifier un cours pour ${esc(g.nom)}</button></div>`:''}</section>`;
@@ -1359,11 +1363,11 @@ function classFiche(){
         <section class="panel"><h2>Supprimer la classe</h2><p class="help">Ses ${pl(els.length,'élève est retiré','élèves sont retirés')} de l’école. Ses cours restent à l’horaire, sans classe.</p>
           ${conf?confirmBox(`Supprimer ${esc(g.nom)} et ${pl(els.length,'élève','élèves')} ?`,'m-del-g',g.id):`<div class="row" style="margin-top:10px"><button class="btn sm danger" type="button" data-act="m-ask" data-id="${esc(g.id)}"${dis()}>Supprimer la classe</button></div>`}</section></div>`;
     }
-    const rows=els.map(e=>{const rr=rateOf(stats[e.id]);return `<tr class="row-link" data-act="student" data-id="${esc(e.id)}"><td><button class="link" type="button" data-act="student" data-id="${esc(e.id)}">${esc(e.nom)}</button>${e.fonction?`<span class="role-chip">${esc(e.fonction)}</span>`:''}</td><td class="num">${e.numero!=null?esc(e.numero):'—'}</td><td class="num">${rr==null?'<span class="muted">—</span>':`<span class="chip ${rateCls(rr)}">${rr} %</span>`}</td><td class="num"><button type="button" class="x" data-act="m-del-el" data-id="${esc(e.id)}" aria-label="${esc('Retirer '+e.nom)}" title="Retirer de la classe"${dis()}>×</button></td></tr>`;}).join('');
-    return `<div class="fiche-two"><section class="panel">${els.length?`<div class="tbl-wrap"><table class="tbl" style="min-width:0"><thead><tr><th>Élève</th><th class="num">N°</th><th class="num">Présence</th><th class="num"><span class="vh">Retirer</span></th></tr></thead><tbody>${rows}</tbody></table></div>`:'<p class="help">Aucun élève pour l’instant.</p>'}</section>
+    const rows=els.map(e=>{const s=stats[e.id],r=rateOf(s);return `<tr class="row-link" data-act="student" data-id="${esc(e.id)}"><td><button class="link" type="button" data-act="student" data-id="${esc(e.id)}">${esc(e.nom)}</button>${e.fonction?`<span class="role-chip">${esc(e.fonction)}</span>`:''}</td><td class="num">${e.numero!=null?esc(e.numero):'—'}</td><td class="num">${r==null?'<span class="muted">—</span>':`<span class="chip ${rateCls(r)}">${r} %</span>`}</td><td class="num">${s?s.A+s.M:0}</td><td class="num">${s?s.R:0}</td><td class="num"><button type="button" class="x" data-act="m-del-el" data-id="${esc(e.id)}" aria-label="${esc('Retirer '+e.nom)}" title="Retirer de la classe"${dis()}>×</button></td></tr>`;}).join('');
+    return `<div class="fiche-two${isAdmin()?' wide':''}"><section class="panel">${els.length?`<div class="tbl-wrap"><table class="tbl" style="min-width:0"><thead><tr><th>Élève</th><th class="num">N°</th><th class="num">Présence</th><th class="num">Absences</th><th class="num">Retards</th><th class="num"><span class="vh">Retirer</span></th></tr></thead><tbody>${rows}</tbody></table></div>`:'<p class="help">Aucun élève pour l’instant.</p>'}</section>
       ${isAdmin()?`<section class="panel"><h2>Inscrire des élèves</h2><form data-form="m-add-els" data-g="${esc(g.id)}"><label class="field"><span>Un nom par ligne</span><textarea id="m-bulk-${esc(g.id)}" rows="6" placeholder="Prénom Nom"></textarea></label><div class="row" style="margin-top:8px"><button class="btn sm" type="submit"${dis()}>Inscrire les élèves</button></div></form></section>`:''}</div>`;
   };
-  return ficheShell('classes',list,g,item,head,[['eleves','Élèves'],['cours','Cours'],['reglages','Réglages']],content);
+  return ficheShell('classes',list,g,item,head,[['eleves','Élèves'],['rattraper',`À rattraper${x.missing.length?' · '+x.missing.length:''}`],['cours','Cours'],['reglages','Réglages']],content);
 }
 
 function courseLoad(c){
@@ -1405,7 +1409,7 @@ function openFiche(page,id){
   if(S.page!==page){
     S.page=page;S.pg={};
     if(page==='eleves'){const e=byId(S.data.eleves,id);if(e&&from==='classes')S.pg.g=e.groupe;}
-    if(page==='eleves'||page==='presences'||page==='classes')ensureTerm();
+    if(page==='eleves'||page==='classes')ensureTerm();
   }else if(!S.pg.fiche) S.pg.listY=window.scrollY;
   S.pg.fiche=id;S.pg.from=from;S.dr=null;
   render();window.scrollTo({top:0});
@@ -1416,7 +1420,7 @@ function closeFiche(){
   S.pg.fiche=null;render();window.scrollTo({top:y});
 }
 function ficheStep(d){
-  const list=S.page==='eleves'?studentList():S.page==='classes'||S.page==='presences'?groups():staff(), i=list.findIndex(x=>x.id===S.pg.fiche), n=list[i+d];
+  const list=S.page==='eleves'?studentList():S.page==='classes'?groups():staff(), i=list.findIndex(x=>x.id===S.pg.fiche), n=list[i+d];
   if(n){S.pg.fiche=n.id;render();window.scrollTo({top:0});const b=$(d<0?'#fi-prev':'#fi-next');if(b&&!b.disabled)b.focus({preventScroll:true});}
 }
 const ageOf=d=>{if(!d)return null;const b=parse(d),t=new Date();let a=t.getFullYear()-b.getFullYear();if(t.getMonth()<b.getMonth()||(t.getMonth()===b.getMonth()&&t.getDate()<b.getDate()))a--;return a>=0&&a<120?a:null;};
@@ -1425,7 +1429,7 @@ function ficheFacts(rows){return `<dl class="facts">${rows.map(([k,v,wide])=>`<d
 function ficheShell(kind,list,cur,listItem,head,tabs,content){
   const i=list.findIndex(x=>x.id===cur.id), prev=list[i-1], next=list[i+1];
   const from=S.pg.from&&S.pg.from!==S.page?S.pg.from:null;
-  const backLbl=from==='classes'?'Retour aux classes':from==='presences'?'Retour aux présences':kind==='eleves'?'Retour à la liste des élèves':kind==='classes'?'Retour aux classes':kind==='presences'?'Retour aux présences':'Retour à la liste du personnel';
+  const backLbl=from==='classes'?'Retour aux classes':kind==='eleves'?'Retour à la liste des élèves':kind==='classes'?'Retour aux classes':'Retour à la liste du personnel';
   const filt=kind==='eleves'?`<div class="fl-tools"><input class="search" id="s-q" type="search" placeholder="Rechercher" aria-label="Rechercher un élève" autocomplete="off" value="${esc(S.pg.q||'')}"><select id="s-g" aria-label="Classe"><option value="">Toutes les classes</option>${groups().map(x=>`<option value="${esc(x.id)}"${S.pg.g===x.id?' selected':''}>${esc(x.nom)}</option>`).join('')}</select></div>`:'';
   const nav=`<div class="fiche-nav"><button class="btn sm" type="button" id="fi-back" data-act="fi-back">${icon('left')}${backLbl}</button><span class="grow"></span>
     ${i>=0?`<span class="muted sm">${i+1} sur ${list.length}</span>`:''}
@@ -1433,7 +1437,7 @@ function ficheShell(kind,list,cur,listItem,head,tabs,content){
     <button class="btn sm" type="button" id="fi-next" data-act="fi-step" data-d="1"${next?` title="${esc(next.nom)} (→)"`:' disabled'}><span class="fi-lbl">${next?esc(next.nom):'Suivant'}</span>${icon('right')}</button></div>`;
   const tab=S.pg.tab&&tabs.some(t=>t[0]===S.pg.tab)?S.pg.tab:tabs[0][0];
   const tabBar=`<div class="seg fiche-tabs" role="group" aria-label="Sections de la fiche">${tabs.map(([k,l])=>`<button type="button" id="fi-tab-${k}" data-act="fi-tab" data-v="${k}" aria-pressed="${k===tab}">${l}</button>`).join('')}</div>`;
-  return `<div class="fiche"><aside class="fiche-list" aria-label="${kind==='eleves'?'Élèves':kind==='classes'||kind==='presences'?'Classes':'Personnel'}">${filt}<ul>${list.map(x=>`<li><button type="button" class="fl-item" id="fl-${esc(x.id)}" data-act="${kind==='eleves'?'student':kind==='classes'?'class':kind==='presences'?'att-class':'staff'}" data-id="${esc(x.id)}" aria-current="${x.id===cur.id}">${listItem(x)}</button></li>`).join('')||'<li class="muted sm" style="padding:12px">Aucun résultat.</li>'}</ul></aside>
+  return `<div class="fiche"><aside class="fiche-list" aria-label="${kind==='eleves'?'Élèves':kind==='classes'?'Classes':'Personnel'}">${filt}<ul>${list.map(x=>`<li><button type="button" class="fl-item" id="fl-${esc(x.id)}" data-act="${kind==='eleves'?'student':kind==='classes'?'class':'staff'}" data-id="${esc(x.id)}" aria-current="${x.id===cur.id}">${listItem(x)}</button></li>`).join('')||'<li class="muted sm" style="padding:12px">Aucun résultat.</li>'}</ul></aside>
     <div class="fiche-main">${nav}${head}${tabBar}<div class="fiche-body">${content(tab)}</div></div></div>`;
 }
 /* Compte de la personne, affiché dans l’en-tête de sa fiche */
@@ -1507,7 +1511,7 @@ function staffFiche(){
   const cs=S.data.cours.filter(c=>c.enseignant===p.id).sort((x,y)=>collator.compare(gName(x.groupe),gName(y.groupe))||collator.compare(x.titre,y.titre));
   const byG={};for(const c of cs)(byG[c.groupe]=byG[c.groupe]||[]).push(c);
   const wk=weekItems().filter(x=>x.kind!=='exam'&&!x.cancelled&&x.tch.includes(p.id));
-  let late=0;for(const x of wk){const ai=attInfo(x);if(ai.state!=='done'&&ai.past)late++;}
+  let late=0;for(const x of wk){const ai=attInfo(x);if(ai.state!=='done'&&ai.past&&ai.total)late++;}
   const chips=`<span class="chip">${esc(p.fonction||'Enseignant')}</span>${principalClasses(p.id).map(g=>`<span class="chip k0">Prof principal · ${esc(g.nom)}</span>`).join('')}<span class="chip ${STATUTS[st]||'off'}">${esc(st)}</span>${acctChip(p.id)}`;
   const actions=`<button class="btn sm primary" type="button" id="fi-edit" data-act="sf-edit" data-id="${esc(p.id)}">Modifier le dossier</button>${teach?`<button class="btn sm" type="button" data-act="see-teacher" data-id="${esc(p.id)}">Son horaire</button>`:''}${acctBtn(p.id,p.fonction&&!teach?'admin':'teacher')}`;
   const stats=teach?[['Cours',String(cs.length),''],['Classes',String(Object.keys(byG).length),''],['Cette semaine',pl(wk.length,'cours','cours'),''],['Présences à prendre',String(late),late?'warn':'']]
@@ -1545,71 +1549,29 @@ function staffFiche(){
 /* ---------- Pages : personnel ---------- */
 function staffPage(){
   if(S.pg.fiche) return staffFiche();
+  const who=S.pg.who||'liste';
+  const segP=`<div class="seg" role="group" aria-label="Affichage"><button type="button" id="st-liste" data-act="pg-set" data-k="who" data-v="liste" aria-pressed="${who==='liste'}">Liste</button><button type="button" id="pt-personnel" data-act="pg-set" data-k="who" data-v="presences" aria-pressed="${who==='presences'}">Présences</button></div>`;
+  if(who==='presences') return attStaff(segP);
   const all=staff(), d=new Date(), m0=iso(new Date(d.getFullYear(),d.getMonth(),1)), t=todayISO();
   const abs={};
   for(const [ds,doc] of Object.entries(S.data.staffPres)){ if(ds<m0||ds>t) continue; for(const [id,v] of Object.entries((doc&&doc.statuts)||{})) if(v==='A') abs[id]=(abs[id]||0)+1; }
   const nT=all.filter(isTeacher).length, nC=all.filter(p=>p.statut==='En congé').length;
-  const tb=`<div class="toolbar"><p class="summary" style="margin:0"><span><b>${all.length}</b>membres</span><span><b>${nT}</b>${nT>1?'enseignants':'enseignant'}</span><span class="${nC?'need':''}"><b>${nC}</b>en congé</span></p><span class="grow"></span><button class="btn primary" type="button" data-act="new-staff">${icon('plus')}Ajouter un membre du personnel</button></div>`;
+  const tb=`<div class="toolbar">${segP}<p class="summary" style="margin:0"><span><b>${all.length}</b>membres</span><span><b>${nT}</b>${nT>1?'enseignants':'enseignant'}</span><span class="${nC?'need':''}"><b>${nC}</b>en congé</span></p><span class="grow"></span><button class="btn primary" type="button" data-act="new-staff">${icon('plus')}Ajouter un membre du personnel</button></div>`;
   if(!all.length) return tb+emptyBox('Aucun membre du personnel','Ajoutez les enseignants et le reste du personnel. Les enseignants pourront ensuite être assignés aux cours.');
   return tb+`<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Nom</th><th>Fonction</th><th>Statut</th><th>Courriel</th><th>Téléphone</th><th class="num">Cours</th><th class="num">Absences ce mois</th></tr></thead><tbody>${all.map(p=>{const dz=S.data.dossiers[p.id]||{}, st=p.statut||'Actif', nc=S.data.cours.filter(c=>c.enseignant===p.id).length;
     return `<tr class="row-link" data-act="staff" data-id="${esc(p.id)}"><td><button class="link" type="button" data-act="staff" data-id="${esc(p.id)}">${esc(p.nom)}</button></td><td>${esc(p.fonction||'Enseignant')}${principalClasses(p.id).map(g=>`<span class="role-chip prin-chip">Principal · ${esc(g.nom.replace(/^(Classe|Groupe)\s+/i,''))}</span>`).join('')}</td><td><span class="chip ${STATUTS[st]||'off'}">${esc(st)}</span></td><td>${esc(p.courriel||'—')}</td><td>${esc(dz.telephone||'—')}</td><td class="num">${nc}</td><td class="num">${abs[p.id]||0}</td></tr>`;}).join('')}</tbody></table></div>`;
 }
 
-/* ---------- Pages : présences ---------- */
-function attendancePage(){
-  const st=S.pg, tab=st.who||'eleves';
-  if(st.fiche&&tab==='eleves') return attClassFiche();
-  const tabs=`<div class="seg" role="group" aria-label="Présences de"><button type="button" id="pt-eleves" data-act="pg-set" data-k="who" data-v="eleves" aria-pressed="${tab==='eleves'}">Élèves</button><button type="button" id="pt-personnel" data-act="pg-set" data-k="who" data-v="personnel" aria-pressed="${tab==='personnel'}">Personnel</button></div>`;
-  return tab==='eleves'?attStudents(tabs):attStaff(tabs);
-}
+/* ---------- Présences : aides des classes et du personnel ---------- */
 const periodSeg=per=>`<div class="seg" role="group" aria-label="Période">${[['semaine','Cette semaine'],['mois','Ce mois'],['annee','Depuis la rentrée']].map(([k,l])=>`<button type="button" id="pp-${k}" data-act="pg-set" data-k="period" data-v="${k}" aria-pressed="${per===k}">${l}</button>`).join('')}</div>`;
 /* Présences d’une classe sur une période : cours passés, complétés, à rattraper, et totaux des élèves */
 function classAtt(gid,from,to,stats,sess){
   const els=studentsOf(gid), mine=sess.filter(s=>s.grp===gid);
-  let done=0;const missing=[];for(const s of mine){const a=attInfo(s);if(a.state==='done')done++;else missing.push(s);}
+  let done=0;const missing=[];for(const s of mine){const a=attInfo(s);if(a.state==='done')done++;else if(els.length)missing.push(s);}
   let P=0,A=0,R=0,M=0,N=0;for(const e of els){const s=stats[e.id];if(s){P+=s.P;A+=s.A;R+=s.R;M+=s.M;N+=s.n;}}
   return {els,past:mine.length,done,missing:missing.sort((a,b)=>b.date.localeCompare(a.date)||b.start-a.start),P,A,R,M,N,rate:N?Math.round((P+R)/N*100):null};
 }
 const missRow=s=>`<button type="button" class="lrow" data-act="open-att" data-date="${s.date}" data-key="${esc(s.key)}"><span class="when">${dn(parse(s.date))}<small>${fMonthS.format(parse(s.date))}</small></span><span class="what"><span class="ti">${codeOf(s.c)}${esc(s.c.titre)}${choreChip(s)}</span><span class="sub">${esc(`${gName(s.c.groupe)} · ${momentOf(s)} · ${shortName(tName(s.c.enseignant))}`)}</span></span><span class="chip warn">À faire</span></button>`;
-function attStudents(tabs){
-  const st=S.pg, per=st.period||'mois', [from,to]=periodRange(per);
-  const head=`<div class="toolbar">${tabs}<span class="grow"></span>${periodSeg(per)}</div>`;
-  if(!S.termLoaded) return head+'<div class="empty"><p>Chargement des présences…</p></div>';
-  const stats=studentStats(from,to), sess=sessionsBetween(from,to).filter(s=>!s.cancelled&&isPast(s));
-  let P=0,R=0,N=0;for(const s of Object.values(stats)){P+=s.P;R+=s.R;N+=s.n;}
-  const per_g=groups().map(g=>({g,x:classAtt(g.id,from,to,stats,sess)}));
-  const miss=per_g.reduce((n,y)=>n+y.x.missing.length,0), rate=N?Math.round((P+R)/N*100):null;
-  const sum=`<p class="att-sum-line">Présence globale <b class="${rateCls(rate)}">${rate==null?'—':rate+' %'}</b>${miss?`<span class="chip warn">${pl(miss,'cours sans présences','cours sans présences')}</span>`:'<span class="chip ok">Toutes les présences sont prises</span>'}</p>`;
-  const cards=per_g.map(({g,x})=>{const c=rateCls(x.rate);
-    return `<article class="t-card cl-card att-card" id="ac-${esc(g.id)}" data-act="att-class" data-id="${esc(g.id)}" tabindex="0" role="button" aria-label="${esc('Présences de '+g.nom)}">
-      <div class="cl-top"><div class="cl-name"><h3>${esc(g.nom)}</h3></div>${icon('right')}</div>
-      <div class="att-rate"><b class="${c}">${x.rate==null?'—':x.rate+' %'}</b><span>${x.rate==null?'aucune présence notée':'de présence'}</span></div>
-      <div class="meter ${c}" aria-hidden="true"><i style="width:${x.rate||0}%"></i></div>
-      ${x.missing.length?`<span class="chip warn att-miss">${pl(x.missing.length,'présence à rattraper','présences à rattraper')}</span>`:''}
-    </article>`;}).join('');
-  return head+sum+(cards?`<div class="cl-grid">${cards}</div>`:'<p class="help">Aucune classe.</p>');
-}
-/* Fiche des présences d’une classe : l’essentiel, les élèves les moins présents en premier */
-function attClassFiche(){
-  const g=byId(S.data.groupes,S.pg.fiche);
-  if(!g){S.pg.fiche=null;return attendancePage();}
-  const per=S.pg.period||'mois', [from,to]=periodRange(per);
-  if(!S.termLoaded) return '<div class="empty"><p>Chargement des présences…</p></div>';
-  const stats=studentStats(from,to), sess=sessionsBetween(from,to).filter(s=>!s.cancelled&&isPast(s)), x=classAtt(g.id,from,to,stats,sess);
-  const list=groups();
-  const item=y=>`<span class="fl-name">${esc(y.nom)}</span>`;
-  const actions=`${periodSeg(per)}<button class="btn sm" type="button" data-act="class" data-id="${esc(g.id)}">Voir la classe</button>`;
-  const stat=[['Présence',x.rate==null?'—':x.rate+' %',rateCls(x.rate)],['Absences',String(x.A+x.M),x.A?'bad':''],['Retards',String(x.R),x.R?'warn':''],['À rattraper',String(x.missing.length),x.missing.length?'warn':'']];
-  const num=String(g.nom).replace(/^(Classe|Groupe)\s+/i,'').slice(0,4);
-  const head=ficheHead(g.nom,'',actions,stat,`<span class="av lg cl-av" aria-hidden="true">${esc(num)}</span>`);
-  const content=tab=>{
-    if(tab==='rattraper') return `<section class="panel">${x.missing.length?`<div class="list">${x.missing.map(missRow).join('')}</div>`:'<p class="help">Toutes les présences de la période sont prises.</p>'}</section>`;
-    const els=x.els.slice().sort((a,b)=>{const ra=rateOf(stats[a.id]),rb=rateOf(stats[b.id]);return (ra==null?101:ra)-(rb==null?101:rb)||collator.compare(a.nom,b.nom);});
-    const rows=els.map(e=>{const s=stats[e.id],r=rateOf(s);return `<tr class="row-link" data-act="student" data-id="${esc(e.id)}"><td><button class="link" type="button" data-act="student" data-id="${esc(e.id)}">${esc(e.nom)}</button></td><td class="num">${r==null?'<span class="muted">—</span>':`<span class="chip ${rateCls(r)}">${r} %</span>`}</td><td class="num">${s?s.A+s.M:0}</td><td class="num">${s?s.R:0}</td></tr>`;}).join('');
-    return `<section class="panel">${rows?`<p class="help" style="margin-bottom:10px">Les élèves les moins présents en premier.</p><div class="tbl-wrap"><table class="tbl" style="min-width:0"><thead><tr><th>Élève</th><th class="num">Présence</th><th class="num">Absences</th><th class="num">Retards</th></tr></thead><tbody>${rows}</tbody></table></div>`:'<p class="help">Aucun élève dans cette classe.</p>'}</section>`;
-  };
-  return ficheShell('presences',list,g,item,head,[['eleves','Élèves'],['rattraper',`À rattraper${x.missing.length?' · '+x.missing.length:''}`]],content);
-}
 
 function staffDraft(){
   const st=S.pg, ds=st.sdate;
@@ -1899,7 +1861,7 @@ function profilePage(){
     const id=P.id, z=S.data.dossiers[id]||{}, cs=S.data.cours.filter(c=>c.enseignant===id);
     const byG={};for(const c of cs)byG[c.groupe]=(byG[c.groupe]||0)+1;
     const wk=weekItems().filter(s=>s.kind!=='exam'&&!s.cancelled&&s.tch.includes(id));
-    let late=0;for(const s of wk){const x=attInfo(s);if(x.state!=='done'&&x.past)late++;}
+    let late=0;for(const s of wk){const x=attInfo(s);if(x.state!=='done'&&x.past&&x.total)late++;}
     const nx=nextSession(s=>s.c.enseignant===id);
     panels+=`<section class="panel"><h2>Mes informations</h2>${facts([['Fonction',rec.fonction||'Enseignant'],['Statut',rec.statut||'Actif'],['Courriel',rec.courriel],['Téléphone',z.telephone||rec.telephone]])}</section>`;
     panels+=`<section class="panel"><h2>Mes classes</h2>${Object.keys(byG).length?`<ul class="acc-list">${Object.entries(byG).sort((x,y)=>collator.compare(gName(x[0]),gName(y[0]))).map(([g,n])=>`<li><span>${esc(gName(g))}${principalOf(g)===id?' <span class="chip k0">Prof principal</span>':''}</span><span class="muted">${pl(n,'cours','cours')}</span></li>`).join('')}</ul>`:'<p class="help">Aucun cours assigné pour l’instant.</p>'}</section>`;
@@ -1927,7 +1889,7 @@ function setHTML(el,html,key){
   if(fid){const f=document.getElementById(fid);if(f&&el.contains(f)){f.focus({preventScroll:true});if(sel&&sel[0]!=null){try{f.setSelectionRange(sel[0],sel[1]);}catch(e){}}}}
 }
 const NAV={
-  admin:[['calendar','Calendrier','cal'],['classes','Classes','teach'],['eleves','Élèves','users'],['personnel','Personnel','card'],['presences','Présences','clip'],['examens','Examens','exam'],['annee','Calendrier scolaire','year'],['comptes','Comptes','key'],['params','Paramètres','gear']],
+  admin:[['calendar','Calendrier','cal'],['classes','Classes','teach'],['eleves','Élèves','users'],['personnel','Personnel','card'],['examens','Examens','exam'],['annee','Calendrier scolaire','year'],['comptes','Comptes','key'],['params','Paramètres','gear']],
   teacher:[['calendar','Mon horaire','cal'],['examens','Examens','exam'],['annee','Calendrier scolaire','year'],['profil','Mon profil','user']],
   student:[['calendar','Mon horaire','cal'],['examens','Examens','exam'],['annee','Calendrier scolaire','year'],['profil','Mon profil','user']]
 };
@@ -1935,6 +1897,7 @@ function ensureSel(){
   if(S.view==='jour'&&(!S.dayDate||iso(monday(parse(S.dayDate)))!==iso(S.week))) S.dayDate=initDay();
   const vis=visibleRoles();
   if(!vis.includes(S.role)) S.role=vis[0];
+  if(S.page==='presences') S.page='classes';
   if(!NAV[S.role].some(n=>n[0]===S.page)&&S.page!=='profil') S.page='calendar';
   if(!allLoaded()) return;
   // Un compte enseignant ou élève choisit lui-même l’enseignant ou la classe affichés.
@@ -1990,10 +1953,9 @@ const HEAD={
   admin:['Le calendrier des classes','Les cours et les examens de la semaine pour chaque classe.'],
   teacher:['Mon horaire','Vos cours de la semaine et les présences à prendre.'],
   student:['Mon horaire','Les cours et les examens de votre classe cette semaine.'],
-  classes:['Classes','L’horaire, les enseignants assignés et les élèves inscrits de chaque classe.'],
+  classes:['Classes','Les élèves, les présences et les cours de chaque classe.'],
   eleves:['Élèves','Les dossiers des élèves et le suivi de leurs présences.'],
-  personnel:['Personnel','Les dossiers du personnel, leur fonction et leur statut d’emploi.'],
-  presences:['Présences','Le suivi en temps réel des présences des élèves et du personnel.'],
+  personnel:['Personnel','Les dossiers du personnel, leur statut et leurs présences.'],
   examens:['Examens','Les examens planifiés pour chaque classe.'],
   annee:['Calendrier scolaire','La rentrée, les étapes, les congés et les examens de l’année.'],
   params:['Paramètres','L’établissement, l’année scolaire et les accès.']
@@ -2011,7 +1973,7 @@ function renderMain(){
   let html;
   const p=S.page;
   if(p==='calendar'){S._stats=null;const body=wait||(S.role==='admin'?adminMain():S.role==='teacher'?teacherMain():studentMain());html=toolbarHTML()+body;}
-  else html=wait||(p==='classes'?classesPage():p==='eleves'?studentsPage():p==='personnel'?staffPage():p==='presences'?attendancePage():p==='examens'?examsPage():p==='annee'?yearPage():p==='comptes'?accountsPage():p==='profil'?profilePage():paramsPage());
+  else html=wait||(p==='classes'?classesPage():p==='eleves'?studentsPage():p==='personnel'?staffPage():p==='examens'?examsPage():p==='annee'?yearPage():p==='comptes'?accountsPage():p==='profil'?profilePage():paramsPage());
   const el=$('#main'), key=S.role+'/'+p;
   const before=el._k===key&&el._h!==html&&!reduceMotion()?measureCards(el):null;
   setHTML(el,html,key);
@@ -2581,7 +2543,7 @@ async function clearExamples(){
 /* ---------- Événements ---------- */
 function setWeek(d){S.week=d;S.day=defaultDay();subWeek();render();}
 function setRole(r){if(r===S.role)return;S.role=r;S.page='calendar';S.pg={};S.dr=null;S.confirmClear=false;savePrefs();render();}
-function goPage(p){S.page=p;S.pg={};if(p==='eleves'||p==='presences'||p==='classes')ensureTerm();render();window.scrollTo({top:0});}
+function goPage(p){if(p==='presences')p='classes';S.page=p;S.pg={};if(p==='eleves'||p==='classes')ensureTerm();render();window.scrollTo({top:0});}
 function openSession(key,date){
   const s=date?findSess(date,key):weekItems().find(x=>x.key===key);if(!s)return;
   const base={key,coursId:s.c.id,slotId:s.sl.id,date:s.date};
@@ -2700,7 +2662,6 @@ document.addEventListener('click',async e=>{
       S.busy=true;renderDrawer();await write(()=>col('cours').doc(c.id).update({annulees:arr}),i>=0?'Cours rétabli':'Cours annulé pour cette date');S.busy=false;render();break;}
     /* classes */
     case 'class':openFiche('classes',b.dataset.id);break;
-    case 'att-class':openFiche('presences',b.dataset.id);break;
     case 'stop':break;
     case 'm-adding':pg.adding=!pg.adding;render();if(pg.adding){const x=$('#m-gname');if(x)x.focus();}break;
     case 'm-ask':pg.ask=b.dataset.id;render();break;
@@ -2833,10 +2794,10 @@ document.addEventListener('change',async e=>{
 });
 $('#scrim').addEventListener('click',()=>closeDrawer());
 document.addEventListener('keydown',e=>{
-  if((e.key==='Enter'||e.key===' ')&&e.target&&e.target.classList&&e.target.classList.contains('cl-card')){e.preventDefault();openFiche(e.target.classList.contains('att-card')?'presences':'classes',e.target.dataset.id);return;}
+  if((e.key==='Enter'||e.key===' ')&&e.target&&e.target.classList&&e.target.classList.contains('cl-card')){e.preventDefault();openFiche('classes',e.target.dataset.id);return;}
   if(e.key==='Escape'&&DRAG){e.preventDefault();endDrag(false);return;}
   if(e.key==='Escape'&&S.dr){e.preventDefault();closeDrawer();return;}
-  if(!S.dr&&S.pg&&S.pg.fiche&&(S.page==='eleves'||S.page==='personnel'||S.page==='classes'||S.page==='presences')&&!e.altKey&&!e.ctrlKey&&!e.metaKey&&!/^(INPUT|SELECT|TEXTAREA)$/.test((e.target&&e.target.tagName)||'')){
+  if(!S.dr&&S.pg&&S.pg.fiche&&(S.page==='eleves'||S.page==='personnel'||S.page==='classes')&&!e.altKey&&!e.ctrlKey&&!e.metaKey&&!/^(INPUT|SELECT|TEXTAREA)$/.test((e.target&&e.target.tagName)||'')){
     if(e.key==='ArrowLeft'){e.preventDefault();ficheStep(-1);return;}
     if(e.key==='ArrowRight'){e.preventDefault();ficheStep(1);return;}
     if(e.key==='Escape'){e.preventDefault();closeFiche();return;}

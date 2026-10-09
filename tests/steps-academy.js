@@ -125,7 +125,7 @@ click($('#nav-classes'));await wait(50);
 ok('5 classes',$$('.t-card').length===5);
 ok('class cards',$$('.cl-card').length===5&&/12/.test($('#cl-c119 .cl-stats').textContent)&&!!$('#cl-c119 .cl-prog')&&!!$('#m-pr-c119'));
 click($('#cl-c119'));await wait(80);
-ok('class fiche',/Classe 119/.test($('#fi-name').textContent)&&$$('.fiche-tabs button').length===3&&$$('.fh-stats>div').length===5&&$$('.fiche-list .fl-item').length===5);
+ok('class fiche',/Classe 119/.test($('#fi-name').textContent)&&$$('.fiche-tabs button').length===4&&$$('.fh-stats>div').length===5&&$$('.fiche-list .fl-item').length===5);
 ok('roles in class list',/Capitaine/.test($('#main').textContent)&&$$('.fiche-body tbody tr').length===12);
 click($('#fi-tab-cours'));await wait(60);
 ok('hours column',$$('.tbl td .chip').some(x=>/\/ 75 h/.test(x.textContent)),$$('.tbl td .chip').slice(0,3).map(x=>x.textContent).join('|'));
@@ -198,19 +198,20 @@ ok('year noel',/Congé de Noël/.test($('#main').textContent)&&/15 juin 2027/.te
 // personnel
 click($('#nav-personnel'));await wait(50);
 ok('3 teachers',$$('#main tbody tr').length===3&&/Marie Leduc/.test($('#main').textContent));
-// présences
-click($('#nav-presences'));await wait(150);
-ok('presences page',!!$('.att-sum-line')&&$$('.att-card').length===5&&!$('.kpi')&&!/Élèves à surveiller/.test($('#main').textContent));
-ok('att cards',$$('.att-card').length===5&&/%/.test($('#ac-c119 .att-rate').textContent),$('#ac-c119 .att-rate').textContent);
-click($('#ac-c119'));await wait(100);
-ok('att class fiche',/Classe 119/.test($('#fi-name').textContent)&&$$('.fiche-tabs button').length===2&&$$('.fiche-body tbody tr').length===12&&$$('.fh-stats>div').length===4);
+// présences (dans les classes)
+ok('no presences menu',!$('#nav-presences'));
+click($('#nav-classes'));await wait(150);
+ok('att cards',$$('.cl-card').length===5&&!$('.att-card')&&/%/.test($('#cl-c119 .cl-stats').textContent),$('#cl-c119 .cl-stats').textContent);
+click($('#cl-c119'));await wait(100);
+ok('att class fiche',/Classe 119/.test($('#fi-name').textContent)&&$$('.fiche-tabs button').length===4&&$$('.fiche-body tbody tr').length===12&&$$('.fh-stats>div').length===5&&/Présence/.test($('.fh-stats').textContent));
 click($('#fi-tab-rattraper'));await wait(60);
 ok('att to catch up',$$('.fiche-body [data-act=open-att]').length>0||/Toutes les présences/.test($('.fiche-body').textContent));
 click($('#pp-annee'));await wait(100);
 ok('att period in fiche',$('#pp-annee').getAttribute('aria-pressed')==='true'&&!!$('#fi-name'));
 click($('#fi-back'));await wait(100);
-ok('att back',$$('.att-card').length===5);
+ok('att back',$$('.cl-card').length===5);
 /* ABS */
+click($('#nav-personnel'));await wait(60);
 click($('#pt-personnel'));await wait(60);
 click($('#sp-e-mleduc-A'));await wait(30);
 click($('[data-act=sp-save]'));await wait(150);
