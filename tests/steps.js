@@ -147,7 +147,7 @@ ok('class att cards',$$('.cl-row').length===2&&/Présence/.test($('.cl-hd').text
 click($('#pp-annee'));await wait(40);
 ok('class att rate',/%/.test($('#cl-g-301 .cl-rate').textContent),$('#cl-g-301 .cl-rate').textContent);
 click($('#cl-g-301'));await wait(100);
-ok('class att table',$$('.fiche-tabs button').length===4&&$$('.fiche-body tbody tr').some(r=>/Nathan Ouellet/.test(r.textContent))&&/Absences/.test($('.fiche-body thead').textContent)&&$('#pp-annee').getAttribute('aria-pressed')==='true');
+ok('class att table',$$('.fiche-tabs button').length===4&&$$('.st-row').some(r=>/Nathan Ouellet/.test(r.textContent))&&/Absences/.test($('.st-hd').textContent)&&$('#pp-annee').getAttribute('aria-pressed')==='true');
 click($('#fi-tab-rattraper'));await wait(60);
 ok('missing list',$$('[data-act=open-att]').length>=3,$$('[data-act=open-att]').length);
 click($('[data-act=open-att]'));await wait(60);
