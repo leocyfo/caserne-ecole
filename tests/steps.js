@@ -12,7 +12,7 @@ const store=()=>[...window.__store.entries()];
 try{
 await wait(400);
 ok('banner',/Horaire partagé/.test($('#banner-text').textContent));
-ok('nav admin 8',$$('#nav button').length===8&&!!$('#nav-comptes')&&!$('#nav-presences'));
+ok('nav admin 10',$$('#nav button').length===10&&!!$('#nav-comptes')&&!!$('#nav-modules')&&!!$('#nav-affectations')&&!$('#nav-presences'));
 ok('board',$$('#main .week button.cc').length===41,$$('#main .week button.cc').length);
 ok('exam card on board',$$('#main .cc.exam').length===1);
 /* DND */
@@ -183,7 +183,7 @@ $('#p-enom').value='Test étape';$('#p-edu').value='2027-06-01';$('#p-eau').valu
 ok('etape added',window.__store.get('config/ecole').etapes.length===4);
 // enseignant
 click($('[data-role=teacher]'));await wait(60);
-ok('teacher nav',$$('#nav button').length===4&&!!$('#nav-profil'));
+ok('teacher nav',$$('#nav button').length===6&&!!$('#nav-profil')&&!!$('#nav-mescours')&&!!$('#nav-dispos'));
 ok('teacher board',$$('#main .week button.cc').length>0);
 click($('#nav-examens'));await wait(40);
 ok('teacher exams',$$('#main [data-act=exam]').length>=1||/Aucun examen/.test($('#main').textContent));

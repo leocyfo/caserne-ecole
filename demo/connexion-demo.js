@@ -2,12 +2,13 @@
    Sert à essayer la connexion, la demande de compte et l’approbation sans Firebase.
    Rien n’est envoyé ailleurs ; « Réinitialiser la démo » efface tout. */
 (function(){
-  const KEY='caserne-ecole-demo-v5';
+  const KEY='caserne-ecole-demo-v6';
   const copy=v=>JSON.parse(JSON.stringify(v));
   const DEMO=[
     {uid:'demo-admin',email:'admin@demo.ca',pw:'demo123',displayName:'Direction de l’Académie',label:'Administration'},
     {uid:'demo-mleduc',email:'marie.leduc@demo.ca',pw:'demo123',displayName:'Marie Leduc',label:'Enseignante · Marie Leduc'},
-    {uid:'demo-alexandre',email:'alexandre.beaulieu@demo.ca',pw:'demo123',displayName:'Alexandre Beaulieu',label:'Élève · Alexandre Beaulieu'}
+    {uid:'demo-alexandre',email:'alexandre.beaulieu@demo.ca',pw:'demo123',displayName:'Alexandre Beaulieu',label:'Élève · Alexandre Beaulieu'},
+    {uid:'demo-vtremblay',email:'vincent.tremblay@demo.ca',pw:'demo123',displayName:'Vincent Tremblay',label:'Instructeur · Vincent Tremblay'}
   ];
   function seed(){
     const now='2026-10-08T12:00:00.000Z';
@@ -18,6 +19,8 @@
     docs.push(['comptes/demo-admin',{role:'admin',ref:'',fiche:{nom:'Direction de l’Académie'},maj:now}]);
     docs.push(['comptes/demo-mleduc',{role:'teacher',ref:'e-mleduc',fiche:{nom:t.nom||'Marie Leduc',fonction:t.fonction||'',statut:t.statut||'',courriel:t.courriel||'',telephone:''},maj:now}]);
     docs.push(['comptes/demo-alexandre',{role:'student',ref:'el-119-01',fiche:{nom:e.nom||'Alexandre Beaulieu',groupe:e.groupe||'c119',numero:e.numero==null?null:e.numero,fonction:e.fonction||'',naissance:e.naissance||'',parent:e.parent||'',courriel:e.courriel||'',telephone:e.telephone||''},maj:now}]);
+    const j=get('enseignants/e-vtremblay');
+    docs.push(['comptes/demo-vtremblay',{role:'teacher',ref:'e-vtremblay',fiche:{nom:j.nom||'Vincent Tremblay',fonction:j.fonction||'',statut:j.statut||'',courriel:j.courriel||'',telephone:''},maj:now}]);
     for(const u of DEMO) docs.push(['profils/'+u.uid,{nom:u.displayName,courriel:u.email,maj:now}]);
     return {users:DEMO.map(({uid,email,pw,displayName})=>({uid,email,pw,displayName})),store:docs,cur:null};
   }

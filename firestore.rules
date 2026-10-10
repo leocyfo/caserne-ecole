@@ -13,6 +13,8 @@ service cloud.firestore {
     function isStaff() { return isAdmin() || role() == 'teacher'; }
     function member() { return isOwner() || hasAcct(); }
     function self(uid) { return signedIn() && request.auth.uid == uid; }
+    function myRef() { return hasAcct() ? get(acctDoc()).data.ref : ''; }
+    function isTeacher() { return role() == 'teacher'; }
 
     // Le premier compte créé devient le propriétaire (administrateur) ; ensuite, plus personne.
     match /config/proprietaire {
@@ -35,6 +37,25 @@ service cloud.firestore {
     // Dossiers et présences du personnel : administration seulement
     match /dossiers-personnel/{id} { allow read, write: if isAdmin(); }
     match /presences-personnel/{id} { allow read, write: if isAdmin(); }
+
+    // Affectation des enseignants : chaque enseignant postule (statut « attente ») et retire sa propre candidature ;
+    // l’administration approuve, refuse ou retire.
+    match /candidatures/{id} {
+      allow read: if isStaff();
+      allow create, update: if isAdmin() || (isTeacher() && request.resource.data.enseignant == myRef() && request.resource.data.statut == 'attente');
+      allow delete: if isAdmin() || (isTeacher() && resource.data.enseignant == myRef() && resource.data.statut == 'attente');
+    }
+    // Demandes de remplacement : l’enseignant attribué envoie ou annule la sienne
+    match /remplacements/{id} {
+      allow read: if isStaff();
+      allow create, update: if isAdmin() || (isTeacher() && request.resource.data.enseignant == myRef());
+      allow delete: if isAdmin() || (isTeacher() && resource.data.enseignant == myRef());
+    }
+    // Disponibilités : chaque enseignant écrit les siennes
+    match /disponibilites/{tid} {
+      allow read: if isStaff();
+      allow write: if isAdmin() || (isTeacher() && tid == myRef());
+    }
 
     // Comptes : chacun lit le sien ; l’administration les gère tous
     match /comptes/{uid} {

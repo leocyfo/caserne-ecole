@@ -1,13 +1,22 @@
 # Caserne-École
 
-Le site de gestion scolaire de l’Académie des pompiers : calendrier des classes, cours, élèves, personnel, présences, examens, calendrier scolaire, comptes et profils. Trois rôles : **Administrateur**, **Enseignant**, **Élève**.
+Le site de gestion scolaire de l’Académie des pompiers : calendrier des classes, modules et cours, affectation des enseignants, élèves, personnel, présences, examens, calendrier scolaire, comptes et profils. Trois rôles : **Administrateur**, **Enseignant**, **Élève**.
 
 ## Le site
 
 - **`index.html`** : le site, avec connexion. On se connecte avec son courriel et son mot de passe. Pour avoir un compte, on clique **Demander un compte** ; l’administration approuve la demande dans le menu **Comptes**, en choisissant le rôle et la fiche de la personne.
-- **`demo.html`** : la démo, avec le même écran de connexion. Trois comptes de démo (mot de passe `demo123`) : `admin@demo.ca`, `marie.leduc@demo.ca` (enseignante) et `alexandre.beaulieu@demo.ca` (élève). On peut aussi demander un compte, puis l’approuver avec le compte Administration. Les comptes et les données (classes 119 à 123, horaire 2026–2027) restent dans le navigateur de chaque visiteur ; **Réinitialiser la démo** remet tout à zéro.
+- **`demo.html`** : la démo, avec le même écran de connexion. Quatre comptes de démo (mot de passe `demo123`) : `admin@demo.ca`, `marie.leduc@demo.ca` (enseignante), `alexandre.beaulieu@demo.ca` (élève) et `vincent.tremblay@demo.ca` (instructeur qui postule aux journées de cours). On peut aussi demander un compte, puis l’approuver avec le compte Administration. Les comptes et les données (classes 119 à 123, horaire 2026–2027) restent dans le navigateur de chaque visiteur ; **Réinitialiser la démo** remet tout à zéro.
 
 Tant que Firebase n’est pas configuré (`config.js` vide), `index.html` renvoie vers la démo.
+
+## Affectation des enseignants
+
+- **Modules** (administration) : le catalogue du programme (nom, heures de théorie et de pratique requises, enseignants requis par cours). Dans la fiche d’un module, on ajoute les cours d’une classe : théorie, pratique, examen théorique ou pratique, date de reprise.
+- **Enseignants requis** : chaque cours a son nombre d’enseignants requis (celui du module par défaut, modifiable cours par cours). Le titulaire du module donne tous ses cours ; les autres places sont à combler.
+- **Enseignants** : *Disponibilités* (les jours où ils peuvent donner des cours) et *Mes cours* (cours à pourvoir selon leurs disponibilités et leurs compétences, candidatures en attente, cours attribués, cours donnés, demande de remplacement).
+- **Affectations** (administration) : cours à combler, candidatures à approuver ou refuser, demandes de remplacement, et pour chaque cours le nombre d’enseignants attribués sur le nombre requis. Les compétences de chaque enseignant se cochent dans son dossier (Personnel).
+
+Données : `candidatures/<séance__enseignant>` (statut `attente`, `approuve`, `refuse` ou `retire`), `remplacements/<séance__enseignant>`, `disponibilites/<enseignant>` (jours `J`, `AM` ou `PM`), `enseignants/<id>.competences` (numéros de modules) et, dans `config/ecole.competences`, `heuresT`, `heuresP` et `requis` par module. Les règles de `firestore.rules` laissent un enseignant écrire seulement ses propres candidatures (en attente), demandes de remplacement et disponibilités.
 
 ## Essayer le site sur cet ordinateur
 
