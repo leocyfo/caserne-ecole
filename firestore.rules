@@ -57,6 +57,13 @@ service cloud.firestore {
       allow write: if isAdmin() || (isTeacher() && tid == myRef());
     }
 
+    // Résultats d’examens : le personnel voit tout ; chaque élève ne lit que les siens
+    match /resultats/{id} { allow read, write: if isStaff(); }
+    match /resultats-eleves/{id} {
+      allow read: if isStaff() || (hasAcct() && resource.data.eleve == myRef());
+      allow write: if isStaff();
+    }
+
     // Comptes : chacun lit le sien ; l’administration les gère tous
     match /comptes/{uid} {
       allow read: if isAdmin() || self(uid);

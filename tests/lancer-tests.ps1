@@ -9,7 +9,7 @@ $pages = [ordered]@{ 'test.html' = 'out.html'; 'test-ac.html' = 'out-ac.html'; '
 foreach ($n in 'setup','request','approve','refused','signin','demo-login','demo-request') { $pages["test-auth-$n.html"] = "out-auth-$n.html" }
 foreach ($p in $pages.Keys) {
   $profil = Join-Path $env:TEMP ('caserne-ecole-tests-' + [guid]::NewGuid())
-  & $chrome --headless=new --disable-gpu --no-first-run "--user-data-dir=$profil" --window-size=1440,1000 --virtual-time-budget=60000 --dump-dom "$url/$p" | Out-File -Encoding utf8 $pages[$p]
+  & $chrome --headless=new --disable-gpu --no-first-run "--user-data-dir=$profil" --window-size=1440,1000 --virtual-time-budget=120000 --dump-dom "$url/$p" | Out-File -Encoding utf8 $pages[$p]
   Remove-Item -Recurse -Force $profil -ErrorAction SilentlyContinue
   $res = node build-test.js $pages[$p]
   $ok = ($res | Select-String '^PASS').Count

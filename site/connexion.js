@@ -75,7 +75,7 @@
   const logo='<span class="g-logo" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"/></svg></span>';
   const side=`<aside class="g-side"><div class="g-brand">${logo}<span>Caserne-École<small>Académie des pompiers</small></span></div>
     <p>L’horaire des classes, les présences, les examens et les corvées, au même endroit.</p>
-    <ul><li>Chaque élève voit son horaire et ses examens.</li><li>Chaque enseignant prend les présences de ses cours.</li><li>L’administration gère les classes, le personnel et les comptes.</li></ul></aside>`;
+    <ul><li>Chaque élève voit son horaire, ses examens et ses résultats.</li><li>Chaque enseignant voit ses cours, indique ses disponibilités et prend les présences.</li><li>L’administration gère les classes, les modules, le personnel et les comptes.</li></ul></aside>`;
   const v=k=>esc(st.vals[k]||'');
   const field=(id,label,type,extra)=>`<label class="g-field" for="g-${id}"><span>${label}</span><input id="g-${id}" name="${id}" type="${type}" value="${type==='password'?'':v(id)}" ${extra||''}></label>`;
   const msg=()=>(st.err?`<p class="g-err" role="alert">${esc(st.err)}</p>`:'')+(st.info?`<p class="g-info" role="status">${esc(st.info)}</p>`:'');

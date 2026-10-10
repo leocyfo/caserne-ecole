@@ -1,3 +1,5 @@
+/* Horloge figée pour les tests : vendredi 9 octobre 2026, 16 h (le temps continue d’avancer à partir de là). */
+(()=>{const R=Date,T0=new R(2026,9,9,16,0,0).getTime(),R0=R.now();class FixedDate extends R{constructor(...a){if(a.length)super(...a);else super(T0+(R.now()-R0));}static now(){return T0+(R.now()-R0);}}window.Date=FixedDate;})();
 /* Service de connexion simulé (remplace Firebase dans les tests). État de départ : window.__AUTH_SEED. */
 (function(){
   window.__errs=window.__errs||[];

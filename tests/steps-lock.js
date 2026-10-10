@@ -12,6 +12,9 @@ if(U.id==='u9'){
   click($('#nav-profil'));await wait(150);
   ok('student own profile',/Alexandre Beaulieu/.test($('#pf-name').textContent)&&/Capitaine/.test($('#main').textContent)&&!$('#pf-who')&&/Compte relié/.test($('#main').textContent)&&/Classe 119/.test($('#main').textContent));
   ok('student avatar photo',!!$('#main .prof-head .av img')&&!!$('#person .av img'));
+  click($('#nav-examens'));await wait(300);
+  ok('student sees own results without the class list',/Mes résultats/.test($('#main').textContent)&&$$('#main .xm-me .chip.ok').length>=5&&/Journée de reprise/.test($('#main').textContent),$$('#main .xm-me .chip').length);
+  ok('student has no class data',!$('[data-act=x-rep]')&&!$('.xm-tile')&&!$('#nav-eleves'));
 }else{
   ok('locked teacher role',/enseignant/i.test($('#ws-label').textContent)&&!$('#sel-teacher')&&$('.roles').hidden,$('#ws-label').textContent);
   ok('teacher name in menu',/Philippe Roy/.test($('#person').textContent));

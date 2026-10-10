@@ -2,7 +2,7 @@
    Sert à essayer la connexion, la demande de compte et l’approbation sans Firebase.
    Rien n’est envoyé ailleurs ; « Réinitialiser la démo » efface tout. */
 (function(){
-  const KEY='caserne-ecole-demo-v6';
+  const KEY='caserne-ecole-demo-v7';
   const copy=v=>JSON.parse(JSON.stringify(v));
   const DEMO=[
     {uid:'demo-admin',email:'admin@demo.ca',pw:'demo123',displayName:'Direction de l’Académie',label:'Administration'},

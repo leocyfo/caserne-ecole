@@ -9,6 +9,19 @@ Le site de gestion scolaire de l’Académie des pompiers : calendrier des class
 
 Tant que Firebase n’est pas configuré (`config.js` vide), `index.html` renvoie vers la démo.
 
+## Vocabulaire
+
+- **Module** : une unité du programme (M7 Autopompe), avec ses heures de théorie et de pratique.
+- **Cours** : une journée ou une demi-journée d’un module pour une classe. Un examen ou une reprise est un cours d’un type particulier.
+- **Activité** : une journée qui n’appartient à aucun module (Accueil, Graduation). Aucun enseignant n’est requis par défaut et les présences ne sont pas attendues.
+- **Titulaire** : l’enseignant d’un module pour une classe. **Enseignant principal** : le responsable d’une classe. **Instructeur** : un enseignant à la journée, qui postule aux cours.
+
+On ajoute un cours avec le même formulaire partout (calendrier, classe, module, examens).
+
+## Examens et résultats
+
+Les résultats ne sont pas dans les fiches d’examen : `resultats/<examen>` contient ceux de toute la classe (personnel seulement) et `resultats-eleves/<élève__examen>` celui d’un élève (lui-même et le personnel). Un élève ne peut donc lire que ses propres résultats.
+
 ## Affectation des enseignants
 
 - **Modules** (administration) : le catalogue du programme (nom, heures de théorie et de pratique requises, enseignants requis par cours). Dans la fiche d’un module, on ajoute les cours d’une classe : théorie, pratique, examen théorique ou pratique, date de reprise.
@@ -62,6 +75,8 @@ outils/construire.js        régénère index.html, demo.html et demo/donnees.js
 4. Poussez le dépôt : GitHub Pages met le site à jour en une ou deux minutes.
 
 ## Tests
+
+Les tests tournent avec une date figée (vendredi 9 octobre 2026) : leurs dates restent valables. La base simulée peut refuser des lectures comme les vraies règles d’accès.
 
 `tests/lancer-tests.ps1` ouvre les pages de test dans Chrome sans fenêtre :
 

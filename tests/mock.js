@@ -1,3 +1,5 @@
+/* Horloge figée pour les tests : vendredi 9 octobre 2026, 16 h (le temps continue d’avancer à partir de là). */
+(()=>{const R=Date,T0=new R(2026,9,9,16,0,0).getTime(),R0=R.now();class FixedDate extends R{constructor(...a){if(a.length)super(...a);else super(T0+(R.now()-R0));}static now(){return T0+(R.now()-R0);}}window.Date=FixedDate;})();
 window.__errs=[];window.addEventListener('error',e=>window.__errs.push(String(e.message)));
 window.addEventListener('unhandledrejection',e=>window.__errs.push('rej:'+String(e.reason&&e.reason.message||e.reason)));
 const store=new Map();(window.__SEED||[]).forEach(d=>store.set(d.path,JSON.parse(JSON.stringify(d.data))));
@@ -5,9 +7,10 @@ window.__store=store;const L=new Set();
 const snapDoc=(path)=>{const v=store.get(path);return {id:path.split('/').pop(),exists:!!v,data:()=>v?Object.freeze(JSON.parse(JSON.stringify(v))):undefined,metadata:{fromCache:false,hasPendingWrites:false}};};
 const ops={'==':(a,b)=>a===b,'>=':(a,b)=>a>=b,'<=':(a,b)=>a<=b,'>':(a,b)=>a>b,'<':(a,b)=>a<b,'!=':(a,b)=>a!==b};
 function q(colPath,filters){
+  const denied=()=>{const D=window.__DENY||[];if(D.includes(colPath))return true;return colPath==='resultats-eleves'&&!!window.__SELF_REF&&!filters.some(([f,o,x])=>f==='eleve'&&o==='=='&&x===window.__SELF_REF);};
   const run=()=>{const docs=[];for(const [p,v] of store){const seg=p.split('/');if(seg.length!==colPath.split('/').length+1||!p.startsWith(colPath+'/'))continue;if(filters.every(([f,o,x])=>ops[o](v[f],x)))docs.push(snapDoc(p));}docs.sort((a,b)=>a.id<b.id?-1:1);return {docs,size:docs.length,empty:!docs.length,docChanges:()=>[],metadata:{fromCache:false,hasPendingWrites:false}};};
-  return {where:(f,o,x)=>q(colPath,[...filters,[f,o,x]]),orderBy(){return this;},limit(){return this;},get:async()=>run(),
-    onSnapshot(cb){const l={fire:()=>setTimeout(()=>cb(run()),0)};L.add(l);l.fire();return ()=>L.delete(l);},
+  return {where:(f,o,x)=>q(colPath,[...filters,[f,o,x]]),orderBy(){return this;},limit(){return this;},get:async()=>{if(denied())throw {code:'invalid_argument',message:'lecture refusée'};return run();},
+    onSnapshot(cb,err){if(denied()){setTimeout(()=>{if(err)err({code:'invalid_argument',message:'lecture refusée'});},0);return ()=>{};}const l={fire:()=>setTimeout(()=>cb(run()),0)};L.add(l);l.fire();return ()=>L.delete(l);},
     doc:(id)=>docRef(colPath+'/'+(id||Math.random().toString(36).slice(2))),path:colPath};
 }
 const fire=()=>{for(const l of L)l.fire();};
