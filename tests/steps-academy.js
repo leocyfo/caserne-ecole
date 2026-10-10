@@ -289,6 +289,18 @@ ok('module hours saved',window.__store.get('config/ecole').competences.find(k=>k
 click($('#md-ask'));await wait(80);click($('[data-act=md-del]'));await wait(350);
 ok('module removed',window.__store.get('config/ecole').competences.length===25&&$$('#main .xm-row').length===25);
 await DBX.doc(MC).delete();await DBX.doc('groupes/c999').delete();await wait(200);
+// ---- nouveautés : sous Paramètres, pour l’administration ----
+{const nav=$$('#nav button').map(b=>b.id);ok('news under params',nav[nav.length-1]==='nav-nouveautes'&&nav[nav.length-2]==='nav-params'&&!!$('#nav-n'),nav.slice(-2).join(','));}
+click($('#nav-nouveautes'));await wait(150);
+ok('news page',/Nouveautés/.test($('#heading').textContent)&&$$('#main .nv-list').length===2&&$$('#main .nv-row').length>15&&/Depuis votre dernière visite/.test($('#main').textContent)&&!$('#nav-n'),$$('#main .nv-row').length);
+click($('#nv-f-fix'));await wait(60);
+ok('news filter',$$('#main .nv-row').length>3&&$$('#main .nv-row>.chip').every(c=>c.textContent==='Correction'),$$('#main .nv-row').length);
+click($('#nv-f-all'));await wait(60);click($('#nv-more'));await wait(60);
+ok('news older',$$('#main .nv-list').length>=4&&!$('#nv-more')&&/Mise en service/.test($('#main').textContent));
+click($('#main .nv-row [data-act=nav][data-page=modules]'));await wait(120);
+ok('news opens page',/Modules/.test($('#heading').textContent));
+click($('#nav-nouveautes'));await wait(120);
+ok('news seen',!/Depuis votre dernière visite/.test($('#main').textContent)&&!$('#nav-n'));
 // calendrier scolaire
 click($('#nav-annee'));await wait(50);
 ok('year noel',/Congé de Noël/.test($('#main').textContent)&&/15 juin 2027/.test($('#main').textContent));

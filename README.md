@@ -9,6 +9,10 @@ Le site de gestion scolaire de l’Académie des pompiers : calendrier des class
 
 Tant que Firebase n’est pas configuré (`config.js` vide), `index.html` renvoie vers la démo.
 
+## Nouveautés
+
+Le menu **Nouveautés** (administration, sous Paramètres) liste les nouvelles fonctions, les améliorations et les corrections du site. La liste est dans `src/calendrier-cours.html` (constante `NOUVEAUTES`) : on y ajoute une ligne à chaque mise à jour.
+
 ## Vocabulaire
 
 - **Module** : une unité du programme (M7 Autopompe), avec ses heures de théorie et de pratique.

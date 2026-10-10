@@ -12,7 +12,7 @@ const store=()=>[...window.__store.entries()];
 try{
 await wait(400);
 ok('banner',/Horaire partagé/.test($('#banner-text').textContent));
-ok('nav admin 10',$$('#nav button').length===10&&!!$('#nav-comptes')&&!!$('#nav-modules')&&!!$('#nav-affectations')&&!$('#nav-presences'));
+ok('nav admin 11',$$('#nav button').length===11&&$$('#nav button').pop().id==='nav-nouveautes'&&!!$('#nav-comptes')&&!!$('#nav-modules')&&!!$('#nav-affectations')&&!$('#nav-presences'));
 ok('board',$$('#main .week button.cc').length===41,$$('#main .week button.cc').length);
 ok('exam card on board',$$('#main .cc.exam').length===1);
 /* DND */
