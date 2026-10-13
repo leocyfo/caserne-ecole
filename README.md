@@ -34,6 +34,8 @@ Une école sans modules garde l’ancien fonctionnement (un cours et ses périod
 
 Les résultats ne sont pas dans les fiches d’examen : `resultats/<examen>` contient ceux de toute la classe (personnel seulement) et `resultats-eleves/<élève__examen>` celui d’un élève (lui-même et le personnel). Un élève ne peut donc lire que ses propres résultats.
 
+Une note en % est facultative (`pct` dans les deux documents). Elle inscrit le résultat : réussi à partir du seuil réglé dans Paramètres (`config/ecole.seuil`, 60 au départ).
+
 ## Affectation des enseignants
 
 - **Modules** (administration) : le catalogue du programme. La fiche d’un module a quatre onglets : *Cours* (numéro, type, enseignants requis), *Examens* (type, nom), *Séances* (les dates, classe par classe) et *Réglages* (nom, heures, chargé de cours).

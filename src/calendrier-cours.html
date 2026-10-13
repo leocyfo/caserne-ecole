@@ -538,6 +538,7 @@ legend{font-size:13px;color:var(--ink-2);font-weight:600;padding:0 4px}
 .xm-who{display:flex;align-items:center;gap:12px;min-width:0}
 .st-num.sm{width:30px;height:30px;border-radius:8px;font-size:13px;flex:none}
 .xr .att-list li{gap:12px}
+.xr-n{width:62px;min-height:36px;flex:none;border:1px solid var(--line-strong);border-radius:6px;background:var(--surface);padding:0 6px;font-size:14px;color:var(--ink);text-align:right;font-variant-numeric:tabular-nums}
 /* Nouveautés */
 .nv-list{margin-bottom:14px}
 .nv-hd{display:flex;align-items:center;gap:12px;text-transform:none;letter-spacing:0;font-size:14px;color:var(--ink)}
@@ -1172,7 +1173,7 @@ const S={
   conn:'loading', canAdmin:null, canWrite:null,
   me:{id:null,name:'',avatarUrl:''}, isOwner:false, myAcct:null, peers:[],
   loaded:{}, busy:false, confirmClear:false, termKey:'', termLoaded:false,
-  data:{comptes:[],demandes:[],config:null,cours:[],enseignants:[],dossiers:{},groupes:[],eleves:[],examens:[],presences:{},presTerm:{},staffPres:{},absProfs:{},candidatures:[],remplacements:[],dispos:{},resultats:{},mesRes:{},journal:[]},
+  data:{comptes:[],demandes:[],config:null,cours:[],enseignants:[],dossiers:{},groupes:[],eleves:[],examens:[],presences:{},presTerm:{},staffPres:{},absProfs:{},candidatures:[],remplacements:[],dispos:{},resultats:{},mesRes:{},mesPct:{},journal:[]},
   dr:null
 };
 let DB=null, unsubPres=null, unsubTerm=null, unsubMR=null, uidSeq=0;
@@ -2039,6 +2040,14 @@ function attStaff(tabs){
 /* Résultats : réussi, échec, absent (à reprendre) et réussi en reprise */
 const RES={reussi:['ok','Réussi'],echec:['bad','Échec'],absent:['warn','Absent'],reprise:['info','Réussi en reprise']};
 const resOk=v=>v==='reussi'||v==='reprise', resKo=v=>v==='echec'||v==='absent';
+/* Notes en % : facultatives. resultats/<examen>.pct = { élève: note } ; une note inscrit le résultat (réussi à partir du seuil). */
+const seuil=()=>{const n=+cfg().seuil;return n>=1&&n<=100?Math.round(n):60;};
+const noteTxt=n=>n==null?'':`${String(Math.round(n*10)/10).replace('.',',')} %`;
+function examPctOf(x){
+  const d=S.data.resultats[resKeyOf(x)], p=Object.assign({},d&&d.pct), mine=(S.data.mesPct||{})[resKeyOf(x)];
+  if(mine!=null&&S.student&&p[S.student]==null) p[S.student]=mine;
+  return p;
+}
 const sxId=key=>'sx-'+String(key).replace(/[^A-Za-z0-9_-]/g,'-');
 const resKeyOf=x=>x.fromSess?sxId(x.key):x.e.id;
 const resElId=(el,id)=>(String(el)+'__'+String(id)).replace(/[^A-Za-z0-9_-]/g,'-');
@@ -2052,15 +2061,17 @@ function examResOf(x){
   return mine&&S.student&&!r[S.student]?Object.assign({},r,{[S.student]:mine}):r;
 }
 /* Enregistre les résultats d’un examen, et le résultat de chaque élève touché dans sa propre fiche */
-async function writeResults(x,res,msg){
-  const id=resKeyOf(x), prev=examResOf(x), now=new Date().toISOString(), ex=!!(S.data.resultats[id]&&S.data.resultats[id].exemple);
-  const doc={examen:x.fromSess?'':x.e.id,seance:x.fromSess?x.key:'',cours:x.c?x.c.id:'',groupe:x.grp||'',titre:(x.e&&x.e.titre)||'Examen',date:x.date,resultats:res,maj:now};
+/* pct : les notes en % par élève ; sans ce paramètre, les notes déjà inscrites sont gardées */
+async function writeResults(x,res,msg,pct){
+  const id=resKeyOf(x), prev=examResOf(x), cur=S.data.resultats[id]||null, p0=(cur&&cur.pct)||{}, p1={}, now=new Date().toISOString(), ex=!!(cur&&cur.exemple);
+  for(const el of Object.keys(res)){const n=pct?pct[el]:p0[el];if(n!=null&&n!==''&&!isNaN(+n)&&res[el]!=='absent') p1[el]=Math.max(0,Math.min(100,+n));}
+  const doc={examen:x.fromSess?'':x.e.id,seance:x.fromSess?x.key:'',cours:x.c?x.c.id:'',groupe:x.grp||'',titre:(x.e&&x.e.titre)||'Examen',date:x.date,resultats:res,pct:p1,maj:now};
   if(ex) doc.exemple=true;
   const fns=[()=>col('resultats').doc(id).set(doc)];
   for(const el of new Set([...Object.keys(prev),...Object.keys(res)])){
-    if(prev[el]===res[el]&&S.data.resultats[id]) continue;
+    if(prev[el]===res[el]&&p0[el]===p1[el]&&cur) continue;
     const rid=resElId(el,id);
-    fns.push(res[el]?()=>col('resultats-eleves').doc(rid).set(Object.assign({eleve:el,examen:id,v:res[el],date:x.date,maj:now},ex?{exemple:true}:{})):()=>col('resultats-eleves').doc(rid).delete());
+    fns.push(res[el]?()=>col('resultats-eleves').doc(rid).set(Object.assign({eleve:el,examen:id,v:res[el],date:x.date,maj:now},p1[el]!=null?{pct:p1[el]}:{},ex?{exemple:true}:{})):()=>col('resultats-eleves').doc(rid).delete());
   }
   if(x.fromSess){const old=S.data.examens.find(q=>q.seance===x.key);if(old)fns.push(()=>col('examens').doc(old.id).delete());}
   else if(x.e&&x.e.resultats&&Object.keys(x.e.resultats).length&&byId(S.data.examens,x.e.id)) fns.push(()=>col('examens').doc(x.e.id).update({resultats:{}}));
@@ -2079,7 +2090,8 @@ function examBoard(filter){
   const items=allExamItems().filter(filter).map(x=>{
     const res=examResOf(x), doc=S.data.resultats[resKeyOf(x)]||null, els=studentsOf(x.grp);
     let ok=0,ko=0,got=0;for(const e of els){const v=res[e.id];if(!v)continue;got++;if(resOk(v))ok++;else if(resKo(v))ko++;}
-    return Object.assign(x,{doc,res,els,ok,ko,got,past:isPast(x)});
+    const pct=examPctOf(x), ps=els.map(e=>pct[e.id]).filter(n=>n!=null);
+    return Object.assign(x,{doc,res,els,ok,ko,got,pct,avg:ps.length?Math.round(ps.reduce((a,b)=>a+ +b,0)/ps.length):null,past:isPast(x)});
   });
   const asc=(a,b)=>a.date.localeCompare(b.date)||a.start-b.start, desc=(a,b)=>-asc(a,b);
   const up=items.filter(x=>!x.past&&(!x.rep||x.els.length)).sort(asc), graded=items.filter(x=>x.past&&!x.rep&&x.els.length);
@@ -2148,7 +2160,7 @@ function examsPage(){
       :`<div class="cl-list"><p class="miss-ok"><span class="chip ok">À jour</span>Aucune reprise à faire.</p></div>`;
   }else{
     body=B.done.length?xList('xm-done',[['Date'],['Examen'],['Classe'],['Réussite'],['','r']],B.done.map(x=>{const t=x.ok+x.ko, r=t?Math.round(x.ok/t*100):null, c=passCls(r);
-      return xRow('xm-done',xOpen(x),`${xDate(x,'')}<div class="xm-t"><b>${xTitle(x)}</b><small>${esc(dayLabel(parse(x.date)))}</small></div>${xCls(x)}<div class="cl-big xm-p ${c}"><b>${x.ok} / ${t}</b><div class="meter ${c}" aria-hidden="true"><i style="width:${r||0}%"></i></div></div><div class="xm-end">${x.ko?`<span class="chip bad">${pl(x.ko,'à reprendre','à reprendre')}</span>`:'<span class="chip ok">Tous réussis</span>'}</div>`,xLabel(x));}).join(''))
+      return xRow('xm-done',xOpen(x),`${xDate(x,'')}<div class="xm-t"><b>${xTitle(x)}</b><small>${esc(dayLabel(parse(x.date)))}${x.avg!=null?` · moyenne ${x.avg} %`:''}</small></div>${xCls(x)}<div class="cl-big xm-p ${c}"><b>${x.ok} / ${t}</b><div class="meter ${c}" aria-hidden="true"><i style="width:${r||0}%"></i></div></div><div class="xm-end">${x.ko?`<span class="chip bad">${pl(x.ko,'à reprendre','à reprendre')}</span>`:'<span class="chip ok">Tous réussis</span>'}</div>`,xLabel(x));}).join(''))
       :`<section class="panel"><p class="help">Aucun résultat pour l’instant.</p></section>`;
   }
   return tb+tiles+body;
@@ -2162,14 +2174,14 @@ function studentExams(){
   const tb=`<div class="toolbar">${identitySelect()}<span class="grow"></span>${me&&mine.length?`<button class="btn" type="button" id="pr-releve" data-act="pr-releve" data-id="${esc(sid)}">${icon('print')}Imprimer mon relevé</button>`:''}</div>`;
   const note=todo.length?`<div class="notice warn"><p><b>${pl(todo.length,'reprise à faire','reprises à faire')}</b> : ${todo.map(x=>esc((x.c&&x.c.code?x.c.code+' ':'')+(x.c?x.c.titre:'Examen'))).join(', ')}.${n?` Prochaine journée de reprise : ${esc(dayLabel(parse(n.date)).toLowerCase())}.`:''}</p></div>`:'';
   const upH=up.length?xList('xm-me',[['Date'],['Examen'],['Moment'],['','r']],up.map(x=>{const k=daysBetween(todayISO(),x.date);return xRow('xm-me',examAct(x),`${xDate(x,x.rep?'rep':k<=2?'hot':'')}<div class="xm-t"><b>${xTitle(x)}</b>${xSub(x)?`<small>${xSub(x)}</small>`:''}</div><span class="xm-m">${esc(momentOf(x))}</span><div class="xm-end">${x.rep?'<span class="chip info">Reprise</span>':xWhen(x)}</div>`,xLabel(x));}).join('')):`<section class="panel"><p class="help">Les examens de votre classe apparaîtront ici dès qu’ils seront planifiés.</p></section>`;
-  const resH=!me?'':mine.length?xList('xm-me',[['Date'],['Examen'],['Moment'],['Résultat','r']],mine.map(x=>{const v=x.res[sid];return xRow('xm-me','',`${xDate(x,'')}<div class="xm-t"><b>${xTitle(x)}</b></div><span class="xm-m">${esc(momentOf(x))}</span><div class="xm-end"><span class="chip ${RES[v][0]}">${RES[v][1]}</span></div>`,'');}).join('')):`<section class="panel"><p class="help">Aucun résultat pour l’instant.</p></section>`;
+  const resH=!me?'':mine.length?xList('xm-me',[['Date'],['Examen'],['Moment'],['Résultat','r']],mine.map(x=>{const v=x.res[sid];return xRow('xm-me','',`${xDate(x,'')}<div class="xm-t"><b>${xTitle(x)}</b></div><span class="xm-m">${esc(momentOf(x))}</span><div class="xm-end"><span class="chip ${RES[v][0]}">${RES[v][1]}${x.pct[sid]!=null?' · '+esc(noteTxt(x.pct[sid])):''}</span></div>`,'');}).join('')):`<section class="panel"><p class="help">Aucun résultat pour l’instant.</p></section>`;
   return tb+note+`<h2 class="xm-h">Prochains examens</h2>${upH}${me?`<h2 class="xm-h">Mes résultats</h2>${resH}`:''}`;
 }
 /* Ouvre les résultats d’une séance « Examen » de l’horaire */
 function openSessExam(key){
   const x=allExamItems().find(k=>k.key===key);if(!x)return;
   if(!x.fromSess) return openExam(x.e.id);
-  openDrawer({kind:'exam',id:null,sess:key,draft:{resultats:Object.assign({},examResOf(x)),groupe:x.grp},err:'',warn:null,confirmDel:false});
+  openDrawer({kind:'exam',id:null,sess:key,draft:{resultats:Object.assign({},examResOf(x)),pct:Object.assign({},examPctOf(x)),groupe:x.grp},err:'',warn:null,confirmDel:false});
 }
 /* Inscrit un seul résultat (ex. « Réussi en reprise ») sans ouvrir l’examen */
 async function setExamResult(key,el,v){
@@ -2195,7 +2207,7 @@ function resultsGrid(gid,filter){
     return `<th scope="col" class="xg-h${todo?' todo':''}"><button type="button" ${xOpen(x)} title="${esc(`${name(x)}${sub(x)?' · '+sub(x):''} · ${dayLabel(d)}${todo?' · résultats à entrer':''}`)}"><b>${esc(code(x))}</b><small>${esc(sub(x))||'&nbsp;'}</small><small>${dn(d)} ${esc(fMonthS.format(d).replace('.',''))}</small></button></th>`;}).join('');
   const rows=els.map(e=>{let ok=0,ko=0;
     const cells=xs.map(x=>{const v=x.res[e.id], g=GRID[v];if(resOk(v))ok++;else if(resKo(v))ko++;
-      return `<td><button type="button" class="xg-c ${g?g[0]:'none'}" ${xOpen(x)} aria-label="${esc(`${e.nom} · ${name(x)} · ${v?RES[v][1]:'sans résultat'}`)}" title="${esc(v?RES[v][1]:'Sans résultat')}">${g?g[1]:'·'}</button></td>`;}).join('');
+      return `<td><button type="button" class="xg-c ${g?g[0]:'none'}" ${xOpen(x)} aria-label="${esc(`${e.nom} · ${name(x)} · ${v?RES[v][1]:'sans résultat'}`)}" title="${esc(v?RES[v][1]+(x.pct[e.id]!=null?' · '+noteTxt(x.pct[e.id]):''):'Sans résultat')}">${g&&x.pct[e.id]!=null?Math.round(x.pct[e.id]):g?g[1]:'·'}</button></td>`;}).join('');
     const t=ok+ko, r=t?Math.round(ok/t*100):null;
     return `<tr><th scope="row" class="xg-n"><button type="button" class="xg-who" data-act="student" data-id="${esc(e.id)}"><span class="st-num sm" aria-hidden="true">${e.numero!=null&&e.numero!==''?esc(e.numero):'—'}</span>${esc(e.nom)}</button></th><td class="xg-r ${passCls(r)}">${r==null?'—':r+' %'}${ko?`<small>${pl(ko,'à reprendre','à reprendre')}</small>`:''}</td>${cells}</tr>`;}).join('');
   const foot=xs.map(x=>{const t=x.ok+x.ko;return `<td class="xg-f">${t?`${x.ok}/${t}`:'—'}</td>`;}).join('');
@@ -2210,7 +2222,7 @@ function studentExamsTab(e){
   const bar=`<div class="st-bar"><p class="summary"><span><b>${mine.length}</b>${mine.length>1?'résultats':'résultat'}</span><span><b class="${passCls(rate)}">${rate==null?'—':rate+' %'}</b>de réussite</span><span class="${pend.length?'need':''}"><b>${pend.length}</b>à reprendre</span></p><span class="grow"></span>${mine.length?`<button class="btn sm" type="button" id="pr-releve" data-act="pr-releve" data-id="${esc(e.id)}">${icon('print')}Imprimer le relevé</button>`:''}</div>`;
   const note=pend.length?`<div class="notice warn"><p><b>À reprendre :</b> ${pend.map(x=>esc((x.c&&x.c.code?x.c.code+' ':'')+(x.c?x.c.titre:x.e.titre||'Examen'))+` (${RES[x.res[e.id]][1].toLowerCase()})`).join(', ')}.${n?` Prochaine journée de reprise : ${esc(dayLabel(parse(n.date)).toLowerCase())}.`:''}</p></div>`:'';
   const res=mine.length?xList('xm-sres',[['Date'],['Examen'],['Résultat'],['','r']],mine.map(x=>{const v=x.res[e.id], can=canEditItem(x);
-    return xRow('xm-sres',can?xOpen(x):'',`${xDate(x,'')}<div class="xm-t"><b>${xTitle(x)}</b>${xSub(x)?`<small>${xSub(x)}</small>`:''}</div><div><span class="chip ${RES[v][0]}">${RES[v][1]}</span></div><div class="xm-end">${resKo(v)&&can?`<button class="btn sm" type="button" data-act="x-rep" data-key="${esc(x.key)}" data-el="${esc(e.id)}"${dis()}>Réussi en reprise</button>`:''}</div>`,xLabel(x));}).join('')):'<section class="panel"><p class="help">Aucun résultat inscrit.</p></section>';
+    return xRow('xm-sres',can?xOpen(x):'',`${xDate(x,'')}<div class="xm-t"><b>${xTitle(x)}</b>${xSub(x)?`<small>${xSub(x)}</small>`:''}</div><div><span class="chip ${RES[v][0]}">${RES[v][1]}${x.pct[e.id]!=null?' · '+esc(noteTxt(x.pct[e.id])):''}</span></div><div class="xm-end">${resKo(v)&&can?`<button class="btn sm" type="button" data-act="x-rep" data-key="${esc(x.key)}" data-el="${esc(e.id)}"${dis()}>Réussi en reprise</button>`:''}</div>`,xLabel(x));}).join('')):'<section class="panel"><p class="help">Aucun résultat inscrit.</p></section>';
   const up=B.up.slice(0,5);
   const upH=up.length?xList('xm-me',[['Date'],['Examen'],['Moment'],['','r']],up.map(x=>{const k=daysBetween(todayISO(),x.date);return xRow('xm-me',examAct(x),`${xDate(x,x.rep?'rep':k<=2?'hot':'')}<div class="xm-t"><b>${xTitle(x)}</b>${xSub(x)?`<small>${xSub(x)}</small>`:''}</div><span class="xm-m">${esc(momentOf(x))}</span><div class="xm-end">${x.rep?'<span class="chip info">Reprise</span>':xWhen(x)}</div>`,xLabel(x));}).join('')):'<section class="panel"><p class="help">Aucun examen prévu.</p></section>';
   return bar+note+`<h2 class="xm-h">Résultats</h2>${res}<h2 class="xm-h">À venir</h2>${upH}`;
@@ -3051,9 +3063,9 @@ function attSheet(d){
 function transcriptHTML(e){
   const B=examBoard(x=>x.grp===e.groupe), mine=B.items.filter(x=>x.past&&!x.rep&&x.res[e.id]).sort((a,b)=>a.date.localeCompare(b.date)||a.start-b.start);
   const ok=mine.filter(x=>resOk(x.res[e.id])).length, ko=mine.filter(x=>resKo(x.res[e.id])).length, rate=ok+ko?Math.round(ok/(ok+ko)*100):null;
-  const rows=mine.map(x=>{const dd=parse(x.date);return `<tr><td>${esc(shortDate(dd))} ${dd.getFullYear()}</td><td>${esc(x.c?(x.c.code?x.c.code+' ':'')+x.c.titre:'')}</td><td>${esc((x.e&&x.e.titre)||'Examen')}</td><td><b>${esc(RES[x.res[e.id]][1])}</b></td></tr>`;}).join('');
+  const rows=mine.map(x=>{const dd=parse(x.date);return `<tr><td>${esc(shortDate(dd))} ${dd.getFullYear()}</td><td>${esc(x.c?(x.c.code?x.c.code+' ':'')+x.c.titre:'')}</td><td>${esc((x.e&&x.e.titre)||'Examen')}</td><td>${x.pct[e.id]!=null?esc(noteTxt(x.pct[e.id])):''}</td><td><b>${esc(RES[x.res[e.id]][1])}</b></td></tr>`;}).join('');
   return `<section class="pr-page">${prHead('Relevé de résultats',esc(e.nom)+(e.numero!=null&&e.numero!==''?' · n° '+esc(e.numero):'')+' · '+esc(gName(e.groupe)))}
-    ${mine.length?`<table class="pr-t pr-res"><thead><tr><th style="width:17%">Date</th><th>Module</th><th style="width:22%">Examen</th><th style="width:21%">Résultat</th></tr></thead><tbody>${rows}</tbody></table>`:'<p>Aucun résultat inscrit pour l’instant.</p>'}
+    ${mine.length?`<table class="pr-t pr-res"><thead><tr><th style="width:17%">Date</th><th>Module</th><th style="width:20%">Examen</th><th style="width:11%">Note</th><th style="width:21%">Résultat</th></tr></thead><tbody>${rows}</tbody></table>`:'<p>Aucun résultat inscrit pour l’instant.</p>'}
     <p class="pr-sum">${pl(mine.length,'examen','examens')} · ${ok} ${ok>1?'réussis':'réussi'}${ko?` · ${ko} à reprendre`:''}${rate!=null?` · ${rate} % de réussite`:''}</p>
     <div class="pr-sign"><span>Remis le ${esc(longDate(new Date()))}</span><span>Signature : ______________________________</span></div></section>`;
 }
@@ -3097,7 +3109,12 @@ function printDrawer(){
    items : [type, titre, explication, page à ouvrir]. Types : new (nouvelle fonction), up (amélioration), fix (correction). */
 const NV_REPO='https://github.com/leocyfo/caserne-ecole';
 const NOUVEAUTES=[
-  {date:'2026-10-13',id:'',push:'Locaux et équipements, avec détection des conflits',items:[
+  {date:'2026-10-13',id:'',push:'Examens : notes en % et seuil de réussite',items:[
+    ['new','Notes en %','Dans les résultats d’un examen, une case « % » par élève. La note est facultative et inscrit le résultat toute seule : réussi à partir du seuil.','examens'],
+    ['new','Seuil de réussite','Il se règle dans Paramètres (60 % au départ).','params'],
+    ['up','Notes affichées partout','Dans la grille des résultats, la fiche de l’élève, « Mes examens » et le relevé imprimé. La liste des examens corrigés donne la moyenne.','examens']
+  ]},
+  {date:'2026-10-13',id:'dc458c1',push:'Locaux et équipements, avec détection des conflits',items:[
     ['new','Locaux et équipements','La liste des salles, camions, tours ou bassins de l’école se tient dans Paramètres.','params'],
     ['new','Par cours de module','Dans l’onglet Cours d’un module, on choisit ce que chaque cours demande. Cela vaut pour toutes les classes.','modules'],
     ['new','Conflits','Deux séances qui veulent le même local ou le même équipement au même moment sont signalées dans le calendrier, dans Affectations et dans la fenêtre de la séance.','affectations'],
@@ -3336,6 +3353,7 @@ function paramsPage(){
     <label class="field"><span>Nom de l’établissement</span><input id="p-nom" value="${esc(c.nom)}" maxlength="80" autocomplete="off"></label>
     <label class="field"><span>Année scolaire</span><input id="p-annee" value="${esc(c.annee)}" maxlength="20" placeholder="2026–2027" autocomplete="off"></label>
     <div class="grid2"><label class="field"><span>Premier jour de classe</span><input type="date" id="p-debut" value="${esc(c.debut)}"></label><label class="field"><span>Dernier jour de classe</span><input type="date" id="p-fin" value="${esc(c.fin)}"></label></div>
+    <label class="field" style="max-width:280px"><span>Seuil de réussite des examens (%)</span><input type="number" id="p-seuil" min="1" max="100" step="1" inputmode="numeric" value="${seuil()}"></label>
     <p class="help">Les étapes et les congés se gèrent dans Calendrier scolaire.</p>
     <div class="row"><button class="btn primary" type="submit"${dis()}>Enregistrer</button></div></form>
   <section class="dr-sec"><h2 class="sec-title">Modules du programme</h2><p class="help">${pl(comps().length,'module','modules')}. Leur nom, leurs heures de théorie et de pratique et leurs cours se gèrent dans le menu Modules.</p><div class="row" style="margin-top:8px"><button class="btn sm" type="button" id="p-modules" data-act="nav" data-page="modules">Ouvrir les modules</button></div></section>
@@ -3589,7 +3607,7 @@ function ensureMyRes(){
   S._mrFor=S.student;S.data.mesRes={};
   if(!S.student) return;
   const who=S.student;
-  unsubMR=col('resultats-eleves').where('eleve','==',who).onSnapshot(q=>{if(S._mrFor!==who)return;const m={};for(const d of q.docs){const v=d.data();if(v&&v.examen)m[v.examen]=v.v;}S.data.mesRes=m;schedule();},()=>{});
+  unsubMR=col('resultats-eleves').where('eleve','==',who).onSnapshot(q=>{if(S._mrFor!==who)return;const m={},mp={};for(const d of q.docs){const v=d.data();if(v&&v.examen){m[v.examen]=v.v;if(v.pct!=null)mp[v.examen]=v.pct;}}S.data.mesRes=m;S.data.mesPct=mp;schedule();},()=>{});
 }
 function exampleCount(){let n=0;for(const k of ['cours','enseignants','groupes','eleves','examens','comptes','candidatures','remplacements']) n+=S.data[k].filter(d=>d.exemple).length;n+=Object.values(S.data.dispos).filter(d=>d&&d.exemple).length+Object.values(S.data.resultats).filter(d=>d&&d.exemple).length;return n;}
 function weekLabel(m){const f=addDays(m,4);return `${dn(m)} ${fMonthS.format(m)} – ${dn(f)} ${fMonth.format(f)} ${f.getFullYear()}`;}
@@ -4095,8 +4113,8 @@ async function applyMove(){
 /* Examens */
 function openExam(id,preset){
   const e=id?byId(S.data.examens,id):null;
-  const draft=e?{resultats:Object.assign({},examResOf(examItem(e))),cours:e.cours||'',groupe:e.groupe||'',titre:e.titre||'',date:e.date||'',debut:e.debut||'',fin:e.fin||'',salle:e.salle||'',surveillant:e.surveillant||'',notes:e.notes||''}
-    :{resultats:{},cours:'',groupe:S.role==='student'?S.group:'',titre:'Examen',date:'',debut:'08:00',fin:'11:00',salle:'',surveillant:S.role==='teacher'?S.teacher:'',notes:''};
+  const draft=e?{resultats:Object.assign({},examResOf(examItem(e))),pct:Object.assign({},examPctOf(examItem(e))),cours:e.cours||'',groupe:e.groupe||'',titre:e.titre||'',date:e.date||'',debut:e.debut||'',fin:e.fin||'',salle:e.salle||'',surveillant:e.surveillant||'',notes:e.notes||''}
+    :{resultats:{},pct:{},cours:'',groupe:S.role==='student'?S.group:'',titre:'Examen',date:'',debut:'08:00',fin:'11:00',salle:'',surveillant:S.role==='teacher'?S.teacher:'',notes:''};
   if(preset){Object.assign(draft,preset);if(preset.cours)fillExamFromCourse(draft,true);}
   openDrawer({kind:'exam',id:id||null,draft,err:'',warn:null,confirmDel:false});
 }
@@ -4148,7 +4166,7 @@ async function saveExam(force){
     const res={};
     for(const el of studentsOf(x.grp)) if(f.resultats&&f.resultats[el.id]) res[el.id]=f.resultats[el.id];
     S.busy=true;d.err='';renderDrawer();
-    const ok=await writeResults(x,res,'Résultats enregistrés');
+    const ok=await writeResults(x,res,'Résultats enregistrés',f.pct||{});
     S.busy=false;if(ok&&S.dr===d)S.dr=null;render();return;
   }
   if(S.role==='teacher'&&!f.cours) return err('Choisissez le cours visé par l’examen.');
@@ -4172,7 +4190,7 @@ async function saveExam(force){
   const prevX=d.id?byId(S.data.examens,d.id):null;
   if(prevX&&prevX.exemple) doc.exemple=true;
   let ok=await write(()=>col('examens').doc(id).set(doc),d.id?'Examen enregistré':'Examen planifié');
-  if(ok&&(Object.keys(res).length||Object.keys(examResOf(examItem(Object.assign({id},prevX||doc)))).length)) ok=await writeResults(examItem(Object.assign({},prevX||{},doc,{id})),res,'');
+  if(ok&&(Object.keys(res).length||Object.keys(examResOf(examItem(Object.assign({id},prevX||doc)))).length)) ok=await writeResults(examItem(Object.assign({},prevX||{},doc,{id})),res,'',f.pct||{});
   S.busy=false;
   if(ok&&S.dr===d) S.dr=null;
   render();
@@ -4181,12 +4199,13 @@ async function saveExam(force){
 function examResultsHTML(f,can){
   const els=f.groupe?studentsOf(f.groupe).slice().sort(byElNum):[];
   if(!els.length) return '';
-  const r=f.resultats||{}, cnt={reussi:0,reprise:0,echec:0,absent:0};for(const e of els){const v=r[e.id];if(cnt[v]!=null)cnt[v]++;}
+  const r=f.resultats||{}, p=f.pct||{}, cnt={reussi:0,reprise:0,echec:0,absent:0};for(const e of els){const v=r[e.id];if(cnt[v]!=null)cnt[v]++;}
+  const ps=els.map(e=>p[e.id]).filter(n=>n!=null&&n!==''), avg=ps.length?Math.round(ps.reduce((a,b)=>a+ +b,0)/ps.length):null;
   const none=els.length-cnt.reussi-cnt.reprise-cnt.echec-cnt.absent;
-  const sum=`<div class="att-sum">${cnt.reussi?`<span class="chip ok">${pl(cnt.reussi,'réussite','réussites')}</span>`:''}${cnt.reprise?`<span class="chip info">${pl(cnt.reprise,'réussi en reprise','réussis en reprise')}</span>`:''}${cnt.echec?`<span class="chip bad">${pl(cnt.echec,'échec','échecs')}</span>`:''}${cnt.absent?`<span class="chip warn">${pl(cnt.absent,'absent','absents')}</span>`:''}${none?`<span class="chip off">${none} sans résultat</span>`:''}</div>`;
+  const sum=`<div class="att-sum">${cnt.reussi?`<span class="chip ok">${pl(cnt.reussi,'réussite','réussites')}</span>`:''}${cnt.reprise?`<span class="chip info">${pl(cnt.reprise,'réussi en reprise','réussis en reprise')}</span>`:''}${cnt.echec?`<span class="chip bad">${pl(cnt.echec,'échec','échecs')}</span>`:''}${cnt.absent?`<span class="chip warn">${pl(cnt.absent,'absent','absents')}</span>`:''}${none?`<span class="chip off">${none} sans résultat</span>`:''}${avg!=null?`<span class="chip off" id="xr-avg">Moyenne ${avg} %</span>`:''}</div>`;
   const btn=(e,v,k,cls,l)=>`<button type="button" class="ab ${cls}" id="xr-${esc(e.id)}-${k}" data-act="x-res" data-el="${esc(e.id)}" data-v="${v}" aria-pressed="${r[e.id]===v}">${l}</button>`;
-  const li=e=>{const v=r[e.id];return `<li><span class="st-num sm" aria-hidden="true">${e.numero!=null&&e.numero!==''?esc(e.numero):'—'}</span><span class="nm">${esc(e.nom)}${v==='reprise'?'<small>Réussi en reprise</small>':''}</span>${can?`<span class="att-btns" role="group" aria-label="${esc('Résultat de '+e.nom)}">${btn(e,'reussi','r','ab-P','Réussi')}${btn(e,'echec','e','ab-A','Échec')}${btn(e,'absent','a','ab-R','Absent')}</span>`:v?`<span class="chip ${RES[v][0]}">${RES[v][1]}</span>`:'<span class="chip off">—</span>'}</li>`;};
-  return `<fieldset class="xr"><legend>Résultats</legend>${sum}<ul class="att-list">${els.map(li).join('')}</ul>${can&&none?'<div class="row" style="margin-top:10px"><button class="btn sm" type="button" data-act="x-res-all">Marquer les autres réussis</button></div>':''}</fieldset>`;
+  const li=e=>{const v=r[e.id];return `<li><span class="st-num sm" aria-hidden="true">${e.numero!=null&&e.numero!==''?esc(e.numero):'—'}</span><span class="nm">${esc(e.nom)}${v==='reprise'?'<small>Réussi en reprise</small>':''}</span>${can?`<input class="xr-n" type="number" id="xn-${esc(e.id)}" data-xn="${esc(e.id)}" data-f="pct" min="0" max="100" step="1" inputmode="numeric" placeholder="%" aria-label="${esc('Note de '+e.nom+' en %')}" value="${p[e.id]!=null?esc(p[e.id]):''}"><span class="att-btns" role="group" aria-label="${esc('Résultat de '+e.nom)}">${btn(e,'reussi','r','ab-P','Réussi')}${btn(e,'echec','e','ab-A','Échec')}${btn(e,'absent','a','ab-R','Absent')}</span>`:v?`<span class="chip ${RES[v][0]}">${RES[v][1]}${p[e.id]!=null?' · '+esc(noteTxt(p[e.id])):''}</span>`:'<span class="chip off">—</span>'}</li>`;};
+  return `<fieldset class="xr"><legend>Résultats</legend>${sum}<ul class="att-list">${els.map(li).join('')}</ul>${can?`<p class="help" style="margin-top:8px">La note en % est facultative. Elle inscrit le résultat : réussi à partir de ${seuil()} %.</p>`:''}${can&&none?'<div class="row" style="margin-top:10px"><button class="btn sm" type="button" data-act="x-res-all">Marquer les autres réussis</button></div>':''}</fieldset>`;
 }
 /* Dossier d’un élève */
 function openStudent(id){
@@ -4422,7 +4441,7 @@ document.addEventListener('click',async e=>{
     case 'x-res-all':{if(!d||d.kind!=='exam')break;const r=d.draft.resultats||(d.draft.resultats={});for(const el of studentsOf(d.draft.groupe))if(!r[el.id])r[el.id]='reussi';renderDrawer();break;}
     case 'x-open':openSessExam(b.dataset.key);break;
     case 'x-rep':await setExamResult(b.dataset.key,b.dataset.el,'reprise');break;
-    case 'x-res':{if(!d||d.kind!=='exam')break;const r=d.draft.resultats||(d.draft.resultats={}),id=b.dataset.el,v=b.dataset.v;if(r[id]===v)delete r[id];else r[id]=v;renderDrawer();break;}
+    case 'x-res':{if(!d||d.kind!=='exam')break;const r=d.draft.resultats||(d.draft.resultats={}),id=b.dataset.el,v=b.dataset.v;if(r[id]===v)delete r[id];else r[id]=v;if(d.draft.pct)delete d.draft.pct[id];renderDrawer();break;}
     case 'new-exam':if(acad())openAddCourse(S.pg.g?{groupe:S.pg.g}:null);else openExam(null,b.dataset.cours?{cours:b.dataset.cours,date:b.dataset.date||''}:null);break;
     case 'student':openFiche('eleves',b.dataset.id);break;
     case 'st-edit':openStudent(b.dataset.id);break;
@@ -4639,7 +4658,7 @@ document.addEventListener('submit',async e=>{
     return;
   }
   if(k==='p-save'){
-    const c=configDoc();c.nom=$('#p-nom').value.trim();c.annee=$('#p-annee').value.trim();c.debut=$('#p-debut').value;c.fin=$('#p-fin').value;
+    const c=configDoc();c.nom=$('#p-nom').value.trim();c.annee=$('#p-annee').value.trim();c.debut=$('#p-debut').value;c.fin=$('#p-fin').value;{const sv=Math.round(+($('#p-seuil')||{}).value);c.seuil=sv>=1&&sv<=100?sv:60;}
     if(c.debut&&c.fin&&c.fin<c.debut){toast('Le dernier jour précède le premier jour de classe.','bad');return;}
     await saveConfig(c,'Paramètres enregistrés');return;
   }
@@ -4673,6 +4692,13 @@ document.addEventListener('input',e=>{
   }
   if(t.id==='s-q'){S.pg.q=t.value;render();return;}
   if(t.id==='jr-q'){S.pg.jq=t.value;S.pg.jl='';render();return;}
+  /* note en % d’un élève : elle inscrit le résultat selon le seuil de réussite */
+  if(t.dataset&&t.dataset.xn&&S.dr&&S.dr.kind==='exam'){
+    const dx=S.dr, el=t.dataset.xn, r=dx.draft.resultats||(dx.draft.resultats={}), p=dx.draft.pct||(dx.draft.pct={}), v=t.value.trim();
+    if(v===''){if(t.validity&&t.validity.badInput)return;delete p[el];}
+    else if(!isNaN(+v)){const n=Math.max(0,Math.min(100,+v));p[el]=n;r[el]=n>=seuil()?'reussi':'echec';}
+    renderDrawer();return;
+  }
   const d=S.dr, f=t.dataset&&t.dataset.f;
   if(!d||!f)return;
   if(d.kind==='course'){

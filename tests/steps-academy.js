@@ -212,8 +212,18 @@ click($('#xt-todo'));await wait(60);
 {const n=$$('#main [data-act=x-open]').length;ok('results to enter',n>=1&&/[1-9]/.test($('#xt-todo b').textContent),n);}
 click($('#main [data-act=x-open]'));await wait(80);
 ok('results drawer',/Résultats de l’examen/.test($('#drawer').textContent)&&$$('#drawer [data-act=x-res]').length===36,$$('#drawer [data-act=x-res]').length);
+// notes en % : la note inscrit le résultat selon le seuil (60 %)
+{const ins=$$('#drawer .xr-n'), id0=ins[0].dataset.xn, id1=ins[1].dataset.xn;window.__g=[id0,id1];
+ typeIn('#xn-'+id0,'85');await wait(60);typeIn('#xn-'+id1,'42');await wait(60);
+ ok('grade sets the result',$$('#drawer .xr-n').length===12&&$('#xr-'+id0+'-r').getAttribute('aria-pressed')==='true'&&$('#xr-'+id1+'-e').getAttribute('aria-pressed')==='true'&&/Moyenne 64 %/.test(($('#xr-avg')||{}).textContent||'')&&$('#xn-'+id0).value==='85'&&/à partir de 60 %/.test($('#drawer').textContent),($('#xr-avg')||{}).textContent);
+ // un résultat choisi à la main retire la note
+ click($('#xr-'+id1+'-a'));await wait(60);
+ ok('manual result clears the grade',$('#xn-'+id1).value===''&&$('#xr-'+id1+'-a').getAttribute('aria-pressed')==='true'&&/Moyenne 85 %/.test($('#xr-avg').textContent));
+ typeIn('#xn-'+id1,'42');await wait(60);}
 click($('[data-act=x-res-all]'));await wait(30);
 $('#x-form').requestSubmit();await wait(250);
+{const [g0,g1]=window.__g, k=[...window.__store.keys()].find(k=>k.startsWith('resultats/')&&(window.__store.get(k).pct||{})[g0]===85), d=k?window.__store.get(k):null, own=k?window.__store.get('resultats-eleves/'+(g0+'__'+k.split('/')[1]).replace(/[^A-Za-z0-9_-]/g,'-')):null;
+ ok('grades saved',!!d&&d.pct[g1]===42&&d.resultats[g0]==='reussi'&&d.resultats[g1]==='echec'&&Object.keys(d.pct).length===2&&!!own&&own.pct===85&&own.v==='reussi',k+' '+JSON.stringify(d&&d.pct));}
 {const full=[...window.__store.keys()].filter(k=>k.startsWith('resultats/sx-')&&window.__store.get(k).groupe==='c119'&&Object.keys(window.__store.get(k).resultats||{}).length===12);ok('session results saved apart',full.length>=9&&![...window.__store.keys()].some(k=>k.startsWith('examens/sx-')),full.length);
  const own=[...window.__store.entries()].filter(([k,v])=>k.startsWith('resultats-eleves/')&&v.eleve==='el-119-01');ok('student result docs',own.length>=9&&own.every(([k,v])=>v.examen&&v.v),own.length);}
 click($('#xt-reps'));await wait(60);
@@ -225,6 +235,7 @@ click($('#xt-done'));await wait(60);
 ok('results list',$$('#main .xm-done.xm-row').length>=8&&/%/.test($('#xt-done b').textContent),$$('#main .xm-done.xm-row').length);
 click($('#xv-grille'));await wait(80);
 ok('exam grid view',!!$('.xg')&&$$('.xg tbody tr').length===12&&!$('.xm-tile')&&$('#x-g').value==='c119');
+ok('grid shows grades',$$('.xg .xg-c.ok').some(c=>c.textContent.trim()==='85')&&$$('.xg .xg-c.bad').some(c=>c.textContent.trim()==='42')&&$$('.xg .xg-c').some(c=>/· 85 %/.test(c.title)),$$('.xg .xg-c.bad').map(c=>c.textContent.trim()).join());
 click($('#xv-board'));await wait(40);
 // ---- affectation des enseignants : parcours complet (requis → compétences → disponibilité → candidature → approbation → remplacement) ----
 const DBX=await window.claude.use('db');
@@ -364,6 +375,12 @@ click($('#fi-tab-reglages'));await wait(100);
 click($('#md-ask'));await wait(80);click($('[data-act=md-del]'));await wait(350);
 ok('module removed',window.__store.get('config/ecole').competences.length===25&&$$('#main .xm-row').length===25);
 await DBX.doc(MC).delete();await DBX.doc('groupes/c999').delete();await wait(200);
+// ---- seuil de réussite des examens ----
+click($('#nav-params'));await wait(120);
+ok('pass threshold setting',!!$('#p-seuil')&&$('#p-seuil').value==='60');
+$('#p-seuil').value='70';$('[data-form=p-save]').requestSubmit();await wait(350);
+ok('pass threshold saved',window.__store.get('config/ecole').seuil===70&&$('#p-seuil').value==='70');
+$('#p-seuil').value='60';$('[data-form=p-save]').requestSubmit();await wait(350);
 // ---- locaux et équipements : la liste, ce que demande un cours du module, une séance, les conflits ----
 click($('#nav-params'));await wait(120);
 {const RS=()=>window.__store.get('config/ecole').ressources||[];
