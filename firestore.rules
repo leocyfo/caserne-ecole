@@ -57,6 +57,13 @@ service cloud.firestore {
       allow write: if isAdmin() || (isTeacher() && tid == myRef());
     }
 
+    // Historique des actions : le personnel y inscrit ce qu’il fait (une entrée par action, un document par mois) ;
+    // seule l’administration le lit
+    match /journal/{id} {
+      allow read: if isAdmin();
+      allow create, update: if isStaff();
+    }
+
     // Résultats d’examens : le personnel voit tout ; chaque élève ne lit que les siens
     match /resultats/{id} { allow read, write: if isStaff(); }
     match /resultats-eleves/{id} {

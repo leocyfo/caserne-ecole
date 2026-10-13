@@ -45,6 +45,15 @@ Données : `candidatures/<séance__enseignant>` (statut `attente`, `approuve`, `
 
 Chaque classe a un document `cours/<id>` par module (sigle `M7`). Ses séances sont dans `seances`, une entrée par séance : `{ date, debut, fin, minutes, tags, label, cours: [ids], examens: [ids] }`. Chaque séance s’écrit à part (`update` qui fusionne), pour que deux personnes ne s’écrasent pas. L’ancien tableau `extras` est encore lu. L’identifiant d’une séance ne change jamais : les présences, les résultats et les candidatures s’y rattachent. Les règles de `firestore.rules` laissent un enseignant écrire seulement ses propres candidatures (en attente), demandes de remplacement et disponibilités.
 
+## Heures, impression, notifications, historique
+
+- **Heures enseignées** (Personnel → Heures) : les heures données par chaque enseignant, mois par mois, et un export CSV pour la paie (sommaire par enseignant, puis détail séance par séance). Une séance annulée ou un enseignant marqué absent ne compte pas.
+- **Impression** : le bouton d’impression du calendrier (ou « Imprimer » dans la fiche d’une classe) prépare l’horaire de la semaine ou la feuille de présences ; l’onglet Examens d’un élève imprime son relevé de résultats. La fenêtre d’impression du navigateur enregistre aussi en PDF. Si elle ne peut pas s’ouvrir (page intégrée dans une autre), la feuille est remise en fichier.
+- **Notifications** (la cloche) : rien de plus n’est enregistré, la liste se déduit des données que la personne lit déjà (candidatures, remplacements, séances annulées). Ce qui a été vu est noté dans le navigateur. Le courriel demandera un serveur (Firebase).
+- **Historique** (administration) : chaque séance annulée, rétablie, déplacée, ajoutée ou supprimée, chaque candidature, approbation, attribution ou retrait, et chaque changement de module y est inscrit avec le nom de la personne et l’heure.
+
+Données : `journal/<AAAA-MM>` (un document par mois, une entrée par action dans `ev` : `{ le, par, role, cat, txt, obj, seance, date, groupe }`) et `cours/<id>.annule` (`{ "date@séance": { le, par } }` pour chaque séance annulée).
+
 ## Essayer le site sur cet ordinateur
 
 Double-cliquez **`Lancer le site local.cmd`** (il faut Node.js) : le site s’ouvre à http://localhost:8080/demo.html. Fermez la fenêtre noire pour l’arrêter.

@@ -578,6 +578,10 @@ legend{font-size:13px;color:var(--ink-2);font-weight:600;padding:0 4px}
 .xm-a5{grid-template-columns:52px minmax(0,2.4fr) 58px minmax(0,1fr) minmax(170px,auto)}
 .xm-a6{grid-template-columns:52px minmax(0,2.2fr) 58px minmax(0,.9fr) minmax(0,1.1fr) 130px}
 .xm-afc{grid-template-columns:minmax(0,1.5fr) minmax(0,1.8fr) minmax(0,1fr) 210px}
+.xm-jr{grid-template-columns:96px minmax(0,1fr) 130px}
+.jr-w{display:flex;flex-direction:column;gap:2px;font-size:14px;color:var(--ink);white-space:nowrap}
+.jr-w small{font-size:12.5px;color:var(--muted)}
+.xm-jr .xm-t b,.xm-jr .xm-t small{white-space:normal}
 .xm-a5 .xm-end,.xm-afc .xm-end{gap:8px;align-items:center;flex-wrap:wrap}
 .xm-hd.xm-a5{grid-template-columns:52px minmax(0,2.4fr) 58px minmax(0,1fr) 170px}
 .xm-who .xm-t small{display:flex;flex-wrap:wrap;gap:4px;white-space:normal}
@@ -1161,7 +1165,7 @@ const S={
   conn:'loading', canAdmin:null, canWrite:null,
   me:{id:null,name:'',avatarUrl:''}, isOwner:false, myAcct:null, peers:[],
   loaded:{}, busy:false, confirmClear:false, termKey:'', termLoaded:false,
-  data:{comptes:[],demandes:[],config:null,cours:[],enseignants:[],dossiers:{},groupes:[],eleves:[],examens:[],presences:{},presTerm:{},staffPres:{},absProfs:{},candidatures:[],remplacements:[],dispos:{},resultats:{},mesRes:{}},
+  data:{comptes:[],demandes:[],config:null,cours:[],enseignants:[],dossiers:{},groupes:[],eleves:[],examens:[],presences:{},presTerm:{},staffPres:{},absProfs:{},candidatures:[],remplacements:[],dispos:{},resultats:{},mesRes:{},journal:[]},
   dr:null
 };
 let DB=null, unsubPres=null, unsubTerm=null, unsubMR=null, uidSeq=0;
@@ -2673,7 +2677,53 @@ async function addCourseDay(o){
   const msg=mk?'Séance ajoutée':'Activité ajoutée';let ok;
   if(c0){const doc=courseDoc(c0);doc.extras.push(x);ok=await affWrite(()=>putCours(c0.id,doc),msg);}
   else ok=await affWrite(()=>putCours(genId('c'),{titre,code:mk?'M'+mk.code:'',couleur:mk?(+mk.code)%8:7,groupe:gid,enseignant:'',salle:'',du:'',au:'',heures:mk?modTot(mk)||null:null,creneaux:[],annulees:[],extras:[x]}),msg);
+  if(ok) logEv('horaire',mk?'a ajouté la séance':'a ajouté l’activité',`${mk?'M'+mk.code+' ':''}${titre}${mk&&x.label?' ('+x.label+')':''} · ${gName(gid)}, ${dayLabel(dd).toLowerCase()}`);
   return ok?'':'L’enregistrement a échoué.';
+}
+
+/* ---------- Historique : qui a fait quoi, et quand ----------
+   journal/<AAAA-MM> : un document par mois, où chaque action est une entrée de « ev » (la base ne grossit pas d’un
+   document par clic ; au-delà de 600 entrées le mois continue dans AAAA-MM-2). Entrée : { le, par, role, cat, txt, obj,
+   seance, date, groupe } — cat : horaire | aff | module. L’écriture ne bloque ni ne fait échouer l’action elle-même. */
+const sObj=s=>`${s.c.code?s.c.code+' ':''}${s.c.titre} · ${gName(s.grp)}, ${dayLabel(parse(s.date)).toLowerCase()}`;
+async function logEv(cat,txt,obj,s){
+  if(!DB) return;
+  try{
+    const now=new Date(), ym=now.getFullYear()+'-'+pad(now.getMonth()+1);
+    const cur=(S.data.journal||[]).filter(d=>d.id===ym||d.id.startsWith(ym+'-')).sort((a,b)=>collator.compare(a.id,b.id)).pop();
+    const id=!cur?ym:Object.keys(cur.ev||{}).length>=600?ym+'-'+((+(cur.id.split('-')[2]||1))+1):cur.id;
+    const ev={le:now.toISOString(),par:whoAmI(),role:S.role,cat,txt,obj:obj||''};
+    if(s){ev.seance=s.key;ev.date=s.date;ev.groupe=s.grp||'';}
+    const body={ev:{[now.getTime().toString(36)+Math.random().toString(36).slice(2,5)]:ev}}, ref=col('journal').doc(id);
+    try{await ref.update(body);}
+    catch(e){
+      /* le document du mois n’existe pas encore : on le crée (jamais d’écrasement d’un mois existant) */
+      if(!e||e.code!=='invalid_argument') return;
+      const snap=await ref.get();if(!snap.exists) await ref.set(body);
+    }
+  }catch(e){}
+}
+function ensureJournal(){
+  if(!DB||S.jrSub) return;S.jrSub=true;
+  try{col('journal').onSnapshot(q=>{S.data.journal=q.docs.map(d=>Object.assign({},d.data(),{id:d.id}));S.jrLoaded=true;schedule();},()=>{S.jrLoaded=true;schedule();});}
+  catch(e){S.jrLoaded=true;}
+}
+const JR_CAT={horaire:['info','Horaire'],aff:['warn','Affectations'],module:['k5','Modules']};
+function historyPage(){
+  ensureJournal();
+  const st=S.pg, f=JR_CAT[st.jc]?st.jc:'', q=String(st.jq||'').trim().toLowerCase(), lim=+st.jl||60, all=[];
+  for(const d of S.data.journal||[]) for(const [id,e] of Object.entries(d.ev||{})) if(e&&e.le&&JR_CAT[e.cat]) all.push(Object.assign({id},e));
+  all.sort((a,b)=>b.le.localeCompare(a.le));
+  const cnt={horaire:0,aff:0,module:0};for(const e of all) cnt[e.cat]++;
+  const list=all.filter(e=>(!f||e.cat===f)&&(!q||`${e.par} ${e.txt} ${e.obj}`.toLowerCase().includes(q)));
+  const seg=`<div class="seg" role="group" aria-label="Filtrer">${[['','Tout',all.length],['horaire','Horaire',cnt.horaire],['aff','Affectations',cnt.aff],['module','Modules',cnt.module]].map(([k,l,n])=>`<button type="button" id="jr-f-${k||'all'}" data-act="pg-set" data-k="jc" data-v="${k}" aria-pressed="${f===k}">${l} · ${n}</button>`).join('')}</div>`;
+  const tb=`<div class="toolbar">${seg}<span class="grow"></span><input class="search" id="jr-q" type="search" placeholder="Rechercher une personne, un module…" aria-label="Rechercher dans l’historique" autocomplete="off" value="${esc(st.jq||'')}"></div>`;
+  if(!S.jrLoaded) return tb+'<section class="panel"><p class="help">Chargement de l’historique…</p></section>';
+  if(!all.length) return tb+emptyBox('Rien dans l’historique pour l’instant','Les séances annulées, déplacées, ajoutées ou supprimées, les candidatures et les attributions s’inscrivent ici, avec le nom de la personne et l’heure.');
+  if(!list.length) return tb+'<section class="panel"><p class="help">Aucune action ne correspond.</p></section>';
+  const rows=list.slice(0,lim).map(e=>{const d=new Date(e.le), s=e.seance&&e.date?findSess(e.date,e.seance):null;
+    return xRow('xm-jr',s?`data-act="sess-at" ${sAt(s)}`:'',`<span class="jr-w"><b>${dn(d)} ${esc(fMonthS.format(d))}</b><small>${pad(d.getHours())} h ${pad(d.getMinutes())}</small></span><div class="xm-t"><b>${esc(e.par||'Quelqu’un')} ${esc(e.txt)}</b>${e.obj?`<small>${esc(e.obj)}</small>`:''}</div><div class="xm-end"><span class="chip ${JR_CAT[e.cat][0]}">${JR_CAT[e.cat][1]}</span></div>`,`${e.par} ${e.txt} ${e.obj}`);}).join('');
+  return tb+xList('xm-jr',[['Quand'],['Action'],['','r']],rows)+(list.length>lim?`<div class="row" style="margin-top:12px"><button class="btn" type="button" id="jr-more" data-act="pg-set" data-k="jl" data-v="${lim+60}">Afficher plus (${list.length-lim})</button></div>`:'');
 }
 
 /* ---------- Notifications (la cloche) ----------
@@ -2875,7 +2925,13 @@ function printDrawer(){
    items : [type, titre, explication, page à ouvrir]. Types : new (nouvelle fonction), up (amélioration), fix (correction). */
 const NV_REPO='https://github.com/leocyfo/caserne-ecole';
 const NOUVEAUTES=[
-  {date:'2026-10-13',id:'',push:'Notifications : une cloche dans le site',items:[
+  {date:'2026-10-13',id:'',push:'Historique : qui a fait quoi, et quand',items:[
+    ['new','Historique','Un nouveau menu pour l’administration. Chaque séance annulée, rétablie, déplacée, ajoutée ou supprimée y est inscrite, avec le nom de la personne et l’heure.','historique'],
+    ['new','Affectations dans l’historique','Les candidatures, les approbations, les refus, les attributions, les retraits et les demandes de remplacement.','historique'],
+    ['new','Modules dans l’historique','Les modules créés, modifiés ou supprimés, et les cours ou examens ajoutés ou retirés.','historique'],
+    ['up','Recherche et filtres','L’historique se filtre par sujet et se cherche par nom de personne ou de module. Une ligne ouvre la séance concernée.','historique']
+  ]},
+  {date:'2026-10-13',id:'78b39d2',push:'Notifications : une cloche dans le site',items:[
     ['new','Cloche de notifications','En haut de chaque page. L’enseignant y voit ses candidatures approuvées ou refusées, les séances qu’on lui attribue ou retire, et ses séances annulées.',''],
     ['new','Pour l’administration','Les demandes de remplacement et les nouvelles candidatures.','affectations'],
     ['new','Pour les élèves','Les séances annulées de leur classe.',''],
@@ -3317,7 +3373,7 @@ function setHTML(el,html,key){
   if(fid){const f=document.getElementById(fid);if(f&&el.contains(f)){f.focus({preventScroll:true});if(sel&&sel[0]!=null){try{f.setSelectionRange(sel[0],sel[1]);}catch(e){}}}}
 }
 const NAV={
-  admin:[['calendar','Calendrier','cal'],['classes','Classes','teach'],['eleves','Élèves','users'],['personnel','Personnel','card'],['modules','Modules','layers'],['affectations','Affectations','clip'],['examens','Examens','exam'],['annee','Calendrier scolaire','year'],['comptes','Comptes','key'],['params','Paramètres','gear'],['nouveautes','Nouveautés','spark']],
+  admin:[['calendar','Calendrier','cal'],['classes','Classes','teach'],['eleves','Élèves','users'],['personnel','Personnel','card'],['modules','Modules','layers'],['affectations','Affectations','clip'],['examens','Examens','exam'],['annee','Calendrier scolaire','year'],['comptes','Comptes','key'],['historique','Historique','clock'],['params','Paramètres','gear'],['nouveautes','Nouveautés','spark']],
   teacher:[['calendar','Mon horaire','cal'],['mescours','Mes cours','clip'],['dispos','Disponibilités','calok'],['examens','Examens','exam'],['annee','Calendrier scolaire','year'],['profil','Mon profil','user']],
   student:[['calendar','Mon horaire','cal'],['examens','Examens','exam'],['annee','Calendrier scolaire','year'],['profil','Mon profil','user']]
 };
@@ -3402,6 +3458,7 @@ const HEAD={
   affectations:['Affectations','Les enseignants requis, les candidatures et les remplacements.'],
   mescours:['Mes cours','Les cours à pourvoir, vos candidatures et vos cours attribués.'],
   dispos:['Mes disponibilités','Les jours où vous pouvez donner des cours.'],
+  historique:['Historique','Qui a annulé, déplacé, attribué ou approuvé quoi, et quand.'],
   params:['Paramètres','L’établissement, l’année scolaire et les accès.'],
   nouveautes:['Nouveautés','Ce qui a changé sur le site : nouvelles fonctions, améliorations et corrections.']
 };
@@ -3432,7 +3489,7 @@ function renderMain(){
   let html;
   const p=S.page;
   if(p==='calendar'){S._stats=null;const body=wait||(S.role==='admin'?adminMain():S.role==='teacher'?teacherMain():studentMain());html=toolbarHTML()+body;}
-  else html=wait||(p==='classes'?classesPage():p==='eleves'?studentsPage():p==='personnel'?staffPage():p==='modules'?modulesPage():p==='affectations'?affPage():p==='mescours'?myCoursesPage():p==='dispos'?disposPage():p==='examens'?examsPage():p==='annee'?yearPage():p==='nouveautes'?newsPage():p==='comptes'?accountsPage():p==='profil'?profilePage():paramsPage());
+  else html=wait||(p==='classes'?classesPage():p==='eleves'?studentsPage():p==='personnel'?staffPage():p==='modules'?modulesPage():p==='affectations'?affPage():p==='mescours'?myCoursesPage():p==='dispos'?disposPage():p==='examens'?examsPage():p==='annee'?yearPage():p==='nouveautes'?newsPage():p==='historique'?historyPage():p==='comptes'?accountsPage():p==='profil'?profilePage():paramsPage());
   const el=$('#main'), key=S.role+'/'+p;
   const before=el._k===key&&el._h!==html&&!reduceMotion()?measureCards(el):null;
   setHTML(el,html,key);
@@ -3843,7 +3900,9 @@ async function applyMove(){
   S.busy=false;
   if(ok){
     if(S.dr===d) S.dr=null;
-    toast(t?W('Séances échangées','Cours échangés'):W('Séance déplacée','Cours déplacé'),null,{label:'Annuler',fn:()=>write(async()=>{for(const [id,doc] of prev) await putCours(id,doc);},'Changement annulé')});
+    const what=t?`${sObj(s)} ⇄ ${sObj(t)}`:`${sObj(s)} → ${dayLabel(parse(d.toDate)).toLowerCase()}, ${momentIn(toMin(deb),toMin(fin)).replace(/^en /,'')}`;
+    logEv('horaire',t?W('a échangé deux séances','a échangé deux cours'):W('a déplacé la séance','a déplacé le cours'),what);
+    toast(t?W('Séances échangées','Cours échangés'):W('Séance déplacée','Cours déplacé'),null,{label:'Annuler',fn:async()=>{if(await write(async()=>{for(const [id,doc] of prev) await putCours(id,doc);},'Changement annulé'))logEv('horaire','a annulé son changement',what);}});
   }
   render();
 }
@@ -4227,18 +4286,21 @@ document.addEventListener('click',async e=>{
       const tag=`${d.sess.date}@${d.sess.slotId}`, arr=[...(c.annulees||[])], i=arr.indexOf(tag);
       if(i>=0)arr.splice(i,1);else arr.push(tag);
       const mark={[tag]:i>=0?null:{le:new Date().toISOString(),par:whoAmI()}};
-      S.busy=true;renderDrawer();await write(()=>col('cours').doc(c.id).update({annulees:arr,annule:mark}),i>=0?W('Séance rétablie','Cours rétabli'):W('Séance annulée','Cours annulé pour cette date'));S.busy=false;render();break;}
+      const se0=findSess(d.sess.date,d.sess.key);
+      S.busy=true;renderDrawer();const okC=await write(()=>col('cours').doc(c.id).update({annulees:arr,annule:mark}),i>=0?W('Séance rétablie','Cours rétabli'):W('Séance annulée','Cours annulé pour cette date'));S.busy=false;
+      if(okC&&se0) logEv('horaire',i>=0?W('a rétabli la séance','a rétabli le cours'):W('a annulé la séance','a annulé le cours'),sObj(se0),se0);
+      render();break;}
     /* classes */
     case 'class':openFiche('classes',b.dataset.id);break;
     case 'module':{const mg=b.dataset.g;openFiche('modules',String(b.dataset.id));if(mg){S.pg.mg=mg;S.pg.tab='seances';render();}break;}
-    case 'sx-del-yes':{if(!d||!d.sess||S.busy)break;const c0=byId(S.data.cours,d.id);if(!c0)break;const doc=courseDoc(c0), xid=d.sess.slotId;doc.extras=doc.extras.filter(x=>x.id!==xid&&!(x.de&&String(x.de).endsWith('@'+xid)));doc.annulees=doc.annulees.filter(t=>!String(t).endsWith('@'+xid));S.dr=null;await affWrite(()=>putCours(c0.id,doc),acad()?'Séance supprimée':'Cours supprimé');break;}
+    case 'sx-del-yes':{if(!d||!d.sess||S.busy)break;const c0=byId(S.data.cours,d.id);if(!c0)break;const doc=courseDoc(c0), xid=d.sess.slotId;doc.extras=doc.extras.filter(x=>x.id!==xid&&!(x.de&&String(x.de).endsWith('@'+xid)));doc.annulees=doc.annulees.filter(t=>!String(t).endsWith('@'+xid));S.dr=null;const se0=findSess(d.sess.date,d.sess.key);if(await affWrite(()=>putCours(c0.id,doc),acad()?'Séance supprimée':'Cours supprimé')&&se0)logEv('horaire',W('a supprimé la séance','a supprimé le cours'),sObj(se0));break;}
     /* affectations */
-    case 'af-apply':{const se=findSess(b.dataset.date,b.dataset.key);if(!se||!S.teacher)break;await affSetStatus(se,S.teacher,'attente','Candidature envoyée');break;}
-    case 'af-withdraw':{const id=candId(b.dataset.key,S.teacher), c0=byId(S.data.candidatures,id);if(!c0||c0.statut!=='attente')break;await affWrite(()=>col('candidatures').doc(id).delete(),'Candidature retirée');break;}
-    case 'af-remp-cancel':{const id=candId(b.dataset.key,S.teacher);if(!byId(S.data.remplacements,id))break;await affWrite(()=>col('remplacements').doc(id).delete(),'Demande de remplacement annulée');break;}
-    case 'af-remp-no':{const id=b.dataset.id;if(!byId(S.data.remplacements,id))break;await affWrite(()=>col('remplacements').doc(id).delete(),'Demande de remplacement refusée');break;}
-    case 'af-approve':case 'af-refuse':{const c0=byId(S.data.candidatures,b.dataset.id);if(!c0)break;const ok=a==='af-approve';await affWrite(()=>col('candidatures').doc(c0.id).update({statut:ok?'approuve':'refuse',maj:new Date().toISOString()}),ok?`${tName(c0.enseignant)} est approuvé pour ${W('cette séance','ce cours')}`:'Candidature refusée');break;}
-    case 'af-retire':{const se=findSess(b.dataset.date,b.dataset.key);if(!se)break;await affSetStatus(se,b.dataset.t,'retire',`${tName(b.dataset.t)} est retiré de ${W('cette séance','ce cours')}`);break;}
+    case 'af-apply':{const se=findSess(b.dataset.date,b.dataset.key);if(!se||!S.teacher)break;if(await affSetStatus(se,S.teacher,'attente','Candidature envoyée'))logEv('aff','a postulé à la séance',sObj(se),se);break;}
+    case 'af-withdraw':{const id=candId(b.dataset.key,S.teacher), c0=byId(S.data.candidatures,id);if(!c0||c0.statut!=='attente')break;const se=findSess(c0.date,c0.seance);if(await affWrite(()=>col('candidatures').doc(id).delete(),'Candidature retirée')&&se)logEv('aff','a retiré sa candidature à la séance',sObj(se),se);break;}
+    case 'af-remp-cancel':{const id=candId(b.dataset.key,S.teacher), r0=byId(S.data.remplacements,id);if(!r0)break;const se=findSess(r0.date,r0.seance);if(await affWrite(()=>col('remplacements').doc(id).delete(),'Demande de remplacement annulée')&&se)logEv('aff','a annulé sa demande de remplacement pour la séance',sObj(se),se);break;}
+    case 'af-remp-no':{const id=b.dataset.id, r0=byId(S.data.remplacements,id);if(!r0)break;const se=findSess(r0.date,r0.seance);if(await affWrite(()=>col('remplacements').doc(id).delete(),'Demande de remplacement refusée')&&se)logEv('aff',`a refusé la demande de remplacement de ${tName(r0.enseignant)} pour la séance`,sObj(se),se);break;}
+    case 'af-approve':case 'af-refuse':{const c0=byId(S.data.candidatures,b.dataset.id);if(!c0)break;const ok=a==='af-approve', se=findSess(c0.date,c0.seance);if(await affWrite(()=>col('candidatures').doc(c0.id).update({statut:ok?'approuve':'refuse',maj:new Date().toISOString()}),ok?`${tName(c0.enseignant)} est approuvé pour ${W('cette séance','ce cours')}`:'Candidature refusée')&&se)logEv('aff',`${ok?'a approuvé':'a refusé'} la candidature de ${tName(c0.enseignant)} pour la séance`,sObj(se),se);break;}
+    case 'af-retire':{const se=findSess(b.dataset.date,b.dataset.key);if(!se)break;if(await affSetStatus(se,b.dataset.t,'retire',`${tName(b.dataset.t)} est retiré de ${W('cette séance','ce cours')}`))logEv('aff',`a retiré ${tName(b.dataset.t)} de la séance`,sObj(se),se);break;}
     case 'af-req':{const se=findSess(b.dataset.date,b.dataset.key);if(!se||S.busy)break;await affReq(se,+b.dataset.d||0);break;}
     /* disponibilités */
     case 'dp-month':{const ym=/^\d{4}-\d{2}$/.test(pg.dm||'')?pg.dm:todayISO().slice(0,7), [Y,M]=ym.split('-').map(Number), x=new Date(Y,M-1+(+b.dataset.n||0),1);pg.dm=x.getFullYear()+'-'+pad(x.getMonth()+1);render();const f=$('#'+b.id);if(f)f.focus({preventScroll:true});break;}
@@ -4253,14 +4315,16 @@ document.addEventListener('click',async e=>{
     case 'md-del':{if(S.busy)break;const code=b.dataset.code, c0=configDoc(), k0=c0.competences.find(x=>String(x.code)===String(code));if(!k0)break;
       /* Un module qui a des cours ne se supprime pas */
       if(mCours(k0).length||mExams(k0).length||modCourses(code).some(c=>datedOf(c).length)){pg.ask='';toast(`Le module M${code} a des cours : il ne peut pas être supprimé.`,'bad');render();break;}
-      c0.competences=c0.competences.filter(x=>String(x.code)!==String(code));pg.fiche=null;pg.ask='';await saveConfig(c0,`Module M${code} supprimé`);break;}
+      c0.competences=c0.competences.filter(x=>String(x.code)!==String(code));pg.fiche=null;pg.ask='';if(await saveConfig(c0,`Module M${code} supprimé`))logEv('module',`a supprimé le module M${code}`,k0.nom||'');break;}
     case 'mc-req':{const id=b.dataset.id;let n=0;
       await editModule(b.dataset.code,m=>{const c=m.cours.find(x=>x.id===id);if(!c)return false;c.requis=n=Math.max(0,Math.min(9,cReq(c)+(+b.dataset.d||0)));},()=>pl(n,'enseignant requis','enseignants requis'));break;}
     case 'mc-del':case 'me-del':{const id=b.dataset.id, code=b.dataset.code, ex=a==='me-del';
       if(modUse(code).n(id)){toast('Déjà à l’horaire d’une classe : retirez d’abord ses séances.','bad');break;}
       pg.askc='';pg.aske='';
-      await editModule(code,m=>{if(ex)m.examens=m.examens.filter(x=>x.id!==id);else m.cours=m.cours.filter(x=>x.id!==id);},ex?'Examen retiré du module':'Cours retiré du module');break;}
-    case 'md-del-x':{if(S.busy)break;const c0=byId(S.data.cours,b.dataset.c);if(!c0)break;const doc=courseDoc(c0), xid=b.dataset.x;doc.extras=doc.extras.filter(x=>x.id!==xid&&!(x.de&&String(x.de).endsWith('@'+xid)));doc.annulees=doc.annulees.filter(t=>!String(t).endsWith('@'+xid));pg.askx='';await affWrite(()=>putCours(c0.id,doc),'Séance supprimée');break;}
+      let nm='';
+      if(await editModule(code,m=>{const o=(ex?m.examens:m.cours).find(x=>x.id===id);nm=o?(ex?o.nom:o.num):'';if(ex)m.examens=m.examens.filter(x=>x.id!==id);else m.cours=m.cours.filter(x=>x.id!==id);},ex?'Examen retiré du module':'Cours retiré du module')) logEv('module',ex?`a retiré l’examen « ${nm} » du module M${code}`:`a retiré le cours ${nm} du module M${code}`,'');
+      break;}
+    case 'md-del-x':{if(S.busy)break;const c0=byId(S.data.cours,b.dataset.c);if(!c0)break;const doc=courseDoc(c0), xid=b.dataset.x;doc.extras=doc.extras.filter(x=>x.id!==xid&&!(x.de&&String(x.de).endsWith('@'+xid)));doc.annulees=doc.annulees.filter(t=>!String(t).endsWith('@'+xid));pg.askx='';const x0=(c0.extras||[]).find(x=>x.id===xid), se0=x0?findSess(x0.date,`${c0.id}_${xid}_${x0.date}`):null;if(await affWrite(()=>putCours(c0.id,doc),'Séance supprimée')&&se0)logEv('horaire','a supprimé la séance',sObj(se0));break;}
     case 'nf-open':{const fresh=nfNew().map(n=>n.id);openDrawer({kind:'notifs',fresh});if(fresh.length){S.nfSeen=[...new Set([...(S.nfSeen||[]),...fresh])].slice(-400);savePrefs();renderHeading();}break;}
     case 'nf-go':{const n=notifs()[+b.dataset.i];if(!n)break;const g=n.go;S.dr=null;
       if(g.k==='aff'){goPage('affectations');S.pg.at=g.tab;render();}
@@ -4295,7 +4359,8 @@ document.addEventListener('submit',async e=>{
     const se=findSess(f.dataset.date,f.dataset.key);if(!se||!S.teacher)return;
     const motif=String(($('#rp-motif')||{}).value||'').trim().slice(0,140), id=candId(se.key,S.teacher);
     S.pg.rp='';
-    await affWrite(()=>col('remplacements').doc(id).set({seance:se.key,cours:se.c.id,groupe:se.grp||'',date:se.date,enseignant:S.teacher,motif,maj:new Date().toISOString()}),'Demande de remplacement envoyée');return;
+    if(await affWrite(()=>col('remplacements').doc(id).set({seance:se.key,cours:se.c.id,groupe:se.grp||'',date:se.date,enseignant:S.teacher,motif,maj:new Date().toISOString()}),'Demande de remplacement envoyée')) logEv('aff','a demandé un remplacement pour la séance',sObj(se)+(motif?' — '+motif:''),se);
+    return;
   }
   if(k==='sf-comp'){
     const list=[...f.querySelectorAll('input[name=comp]:checked')].map(i=>+i.value).filter(n=>!isNaN(n)).sort((x,y)=>x-y);
@@ -4306,6 +4371,7 @@ document.addEventListener('submit',async e=>{
     if(!code||code<1){toast('Indiquez le numéro du module.','bad');return;}
     if(!nom){toast('Indiquez le nom du module.','bad');return;}
     const ok=await saveModule(code,{nom,heuresT:numOrNull($('#md-ht').value),heuresP:numOrNull($('#md-hp').value),charge:$('#md-charge').value},isNew);
+    if(ok) logEv('module',isNew?`a créé le module M${code}`:`a modifié le module M${code}`,nom+($('#md-charge')&&$('#md-charge').value?' · chargé de cours : '+tName($('#md-charge').value):''));
     if(ok&&isNew){S.pg.adding='';S.pg.justAdded=String(code);openFiche('modules',String(code));}
     return;
   }
@@ -4321,7 +4387,7 @@ document.addEventListener('submit',async e=>{
     const ok=await editModule(code,m=>{
       if(m.cours.some(c=>String(c.num).trim().toLowerCase()===num.toLowerCase())){toast(`Le cours ${num} existe déjà dans le module M${code}.`,'bad');return false;}
       m.cours.push({id:genId('k'),num,type:COURS_TYPES.includes(type)?type:'theorie',requis:rq==null?1:Math.min(9,rq)});},'Cours ajouté au module');
-    if(ok){const i=$('#mc-num');if(i){i.value='';i.focus();}}
+    if(ok){logEv('module',`a ajouté le cours ${num} au module M${code}`,'');const i=$('#mc-num');if(i){i.value='';i.focus();}}
     return;
   }
   if(k==='me-add'){
@@ -4330,7 +4396,7 @@ document.addEventListener('submit',async e=>{
     const ok=await editModule(code,m=>{
       if(m.examens.some(x=>String(x.nom).trim().toLowerCase()===nom.toLowerCase())){toast(`L’examen « ${nom} » existe déjà dans le module M${code}.`,'bad');return false;}
       m.examens.push({id:genId('e'),type:EXAM_T[type]?type:'t',nom});},'Examen ajouté au module');
-    if(ok){const i=$('#me-nom');if(i){i.value='';i.focus();}}
+    if(ok){logEv('module',`a ajouté l’examen « ${nom} » au module M${code}`,'');const i=$('#me-nom');if(i){i.value='';i.focus();}}
     return;
   }
   if(k==='exam'){if(d&&d.kind==='exam')await saveExam(!!d.warn);return;}
@@ -4394,6 +4460,7 @@ document.addEventListener('input',e=>{
     return;
   }
   if(t.id==='s-q'){S.pg.q=t.value;render();return;}
+  if(t.id==='jr-q'){S.pg.jq=t.value;S.pg.jl='';render();return;}
   const d=S.dr, f=t.dataset&&t.dataset.f;
   if(!d||!f)return;
   if(d.kind==='course'){
@@ -4445,7 +4512,8 @@ document.addEventListener('change',async e=>{
   }
   else if(t.dataset&&t.dataset.af==='assign'){
     const se=findSess(t.dataset.date,t.dataset.key);if(!se||!t.value)return;
-    await affSetStatus(se,t.value,'approuve',`${tName(t.value)} est attribué à ${W('cette séance','ce cours')}`,{par:'admin'});
+    const tv=t.value;
+    if(await affSetStatus(se,tv,'approuve',`${tName(tv)} est attribué à ${W('cette séance','ce cours')}`,{par:'admin'})) logEv('aff',`a attribué ${tName(tv)} à la séance`,sObj(se),se);
   }
   else if(t.dataset&&t.dataset.mc==='type'){
     /* le type d’un cours du module : les séances de toutes les classes suivent */

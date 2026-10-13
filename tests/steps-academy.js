@@ -398,17 +398,35 @@ click($('#nav-calendar'));await wait(100);
  click($('[data-role=teacher]'));await wait(150);click($('#nf-bell'));await wait(100);
  ok('restored session leaves the bell',!rows().some(t=>/Séance annulée/.test(t)&&/Classe 120/.test(t))&&!(window.__store.get('cours/k120-m09').annule||{})[TG]&&!window.__store.get('cours/k120-m09').annulees.includes(TG));
  click($('#dr-close'));await wait(40);click($('[data-role=admin]'));await wait(120);if($('#w-today')){click($('#w-today'));await wait(100);}}
+// ---- historique : qui a fait quoi, et quand (un document par mois, une entrée par action) ----
+click($('#nav-historique'));await wait(250);
+{const rows=()=>$$('#main .xm-jr.xm-row').map(r=>r.textContent.replace(/\s+/g,' '));
+ const J=()=>{const out=[];for(const k of SK('journal'))for(const e of Object.values(window.__store.get(k).ev||{}))out.push(e);return out;};
+ ok('history page',/Historique/.test($('#heading').textContent)&&rows().length>=10&&$$('#main .toolbar .seg button').length===4&&!!$('#jr-q'),rows().length);
+ ok('history: cancel and restore',rows().some(t=>/a annulé la séance/.test(t)&&/M9/.test(t)&&/Classe 120/.test(t))&&rows().some(t=>/a rétabli la séance/.test(t))&&rows().every(t=>/\d\d h \d\d/.test(t)),rows()[0]);
+ ok('history: affectations',J().some(e=>e.cat==='aff'&&/a postulé/.test(e.txt))&&J().some(e=>/a approuvé la candidature de Vincent Tremblay/.test(e.txt))&&J().some(e=>/a demandé un remplacement/.test(e.txt)&&/Garde en caserne/.test(e.obj))&&J().some(e=>/a retiré Vincent Tremblay/.test(e.txt)),J().filter(e=>e.cat==='aff').map(e=>e.txt).join(' | '));
+ ok('history: modules',J().some(e=>e.cat==='module'&&/a créé le module M26/.test(e.txt))&&J().some(e=>/a ajouté le cours 26\.1 au module M26/.test(e.txt))&&J().some(e=>/a retiré le cours 26\.1 du module M26/.test(e.txt))&&J().some(e=>/a supprimé le module M26/.test(e.txt))&&J().some(e=>/a ajouté la séance/.test(e.txt)&&/Classe 999/.test(e.obj))&&J().some(e=>/a supprimé la séance/.test(e.txt)),J().filter(e=>e.cat==='module').map(e=>e.txt).join(' | '));
+ ok('history: one document per month',SK('journal').length===1&&/^journal\/\d{4}-\d\d$/.test(SK('journal')[0])&&J().length>=15&&J().every(e=>/^20\d\d-/.test(e.le)&&e.par==='Thierry Mayrand'&&!!e.cat),SK('journal').join()+' '+J().length);
+ click($('#jr-f-aff'));await wait(80);
+ ok('history filter',rows().length>=4&&rows().every(t=>/Affectations/.test(t)),rows().length);
+ click($('#jr-f-all'));await wait(60);typeIn('#jr-q','rétabli');await wait(150);
+ ok('history search',rows().length>=1&&rows().every(t=>/rétabli/.test(t))&&$('#jr-q').value==='rétabli',rows().length);
+ typeIn('#jr-q','');await wait(100);
+ // une ligne ouvre la séance concernée
+ click($$('#main .xm-jr.xm-row.go').find(r=>/a annulé la séance/.test(r.textContent)&&/Classe 120/.test(r.textContent)));await wait(150);
+ ok('history row opens the session',!$('#drawer').hidden&&/Matières dangereuses/.test($('#drawer').textContent));
+ click($('#dr-close'));await wait(40);}
 // ---- nouveautés : sous Paramètres, pour l’administration ----
 {const nav=$$('#nav button').map(b=>b.id);ok('news under params',nav[nav.length-1]==='nav-nouveautes'&&nav[nav.length-2]==='nav-params'&&!!$('#nav-n'),nav.slice(-2).join(','));}
 click($('#nav-nouveautes'));await wait(150);
-ok('news page',/Nouveautés/.test($('#heading').textContent)&&$$('#main .nv-list').length===5&&$$('#main .nv-row').length>15&&/Depuis votre dernière visite/.test($('#main').textContent)&&!$('#nav-n'),$$('#main .nv-row').length);
+ok('news page',/Nouveautés/.test($('#heading').textContent)&&$$('#main .nv-list').length===5&&$$('#main .nv-row').length>=5&&/Depuis votre dernière visite/.test($('#main').textContent)&&!$('#nav-n'),$$('#main .nv-row').length);
 // un bloc par push : numéro, titre du push, date, identifiant avec un lien vers GitHub
-{const h=$$('#main .nv-push'), n=h.map(x=>+x.querySelector('.nv-num').textContent), l=$('#main .nv-push a[href*="/commit/12976b2"]');
- ok('news by push',$('#nv-v-push').getAttribute('aria-pressed')==='true'&&h.length===5&&n[0]>=32&&n.every((x,i)=>i===0||x===n[i-1]-1)&&/Modules : cours, examens et chargé de cours/.test($('#main').textContent)&&!!l&&l.target==='_blank'&&/github\.com\/leocyfo\/caserne-ecole/.test(l.href)&&/13 octobre 2026/.test(l.closest('.nv-push').textContent)&&/pushes précédents/.test($('#nv-more').textContent),n.join(','));}
+{const h=$$('#main .nv-push'), n=h.map(x=>+x.querySelector('.nv-num').textContent), ls=$$('#main .nv-push a');
+ ok('news by push',$('#nv-v-push').getAttribute('aria-pressed')==='true'&&h.length===5&&n[0]>=32&&n.every((x,i)=>i===0||x===n[i-1]-1)&&ls.length===5&&ls.every(l=>l.target==='_blank'&&/github\.com\/leocyfo\/caserne-ecole\/(commit\/[0-9a-f]{7}|commits\/main)$/.test(l.href))&&ls.filter(l=>/\/commit\//.test(l.href)).length>=4&&h.every(x=>/20\d\d · push/.test(x.textContent))&&/pushes précédents/.test($('#nv-more').textContent),n.join(','));}
 click($('#nv-f-fix'));await wait(60);
 ok('news filter',$$('#main .nv-row').length>3&&$$('#main .nv-row>.chip').every(c=>c.textContent==='Correction'),$$('#main .nv-row').length);
 click($('#nv-f-all'));await wait(60);click($('#nv-more'));await wait(60);
-ok('news older',$$('#main .nv-list').length>=32&&!$('#nv-more')&&/Mise en service/.test($('#main').textContent)&&$$('#main .nv-push').every(x=>x.querySelector('.nv-pt b').textContent.length>5)&&$$('#main .nv-list').every(x=>x.querySelectorAll('.nv-row').length>=1),$$('#main .nv-list').length);
+ok('news older',$$('#main .nv-list').length>=32&&!$('#nv-more')&&/Mise en service/.test($('#main').textContent)&&!!$('#main .nv-push a[href$="/commit/12976b2"]')&&/13 octobre 2026/.test($('#main .nv-push a[href$="/commit/12976b2"]').closest('.nv-push').textContent)&&/Modules : cours, examens et chargé de cours/.test($('#main').textContent)&&$$('#main .nv-push').every(x=>x.querySelector('.nv-pt b').textContent.length>5)&&$$('#main .nv-list').every(x=>x.querySelectorAll('.nv-row').length>=1),$$('#main .nv-list').length);
 // les mêmes changements regroupés par date : les pushes d’un même jour sont réunis
 {const rows=$$('#main .nv-row').length;click($('#nv-v-date'));await wait(80);
  ok('news by date',$('#nv-v-date').getAttribute('aria-pressed')==='true'&&!$('#main .nv-push')&&$$('#main .nv-list').length>=5&&$$('#main .nv-list').length<12&&$$('#main .nv-row').length===rows&&/pushes/.test($('#main .nv-hd').textContent),$$('#main .nv-list').length+' '+$$('#main .nv-row').length+'/'+rows);
