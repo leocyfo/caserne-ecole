@@ -364,6 +364,40 @@ click($('#fi-tab-reglages'));await wait(100);
 click($('#md-ask'));await wait(80);click($('[data-act=md-del]'));await wait(350);
 ok('module removed',window.__store.get('config/ecole').competences.length===25&&$$('#main .xm-row').length===25);
 await DBX.doc(MC).delete();await DBX.doc('groupes/c999').delete();await wait(200);
+// ---- notifications : la cloche (rien de plus n’est enregistré, tout se déduit des données) ----
+click($('#nav-calendar'));await wait(100);
+{const rows=()=>$$('#drawer .nf-row').map(r=>r.textContent);
+ ok('admin bell',!!$('#nf-bell')&&!!$('#nf-n')&&parseInt($('#nf-n').textContent,10)>=2,($('#nf-n')||{}).textContent);
+ click($('#nf-bell'));await wait(100);
+ ok('admin notifications',/Notifications/.test($('#drawer .eyebrow').textContent)&&rows().some(t=>/Remplacement demandé/.test(t)&&/Marie Leduc/.test(t))&&rows().some(t=>/Nouvelle candidature/.test(t))&&$$('#drawer .nf-row.new').length>=2&&!$('#nf-n'),rows().length);
+ click($$('#drawer .nf-row').find(r=>/Remplacement demandé/.test(r.textContent)));await wait(150);
+ ok('notification opens its page',/Affectations/.test($('#heading').textContent)&&$('#at-remp').getAttribute('aria-pressed')==='true'&&$('#drawer').hidden);
+ click($('#nf-bell'));await wait(80);
+ ok('notifications seen',/Tout est vu/.test($('#dr-title').textContent)&&!$('#drawer .nf-row.new')&&$$('#drawer .nf-row').length>=2);
+ click($('#dr-close'));await wait(40);
+ // une séance annulée : l’enseignant qui la donnait et la classe sont prévenus
+ click($('#nav-calendar'));await wait(100);click($('#w-next'));await wait(120);
+ const KA='k120-m09_a20261013am_2026-10-13', TG='2026-10-13@a20261013am';
+ click($('.cc[data-key="'+KA+'"]'));await wait(80);click($('[data-act=s-cancel]'));await wait(250);click($('#dr-close'));await wait(40);
+ const mk=window.__store.get('cours/k120-m09').annule||{};
+ ok('cancellation is stamped',!!mk[TG]&&/^20\d\d-/.test(mk[TG].le)&&window.__store.get('cours/k120-m09').annulees.includes(TG),JSON.stringify(mk));
+ click($('[data-role=teacher]'));await wait(150);
+ ok('teacher bell',!!$('#nf-n'),($('#nf-n')||{}).textContent);
+ click($('#nf-bell'));await wait(100);
+ ok('teacher notified of cancelled session',rows().some(t=>/Séance annulée/.test(t)&&/Classe 120/.test(t)&&/M9/.test(t)),rows().join(' | ').slice(0,200));
+ click($$('#drawer .nf-row').find(r=>/Séance annulée/.test(r.textContent)));await wait(200);
+ ok('cancelled session opens',!$('#drawer').hidden&&/annulée/.test($('#drawer').textContent)&&/Matières dangereuses/.test($('#drawer').textContent),$('#drawer').textContent.slice(0,80));
+ click($('#dr-close'));await wait(40);
+ click($('[data-role=student]'));await wait(150);pick('#sel-group','c120');await wait(150);
+ click($('#nf-bell'));await wait(100);
+ ok('class notified of cancelled session',rows().some(t=>/Séance annulée/.test(t)&&/Classe 120/.test(t)),rows().join(' | ').slice(0,160));
+ click($('#dr-close'));await wait(40);pick('#sel-group','c119');await wait(100);
+ // une fois la séance rétablie, la notification disparaît
+ click($('[data-role=admin]'));await wait(150);
+ click($('.cc[data-key="'+KA+'"]'));await wait(80);click($('[data-act=s-cancel]'));await wait(250);click($('#dr-close'));await wait(40);
+ click($('[data-role=teacher]'));await wait(150);click($('#nf-bell'));await wait(100);
+ ok('restored session leaves the bell',!rows().some(t=>/Séance annulée/.test(t)&&/Classe 120/.test(t))&&!(window.__store.get('cours/k120-m09').annule||{})[TG]&&!window.__store.get('cours/k120-m09').annulees.includes(TG));
+ click($('#dr-close'));await wait(40);click($('[data-role=admin]'));await wait(120);if($('#w-today')){click($('#w-today'));await wait(100);}}
 // ---- nouveautés : sous Paramètres, pour l’administration ----
 {const nav=$$('#nav button').map(b=>b.id);ok('news under params',nav[nav.length-1]==='nav-nouveautes'&&nav[nav.length-2]==='nav-params'&&!!$('#nav-n'),nav.slice(-2).join(','));}
 click($('#nav-nouveautes'));await wait(150);

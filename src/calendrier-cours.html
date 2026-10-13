@@ -230,11 +230,21 @@ table.tbl{width:100%;border-collapse:collapse;min-width:640px}
 .hr-m[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:inset 0 0 0 1px var(--role)}
 .hr-tot td{font-weight:700;background:var(--head);border-top:1px solid var(--line)}
 .hr-tot td.on{background:var(--role-bg)}
+.bell{position:relative;width:40px;height:40px;border:1px solid var(--line);border-radius:999px;background:var(--surface);display:inline-grid;place-items:center;color:var(--ink-2);flex:none}
+.bell:hover{background:var(--surface-2);color:var(--ink)}
+.bell .ic{width:19px;height:19px}
+.bell-n{position:absolute;top:-5px;right:-5px;min-width:19px;height:19px;padding:0 5px;border-radius:999px;background:var(--bad);color:#FFFFFF;font-size:11.5px;font-weight:700;font-style:normal;line-height:19px;text-align:center}
+.nf-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.nf-row{display:flex;flex-direction:column;gap:6px;width:100%;padding:11px 13px;border:1px solid var(--line);border-radius:10px;background:var(--surface);text-align:left;font:inherit;color:var(--ink);cursor:pointer}
+.nf-row:hover{background:var(--surface-2)}
+.nf-row.new{border-color:var(--role);box-shadow:inset 3px 0 0 var(--role)}
+.nf-h{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.nf-h small{font-size:12.5px;color:var(--muted);white-space:nowrap}
+.nf-tx{font-size:14.5px;line-height:1.4}
 #print-root{display:none}
 @media print{body.printing{background:#fff}body.printing>*:not(#print-root){display:none!important}body.printing>#print-root{display:block}}
 .pr-btns{display:flex;flex-wrap:wrap;gap:8px}
-.ctl-print{width:40px;height:40px;flex:none}
-.ctl-print .ic{width:18px;height:18px}
+
 .link{background:none;border:0;padding:0;font-weight:700;color:var(--ink);text-align:left}
 .link:hover{text-decoration:underline;color:var(--head-ink)}
 .help{font-size:13px;color:var(--muted);margin:0}
@@ -1145,7 +1155,7 @@ let prefs={};
 try{prefs=JSON.parse(localStorage.getItem(PREF)||'{}')||{};}catch(e){prefs={};}
 const S={
   role:['admin','teacher','student'].includes(prefs.role)?prefs.role:'admin',
-  teacher:prefs.teacher||'', group:prefs.group||'', student:prefs.student||'', filtre:prefs.filtre||'', fmode:prefs.fmode==='e'?'e':'g', compact:prefs.compact===true, view:prefs.view==='jour'?'jour':'semaine', dayDate:'', sideMini:prefs.sideMini===true||(prefs.sideMini===undefined&&typeof window!=='undefined'&&window.innerWidth<=900), demoHidden:prefs.demoHidden===true, nvSeen:typeof prefs.nvSeen==='string'?prefs.nvSeen:'',
+  teacher:prefs.teacher||'', group:prefs.group||'', student:prefs.student||'', filtre:prefs.filtre||'', fmode:prefs.fmode==='e'?'e':'g', compact:prefs.compact===true, view:prefs.view==='jour'?'jour':'semaine', dayDate:'', sideMini:prefs.sideMini===true||(prefs.sideMini===undefined&&typeof window!=='undefined'&&window.innerWidth<=900), demoHidden:prefs.demoHidden===true, nvSeen:typeof prefs.nvSeen==='string'?prefs.nvSeen:'', nfSeen:Array.isArray(prefs.nfSeen)?prefs.nfSeen.slice(-400):[],
   page:'calendar', pg:{},
   week:(()=>{const d=new Date(),j=d.getDay();return monday(j===6?addDays(d,2):j===0?addDays(d,1):d);})(), day:0,
   conn:'loading', canAdmin:null, canWrite:null,
@@ -1155,7 +1165,7 @@ const S={
   dr:null
 };
 let DB=null, unsubPres=null, unsubTerm=null, unsubMR=null, uidSeq=0;
-function savePrefs(){try{localStorage.setItem(PREF,JSON.stringify({role:S.role,teacher:S.teacher,group:S.group,student:S.student,filtre:S.filtre,fmode:S.fmode,compact:S.compact,view:S.view,sideMini:S.sideMini,demoHidden:S.demoHidden,nvSeen:S.nvSeen}));}catch(e){}}
+function savePrefs(){try{localStorage.setItem(PREF,JSON.stringify({role:S.role,teacher:S.teacher,group:S.group,student:S.student,filtre:S.filtre,fmode:S.fmode,compact:S.compact,view:S.view,sideMini:S.sideMini,demoHidden:S.demoHidden,nvSeen:S.nvSeen,nfSeen:S.nfSeen}));}catch(e){}}
 
 const byId=(arr,id)=>arr.find(x=>x.id===id);
 const cfg=()=>Object.assign({nom:'',annee:'',debut:'',fin:'',conges:[],etapes:[],competences:[]},S.data.config||{});
@@ -1522,7 +1532,7 @@ function toolbarHTML(){
     if(late) right+=`<button type="button" class="late" id="late-pill" data-act="nav" data-page="classes" title="${W('Séances passées','Cours passés')} de la semaine dont les présences n’ont pas été prises. Ouvrir les classes.">${late} ${late>1?'présences en retard':'présence en retard'} cette semaine</button>`;
     if(ready&&S.canAdmin!==false) right+=`<button class="btn primary" type="button" data-act="new-course">${icon('plus')}${acad()?'Ajouter une séance':'Planifier un cours'}</button>`;
   }else right=identitySelect();
-  return `<section class="ctl" aria-label="Affichage de l’horaire">${dd?navDay:nav}${viewSeg}${mid?'<span class="vsep" aria-hidden="true"></span>'+mid:''}<span class="grow"></span>${ready?`<button type="button" class="icon-btn ctl-print" id="pr-open" data-act="pr-open" aria-label="Imprimer" title="Imprimer l’horaire de la semaine ou la feuille de présences">${icon('print')}</button>`:''}${right}</section>`;
+  return `<section class="ctl" aria-label="Affichage de l’horaire">${dd?navDay:nav}${viewSeg}${mid?'<span class="vsep" aria-hidden="true"></span>'+mid:''}<span class="grow"></span>${right}</section>`;
 }
 function viewSelHTML(){
   const mode=S.fmode, f=S.filtre;
@@ -2409,9 +2419,9 @@ function affBoxHTML(s){
 }
 /* Écritures */
 async function affWrite(fn,msg){if(S.busy)return false;S.busy=true;render();const ok=await write(fn,msg);S.busy=false;render();return ok;}
-async function affSetStatus(s,tid,statut,msg){
+async function affSetStatus(s,tid,statut,msg,extra){
   const id=candId(s.key,tid), rp=affIdx().rp[s.key+'|'+tid];
-  return affWrite(async()=>{await col('candidatures').doc(id).set(candDoc(s,tid,statut));if(statut==='retire'&&rp)await col('remplacements').doc(rp.id).delete();},msg);
+  return affWrite(async()=>{await col('candidatures').doc(id).set(Object.assign(candDoc(s,tid,statut),extra||{}));if(statut==='retire'&&rp)await col('remplacements').doc(rp.id).delete();},msg);
 }
 async function affReq(s,d){
   const c=byId(S.data.cours,s.c.id);if(!c||linkedX(s))return;
@@ -2666,6 +2676,63 @@ async function addCourseDay(o){
   return ok?'':'L’enregistrement a échoué.';
 }
 
+/* ---------- Notifications (la cloche) ----------
+   Rien de plus n’est enregistré : la liste se déduit de ce que la personne peut déjà lire — ses candidatures,
+   les demandes de remplacement, les séances annulées. Ce qui a été vu est noté dans le navigateur.
+   Le courriel viendra avec la connexion Firebase (il faut un serveur pour l’envoyer). */
+const whoAmI=()=>(S.me&&S.me.name)||'';
+const ago=t=>{if(!t)return '';const m=Math.round((Date.now()-new Date(t).getTime())/60000);if(isNaN(m))return '';if(m<1)return 'à l’instant';if(m<60)return `il y a ${m} min`;const h=Math.round(m/60);if(h<24)return `il y a ${h} h`;const d=Math.round(h/24);return d===1?'hier':d<14?`il y a ${d} jours`:shortDate(new Date(t));};
+let _nf=null;
+function notifs(){
+  const D=S.data, who=S.role==='teacher'?S.teacher:S.role==='student'?S.group:'', day=todayISO(), k=S.role+'|'+who+'|'+day;
+  if(_nf&&_nf.c===D.cours&&_nf.a===D.candidatures&&_nf.r===D.remplacements&&_nf.g===D.config&&_nf.k===k) return _nf.out;
+  const out=[], recent=iso(addDays(new Date(),-7));
+  const info=(date,key)=>{const s=findSess(date,key);return s?{s,txt:`${s.c.code?s.c.code+' ':''}${s.c.titre} · ${gName(s.grp)}, ${dayLabel(parse(s.date)).toLowerCase()}`}:null;};
+  /* séances annulées à venir : pour l’enseignant qui les donnait, ou pour la classe */
+  const cancelled=(match,pre)=>{
+    for(const c of D.cours) for(const tag of c.annulees||[]){
+      const [date,sid]=String(tag).split('@');if(!sid||date<day) continue;
+      const x=info(date,`${c.id}_${sid}_${date}`);if(!x||!x.s.cancelled||x.s.movedX||!match(x.s)) continue;
+      const a=(c.annule||{})[tag]||{};
+      out.push({id:`a:${pre}:${x.s.key}`,t:a.le||'',tone:'bad',title:W('Séance annulée','Cours annulé'),text:x.txt+'.',go:{k:'sess',key:x.s.key,date}});
+    }
+  };
+  if(S.role==='teacher'&&who){
+    for(const d of D.candidatures){
+      if(d.enseignant!==who||d.date<recent) continue;
+      const T={approuve:d.par==='admin'?['ok','Séance attribuée','Vous donnez ']:['ok','Candidature approuvée','Vous donnez '],refuse:['bad','Candidature refusée','Pour '],retire:['warn','Séance retirée','Vous ne donnez plus ']}[d.statut], x=T&&info(d.date,d.seance);
+      if(x) out.push({id:`c:${d.id}:${d.statut}`,t:d.maj||'',tone:T[0],title:T[1],text:T[2]+x.txt+'.',go:{k:'mes',tab:d.statut==='approuve'?'mine':'open'}});
+    }
+    cancelled(s=>(s.tch||[]).includes(who),'t:'+who);
+  }else if(S.role==='student'&&who) cancelled(s=>s.grp===who,'g:'+who);
+  else if(S.role==='admin'){
+    for(const d of D.remplacements){
+      if(d.date<day) continue;const x=info(d.date,d.seance);
+      if(x&&!x.s.cancelled&&(x.s.tch||[]).includes(d.enseignant)) out.push({id:`r:${d.id}`,t:d.maj||'',tone:'warn',title:'Remplacement demandé',text:`${tName(d.enseignant)} · ${x.txt}.${d.motif?' Raison : '+d.motif:''}`,go:{k:'aff',tab:'remp'}});
+    }
+    for(const d of D.candidatures){
+      if(d.statut!=='attente'||d.date<day) continue;const x=info(d.date,d.seance);
+      if(x&&!x.s.cancelled&&byId(D.enseignants,d.enseignant)) out.push({id:`c:${d.id}:attente`,t:d.maj||'',tone:'info',title:'Nouvelle candidature',text:`${tName(d.enseignant)} · ${x.txt}.`,go:{k:'aff',tab:'cand'}});
+    }
+  }
+  out.sort((a,b)=>(b.t||'').localeCompare(a.t||''));
+  _nf={c:D.cours,a:D.candidatures,r:D.remplacements,g:D.config,k,out};
+  return out;
+}
+const nfNew=()=>{const seen=new Set(S.nfSeen||[]);return notifs().filter(n=>!seen.has(n.id));};
+function bellHTML(){
+  if(S.conn!=='shared'||!allLoaded()) return '';
+  const n=nfNew().length;
+  return `<button type="button" class="bell" id="nf-bell" data-act="nf-open" aria-label="${n?pl(n,'nouvelle notification','nouvelles notifications'):'Notifications'}" title="Notifications">${icon('bell')}${n?`<i class="bell-n" id="nf-n">${n>9?'9+':n}</i>`:''}</button>`;
+}
+function notifDrawer(){
+  const d=S.dr, list=notifs(), fresh=new Set(d.fresh||[]), n=list.filter(x=>fresh.has(x.id)).length;
+  const empty=S.role==='admin'?'Les demandes de remplacement et les nouvelles candidatures apparaîtront ici.':S.role==='teacher'?'Vos candidatures approuvées ou refusées et vos séances annulées apparaîtront ici.':'Les séances annulées de votre classe apparaîtront ici.';
+  const rows=list.map((x,i)=>`<li><button type="button" class="nf-row${fresh.has(x.id)?' new':''}" data-act="nf-go" data-i="${i}"><span class="nf-h"><span class="chip ${x.tone}">${esc(x.title)}</span><small>${esc(ago(x.t))}</small></span><span class="nf-tx">${esc(x.text)}</span></button></li>`).join('');
+  return dTop('Notifications',!list.length?'Rien pour l’instant':n?pl(n,'nouvelle','nouvelles'):'Tout est vu','')
+    +`<div class="dr-body">${list.length?`<ul class="nf-list">${rows}</ul>`:`<p class="help">${empty}</p>`}</div>`;
+}
+
 /* ---------- Impression (et PDF) ----------
    La page prépare une feuille, puis ouvre la fenêtre d’impression du navigateur, qui sait aussi enregistrer en PDF.
    Si cette fenêtre ne peut pas s’ouvrir (page intégrée dans une autre), la feuille est remise en fichier à ouvrir et à imprimer.
@@ -2808,7 +2875,13 @@ function printDrawer(){
    items : [type, titre, explication, page à ouvrir]. Types : new (nouvelle fonction), up (amélioration), fix (correction). */
 const NV_REPO='https://github.com/leocyfo/caserne-ecole';
 const NOUVEAUTES=[
-  {date:'2026-10-13',id:'',push:'Impression : horaire de la semaine, feuille de présences, relevé de résultats',items:[
+  {date:'2026-10-13',id:'',push:'Notifications : une cloche dans le site',items:[
+    ['new','Cloche de notifications','En haut de chaque page. L’enseignant y voit ses candidatures approuvées ou refusées, les séances qu’on lui attribue ou retire, et ses séances annulées.',''],
+    ['new','Pour l’administration','Les demandes de remplacement et les nouvelles candidatures.','affectations'],
+    ['new','Pour les élèves','Les séances annulées de leur classe.',''],
+    ['up','Séance annulée','Le site note quand et par qui une séance a été annulée.','calendar']
+  ]},
+  {date:'2026-10-13',id:'33d9ffb',push:'Impression : horaire de la semaine, feuille de présences, relevé de résultats',items:[
     ['new','Imprimer l’horaire de la semaine','Le bouton d’impression du calendrier (ou « Imprimer » dans la fiche d’une classe) prépare une page par classe, ou l’horaire d’un enseignant.','calendar'],
     ['new','Feuille de présences','Au même endroit : les élèves en lignes, les séances de la semaine en colonnes, à cocher à la main. Les présences déjà prises y sont inscrites.','classes'],
     ['new','Relevé de résultats','Dans l’onglet Examens de la fiche d’un élève, « Imprimer le relevé ». L’élève peut imprimer le sien depuis « Mes examens ».','eleves'],
@@ -3348,7 +3421,9 @@ function renderHeading(){
   const hk=S.page==='calendar'?S.role:S.page, h=acad()&&HEAD_AC[hk]&&h0===HEAD[hk]?HEAD_AC[hk]:h0;
   const show=demoHidden()?`<button type="button" class="demo-show" id="demo-show" data-act="demo" title="Réafficher le bandeau des profils et des données d’exemple">${icon('eye')}Afficher le bandeau</button>`:'';
   const sub=S.page==='calendar'?'':`<p>${h[1]}</p>`;
-  setHTML($('#heading'),`<div><h1>${h[0]}</h1>${sub}</div>${show?`<div class="head-side">${show}</div>`:''}`);
+  const prBtn=S.page==='calendar'&&S.conn==='shared'&&allLoaded()?`<button type="button" class="bell" id="pr-open" data-act="pr-open" aria-label="Imprimer" title="Imprimer l’horaire de la semaine ou la feuille de présences">${icon('print')}</button>`:'';
+  const side=show+prBtn+bellHTML();
+  setHTML($('#heading'),`<div><h1>${h[0]}</h1>${sub}</div>${side?`<div class="head-side">${side}</div>`:''}`);
 }
 function renderMain(){
   if(typeof DRAG!=='undefined'&&DRAG&&DRAG.active){pendingMain=true;return;}
@@ -3424,7 +3499,7 @@ function renderDrawer(){
   }
   const d=S.dr;
   if(d.kind==='att') syncAtt();
-  const html=d.kind==='att'?attDrawer():d.kind==='addc'?addCourseDrawer():d.kind==='course'?courseDrawer():d.kind==='exam'?examDrawer():d.kind==='student'?studentDrawer():d.kind==='staff'?staffDrawer():d.kind==='move'?moveDrawer():d.kind==='acct'?accountDrawer():d.kind==='print'?printDrawer():infoDrawer();
+  const html=d.kind==='att'?attDrawer():d.kind==='addc'?addCourseDrawer():d.kind==='course'?courseDrawer():d.kind==='exam'?examDrawer():d.kind==='student'?studentDrawer():d.kind==='staff'?staffDrawer():d.kind==='move'?moveDrawer():d.kind==='acct'?accountDrawer():d.kind==='print'?printDrawer():d.kind==='notifs'?notifDrawer():infoDrawer();
   const fresh=el._k!==d.uid;
   el.classList.toggle('dialog',d.kind==='move');
   setHTML(el,html,d.uid);
@@ -4151,7 +4226,8 @@ document.addEventListener('click',async e=>{
       if(!d||!d.sess||S.busy)break;const c=byId(S.data.cours,d.id);if(!c)break;
       const tag=`${d.sess.date}@${d.sess.slotId}`, arr=[...(c.annulees||[])], i=arr.indexOf(tag);
       if(i>=0)arr.splice(i,1);else arr.push(tag);
-      S.busy=true;renderDrawer();await write(()=>col('cours').doc(c.id).update({annulees:arr}),i>=0?W('Séance rétablie','Cours rétabli'):W('Séance annulée','Cours annulé pour cette date'));S.busy=false;render();break;}
+      const mark={[tag]:i>=0?null:{le:new Date().toISOString(),par:whoAmI()}};
+      S.busy=true;renderDrawer();await write(()=>col('cours').doc(c.id).update({annulees:arr,annule:mark}),i>=0?W('Séance rétablie','Cours rétabli'):W('Séance annulée','Cours annulé pour cette date'));S.busy=false;render();break;}
     /* classes */
     case 'class':openFiche('classes',b.dataset.id);break;
     case 'module':{const mg=b.dataset.g;openFiche('modules',String(b.dataset.id));if(mg){S.pg.mg=mg;S.pg.tab='seances';render();}break;}
@@ -4185,6 +4261,12 @@ document.addEventListener('click',async e=>{
       pg.askc='';pg.aske='';
       await editModule(code,m=>{if(ex)m.examens=m.examens.filter(x=>x.id!==id);else m.cours=m.cours.filter(x=>x.id!==id);},ex?'Examen retiré du module':'Cours retiré du module');break;}
     case 'md-del-x':{if(S.busy)break;const c0=byId(S.data.cours,b.dataset.c);if(!c0)break;const doc=courseDoc(c0), xid=b.dataset.x;doc.extras=doc.extras.filter(x=>x.id!==xid&&!(x.de&&String(x.de).endsWith('@'+xid)));doc.annulees=doc.annulees.filter(t=>!String(t).endsWith('@'+xid));pg.askx='';await affWrite(()=>putCours(c0.id,doc),'Séance supprimée');break;}
+    case 'nf-open':{const fresh=nfNew().map(n=>n.id);openDrawer({kind:'notifs',fresh});if(fresh.length){S.nfSeen=[...new Set([...(S.nfSeen||[]),...fresh])].slice(-400);savePrefs();renderHeading();}break;}
+    case 'nf-go':{const n=notifs()[+b.dataset.i];if(!n)break;const g=n.go;S.dr=null;
+      if(g.k==='aff'){goPage('affectations');S.pg.at=g.tab;render();}
+      else if(g.k==='mes'){goPage('mescours');S.pg.mt=g.tab;render();}
+      else{const mon=monday(parse(g.date));if(iso(mon)!==iso(S.week)){S.week=mon;S.day=defaultDay();subWeek();}S.page='calendar';S.pg={};render();openSession(g.key,g.date);}
+      break;}
     case 'pr-open':openPrint(b.dataset.g?{g:b.dataset.g,t:''}:null);break;
     case 'pr-go':{if(!d||d.kind!=='print')break;const fe=b.dataset.doc==='feuille', html=fe?attSheet(d):weekSheet(d);
       if(!html){toast(fe?'Aucune séance avec des présences à prendre cette semaine-là.':'Rien à imprimer pour cette semaine.','bad');break;}
@@ -4363,7 +4445,7 @@ document.addEventListener('change',async e=>{
   }
   else if(t.dataset&&t.dataset.af==='assign'){
     const se=findSess(t.dataset.date,t.dataset.key);if(!se||!t.value)return;
-    await affSetStatus(se,t.value,'approuve',`${tName(t.value)} est attribué à ${W('cette séance','ce cours')}`);
+    await affSetStatus(se,t.value,'approuve',`${tName(t.value)} est attribué à ${W('cette séance','ce cours')}`,{par:'admin'});
   }
   else if(t.dataset&&t.dataset.mc==='type'){
     /* le type d’un cours du module : les séances de toutes les classes suivent */
