@@ -2,7 +2,7 @@
    Sert à essayer la connexion, la demande de compte et l’approbation sans Firebase.
    Rien n’est envoyé ailleurs ; « Réinitialiser la démo » efface tout. */
 (function(){
-  const KEY='caserne-ecole-demo-v7';
+  const KEY='caserne-ecole-demo-v8';
   const copy=v=>JSON.parse(JSON.stringify(v));
   const DEMO=[
     {uid:'demo-admin',email:'admin@demo.ca',pw:'demo123',displayName:'Direction de l’Académie',label:'Administration'},
@@ -46,9 +46,11 @@
       onSnapshot(cb){const l=()=>setTimeout(()=>cb(run()),0);L.add(l);l();return ()=>L.delete(l);},
       doc:id=>ref(col+'/'+(id||Math.random().toString(36).slice(2)))};
   }
+  /* update() fusionne comme la vraie base : les objets imbriqués se fusionnent, le reste (tableaux, null) remplace */
+  const merge=(t,s)=>{for(const [k,v] of Object.entries(s)){if(v&&typeof v==='object'&&!Array.isArray(v)&&t[k]&&typeof t[k]==='object'&&!Array.isArray(t[k]))merge(t[k],v);else t[k]=v;}return t;};
   function ref(p){return {id:p.split('/').pop(),path:p,get:async()=>snapDoc(p),
     set:async d=>{store.set(p,copy(d));fire();},
-    update:async d=>{if(!store.has(p))throw {code:'invalid_argument',message:'Document introuvable'};store.set(p,Object.assign(store.get(p),copy(d)));fire();},
+    update:async d=>{if(!store.has(p))throw {code:'invalid_argument',message:'Document introuvable'};store.set(p,merge(store.get(p),copy(d)));fire();},
     delete:async()=>{store.delete(p);fire();},
     onSnapshot(cb){const l=()=>setTimeout(()=>cb(snapDoc(p)),0);L.add(l);l();return ()=>L.delete(l);}};}
   const err=c=>Object.assign(new Error(c),{code:c});

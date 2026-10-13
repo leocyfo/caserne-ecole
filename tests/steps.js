@@ -9,6 +9,8 @@ const dragTo=async(src,target,isCell)=>{src.scrollIntoView({block:'center'});awa
 const setSel=(id,v)=>{const s=$(id);s.value=v;s.dispatchEvent(new Event('change',{bubbles:true}));};
 const typeIn=(id,v)=>{const i=$(id);i.value=v;i.dispatchEvent(new Event('input',{bubbles:true}));};
 const store=()=>[...window.__store.entries()];
+/* Séances d’un cours telles que la page les voit : tableau extras d’origine + carte seances */
+const XS=id=>{const d=window.__store.get('cours/'+id)||{},m=new Map((d.extras||[]).map(x=>[x.id,x]));for(const [k,v] of Object.entries(d.seances||{})){if(!v)m.delete(k);else{const o=Object.assign({},m.get(k),v,{id:k});for(const f of Object.keys(o))if(o[f]===null)delete o[f];m.set(k,o);}}return [...m.values()];};
 try{
 await wait(400);
 ok('banner',/Horaire partagé/.test($('#banner-text').textContent));
@@ -40,11 +42,11 @@ const ts=$('#mv-time');ts.value='13:45-15:00';ts.dispatchEvent(new Event('change
 ok('time change clears group warning',!/Groupe 302 a déjà/.test($('#drawer').textContent)||/Science/.test($('#drawer').textContent),$('#drawer .notice')&&$('#drawer .notice').textContent);
 click($('[data-act=mv-apply]'));await wait(150);
 let m=window.__store.get('cours/c-mat-302');
-ok('moved once',m.annulees.includes('2026-10-05@s11')&&m.extras.some(x=>x.date==='2026-10-07'&&x.debut==='13:45'&&x.de==='2026-10-05@s11'),JSON.stringify(m.extras));
+ok('moved once',m.annulees.includes('2026-10-05@s11')&&XS('c-mat-302').some(x=>x.date==='2026-10-07'&&x.debut==='13:45'&&x.de==='2026-10-05@s11'),JSON.stringify(XS('c-mat-302')));
 ok('moved chips',/Déplacé au mercredi 7/.test($('#main').textContent)&&/Déplacé ici/.test($('#main').textContent));
 click($$('.toast button').pop());await wait(150);
 m=window.__store.get('cours/c-mat-302');
-ok('undo',m.annulees.length===0&&m.extras.length===0,JSON.stringify(m.annulees));
+ok('undo',m.annulees.length===0&&XS('c-mat-302').length===0,JSON.stringify(m.annulees));
 const a=$('.cc[data-key="c-sci-302_s12_2026-10-05"]'), bc=$('.cc[data-key="c-his-302_s13_2026-10-05"]');
 pt=await dragTo(a,bc,false);ok('swap highlight',bc.classList.contains('drop-swap'));
 ptr('pointerup',pt[0],pt[1]);await wait(40);
@@ -69,11 +71,11 @@ click($('[data-act=move-open]'));await wait(40);
 ok('move from drawer',$('#drawer').classList.contains('dialog')&&!!$('#mv-day'));
 const dsel=$('#mv-day');dsel.value='2026-10-09';dsel.dispatchEvent(new Event('change',{bubbles:true}));await wait(30);
 click($('[data-act=mv-apply]'));await wait(150);
-ok('moved via drawer',window.__store.get('cours/c-fra-302').extras.some(x=>x.date==='2026-10-09'));
+ok('moved via drawer',XS('c-fra-302').some(x=>x.date==='2026-10-09'));
 click($('.cc[data-key="c-fra-302_s14_2026-10-05"]'));await wait(40);
 ok('extras listed',/Changements ponctuels/.test($('#drawer').textContent));
 click($('[data-act=x-extra]'));await wait(150);
-ok('extra reverted',window.__store.get('cours/c-fra-302').extras.length===0&&window.__store.get('cours/c-fra-302').annulees.length===0);
+ok('extra reverted',XS('c-fra-302').length===0&&window.__store.get('cours/c-fra-302').annulees.length===0);
 click($('#dr-close'));await wait(30);
 /* SIZE */
 ok('expander shown',!!$('#exp-btn')&&$('#exp-btn').getAttribute('aria-expanded')==='true');

@@ -15,12 +15,18 @@ Le menu **Nouveautés** (administration, sous Paramètres) liste les nouvelles f
 
 ## Vocabulaire
 
-- **Module** : une unité du programme (M7 Autopompe), avec ses heures de théorie et de pratique.
-- **Cours** : une journée ou une demi-journée d’un module pour une classe. Un examen ou une reprise est un cours d’un type particulier.
+- **Module** : une unité du programme (M7 Autopompe), avec son numéro, son nom, ses heures de théorie et de pratique et son chargé de cours.
+- **Cours** : ce qui compose un module (7.1, 7.2…). Un cours a un numéro, un type (théorie, pratique, simulation, visite, stage) et un nombre d’enseignants requis. Il vaut pour toutes les classes.
+- **Examen** : un examen du module, théorique ou pratique, avec son nom. Il vaut aussi pour toutes les classes.
+- **Séance** : un cours ou un examen donné à une classe, à une date (avant-midi, après-midi ou toute la journée). Une séance peut couvrir plusieurs cours (8.1 et 8.2).
 - **Activité** : une journée qui n’appartient à aucun module (Accueil, Graduation). Aucun enseignant n’est requis par défaut et les présences ne sont pas attendues.
-- **Titulaire** : l’enseignant d’un module pour une classe. **Enseignant principal** : le responsable d’une classe. **Instructeur** : un enseignant à la journée, qui postule aux cours.
+- **Chargé de cours** : l’enseignant d’un module. Il donne ses séances à toutes les classes. **Enseignant principal** : le responsable d’une classe. **Instructeur** : un enseignant à la journée, qui postule aux séances.
 
-On ajoute un cours avec le même formulaire partout (calendrier, classe, module, examens).
+On ajoute une séance avec le même formulaire partout (calendrier, classe, module, examens) : on coche les cours ou l’examen du module qu’elle donne.
+
+Règles : le numéro d’un module est unique ; un module qui a des cours ne peut pas être supprimé ; un cours ou un examen déjà à l’horaire d’une classe ne peut pas être retiré du module. Le même module donné à deux classes au même moment n’est pas compté comme un conflit pour son enseignant.
+
+Une école sans modules garde l’ancien fonctionnement (un cours et ses périodes de la semaine) et le mot « cours ».
 
 ## Examens et résultats
 
@@ -28,12 +34,14 @@ Les résultats ne sont pas dans les fiches d’examen : `resultats/<examen>` con
 
 ## Affectation des enseignants
 
-- **Modules** (administration) : le catalogue du programme (nom, heures de théorie et de pratique requises, enseignants requis par cours). Dans la fiche d’un module, on ajoute les cours d’une classe : théorie, pratique, examen théorique ou pratique, date de reprise.
-- **Enseignants requis** : chaque cours a son nombre d’enseignants requis (celui du module par défaut, modifiable cours par cours). Le titulaire du module donne tous ses cours ; les autres places sont à combler.
-- **Enseignants** : *Disponibilités* (les jours où ils peuvent donner des cours) et *Mes cours* (cours à pourvoir selon leurs disponibilités et leurs compétences, candidatures en attente, cours attribués, cours donnés, demande de remplacement).
-- **Affectations** (administration) : cours à combler, candidatures à approuver ou refuser, demandes de remplacement, et pour chaque cours le nombre d’enseignants attribués sur le nombre requis. Les compétences de chaque enseignant se cochent dans son dossier (Personnel).
+- **Modules** (administration) : le catalogue du programme. La fiche d’un module a quatre onglets : *Cours* (numéro, type, enseignants requis), *Examens* (type, nom), *Séances* (les dates, classe par classe) et *Réglages* (nom, heures, chargé de cours).
+- **Enseignants requis** : le nombre se règle sur chaque cours du module et vaut pour toutes les classes. Une séance qui couvre plusieurs cours prend le plus grand. Le chargé de cours du module compte parmi eux ; les autres places sont à combler. Pour un examen, une reprise ou une activité, le nombre se règle dans la fenêtre de la séance.
+- **Enseignants** : *Disponibilités* (les jours où ils peuvent donner des cours) et *Mes séances* (séances à pourvoir selon leurs disponibilités et leurs compétences, candidatures en attente, séances attribuées, séances données, demande de remplacement).
+- **Affectations** (administration) : séances à combler, candidatures à approuver ou refuser, demandes de remplacement, et pour chaque séance le nombre d’enseignants attribués sur le nombre requis. Les compétences de chaque enseignant se cochent dans son dossier (Personnel).
 
-Données : `candidatures/<séance__enseignant>` (statut `attente`, `approuve`, `refuse` ou `retire`), `remplacements/<séance__enseignant>`, `disponibilites/<enseignant>` (jours `J`, `AM` ou `PM`), `enseignants/<id>.competences` (numéros de modules) et, dans `config/ecole.competences`, `heuresT`, `heuresP` et `requis` par module. Les règles de `firestore.rules` laissent un enseignant écrire seulement ses propres candidatures (en attente), demandes de remplacement et disponibilités.
+Données : `candidatures/<séance__enseignant>` (statut `attente`, `approuve`, `refuse` ou `retire`), `remplacements/<séance__enseignant>`, `disponibilites/<enseignant>` (jours `J`, `AM` ou `PM`), `enseignants/<id>.competences` (numéros de modules) et, dans `config/ecole.competences`, pour chaque module : `heuresT`, `heuresP`, `charge` (le chargé de cours), `cours` (`{ id, num, type, requis }`) et `examens` (`{ id, type, nom }`, type `t` ou `p`).
+
+Chaque classe a un document `cours/<id>` par module (sigle `M7`). Ses séances sont dans `seances`, une entrée par séance : `{ date, debut, fin, minutes, tags, label, cours: [ids], examens: [ids] }`. Chaque séance s’écrit à part (`update` qui fusionne), pour que deux personnes ne s’écrasent pas. L’ancien tableau `extras` est encore lu. L’identifiant d’une séance ne change jamais : les présences, les résultats et les candidatures s’y rattachent. Les règles de `firestore.rules` laissent un enseignant écrire seulement ses propres candidatures (en attente), demandes de remplacement et disponibilités.
 
 ## Essayer le site sur cet ordinateur
 

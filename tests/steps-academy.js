@@ -9,6 +9,8 @@ const freePoint=cell=>{const r=cell.getBoundingClientRect(),x=r.left+r.width/2;f
 const dragTo=async(src,target,isCell)=>{src.scrollIntoView({block:'center'});await wait(30);const [x0,y0]=center(src);ptr('pointerdown',x0,y0,src);ptr('pointermove',x0+12,y0+8);const p=isCell?freePoint(target):center(target);ptr('pointermove',p[0],p[1]);return p;};
 const pick0=(sel,v)=>{const x=$(sel);x.value=v;x.dispatchEvent(new Event('change',{bubbles:true}));};
 const typeIn=(id,v)=>{const i=$(id);i.value=v;i.dispatchEvent(new Event('input',{bubbles:true}));};
+/* Séances d’un cours telles que la page les voit : tableau extras d’origine + carte seances */
+const XS=id=>{const d=window.__store.get('cours/'+id)||{},m=new Map((d.extras||[]).map(x=>[x.id,x]));for(const [k,v] of Object.entries(d.seances||{})){if(!v)m.delete(k);else{const o=Object.assign({},m.get(k),v,{id:k});for(const f of Object.keys(o))if(o[f]===null)delete o[f];m.set(k,o);}}return [...m.values()];};
 try{
 await wait(600);
 ok('brand',/ACADÉMIE|Académie/.test($('#brand-text').textContent)&&/pompiers/i.test($('#brand-text').textContent),$('#brand-text').textContent);
@@ -32,16 +34,17 @@ ok('119 AM today',!!am&&/9\/12 marqués/.test(am.textContent),am&&am.textContent
 {const ex=$$('#main .week .cc.kx:not(.has-badge)'),th=$('#main .week .cc.k0');ok('exams dark',ex.length>2&&ex.every(x=>getComputedStyle(x).backgroundColor==='rgb(159, 45, 53)')&&!!th&&getComputedStyle(th).backgroundColor!=='rgb(159, 45, 53)',ex.length);}
 // course drawer of a dated course
 click(am);await wait(50);
-ok('day window',!$('#c-form')&&!!$('#af-box')&&!!$('#c-open-mod')&&/Modifier ce cours/.test($('#drawer').textContent)&&!/Supprimer le cours/.test($('#drawer').textContent)&&/Cours/.test($('#drawer .eyebrow').textContent));
+ok('day window',!$('#c-form')&&!!$('#af-box')&&!!$('#c-open-mod')&&/Modifier cette séance/.test($('#drawer').textContent)&&!/Supprimer le cours/.test($('#drawer').textContent)&&/Supprimer cette séance/.test($('#drawer').textContent)&&/Séance/.test($('#drawer .eyebrow').textContent));
+ok('linked session: type and requis come from the module',!$('#sb-act')&&!!$('#af-req-ro')&&!$('#af-req-p')&&$('#af-req-n').textContent==='1'&&/Chargé de cours/.test($('#af-box').textContent)&&/Olivier Bouchard/.test($('#af-box').textContent),$('#af-box').textContent.slice(0,120));
 if(!$('#drawer').hidden){click($('#dr-close'));await wait(30);}
 // drag a dated session to Thursday (once)
 const src=$('.cc[data-key="k119-m08_a20261006am_2026-10-06"]');const cell=$('.wk-cell[data-date="2026-10-08"][data-grp="c119"]');
 const pt=await dragTo(src,cell,true);ptr('pointerup',pt[0],pt[1]);await wait(40);
 ok('move dialog no weekly',!!$('#drawer.dialog')&&!$('input[name=mv-scope][value=weekly]'));
 click($('[data-act=mv-apply]'));await wait(150);
-ok('dated moved',window.__store.get('cours/k119-m08').extras.some(x=>x.id==='a20261006am'&&x.date==='2026-10-08'));
+ok('dated moved',XS('k119-m08').some(x=>x.id==='a20261006am'&&x.date==='2026-10-08'));
 click($$('.toast button').pop());await wait(150);
-ok('undo dated move',window.__store.get('cours/k119-m08').extras.some(x=>x.id==='a20261006am'&&x.date==='2026-10-06'));
+ok('undo dated move',XS('k119-m08').some(x=>x.id==='a20261006am'&&x.date==='2026-10-06'));
 // next week: Action de grâce
 click($('#w-next'));await wait(60);
 ok('thanksgiving off',$$('#main .cc.offday strong').some(x=>x.textContent==='Action de grâce'));
@@ -53,9 +56,9 @@ click($('#exp-btn'));await wait(400);
 /* BADGE */
 click($('.cc[data-key="k120-m04_a20261005am_2026-10-05"]')||$('#main .week .cc[data-act=sess]'));await wait(60);
 click($('[data-act=s-cancel]'));await wait(150);click($('#dr-close'));await wait(40);
-ok('cancel badge',$$('#main .week .cc-badge.bad').some(x=>x.textContent==='Cours annulé'));
+ok('cancel badge',$$('#main .week .cc-badge.bad').some(x=>x.textContent==='Séance annulée'));
 click($('#main .week .cc.cancelled'));await wait(60);click($('[data-act=s-cancel]'));await wait(150);click($('#dr-close'));await wait(40);
-ok('cancel badge removed',!$$('#main .week .cc-badge').some(x=>x.textContent==='Cours annulé'));
+ok('cancel badge removed',!$$('#main .week .cc-badge').some(x=>x.textContent==='Séance annulée'));
 /* SIDE */
 document.head.insertAdjacentHTML('beforeend','<style id="no-tr">.app{transition:none!important}</style>');
 click($('#side-toggle'));await wait(400);
@@ -69,15 +72,19 @@ ok('side expanded',!$('.app').classList.contains('side-mini')&&$('.sidebar').get
 $('#no-tr').remove();
 /* COMPS */
 click($('[data-act=new-course]'));await wait(60);
-ok('add course drawer',!!$('#ac-form')&&$$('#ac-m option').length===27&&!$('#c-form')&&/Ajouter un cours/.test($('#drawer').textContent)&&$('#ac-g').value==='c119');
+ok('add course drawer',!!$('#ac-form')&&$$('#ac-m option').length===27&&!$('#c-form')&&/Ajouter une séance/.test($('#drawer').textContent)&&$('#ac-g').value==='c119');
 {const m=$('#ac-m');m.value='__act';m.dispatchEvent(new Event('input',{bubbles:true}));}await wait(40);
 ok('activity name field',!!$('#ac-titre')&&$('#ac-m').value==='__act');
-ok('type list',$$('#ac-type option').length===10&&$$('#ac-type option').some(o=>o.textContent==='Reprise')&&$$('#ac-type option').some(o=>o.textContent==='Examen pratique')&&$('#ac-type').value==='theorie'&&$('#ac-per').value==='jour');
+ok('type list',$$('#ac-type option').length===11&&$$('#ac-type option').some(o=>o.textContent==='Reprise')&&$$('#ac-type option').some(o=>o.textContent==='Visite')&&$('#ac-type').value==='activite'&&$('#ac-per').value==='jour'&&!$('#ac-picks'));
 $('#ac-form').requestSubmit();await wait(80);
 ok('add course needs a name',/nom de l’activité/.test($('#drawer').textContent)&&!$('#drawer').hidden);
 {const m=$('#ac-m');m.value='7';m.dispatchEvent(new Event('input',{bubbles:true}));}await wait(40);
-ok('module chosen',/Autopompe/.test($('#dr-title').textContent)&&$('#ac-m').value==='7'&&!$('#ac-titre'));
+ok('module chosen',/Autopompe/.test($('#dr-title').textContent)&&$('#ac-m').value==='7'&&!$('#ac-titre')&&!$('#ac-type'));
+ok('module courses to tick',$$('#ac-picks input').length===8&&$$('#ac-picks .pk.done').length===7&&/7\.1/.test($('#ac-picks').textContent)&&/Examen 7\.6/.test($('#ac-picks').textContent)&&/Reprise/.test($('#ac-picks').textContent),$$('#ac-picks input').length+' '+$$('#ac-picks .pk.done').length);
 typeIn('#ac-date','2026-10-10');await wait(40);$('#ac-form').requestSubmit();await wait(80);
+ok('add session needs a course',/Cochez le cours/.test($('#drawer').textContent)&&!$('#drawer').hidden);
+click($('#ac-picks input'));await wait(40);
+$('#ac-form').requestSubmit();await wait(80);
 ok('add course weekend refused',/fin de semaine/.test($('#drawer').textContent));
 typeIn('#ac-date','2026-10-13');await wait(40);$('#ac-form').requestSubmit();await wait(80);
 ok('add course clash refused',/a déjà/.test($('#drawer').textContent)&&!$('#drawer').hidden);
@@ -87,24 +94,33 @@ ok('params modules link',!!$('#p-modules')&&!$('#p-kcode')&&/25 modules/.test($(
 click($('#nav-calendar'));await wait(60);
 /* PERIODE */
 click($('.cc[data-key="k119-m08_a20261006am_2026-10-06"]'));await wait(60);
-ok('session period/activity',!!$('#sb-per')&&$('#sb-per').value==='jour'&&$('#sb-act').value==='theorie'&&/Toute la journée/.test($('#sb-per').selectedOptions[0].textContent),($('#sb-per')||{}).value+'|'+($('#sb-act')||{}).value);
-{const sa=$('#sb-act');sa.value='pratique';sa.dispatchEvent(new Event('change',{bubbles:true}));}await wait(150);
-const xpm=()=>window.__store.get('cours/k119-m08').extras.find(x=>x.id==='a20261006am');
-ok('activity saved',xpm().tags[0]==='Pratique'&&xpm().tags.includes('Ménage'),JSON.stringify(xpm().tags));
+ok('session period',!!$('#sb-per')&&$('#sb-per').value==='jour'&&!$('#sb-act')&&/Toute la journée/.test($('#sb-per').selectedOptions[0].textContent),($('#sb-per')||{}).value);
+const xpm=()=>XS('k119-m08').find(x=>x.id==='a20261006am');
+const nM8=XS('k119-m08').length;
 {const sp=$('#sb-per');sp.value='pm';sp.dispatchEvent(new Event('change',{bubbles:true}));}await wait(150);
-ok('period saved',xpm().debut==='12:00'&&xpm().fin==='15:00');
+// la séance s’enregistre seule : les autres séances du module ne sont pas réécrites
+ok('period saved',xpm().debut==='12:00'&&xpm().fin==='15:00'&&xpm().tags[0]==='Théorie'&&xpm().cours.length===2&&XS('k119-m08').length===nM8&&!window.__store.get('cours/k119-m08').extras,JSON.stringify(xpm()));
 click($('#dr-close'));await wait(40);
-ok('card shows pratique',/Pratique/.test(($('.cc[data-key="k119-m08_a20261006am_2026-10-06"]')||{}).textContent||'')&&/Après-midi/.test(($('.cc[data-key="k119-m08_a20261006am_2026-10-06"] .cc-time')||{}).textContent||''));
-// remettre la séance comme avant : Théorie, toute la journée
+ok('card shows afternoon',/Théorie/.test(($('.cc[data-key="k119-m08_a20261006am_2026-10-06"]')||{}).textContent||'')&&/Après-midi/.test(($('.cc[data-key="k119-m08_a20261006am_2026-10-06"] .cc-time')||{}).textContent||''));
+// remettre la séance comme avant : toute la journée
 click($('.cc[data-key="k119-m08_a20261006am_2026-10-06"]'));await wait(60);
-{const sa=$('#sb-act');sa.value='theorie';sa.dispatchEvent(new Event('change',{bubbles:true}));}await wait(150);
 {const sp=$('#sb-per');sp.value='jour';sp.dispatchEvent(new Event('change',{bubbles:true}));}await wait(150);
 ok('session restored',xpm().tags[0]==='Théorie'&&xpm().debut==='08:00'&&xpm().fin==='15:00');
 click($('#dr-close'));await wait(40);
+// une journée sans cours du module (la reprise de la classe) garde son type modifiable
+click($('#w-next'));await wait(80);
+click($('.cc[data-key="k119-reprise_a20261016am_2026-10-16"]'));await wait(60);
+ok('free day keeps its type select',!!$('#sb-act')&&$('#sb-act').value==='reprise'&&/Activité/.test($('#drawer .eyebrow').textContent),($('#sb-act')||{}).value);
+{const sa=$('#sb-act');sa.value='activite';sa.dispatchEvent(new Event('change',{bubbles:true}));}await wait(150);
+const xrp=()=>XS('k119-reprise').find(x=>x.id==='a20261016am');
+ok('activity saved',!xrp().tags.includes('Reprise'),JSON.stringify(xrp().tags));
+{const sa=$('#sb-act');sa.value='reprise';sa.dispatchEvent(new Event('change',{bubbles:true}));}await wait(150);
+ok('activity restored',xrp().tags[0]==='Reprise',JSON.stringify(xrp().tags));
+click($('#dr-close'));await wait(40);click($('#w-today'));await wait(80);
 // classes
 click($('#nav-classes'));await wait(50);
 ok('5 classes',$$('.cl-row').length===5);
-ok('class rows',$$('.cl-row').length===5&&$('#cl-c119 .cl-n').textContent.trim()==='12'&&!!$('#cl-c119 .cl-adv .meter')&&!!$('#m-pr-c119')&&$('#cl-c120 .cl-n').textContent.trim()==='10'&&/cours pris sur/.test($('#cl-c119 .cl-rate').textContent));
+ok('class rows',$$('.cl-row').length===5&&$('#cl-c119 .cl-n').textContent.trim()==='12'&&!!$('#cl-c119 .cl-adv .meter')&&!!$('#m-pr-c119')&&$('#cl-c120 .cl-n').textContent.trim()==='10'&&/séances prises sur/.test($('#cl-c119 .cl-rate').textContent));
 click($('#cl-c119'));await wait(80);
 ok('class fiche',/Classe 119/.test($('#fi-name').textContent)&&$$('.fiche-tabs button').length===5&&$$('.fh-stats>div').length===5&&$$('.fiche-list .fl-item').length===5);
 ok('roles in class list',/Capitaine/.test($('#main').textContent)&&$$('.st-row').length===12);
@@ -144,7 +160,7 @@ click($$('#main tbody .link').find(x=>/Camille/.test(x.textContent)));await wait
 ok('student fiche',/Camille Bergeron/.test($('#fi-name').textContent)&&/Lieutenant 1/.test($('.fiche-head').textContent)&&/Cravate oubliée/.test($('#main').textContent)&&$$('.fiche-list .fl-item').length===52);
 ok('fiche simple',$$('.fiche-tabs button').length===3&&$('#fi-tab-dossier').getAttribute('aria-pressed')==='true'&&$$('.fh-stats>div').length===4&&$$('.fiche-body .panel').length===1&&!/Semaine de la classe/.test($('#main').textContent));
 click($('#fi-tab-presences'));await wait(80);
-ok('tab presences',/Absences et retards/.test($('.fiche-body').textContent)&&/Par cours/.test($('.fiche-body').textContent)&&!/Parent ou tuteur/.test($('.fiche-body').textContent));
+ok('tab presences',/Absences et retards/.test($('.fiche-body').textContent)&&/Par module/.test($('.fiche-body').textContent)&&!/Parent ou tuteur/.test($('.fiche-body').textContent));
 click($('#fi-tab-examens'));await wait(80);
 ok('tab examens',/Résultats/.test($('.fiche-body').textContent)&&/À venir/.test($('.fiche-body').textContent)&&/de réussite/.test($('.fiche-body .summary').textContent));
 click($('#fi-tab-dossier'));await wait(80);
@@ -168,9 +184,9 @@ ok('fiche escape back',!$('.fiche')&&$$('#main tbody tr').length===52&&Math.abs(
 // personnel
 click($('#nav-personnel'));await wait(80);
 click($$('#main tbody .link').find(x=>/Marie Leduc/.test(x.textContent)));await wait(80);
-ok('staff fiche',/Marie Leduc/.test($('#fi-name').textContent)&&/responsable de la classe 119/.test($('.fiche-body').textContent)&&+(l=>{const d=[...document.querySelectorAll('.fh-stats>div')].find(x=>x.querySelector('dt').textContent===l);return d?d.querySelector('dd').textContent:'';})('Modules')>20&&(l=>{const d=[...document.querySelectorAll('.fh-stats>div')].find(x=>x.querySelector('dt').textContent===l);return d?d.querySelector('dd').textContent:'';})('Classes')==='1');
+ok('staff fiche',/Marie Leduc/.test($('#fi-name').textContent)&&/responsable de la classe 119/.test($('.fiche-body').textContent)&&+(l=>{const d=[...document.querySelectorAll('.fh-stats>div')].find(x=>x.querySelector('dt').textContent===l);return d?d.querySelector('dd').textContent:'';})('Modules')===3&&(l=>{const d=[...document.querySelectorAll('.fh-stats>div')].find(x=>x.querySelector('dt').textContent===l);return d?d.querySelector('dd').textContent:'';})('Classes')==='5');
 click($('#fi-tab-cours'));await wait(80);
-ok('staff modules tab',$$('.cg-head').length===1&&/Modules par classe/.test($('.fiche-body').textContent)&&/Modules/.test($('#fi-tab-cours').textContent));
+ok('staff modules tab',$$('#sf-mods li').length===3&&/M9/.test($('#sf-mods').textContent)&&/Chargé de cours/.test($('.fiche-body').textContent)&&/Activités par classe/.test($('.fiche-body').textContent)&&$$('.cg-head').length===1&&/Modules/.test($('#fi-tab-cours').textContent),$$('#sf-mods li').length+' '+$$('.cg-head').length);
 click($('#cg-c119'));await wait(80);
 ok('staff courses by class',$('#cg-c119').getAttribute('aria-expanded')==='true'&&$$('.cg-body li').length>5);
 click($('#fi-next'));await wait(80);
@@ -211,16 +227,25 @@ const SK=k=>[...window.__store.keys()].filter(x=>x.startsWith(k+'/'));
 const pick=(sel,v)=>{const x=$(sel);x.value=v;x.dispatchEvent(new Event('change',{bubbles:true}));};
 click($('#nav-affectations'));await wait(150);
 ok('aff page',$$('.xm-tile').length===4&&!!$('#at-open')&&!!$('#af-hz')&&$('#at-open').getAttribute('aria-pressed')==='true');
-pick('#af-hz','90');await wait(150);pick('#x-g','c119');await wait(150);
+pick('#af-hz','90');await wait(150);
+// un chargé de cours par module : personne n’est dans deux modules au même moment
+ok('no clash with one course leader per module',!/conflit/i.test($('#at-open').textContent)&&!$$('#main .xm-row .chip.bad').some(c=>c.textContent==='Conflit'),$('#at-open').textContent.replace(/\s+/g,' '));
+pick('#x-g','c119');await wait(150);
 click($('#at-all'));await wait(150);
-const affRow=$$('#main .xm-row[data-act=sess-at]').find(r=>/^1 \/ 1$/.test(r.querySelector('.af-n b').textContent.trim()));
+const one=r=>{const [c,x]=r.dataset.key.split('_'),e=XS(c).find(y=>y.id===x);return !!e&&(e.cours||[]).length===1;};
+const affRow=$$('#main .xm-row[data-act=sess-at]').find(r=>/^1 \/ 1$/.test(r.querySelector('.af-n b').textContent.trim())&&one(r));
 ok('aff all list',!!affRow&&/Enseignants/.test($('.xm-hd').textContent),$$('#main .xm-row').length);
 const AK=affRow.dataset.key, AD=affRow.dataset.date, CID=(AK+'__e-vtremblay').replace(/[^A-Za-z0-9_-]/g,'-');
 click(affRow);await wait(150);
-ok('aff drawer',!!$('#af-box')&&$('#af-req-n').textContent==='1'&&/Titulaire du module/.test($('#af-box').textContent)&&!!$('#af-assign'));
-click($('#af-req-p'));await wait(300);
-{const c=window.__store.get('cours/'+AK.split('_')[0]),x=c.extras.find(e=>e.id===AK.split('_')[1]);ok('requis 2',$('#af-req-n').textContent==='2'&&/1 sur 2/.test($('#af-count').textContent)&&!!x&&x.requis===2,$('#af-count').textContent);}
-click($('#dr-close'));await wait(60);
+ok('aff drawer',!!$('#af-box')&&$('#af-req-n').textContent==='1'&&/Chargé de cours/.test($('#af-box').textContent)&&!!$('#af-req-ro')&&!$('#af-req-p')&&!!$('#af-assign'));
+// le nombre d’enseignants requis se règle sur le cours, dans le module : il vaut pour toutes les classes
+const AC=XS(AK.split('_')[0]).find(e=>e.id===AK.split('_')[1]).cours[0], AM=+window.__store.get('cours/'+AK.split('_')[0]).code.slice(1);
+click($('#c-open-mod'));await wait(150);
+ok('module opens on the class sessions',/Modules/.test($('#heading').textContent)&&$('#fi-tab-seances').getAttribute('aria-pressed')==='true'&&$('#md-g').value==='c119'&&$('#drawer').hidden);
+click($('#fi-tab-cours'));await wait(100);
+click($('#mc-rp-'+AC));await wait(350);
+ok('requis 2',window.__store.get('config/ecole').competences.find(k=>k.code===AM).cours.find(c=>c.id===AC).requis===2&&$('#mc-rn-'+AC).textContent==='2');
+click($('#nav-affectations'));await wait(150);pick('#af-hz','90');await wait(150);pick('#x-g','c119');await wait(150);
 click($('#at-open'));await wait(100);
 ok('open list has it',!!$('#main .xm-row[data-key="'+AK+'"]')&&/1 à combler/.test($('#main .xm-row[data-key="'+AK+'"]').textContent));
 click($('#nav-personnel'));await wait(80);
@@ -262,30 +287,75 @@ ok('replacement listed',/Garde en caserne/.test($('#main .xm-list').textContent)
 click($('[data-act=af-retire][data-key="'+AK+'"][data-t="e-vtremblay"]'));await wait(350);
 ok('teacher released',window.__store.get('candidatures/'+CID).statut==='retire'&&!window.__store.get('remplacements/'+CID));
 click($('[data-role=teacher]'));await wait(100);pick('#sel-teacher','e-mleduc');await wait(100);click($('[data-role=admin]'));await wait(100);
-// ---- modules ----
+// ---- modules : structure (cours, examens, chargé de cours), séances par classe, suppression protégée ----
 click($('#nav-modules'));await wait(120);
-ok('modules list',$$('#main .xm-row').length===25&&!!$('#md-7')&&/Théorie/.test($('.xm-hd').textContent)&&/Pratique/.test($('.xm-hd').textContent));
+ok('modules list',$$('#main .xm-row').length===25&&!!$('#md-7')&&/Théorie/.test($('.xm-hd').textContent)&&/Pratique/.test($('.xm-hd').textContent)&&/Chargé de cours/.test($('.xm-hd').textContent)&&!/requis/i.test($('.xm-hd').textContent)&&/Olivier Bouchard/.test($('#md-7').textContent),$('#md-7').textContent);
 click($('#md-add-open'));await wait(60);
-$('#md-code').value='26';$('#md-nom').value='Module d’essai';$('#md-ht').value='6';$('#md-hp').value='9';$('#md-req').value='2';
+ok('module form has a course leader',!!$('#md-charge')&&!$('#md-req')&&$$('#md-charge option').length>=9);
+$('#md-code').value='7';$('#md-nom').value='Doublon';$('[data-form=md-add]').requestSubmit();await wait(300);
+ok('module number must be new',window.__store.get('config/ecole').competences.length===25&&$$('.toast').some(t=>/existe déjà/.test(t.textContent)));
+$('#md-code').value='26';$('#md-nom').value='Module d’essai';$('#md-ht').value='6';$('#md-hp').value='9';$('#md-charge').value='e-proy';
 $('[data-form=md-add]').requestSubmit();await wait(400);
-{const k=window.__store.get('config/ecole').competences.find(k=>k.code===26);ok('module created',!!k&&k.heuresT===6&&k.heuresP===9&&k.heures===15&&k.requis===2&&/Module d’essai/.test(($('#fi-name')||{}).textContent||''),JSON.stringify(k));}
+const K26=()=>window.__store.get('config/ecole').competences.find(k=>k.code===26);
+ok('module created',!!K26()&&K26().heuresT===6&&K26().heuresP===9&&K26().heures===15&&K26().charge==='e-proy'&&K26().requis===undefined&&/Module d’essai/.test(($('#fi-name')||{}).textContent||'')&&/Chargé de cours · Philippe Roy/.test(($('#md-charge-chip')||{}).textContent||''),JSON.stringify(K26()));
+// les cours du module
+ok('module starts without courses',!!$('#mc-none')&&$('#fi-tab-cours').getAttribute('aria-pressed')==='true'&&$$('.fiche-tabs button').length===4);
+$('#mc-num').value='26.1';$('[data-form=mc-add]').requestSubmit();await wait(350);
+$('#mc-num').value='26.2';$('#mc-type').value='pratique';$('#mc-req').value='2';$('[data-form=mc-add]').requestSubmit();await wait(350);
+ok('courses added to module',K26().cours.length===2&&K26().cours[0].num==='26.1'&&K26().cours[0].type==='theorie'&&K26().cours[0].requis===1&&K26().cours[1].type==='pratique'&&K26().cours[1].requis===2&&$$('#main article.md-c').length===2,JSON.stringify(K26().cours));
+$('#mc-num').value='26.1';$('[data-form=mc-add]').requestSubmit();await wait(250);
+ok('course number unique in module',K26().cours.length===2&&$$('.toast').some(t=>/existe déjà dans le module/.test(t.textContent)));
+const C1=K26().cours[0].id, C2=K26().cours[1].id;
+click($('#mc-rp-'+C1));await wait(350);
+ok('requis set on the course',K26().cours.find(c=>c.id===C1).requis===2&&$('#mc-rn-'+C1).textContent==='2');
+click($('#mc-rm-'+C1));await wait(350);
+// les examens du module
+click($('#fi-tab-examens'));await wait(100);
+$('#me-type').value='p';$('#me-nom').value='Examen final';$('[data-form=me-add]').requestSubmit();await wait(350);
+ok('exam added to module',K26().examens.length===1&&K26().examens[0].type==='p'&&K26().examens[0].nom==='Examen final'&&$$('#main article.md-e').length===1,JSON.stringify(K26().examens));
+const E1=K26().examens[0].id;
+// les séances : un cours du module donné à une classe, à une date
 await DBX.doc('groupes/c999').set({nom:'Classe 999'});await wait(200);
+click($('#fi-tab-seances'));await wait(100);
 pick('#md-g','c999');await wait(120);
-click($('[data-act=pg-set][data-k=xtype][data-v="examen-p"]'));await wait(80);
-ok('quick exam type',$('#mx-type').value==='examen-p');
-let MD='';for(let i=1;i<25&&!MD;i++){const d=new Date();d.setDate(d.getDate()+i);const ds=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');$('#mx-date').value=ds;$('#mx-label').value='26.1';$('[data-form=md-add-x]').requestSubmit();await wait(300);if(SK('cours').some(k=>window.__store.get(k).code==='M26'))MD=ds;}
+ok('session form lists the courses',$$('#mx-picks input').length===4&&$$('#mx-picks .pk.done').length===0&&!$('#mx-type')&&!$('#mx-label'),$$('#mx-picks input').length);
+$('#mx-date').value='2026-10-20';$('[data-form=md-add-x]').requestSubmit();await wait(200);
+ok('session needs a course',!SK('cours').some(k=>window.__store.get(k).code==='M26')&&$$('.toast').some(t=>/Cochez le cours/.test(t.textContent)));
+const tick=v=>{const i=$('#mx-picks input[data-pick="'+v+'"]');if(i&&!i.checked)i.click();};
+const X26=()=>{const k=SK('cours').find(k=>window.__store.get(k).code==='M26');return k?Object.values(window.__store.get(k).seances||{}).filter(Boolean):[];};
+const addOn=async(vals,n)=>{for(let i=1;i<30&&X26().length<n;i++){const d=new Date();d.setDate(d.getDate()+i+(n-1)*3);const ds=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');vals.forEach(tick);await wait(30);$('#mx-date').value=ds;$('[data-form=md-add-x]').requestSubmit();await wait(300);}};
+await addOn(['c:'+C1,'c:'+C2],1);
 const MC=SK('cours').find(k=>window.__store.get(k).code==='M26');
-ok('course added to module',!!MC&&window.__store.get(MC).groupe==='c999'&&window.__store.get(MC).extras.length===1&&window.__store.get(MC).extras[0].tags.join()==='Examen,Pratique',MD);
-ok('module course row',$$('#main article.md-x').length===1&&/Examens/.test($('.md-sum').textContent));
-{const t=$('#main article.md-x select[data-mod=type]');t.value='theorie';t.dispatchEvent(new Event('change',{bubbles:true}));}await wait(300);
-ok('course type changed',window.__store.get(MC).extras[0].tags.join()==='Théorie');
-click($('#main article.md-x [data-act=af-req][data-d="1"]'));await wait(300);
-ok('course requis',window.__store.get(MC).extras[0].requis===3,window.__store.get(MC).extras[0].requis);
-click($('#main article.md-x [data-act=pg-set][data-k=askx]'));await wait(80);click($('[data-act=md-del-x]'));await wait(300);
-ok('course removed',window.__store.get(MC).extras.length===0);
+ok('session added to class',!!MC&&window.__store.get(MC).groupe==='c999'&&X26().length===1&&X26()[0].tags.join()==='Théorie'&&X26()[0].label==='26.1–26.2'&&X26()[0].cours.join()===C1+','+C2&&!window.__store.get(MC).extras,JSON.stringify(X26()));
+ok('session row',$$('#main article.md-x').length===1&&/Cours 26\.1 et 26\.2/.test($('#main article.md-x').textContent)&&!$('#main article.md-x select')&&!$('#main article.md-x [data-act=af-req]')&&$$('#mx-picks .pk.done').length===2&&/Examens/.test($('.md-sum').textContent),$('#main article.md-x').textContent.replace(/\s+/g,' ').slice(0,90));
+ok('session requis follows the courses',$('#main article.md-x .af-n b').textContent.trim()==='1 / 2',$('#main article.md-x .af-n b').textContent);
+// le type d’un cours se change dans le module : la séance suit
+click($('#fi-tab-cours'));await wait(100);
+{const t=$('#mc-t-'+C1);t.value='pratique';t.dispatchEvent(new Event('change',{bubbles:true}));}await wait(600);
+ok('course type follows in sessions',K26().cours.find(c=>c.id===C1).type==='pratique'&&X26()[0].tags.join()==='Pratique',JSON.stringify(X26()[0].tags));
+// un cours déjà à l’horaire ne se retire pas
+click($('#mc-'+C1+' [data-act=pg-set][data-k=askc]'));await wait(80);
+ok('course in use cannot be removed',/retirez d’abord ses séances/.test($('#mc-'+C1).textContent)&&!$('#mc-'+C1+' [data-act=mc-del]')&&/1 sur/.test($('#mc-'+C1).textContent));
+click($('#mc-'+C1+' [data-act=pg-set][data-k=askc]'));await wait(60);
+// une séance d’examen
+click($('#fi-tab-seances'));await wait(100);
+await addOn(['e:'+E1],2);
+ok('exam session added',X26().length===2&&X26().some(x=>x.tags.join()==='Examen,Pratique'&&(x.examens||[])[0]===E1&&x.label==='Examen final'),JSON.stringify(X26()));
+// un module qui a des cours ne se supprime pas
 click($('#fi-tab-reglages'));await wait(100);
-$('#md-ht').value='10';$('[data-form=md-save]').requestSubmit();await wait(450);
-ok('module hours saved',window.__store.get('config/ecole').competences.find(k=>k.code===26).heuresT===10&&window.__store.get(MC).heures===19,window.__store.get(MC).heures);
+ok('module with courses cannot be deleted',$('#md-ask').disabled&&/ne peut pas être supprimé/.test($('#md-del-why').textContent)&&/2 cours, 1 examen, 2 séances/.test($('#md-del-why').textContent),($('#md-del-why')||{}).textContent);
+$('#md-ht').value='10';$('#md-charge').value='e-sgagnon';$('[data-form=md-save]').requestSubmit();await wait(450);
+ok('module settings saved',K26().heuresT===10&&K26().charge==='e-sgagnon'&&K26().cours.length===2&&window.__store.get(MC).heures===19&&/Sophie Gagnon/.test($('#md-charge-chip').textContent),window.__store.get(MC).heures);
+// on retire les séances, puis les cours et l’examen : le module peut alors être supprimé
+click($('#fi-tab-seances'));await wait(100);
+for(let i=0;i<2;i++){click($('#main article.md-x [data-act=pg-set][data-k=askx]'));await wait(80);click($('[data-act=md-del-x]'));await wait(300);}
+ok('sessions removed',X26().length===0&&$$('#main article.md-x').length===0);
+click($('#fi-tab-cours'));await wait(100);
+for(const id of [C1,C2]){click($('#mc-'+id+' [data-act=pg-set][data-k=askc]'));await wait(80);click($('#mc-'+id+' [data-act=mc-del]'));await wait(350);}
+click($('#fi-tab-examens'));await wait(100);
+click($('#me-'+E1+' [data-act=pg-set][data-k=aske]'));await wait(80);click($('#me-'+E1+' [data-act=me-del]'));await wait(350);
+ok('courses and exam removed',K26().cours.length===0&&K26().examens.length===0);
+click($('#fi-tab-reglages'));await wait(100);
 click($('#md-ask'));await wait(80);click($('[data-act=md-del]'));await wait(350);
 ok('module removed',window.__store.get('config/ecole').competences.length===25&&$$('#main .xm-row').length===25);
 await DBX.doc(MC).delete();await DBX.doc('groupes/c999').delete();await wait(200);
@@ -307,7 +377,7 @@ ok('year noel',/Congé de Noël/.test($('#main').textContent)&&/15 juin 2027/.te
 ok('year without exam list',!!$('#yr-exams')&&/examens à venir/.test($('#yr-exams').textContent)&&$$('#main .tl li').length<14&&/Année écoulée/.test($('#main').textContent),$$('#main .tl li').length);
 // personnel
 click($('#nav-personnel'));await wait(50);
-ok('7 staff',$$('#main tbody tr').length===7&&/Marie Leduc/.test($('#main').textContent)&&/Instructeur/.test($('#main').textContent)&&/Cours cette semaine/.test($('#main thead').textContent));
+ok('10 staff',$$('#main tbody tr').length===10&&/Marie Leduc/.test($('#main').textContent)&&/Instructeur/.test($('#main').textContent)&&/Séances cette semaine/.test($('#main thead').textContent));
 // présences (dans les classes)
 ok('no presences menu',!$('#nav-presences'));
 click($('#nav-classes'));await wait(150);
@@ -406,8 +476,8 @@ click($('#exp-btn'));await wait(400);
 click($('#exp-btn'));await wait(400);
 click($('.cc[data-key="k119-m08_a20261006am_2026-10-06"]'));await wait(80);
 ok('chore checkbox',!!$('#sb-menage')&&$('#sb-menage').checked);
-ok('session summary',/Marie Leduc/.test($('#af-box').textContent)&&!/Enseignant/.test($('.sb-facts').textContent)&&$('.sb-facts').textContent.includes('9 / 12')&&/8\.1/.test($('.sb-facts').textContent)&&/Théorie/.test($('.sb-chips').textContent)&&/Modifier ce cours/.test($('.sess-box').textContent)&&!/éance/.test($('#drawer').textContent));
-const xam=()=>window.__store.get('cours/k119-m08').extras.find(x=>x.id==='a20261006am');
+ok('session summary',/Olivier Bouchard/.test($('#af-box').textContent)&&!/Enseignant/.test($('.sb-facts').textContent)&&$('.sb-facts').textContent.includes('9 / 12')&&/8\.1 et 8\.2/.test($('.sb-facts').textContent)&&/Théorie/.test($('.sb-chips').textContent)&&/Modifier cette séance/.test($('.sess-box').textContent)&&!/ce cours/.test($('#drawer').textContent));
+const xam=()=>XS('k119-m08').find(x=>x.id==='a20261006am');
 click($('#sb-menage'));await wait(250);
 ok('chore removed for the day',!xam().tags.includes('Ménage')&&xam().tags.includes('Théorie')&&!(window.__store.get('groupes/c119').menage||[]).includes('2026-10-06')&&!$('.wk-cell[data-date="2026-10-06"][data-grp="c119"]').querySelector('.cell-chore'),JSON.stringify(xam().tags));
 click($('#sb-menage'));await wait(250);

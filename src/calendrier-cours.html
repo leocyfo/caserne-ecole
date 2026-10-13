@@ -607,7 +607,8 @@ button.dp-wd{cursor:pointer}button.dp-wd:hover{background:#E3EDF7}
 .ck input{width:18px;height:18px;margin:1px 0 0;flex:none;accent-color:var(--role)}
 .ck b{color:var(--muted);font-weight:700;margin-right:2px}
 /* Modules */
-.md-cols{grid-template-columns:58px minmax(0,2.4fr) 84px 84px 84px 104px 76px 20px}
+.md-cols{grid-template-columns:58px minmax(0,2.2fr) minmax(0,1.3fr) 78px 78px 78px 62px 66px 20px}
+.md-ch{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .md-cols>.ic{width:18px;height:18px;color:var(--muted)}
 .cl-num.md-num{font-size:15px}
 .cl-num.lg.md-num{font-size:22px}
@@ -628,6 +629,29 @@ button.dp-wd{cursor:pointer}button.dp-wd:hover{background:#E3EDF7}
 .md-x select{width:100%;min-width:0;min-height:36px;border:1px solid var(--line-strong);border-radius:6px;background:var(--surface);padding:0 8px;font-size:14px;color:var(--ink)}
 .md-x .xm-end{gap:6px}
 .md-x.is-past .xm-d{opacity:.6}
+.md-c{grid-template-columns:minmax(0,1.3fr) minmax(0,1.3fr) 124px 150px minmax(40px,auto)}
+.md-e{grid-template-columns:minmax(0,1.6fr) minmax(0,1.2fr) 150px minmax(40px,auto)}
+.md-c select,.md-e select{width:100%;min-width:0;min-height:36px;border:1px solid var(--line-strong);border-radius:6px;background:var(--surface);padding:0 8px;font-size:14px;color:var(--ink)}
+.md-c .xm-end,.md-e .xm-end{gap:6px;align-items:center}
+.md-why{max-width:250px;text-align:right}
+.md-lead{margin:0 0 12px}
+.md-h small{font-size:13px;font-weight:400}
+.af-req small{font-size:12px;font-weight:400}
+.pk-set{border:0;padding:0;margin:0;min-width:0}
+.pk-set legend{padding:0;margin-bottom:6px;font-size:13px;font-weight:600;color:var(--ink-2)}
+.pk-set .help{margin-top:8px}
+.pk-list{display:flex;flex-wrap:wrap;gap:6px}
+.pk{position:relative;display:inline-flex}
+.pk input{position:absolute;inset:0;width:100%;height:100%;margin:0;opacity:0;cursor:pointer}
+.pk span{display:inline-flex;align-items:baseline;gap:6px;min-height:36px;padding:7px 12px;border:1px solid var(--line-strong);border-radius:8px;background:var(--surface);font-size:14.5px;font-weight:600;color:var(--ink);line-height:1.2}
+.pk small{font-size:12px;font-weight:400;color:var(--muted)}
+.pk.done span{background:var(--surface-2);color:var(--muted)}
+.pk.done span::after{content:'✓';font-size:12px;color:var(--ok)}
+.pk input:checked+span{border-color:var(--role);background:var(--role-bg);box-shadow:inset 0 0 0 1px var(--role);color:var(--ink)}
+.pk input:focus-visible+span{outline:3px solid var(--focus);outline-offset:1px}
+.pk input:disabled+span{opacity:.6}
+.mx-row{display:flex;flex-wrap:wrap;align-items:flex-end;gap:8px}
+.mx-row .field{flex:1 1 170px}
 .xm-sres{grid-template-columns:52px minmax(0,2.4fr) 150px 170px}
 .summary b.ok{color:var(--ok)}.summary b.warn{color:var(--warn)}.summary b.bad{color:var(--bad)}
 /* Grille des résultats */
@@ -1218,9 +1242,10 @@ function statusChip0(s,mode){
 function sessLabel(s){
   const l=s&&s.extra&&s.extra.label?String(s.extra.label).trim():'';
   if(!l||l.toLowerCase()===String(s.c&&s.c.titre||'').toLowerCase()) return '';
-  const r=/^(\d+(?:[.,]\d+)*)\s*[–-]\s*(\d+(?:[.,]\d+)*)$/.exec(l);
+  /* « 8.1–8.2 » : deux cours ; « 16-6 » : un seul cours, numéroté avec un trait d’union */
+  const r=/^(\d+(?:[.,-]\d+)*)\s*–\s*(\d+(?:[.,-]\d+)*)$/.exec(l)||/^(\d+(?:[.,]\d+)*)\s+-\s+(\d+(?:[.,]\d+)*)$/.exec(l);
   if(r) return `Cours ${r[1]} et ${r[2]}`;
-  return /^\d+([.,]\d+)*$/.test(l)?'Cours '+l:l;
+  return /^\d+([.,-]\d+)*$/.test(l)?'Cours '+l:l;
 }
 function metaFor(s,mode){
   if(s.kind==='exam'){
@@ -1238,10 +1263,10 @@ const TAGTONE={Pratique:'k6',Théorie:'k0',Examen:'kx',Reprise:'kx',Simulation:'
 const tagsOf=s=>(s.extra&&s.extra.tags)||(s.sl&&s.sl.type?withAct([],s.sl.type):[]);
 /* Période et activité d’une séance, comme dans le formulaire du site de l’Académie */
 const PERIODES=[{k:'am',label:'Avant-midi',debut:'08:00',fin:'11:00'},{k:'pm',label:'Après-midi',debut:'12:00',fin:'15:00'},{k:'jour',label:'Toute la journée',debut:'08:00',fin:'15:00'}];
-const ACTIVITES=[{k:'theorie',label:'Théorie',tags:['Théorie']},{k:'pratique',label:'Pratique',tags:['Pratique']},{k:'examen',label:'Examen',tags:['Examen']},{k:'examen-t',label:'Examen théorique',tags:['Examen','Théorie']},{k:'examen-p',label:'Examen pratique',tags:['Examen','Pratique']},{k:'reprise',label:'Reprise',tags:['Reprise']},{k:'simulation',label:'Simulation',tags:['Simulation']},{k:'conge',label:'Congé / journée spéciale',tags:['Congé']},{k:'stage',label:'Stage',tags:['Stage']},{k:'activite',label:'Activité',tags:[]}];
-const ACT_TAGS=new Set(['Théorie','Pratique','Examen','Reprise','Simulation','Congé','Stage']);
+const ACTIVITES=[{k:'theorie',label:'Théorie',tags:['Théorie']},{k:'pratique',label:'Pratique',tags:['Pratique']},{k:'examen',label:'Examen',tags:['Examen']},{k:'examen-t',label:'Examen théorique',tags:['Examen','Théorie']},{k:'examen-p',label:'Examen pratique',tags:['Examen','Pratique']},{k:'reprise',label:'Reprise',tags:['Reprise']},{k:'simulation',label:'Simulation',tags:['Simulation']},{k:'conge',label:'Congé / journée spéciale',tags:['Congé']},{k:'visite',label:'Visite',tags:['Visite']},{k:'stage',label:'Stage',tags:['Stage']},{k:'activite',label:'Activité',tags:[]}];
+const ACT_TAGS=new Set(['Théorie','Pratique','Examen','Reprise','Simulation','Visite','Congé','Stage']);
 const periodOf=(debut,fin)=>{const p=PERIODES.find(x=>x.debut===debut&&x.fin===fin);return p?p.k:'autre';};
-function actOf(tags){const t=new Set(tags||[]);if(t.has('Examen')&&t.has('Théorie'))return 'examen-t';if(t.has('Examen')&&t.has('Pratique'))return 'examen-p';if(t.has('Examen'))return 'examen';if(t.has('Reprise'))return 'reprise';if(t.has('Théorie'))return 'theorie';if(t.has('Pratique'))return 'pratique';if(t.has('Simulation'))return 'simulation';if(t.has('Congé'))return 'conge';if(t.has('Stage'))return 'stage';return 'activite';}
+function actOf(tags){const t=new Set(tags||[]);if(t.has('Examen')&&t.has('Théorie'))return 'examen-t';if(t.has('Examen')&&t.has('Pratique'))return 'examen-p';if(t.has('Examen'))return 'examen';if(t.has('Reprise'))return 'reprise';if(t.has('Théorie'))return 'theorie';if(t.has('Pratique'))return 'pratique';if(t.has('Simulation'))return 'simulation';if(t.has('Visite'))return 'visite';if(t.has('Congé'))return 'conge';if(t.has('Stage'))return 'stage';return 'activite';}
 function withAct(tags,k){const a=ACTIVITES.find(x=>x.k===k);return (a?a.tags:[]).concat((tags||[]).filter(t=>!ACT_TAGS.has(t)));}
 function periodSelect(id,debut,fin,attrs,custom){const p=custom?'autre':periodOf(debut,fin);return `<select id="${id}" ${attrs}>${PERIODES.map(x=>`<option value="${x.k}"${p===x.k?' selected':''}>${x.label}</option>`).join('')}<option value="autre"${p==='autre'?' selected':''}>${p==='autre'&&debut&&fin?`Heures précises (${fmtT(debut)} – ${fmtT(fin)})`:'Heures précises…'}</option></select>`;}
 const actSelect=(id,k,attrs)=>`<select id="${id}" ${attrs}>${ACTIVITES.map(x=>`<option value="${x.k}"${k===x.k?' selected':''}>${x.label}</option>`).join('')}</select>`;
@@ -1272,7 +1297,7 @@ async function setChoreDay(gid,date,on){
   if(!on) for(const c of S.data.cours.filter(c=>c.groupe===gid)){
     if(!(c.extras||[]).some(x=>x.date===date&&(x.tags||[]).some(t=>CHORE_TAGS.has(t)))) continue;
     const doc=courseDoc(c);doc.extras.forEach(x=>{if(x.date===date)x.tags=(x.tags||[]).filter(t=>!CHORE_TAGS.has(t));});
-    jobs.push(()=>col('cours').doc(c.id).set(doc));
+    jobs.push(()=>putCours(c.id,doc));
   }
   S.busy=true;render();
   await write(async()=>{for(const j of jobs)await j();},on?'Corvée de ménage ajoutée pour la journée':'Corvée de ménage retirée');
@@ -1334,7 +1359,7 @@ function cardStatus(s,mode){
   if(mode==='student') return moved;
   const a=attInfo(s);
   let aff='';
-  if(mode==='admin'&&!isPast(s)){const f=staffing(s);aff=(f.clash.length?`<span class="cc-st bad" title="${esc(f.clash.map(tName).join(', ')+' : aussi dans un autre cours à ce moment')}">Conflit</span>`:'')+(f.open>0?`<span class="cc-st warn" title="Enseignants attribués sur enseignants requis">${f.firm}/${f.requis} ens.</span>`:f.requis>1?`<span class="cc-st ok">${f.firm}/${f.requis} ens.</span>`:'')+(f.pending.length?`<span class="cc-st info">${f.pending.length} cand.</span>`:'')+(f.remp.length?'<span class="cc-st warn">Remplacement</span>':'');}
+  if(mode==='admin'&&!isPast(s)){const f=staffing(s);aff=(f.clash.length?`<span class="cc-st bad" title="${esc(f.clash.map(tName).join(', ')+W(' : aussi dans une autre séance à ce moment',' : aussi dans un autre cours à ce moment'))}">Conflit</span>`:'')+(f.open>0?`<span class="cc-st warn" title="Enseignants attribués sur enseignants requis">${f.firm}/${f.requis} ens.</span>`:f.requis>1?`<span class="cc-st ok">${f.firm}/${f.requis} ens.</span>`:'')+(f.pending.length?`<span class="cc-st info">${f.pending.length} cand.</span>`:'')+(f.remp.length?'<span class="cc-st warn">Remplacement</span>':'');}
   return moved+aff+(a.state==='done'?'<span class="cc-st ok">Présences faites</span>':a.state==='partial'?`<span class="cc-st warn">${a.marked}/${a.total} marqués</span>`:a.state==='todo'?'<span class="cc-st warn">Présences à faire</span>':'');
 }
 const cardTop=(time,kind,ch)=>`<span class="cc-top"><span class="cc-time">${time}</span><span class="cc-tr">${ch?`<span class="cc-chore-pill${ch==='maybe'?' maybe':''}" title="Corvée de ménage de la classe, toute la journée">${icon('broom')}<span class="vh">Corvée de ménage</span></span>`:''}${kind?`<span class="cc-kind">${esc(kind)}</span>`:''}</span></span>`;
@@ -1348,7 +1373,7 @@ function cardHTML(s,mode,dayChore){
   const c=s.c, meta=metaFor(s,mode), drag=mode==='admin'&&isAdmin()&&!s.cancelled&&S.conn==='shared';
   const st=s.cancelled||mode==='student'?'':attInfo(s).state, dot=st==='done'||st==='todo'||st==='partial'?` data-st="${st}"`:'';
   const stTxt=st==='done'?'présences faites':st==='partial'?'présences commencées':st==='todo'?'présences à faire':'';
-  const badge=s.cancelled&&s.movedX?['info','Cours déplacé']:s.cancelled?['bad','Cours annulé']:profAbsent(s)?['bad','Enseignant absent']:null;
+  const badge=s.cancelled&&s.movedX?['info',W('Séance déplacée','Cours déplacé')]:s.cancelled?['bad',W('Séance annulée','Cours annulé')]:profAbsent(s)?['bad','Enseignant absent']:null;
   const {kind,flags}=cardKind(tagsOf(s)), ch=dayChore?'':choreOf(s), foot=s.cancelled?'':cardStatus(s,mode)+flags.filter(t=>!CHORE_TAGS.has(t)).map(t=>`<span class="cc-flag">${esc(t)}</span>`).join('');
   const note=s.cancelled&&s.movedX?(s.movedX.date===s.date?movedLabel(s):`${movedLabel(s)}, ${momentIn(toMin(s.movedX.debut),toMin(s.movedX.fin)).replace(/^en /,'')}`):'';
   return `<button type="button" class="cc ${sessTone(s)}${s.cancelled?' cancelled':''}${badge?' has-badge':''}" data-act="sess" data-key="${esc(s.key)}" data-date="${s.date}" data-grp="${esc(s.grp||'')}"${dot}${drag?' data-drag="1"':''} title="${esc(`${c.titre} · ${fmtT(s.start)} – ${fmtT(s.end)}${meta?' · '+meta:''}${stTxt?' · '+stTxt:''}${drag?' · glisser pour déplacer':''}`)}" aria-label="${esc(`${c.titre}, ${fmtT(s.start)} à ${fmtT(s.end)}${meta?', '+meta:''}${s.cancelled?', '+(s.movedX?movedLabel(s):'annulé'):''}${ch?', corvée de ménage'+(ch==='maybe'?' à confirmer':''):''}`)}">
@@ -1365,8 +1390,8 @@ function daytabsHTML(){
   return h+'</div>';
 }
 function expBtn(){
-  const lbl=S.compact?'Agrandir : voir l’enseignant, le local et les présences de chaque cours (touche +)':'Réduire : deux lignes par cours pour tout voir d’un coup d’œil (touche −)';
-  return `<button type="button" class="expander" id="exp-btn" data-act="toggle-size" aria-expanded="${!S.compact}" aria-label="${lbl}" title="${lbl}"><svg aria-hidden="true" viewBox="0 0 10 12" class="exp-arrow"><path d="M1 0.5 9.5 6 1 11.5Z" fill="currentColor"/></svg><span class="lbl">${S.compact?'Agrandir les cours':'Réduire les cours'}</span></button>`;
+  const lbl=S.compact?'Agrandir : voir l’enseignant, le local et les présences de chaque '+W('séance','cours')+' (touche +)':'Réduire : deux lignes par '+W('séance','cours')+' pour tout voir d’un coup d’œil (touche −)';
+  return `<button type="button" class="expander" id="exp-btn" data-act="toggle-size" aria-expanded="${!S.compact}" aria-label="${lbl}" title="${lbl}"><svg aria-hidden="true" viewBox="0 0 10 12" class="exp-arrow"><path d="M1 0.5 9.5 6 1 11.5Z" fill="currentColor"/></svg><span class="lbl">${S.compact?W('Agrandir les séances','Agrandir les cours'):W('Réduire les séances','Réduire les cours')}</span></button>`;
 }
 /* Vue « Jour » : les classes en colonnes, la journée en ligne */
 function dayBoardHTML(list,cols){
@@ -1381,12 +1406,12 @@ function dayBoardHTML(list,cols){
   for(const g of cols){
     const items=list.filter(x=>x.date===ds&&g.match(x));
     let inner;
-    if(off) inner=`<div class="cc offday k7"><span class="cc-top"><span class="cc-kind">${off==='Hors année scolaire'?'Hors calendrier':'Congé'}</span></span><strong>${esc(off)}</strong><span class="cc-meta">Aucun cours</span></div>`;
-    else if(!items.length) inner='<p class="cell-note">Aucun cours</p>';
+    if(off) inner=`<div class="cc offday k7"><span class="cc-top"><span class="cc-kind">${off==='Hors année scolaire'?'Hors calendrier':'Congé'}</span></span><strong>${esc(off)}</strong><span class="cc-meta">${W('Aucune séance','Aucun cours')}</span></div>`;
+    else if(!items.length) inner='<p class="cell-note">'+W('Aucune séance','Aucun cours')+'</p>';
     else inner=items.map(x=>cardHTML(x,'admin',!!g.id)).join('').replace(/ data-drag="1"/g,'');
     const ch=g.id&&!off?choreDay(g.id,ds):'';
     if(ch) inner=`<div class="cell-chore${ch==='maybe'?' maybe':''}" title="Corvée de ménage pour toute la classe, toute la journée">${icon('broom')}<span><b>Corvée de ménage${ch==='maybe'?' ?':''}</b><small>toute la journée</small></span></div>`+inner;
-    if(edit&&g.id&&!off) inner+=`<button type="button" class="cell-add" data-act="add-at" data-date="${ds}" data-g="${esc(g.id)}" aria-label="${esc('Ajouter un cours pour '+g.name)}">+ Ajouter</button>`;
+    if(edit&&g.id&&!off) inner+=`<button type="button" class="cell-add" data-act="add-at" data-date="${ds}" data-g="${esc(g.id)}" aria-label="${esc(W('Ajouter une séance pour ','Ajouter un cours pour ')+g.name)}">+ Ajouter</button>`;
     h+=`<div class="wk-cell${ds===today?' is-today':''}${ch?' chore'+(ch==='maybe'?' maybe':''):''}" role="cell">${inner}</div>`;
   }
   return h+'</div></div></div>';
@@ -1405,13 +1430,13 @@ function boardHTML(list,rows,mode,corner){
     for(let i=0;i<5;i++){
       const ds=iso(addDays(S.week,i)), off=offDay(ds), items=list.filter(s=>s.date===ds&&r.match(s)), cg=mode==='admin'?r.id:mode==='student'?S.group:null;
       let inner;
-      if(off) inner=`<div class="cc offday k7"><span class="cc-top"><span class="cc-kind">${off==='Hors année scolaire'?'Hors calendrier':'Congé'}</span></span><strong>${esc(off)}</strong><span class="cc-meta">Aucun cours</span></div>`;
-      else if(!items.length) inner='<p class="cell-note">Aucun cours</p>';
+      if(off) inner=`<div class="cc offday k7"><span class="cc-top"><span class="cc-kind">${off==='Hors année scolaire'?'Hors calendrier':'Congé'}</span></span><strong>${esc(off)}</strong><span class="cc-meta">${W('Aucune séance','Aucun cours')}</span></div>`;
+      else if(!items.length) inner='<p class="cell-note">'+W('Aucune séance','Aucun cours')+'</p>';
       else inner=items.map(s=>cardHTML(s,mode,!!cg)).join('');
       // la corvée de ménage : une bande pour la classe, toute la journée
       const ch=cg&&!off?choreDay(cg,ds):'';
       if(ch) inner=`<div class="cell-chore${ch==='maybe'?' maybe':''}" title="Corvée de ménage pour toute la classe, toute la journée${ch==='maybe'?' (à confirmer)':''}">${icon('broom')}<span><b>Corvée de ménage${ch==='maybe'?' ?':''}</b><small>toute la journée</small></span></div>`+inner;
-      if(edit&&r.id&&!off) inner+=`<button type="button" class="cell-add" data-act="add-at" data-date="${ds}" data-g="${esc(r.id)}" aria-label="${esc(`Ajouter un cours pour ${r.name}, ${DAYS[i].toLowerCase()} ${dn(addDays(S.week,i))}`)}">+ Ajouter</button>`;
+      if(edit&&r.id&&!off) inner+=`<button type="button" class="cell-add" data-act="add-at" data-date="${ds}" data-g="${esc(r.id)}" aria-label="${esc(`${W('Ajouter une séance','Ajouter un cours')} pour ${r.name}, ${DAYS[i].toLowerCase()} ${dn(addDays(S.week,i))}`)}">+ Ajouter</button>`;
       h+=`<div class="wk-cell${ds===today?' is-today':''}${S.day===i?' sel':''}${ch?' chore'+(ch==='maybe'?' maybe':''):''}" role="cell"${edit&&r.id?` data-date="${ds}" data-grp="${esc(r.id)}"${off?' data-off="1"':''}`:''}>${inner}</div>`;
     }
     h+='</div>';
@@ -1464,8 +1489,8 @@ function toolbarHTML(){
   if(S.role==='admin'){
     if(S.data.cours.length&&ready) mid=viewSelHTML();
     const late=S._stats?S._stats.late:0;
-    if(late) right+=`<button type="button" class="late" id="late-pill" data-act="nav" data-page="classes" title="Cours passés de la semaine dont les présences n’ont pas été prises. Ouvrir les classes.">${late} ${late>1?'présences en retard':'présence en retard'} cette semaine</button>`;
-    if(ready&&S.canAdmin!==false) right+=`<button class="btn primary" type="button" data-act="new-course">${icon('plus')}${acad()?'Ajouter un cours':'Planifier un cours'}</button>`;
+    if(late) right+=`<button type="button" class="late" id="late-pill" data-act="nav" data-page="classes" title="${W('Séances passées','Cours passés')} de la semaine dont les présences n’ont pas été prises. Ouvrir les classes.">${late} ${late>1?'présences en retard':'présence en retard'} cette semaine</button>`;
+    if(ready&&S.canAdmin!==false) right+=`<button class="btn primary" type="button" data-act="new-course">${icon('plus')}${acad()?'Ajouter une séance':'Planifier un cours'}</button>`;
   }else right=identitySelect();
   return `<section class="ctl" aria-label="Affichage de l’horaire">${dd?navDay:nav}${viewSeg}${mid?'<span class="vsep" aria-hidden="true"></span>'+mid:''}<span class="grow"></span>${right}</section>`;
 }
@@ -1478,7 +1503,7 @@ function viewSelHTML(){
     return `<div class="viewsel">${seg}${sel?`<span class="token" id="class-token">${esc(sel)}<button type="button" id="tok-clear" data-act="filt" data-v="" aria-label="Revoir toutes les classes" title="Revoir toutes les classes">×</button></span>`:''}</div>`;
   }
   const chips=[`<button type="button" class="fchip" id="fc-all" data-act="filt" data-v="" aria-pressed="${!f}">Tous</button>`]
-    .concat(teachers().map(t=>`<button type="button" class="fchip" id="fc-${esc(t.id)}" data-act="filt" data-v="e:${esc(t.id)}" aria-pressed="${f==='e:'+t.id}">${esc(t.nom)}<small title="Cours cette semaine">${weekCount(t.id,S.week)}</small></button>`));
+    .concat(teachers().map(t=>`<button type="button" class="fchip" id="fc-${esc(t.id)}" data-act="filt" data-v="e:${esc(t.id)}" aria-pressed="${f==='e:'+t.id}">${esc(t.nom)}<small title="${W('Séances','Cours')} cette semaine">${weekCount(t.id,S.week)}</small></button>`));
   return `<div class="viewsel">${seg}<div class="chips" role="group" aria-label="Enseignants">${chips.join('')}</div></div>`;
 }
 function adminMain(){
@@ -1498,7 +1523,7 @@ function adminMain(){
     if(f.startsWith('e:')) gs=gs.filter(g=>list.some(s=>s.grp===g.id));
     rows=gs.map(g=>({id:g.id,name:g.nom,match:s=>s.grp===g.id}));
     if(list.some(s=>!known.has(s.grp))) rows.push({id:null,name:'Sans classe',match:s=>!known.has(s.grp)});
-    if(!rows.length) rows=[{id:null,name:f?'Aucun cours':'Tous les cours',match:()=>true}];
+    if(!rows.length) rows=[{id:null,name:f?W('Aucune séance','Aucun cours'):W('Toutes les séances','Tous les cours'),match:()=>true}];
   }
   let done=0,late=0,cancel=0,live=0,exams=0;
   for(const s of list){if(s.kind==='exam'){exams++;continue;}const a=attInfo(s);if(a.state==='cancelled')cancel++;else{live++;if(a.state==='done')done++;else if(a.due)late++;}}
@@ -1518,17 +1543,17 @@ function teacherMain(){
   let panels='';
   if(isCurWeek()){
     const td=todayISO(), off=offDay(td), tl=list.filter(s=>s.date===td);
-    panels+=`<section class="panel"><h2>Aujourd’hui</h2>${off?`<p class="help">${esc(off)}</p>`:tl.length?`<div class="list">${tl.map(s=>rowHTML(s,'teacher')).join('')}</div>`:'<p class="help">Aucun cours aujourd’hui.</p>'}</section>`;
+    panels+=`<section class="panel"><h2>Aujourd’hui</h2>${off?`<p class="help">${esc(off)}</p>`:tl.length?`<div class="list">${tl.map(s=>rowHTML(s,'teacher')).join('')}</div>`:`<p class="help">${W('Aucune séance','Aucun cours')} aujourd’hui.</p>`}</section>`;
   }
   const live=list.filter(s=>s.kind==='cours'&&!s.cancelled);
   let done=0;const late=[];
   for(const s of live){const a=attInfo(s);if(a.state==='done')done++;else if(a.due)late.push(s);}
   const p=pct(done,live.length)||0;
   panels+=`<section class="panel"><h2>Présences de la semaine</h2>
-    <p class="big">${done}<span> / ${live.length}</span></p><div class="meter" role="img" aria-label="${p} % des cours"><i style="width:${p}%"></i></div>
-    <p class="help">${live.length?`${pl(done,'cours complété','cours complétés')} sur ${live.length} cette semaine.`:'Aucun cours cette semaine.'}</p>
+    <p class="big">${done}<span> / ${live.length}</span></p><div class="meter" role="img" aria-label="${p} % des ${W('séances','cours')}"><i style="width:${p}%"></i></div>
+    <p class="help">${live.length?`${pl(done,W('séance complétée','cours complété'),W('séances complétées','cours complétés'))} sur ${live.length} cette semaine.`:W('Aucune séance cette semaine.','Aucun cours cette semaine.')}</p>
     ${late.length?`<h2 style="margin-top:14px">À rattraper</h2><div class="miss-list">${late.slice(0,5).map(s=>missRow(s,'teacher')).join('')}</div>${late.length>5?`<p class="help">Et ${late.length-5} autres.</p>`:''}`:''}</section>`;
-  return `<div class="panels">${panels}</div>`+daytabsHTML()+boardHTML(list,[{name:'Mes cours',match:()=>true}],'teacher');
+  return `<div class="panels">${panels}</div>`+daytabsHTML()+boardHTML(list,[{name:W('Mes séances','Mes cours'),match:()=>true}],'teacher');
 }
 function nextSession(filter){
   const base=new Date(), nm=nowMin();
@@ -1564,7 +1589,7 @@ function studentMain(){
   if(!gs.length) return emptyBox('Aucune classe pour l’instant','L’horaire apparaîtra ici dès que l’administration aura créé les classes et leurs cours.');
   const gid=S.group, list=filterItems(weekItems(),'student');
   const nx=nextSession(s=>s.c.groupe===gid);
-  let next='<p class="help">Aucun cours prévu dans les prochaines semaines.</p>';
+  let next=`<p class="help">${W('Aucune séance prévue','Aucun cours prévu')} dans les prochaines semaines.</p>`;
   if(nx){
     const s=nx.s, ongoing=nx.i===0&&s.start<=nowMin();
     const when=nx.i===0?'Aujourd’hui':nx.i===1?'Demain':dayLabel(parse(s.date));
@@ -1573,7 +1598,7 @@ function studentMain(){
       <div class="muted">${esc([s.salle?'Local '+s.salle:'',tchNames(s)].filter(Boolean).join(' · '))}</div></div>`;
   }
   const ex=upcomingExams(x=>x.grp===gid,4);
-  return `<div class="panels"><section class="panel"><h2>Prochain cours</h2>${next}</section><section class="panel"><h2>Prochains examens</h2>${ex.length?`<div class="list">${examRows(ex,'student')}</div>`:'<p class="help">Aucun examen prévu.</p>'}</section></div>`
+  return `<div class="panels"><section class="panel"><h2>${W('Prochaine séance','Prochain cours')}</h2>${next}</section><section class="panel"><h2>Prochains examens</h2>${ex.length?`<div class="list">${examRows(ex,'student')}</div>`:'<p class="help">Aucun examen prévu.</p>'}</section></div>`
     +daytabsHTML()+boardHTML(list,[{name:gName(gid),match:()=>true}],'student');
 }
 
@@ -1607,9 +1632,9 @@ function classesPage(){
     const x=classAtt(g.id,from,to,stats,sess), pr=classProgress(g.id), pid=principalOf(g.id), c=rateCls(x.rate), n=x.els.length;
     const num=String(g.nom).replace(/^(Classe|Groupe)\s+/i,'').slice(0,4);
     const prin=isAdmin()?`<label class="vh" for="m-pr-${esc(g.id)}">${esc('Enseignant principal de '+g.nom)}</label><select id="m-pr-${esc(g.id)}" data-gp="${esc(g.id)}"${dis()}><option value="">Aucun enseignant principal</option>${ts.map(t=>`<option value="${esc(t.id)}"${g.principal===t.id?' selected':''}>${esc(t.nom)}</option>`).join('')}</select>`:pid?`<b>${esc(tName(pid))}</b>`:'<b class="none-t">Aucun</b>';
-    const rate=!S.termLoaded?'<b class="none">…</b>':x.rate==null?'<b class="none">—</b>':`<b>${x.rate} %</b><div class="meter ${c}" aria-hidden="true"><i style="width:${x.rate}%"></i></div><small class="cl-basis">${x.done} cours pris sur ${x.past}</small>`;
+    const rate=!S.termLoaded?'<b class="none">…</b>':x.rate==null?'<b class="none">—</b>':`<b>${x.rate} %</b><div class="meter ${c}" aria-hidden="true"><i style="width:${x.rate}%"></i></div><small class="cl-basis">${x.done} ${W('séances prises','cours pris')} sur ${x.past}</small>`;
     const adv=pr.total?`<b>${pr.pct} %</b><div class="meter" aria-hidden="true"><i style="width:${pr.pct}%"></i></div>`:'<b class="none">—</b>';
-    const state=!n?'<span class="chip off">Aucun élève</span>':!S.termLoaded?'':x.missing.length?`<span class="chip warn" title="${esc(pl(x.missing.length,'cours sans présences','cours sans présences'))}">${x.missing.length} à rattraper</span>`:x.past?'<span class="chip ok">À jour</span>':'';
+    const state=!n?'<span class="chip off">Aucun élève</span>':!S.termLoaded?'':x.missing.length?`<span class="chip warn" title="${esc(pl(x.missing.length,W('séance sans présences','cours sans présences'),W('séances sans présences','cours sans présences')))}">${x.missing.length} à rattraper</span>`:x.past?'<span class="chip ok">À jour</span>':'';
     return `<article class="cl-row cl-cols" id="cl-${esc(g.id)}" data-act="class" data-id="${esc(g.id)}" tabindex="0" role="button" aria-label="${esc('Ouvrir '+g.nom)}">
       <div class="cl-c"><span class="cl-num" aria-hidden="true">${esc(num)}</span><span class="cl-name"><b>${esc(g.nom)}</b>${g.description?`<small>${esc(g.description)}</small>`:''}</span></div>
       <div class="cl-prin" data-act="stop" data-l="Enseignant principal">${pid?avHTML(tName(pid),''):'<span class="av none" aria-hidden="true">?</span>'}${prin}</div>
@@ -1641,13 +1666,13 @@ function classFiche(){
   const head=ficheHead(g.nom,chips,actions,stat,`<span class="cl-num lg" aria-hidden="true">${esc(numOf(g))}</span>`);
   const content=tab=>{
     if(tab==='examens') return classExamsTab(g);
-    if(tab==='rattraper') return !S.termLoaded?'<section class="panel"><p class="help">Chargement des présences…</p></section>':!els.length?'<section class="panel"><p class="help">Aucun élève dans cette classe : il n’y a pas de présences à prendre.</p></section>':x.missing.length?`<div class="st-bar"><p class="summary"><span class="need"><b>${x.missing.length}</b>${x.missing.length>1?'cours sans présences':'cours sans présences'}</span></p></div><div class="cl-list miss-list">${x.missing.map(missRow).join('')}</div>`:'<div class="cl-list"><p class="miss-ok"><span class="chip ok">À jour</span>Toutes les présences de la période sont prises.</p></div>';
+    if(tab==='rattraper') return !S.termLoaded?'<section class="panel"><p class="help">Chargement des présences…</p></section>':!els.length?'<section class="panel"><p class="help">Aucun élève dans cette classe : il n’y a pas de présences à prendre.</p></section>':x.missing.length?`<div class="st-bar"><p class="summary"><span class="need"><b>${x.missing.length}</b>${x.missing.length>1?W('séances sans présences','cours sans présences'):W('séance sans présences','cours sans présences')}</span></p></div><div class="cl-list miss-list">${x.missing.map(missRow).join('')}</div>`:'<div class="cl-list"><p class="miss-ok"><span class="chip ok">À jour</span>Toutes les présences de la période sont prises.</p></div>';
     if(tab==='cours'){
       const A=acad(), mods=cs.filter(c=>!isActivity(c)), acts=cs.filter(isActivity);
-      const tbl=(list,name)=>`<div class="tbl-wrap"><table class="tbl"><thead><tr><th>${name}</th><th class="num">${A?'Cours':'Périodes'}</th><th class="num">Heures</th><th>${A?'Titulaire':'Enseignant'}</th><th>Local</th><th></th></tr></thead><tbody>${list.map(c=>`<tr><td><span class="row" style="gap:6px;flex-wrap:nowrap">${c.code?`<span class="chip ${tone(c)}">${esc(c.code)}</span>`:''}<b>${esc(c.titre)}</b></span></td><td class="num">${courseLoad(c).label}</td><td class="num">${courseLoad(c).hours}</td><td><select data-assign="${esc(c.id)}" aria-label="${esc((A?'Titulaire de ':'Enseignant de ')+c.titre)}"${dis()}><option value="">À assigner</option>${ts.map(t=>`<option value="${esc(t.id)}"${c.enseignant===t.id?' selected':''}>${esc(t.nom)}</option>`).join('')}</select></td><td>${esc(c.salle||'—')}</td><td class="num">${A&&modOf(c)?`<button class="btn sm ghost" type="button" data-act="module" data-id="${esc(modOf(c).code)}" data-g="${esc(g.id)}">Ouvrir</button>`:`<button class="btn sm ghost" type="button" data-act="edit-course" data-id="${esc(c.id)}">Modifier</button>`}</td></tr>`).join('')}</tbody></table></div>`;
+      const tbl=(list,name,act)=>`<div class="tbl-wrap"><table class="tbl"><thead><tr><th>${name}</th><th class="num">${A?(act?'Jours':'Séances'):'Périodes'}</th><th class="num">Heures</th><th>${A?(act?'Responsable':'Chargé de cours'):'Enseignant'}</th><th>Local</th><th></th></tr></thead><tbody>${list.map(c=>`<tr><td><span class="row" style="gap:6px;flex-wrap:nowrap">${c.code?`<span class="chip ${tone(c)}">${esc(c.code)}</span>`:''}<b>${esc(c.titre)}</b></span></td><td class="num">${courseLoad(c).label}</td><td class="num">${courseLoad(c).hours}</td><td>${A&&!act?(c.enseignant&&byId(S.data.enseignants,c.enseignant)?esc(tName(c.enseignant)):'<span class="muted">À choisir</span>'):`<select data-assign="${esc(c.id)}" aria-label="${esc((A?'Responsable de ':'Enseignant de ')+c.titre)}"${dis()}><option value="">À assigner</option>${ts.map(t=>`<option value="${esc(t.id)}"${c.enseignant===t.id?' selected':''}>${esc(t.nom)}</option>`).join('')}</select>`}</td><td>${esc(c.salle||'—')}</td><td class="num">${A&&modOf(c)?`<button class="btn sm ghost" type="button" data-act="module" data-id="${esc(modOf(c).code)}" data-g="${esc(g.id)}">Ouvrir</button>`:`<button class="btn sm ghost" type="button" data-act="edit-course" data-id="${esc(c.id)}">Modifier</button>`}</td></tr>`).join('')}</tbody></table></div>`;
       return `<section class="panel">${mods.length?tbl(mods,A?'Module':'Cours'):`<p class="help">${A?'Aucun module pour cette classe.':'Aucun cours pour cette classe.'}</p>`}
-        ${acts.length?`<h3 class="fiche-h3">Activités</h3>${tbl(acts,'Activité')}`:''}
-        ${isAdmin()?`<div class="row" style="margin-top:12px"><button class="btn sm" type="button" data-act="new-course" data-g="${esc(g.id)}">${icon('plus')}${A?'Ajouter un cours à '+esc(g.nom):'Planifier un cours pour '+esc(g.nom)}</button></div>`:''}</section>`;
+        ${acts.length?`<h3 class="fiche-h3">Activités</h3>${tbl(acts,'Activité',true)}`:''}
+        ${isAdmin()?`<div class="row" style="margin-top:12px"><button class="btn sm" type="button" data-act="new-course" data-g="${esc(g.id)}">${icon('plus')}${A?'Ajouter une séance à '+esc(g.nom):'Planifier un cours pour '+esc(g.nom)}</button></div>`:''}</section>`;
     }
     if(tab==='reglages'){
       const conf=S.pg.ask===g.id;
@@ -1656,7 +1681,7 @@ function classFiche(){
           <label class="field"><span>Description</span><input id="m-gdesc" value="${esc(g.description||'')}" maxlength="120" placeholder="Ex. Intervention en sécurité incendie" autocomplete="off"></label>
           <label class="field"><span>Enseignant principal</span><select id="m-pr-fiche" data-gp="${esc(g.id)}"${dis()}><option value="">Aucun</option>${ts.map(t=>`<option value="${esc(t.id)}"${g.principal===t.id?' selected':''}>${esc(t.nom)}</option>`).join('')}</select></label>
           <div class="row"><button class="btn primary" type="submit"${dis()}>Enregistrer</button></div></form></section>
-        <section class="panel"><h2>Supprimer la classe</h2><p class="help">Ses ${pl(els.length,'élève est retiré','élèves sont retirés')} de l’école. Ses cours restent à l’horaire, sans classe.</p>
+        <section class="panel"><h2>Supprimer la classe</h2><p class="help">Ses ${pl(els.length,'élève est retiré','élèves sont retirés')} de l’école. ${W('Ses séances','Ses cours')} restent à l’horaire, sans classe.</p>
           ${conf?confirmBox(`Supprimer ${esc(g.nom)} et ${pl(els.length,'élève','élèves')} ?`,'m-del-g',g.id):`<div class="row" style="margin-top:10px"><button class="btn sm danger" type="button" data-act="m-ask" data-id="${esc(g.id)}"${dis()}>Supprimer la classe</button></div>`}</section></div>`;
     }
     const ev=S.pg.enrol, enrol=isAdmin()&&(ev===g.id?true:ev==='non:'+g.id?false:!els.length);
@@ -1796,8 +1821,8 @@ function studentFiche(){
       for(const p of Object.values(S.data.presTerm)){const v=p&&p.statuts&&p.statuts[e.id];if(!v||!LBL[v])continue;const x=byC[p.cours]||(byC[p.cours]={P:0,A:0,R:0,M:0,n:0});x[v]++;x.n++;}
       const per=Object.entries(byC).map(([cid,x])=>({c:byId(S.data.cours,cid),x})).sort((p,q)=>collator.compare(p.c?p.c.titre:'',q.c?q.c.titre:''));
       return `<div class="fiche-two"><section class="panel"><h2>Absences et retards</h2>${log.length?rows(log.map(x=>{const c=byId(S.data.cours,x.cours);return `<li><span>${esc(dayLabel(parse(x.date)))}<span class="muted sm"> · ${esc(c?c.titre:'Cours')}</span></span><span class="chip ${CHIP[x.v]}">${LBL[x.v]}</span></li>`;})):'<p class="help">Aucune absence ni aucun retard depuis la rentrée.</p>'}</section>
-        <section class="panel"><h2>Par cours</h2>${per.length?rows(per.map(({c,x})=>{const rr=pct(x.P+x.R,x.n);return `<li><span>${esc(c?c.titre:'Cours supprimé')}</span><span class="chip ${rr>=95?'ok':rr>=90?'warn':'bad'}">${rr} %</span></li>`;})):'<p class="help">Aucun cours noté pour l’instant.</p>'}
-        <p class="help" style="margin-top:10px">${n?`${pl(n,'cours noté','cours notés')} depuis le ${esc(longDate(parse(yearStart())))}.`:''}</p></section></div>`;
+        <section class="panel"><h2>${W('Par module','Par cours')}</h2>${per.length?rows(per.map(({c,x})=>{const rr=pct(x.P+x.R,x.n);return `<li><span>${esc(c?c.titre:W('Module supprimé','Cours supprimé'))}</span><span class="chip ${rr>=95?'ok':rr>=90?'warn':'bad'}">${rr} %</span></li>`;})):`<p class="help">${W('Aucune séance notée','Aucun cours noté')} pour l’instant.</p>`}
+        <p class="help" style="margin-top:10px">${n?`${pl(n,W('séance notée','cours noté'),W('séances notées','cours notés'))} depuis le ${esc(longDate(parse(yearStart())))}.`:''}</p></section></div>`;
     }
     if(tab==='examens') return studentExamsTab(e);
     return `<section class="panel"><dl class="facts facts3">
@@ -1822,7 +1847,7 @@ function staffFiche(){
   let late=0;for(const x of wk){const ai=attInfo(x);if(ai.due)late++;}
   const chips=`<span class="chip">${esc(p.fonction||'Enseignant')}</span>${principalClasses(p.id).map(g=>`<span class="chip k0">Enseignant principal · ${esc(g.nom)}</span>`).join('')}<span class="chip ${STATUTS[st]||'off'}">${esc(st)}</span>${acctChip(p.id)}`;
   const actions=`<button class="btn sm primary" type="button" id="fi-edit" data-act="sf-edit" data-id="${esc(p.id)}">Modifier le dossier</button>${teach?`<button class="btn sm" type="button" data-act="see-teacher" data-id="${esc(p.id)}">Son horaire</button>`:''}${acctBtn(p.id,p.fonction&&!teach?'admin':'teacher')}`;
-  const stats=teach?[['Modules',String(cs.length),''],['Classes',String(Object.keys(byG).length),''],['Cette semaine',pl(wk.length,'cours','cours'),''],['Présences à prendre',String(late),late?'warn':'']]
+  const stats=teach?[['Modules',String(acad()?new Set(cs.map(modKey).filter(x=>x!=null)).size:cs.length),''],['Classes',String(Object.keys(byG).length),''],['Cette semaine',pl(wk.length,W('séance','cours'),W('séances','cours')),''],['Présences à prendre',String(late),late?'warn':'']]
     :[['Statut',esc(st),''],['Courriel',p.courriel?esc(p.courriel):'—','']];
   const head=ficheHead(p.nom,chips,actions,stats);
   const SCH={P:'ok',A:'bad',C:'warn',F:'info'};
@@ -1830,18 +1855,21 @@ function staffFiche(){
   const content=tab=>{
     if(tab==='competences'){
       const mine=new Set((p.competences||[]).map(Number)), can=isAdmin()&&S.conn==='shared';
-      return `<section class="panel"><h2>Compétences</h2><p class="help" style="margin-bottom:10px">Les modules que ${esc(p.nom)} peut donner. Les cours à pourvoir lui sont proposés selon cette liste.</p>
+      return `<section class="panel"><h2>Compétences</h2><p class="help" style="margin-bottom:10px">Les modules que ${esc(p.nom)} peut donner. Les séances à pourvoir lui sont proposées selon cette liste.</p>
           ${comps().length?`<form data-form="sf-comp" data-id="${esc(p.id)}"><div class="ck-grid">${comps().map(k=>`<label class="ck"><input type="checkbox" name="comp" value="${esc(k.code)}"${mine.has(+k.code)?' checked':''}${can?'':' disabled'}><span><b>M${esc(k.code)}</b> ${esc(k.nom)}</span></label>`).join('')}</div>
           ${can?`<div class="row" style="margin-top:12px"><button class="btn primary" type="submit"${dis()}>Enregistrer les compétences</button><button class="btn sm ghost" type="button" data-act="sf-comp-all" data-v="1">Tout cocher</button><button class="btn sm ghost" type="button" data-act="sf-comp-all" data-v="">Tout décocher</button></div>`:''}</form>`:'<p class="help">Créez d’abord les modules du programme dans le menu Modules.</p>'}</section>
         <section class="panel dp-panel" style="margin-top:14px"><h2>Disponibilités</h2>${dispoCalHTML(p.id,can)}</section>`;
     }
     if(tab==='cours'){
       const og=S.pg.og||{}, nx=nextSession(x=>x.tch.includes(p.id)), surv=upcomingExams(x=>x.e&&x.e.surveillant===p.id,5);
-      const groupsHTML=cs.length?`<ul class="cg-list">${Object.entries(byG).sort((x,y)=>collator.compare(gName(x[0]),gName(y[0]))).map(([g,arr])=>{const h=arr.reduce((t,c)=>t+heuresOf(c),0), open=!!og[g];
-        return `<li><button type="button" class="cg-head" id="cg-${esc(g)}" data-act="fi-og" data-g="${esc(g)}" aria-expanded="${open}"><span><b>${esc(gName(g))}</b><span class="muted sm"> · ${acad()?pl(arr.length,'module','modules'):pl(arr.length,'cours','cours')}${h?` · ${h} h prévues`:''}</span></span>${icon('right')}</button>
-        ${open?`<ul class="plist cg-body">${arr.map(c=>`<li><button class="link" type="button" data-act="edit-course" data-id="${esc(c.id)}">${c.code?`<span class="muted">${esc(c.code)}</span> `:''}${esc(c.titre)}</button><span class="muted sm">${heuresOf(c)?heuresOf(c)+' h':''}</span></li>`).join('')}</ul>`:''}</li>`;}).join('')}</ul>`:`<p class="help">${acad()?'Titulaire d’aucun module.':'Aucun cours assigné.'}</p>`;
-      return `<div class="fiche-two"><section class="panel"><h2>${acad()?'Modules par classe':'Cours par classe'}</h2>${groupsHTML}</section>
-        <section class="panel"><h2>À venir</h2><p class="help">${nx?`Prochain cours : <b>${esc(nx.s.c.titre)}</b> (${esc(gName(nx.s.c.groupe))}), ${esc(dayLabel(parse(nx.s.date)).toLowerCase())}, ${momentIn(nx.s.start,nx.s.end).replace(/^en /,'')}.`:'Aucun cours prévu prochainement.'}</p>
+      const myMods=acad()?comps().filter(k=>k.charge===p.id):[];
+      const modsHTML=myMods.length?`<ul class="plist" id="sf-mods">${myMods.map(k=>`<li><button class="link" type="button" data-act="module" data-id="${esc(k.code)}"><span class="muted">M${esc(k.code)}</span> ${esc(k.nom)}</button><span class="muted sm">${pl(new Set(modCourses(k.code).map(c=>c.groupe)).size,'classe','classes')}${modTot(k)?' · '+modTot(k)+' h':''}</span></li>`).join('')}</ul>`:'';
+      const lst=acad()?cs.filter(isActivity):cs, byL={};for(const c of lst)(byL[c.groupe]=byL[c.groupe]||[]).push(c);
+      const groupsHTML=lst.length?`<ul class="cg-list">${Object.entries(byL).sort((x,y)=>collator.compare(gName(x[0]),gName(y[0]))).map(([g,arr])=>{const h=arr.reduce((t,c)=>t+heuresOf(c),0), open=!!og[g];
+        return `<li><button type="button" class="cg-head" id="cg-${esc(g)}" data-act="fi-og" data-g="${esc(g)}" aria-expanded="${open}"><span><b>${esc(gName(g))}</b><span class="muted sm"> · ${acad()?pl(arr.length,'activité','activités'):pl(arr.length,'cours','cours')}${h?` · ${h} h prévues`:''}</span></span>${icon('right')}</button>
+        ${open?`<ul class="plist cg-body">${arr.map(c=>`<li><button class="link" type="button" data-act="edit-course" data-id="${esc(c.id)}">${c.code?`<span class="muted">${esc(c.code)}</span> `:''}${esc(c.titre)}</button><span class="muted sm">${heuresOf(c)?heuresOf(c)+' h':''}</span></li>`).join('')}</ul>`:''}</li>`;}).join('')}</ul>`:acad()?'':'<p class="help">Aucun cours assigné.</p>';
+      return `<div class="fiche-two"><section class="panel">${acad()?`<h2>Chargé de cours</h2>${modsHTML||'<p class="help" id="sf-nomods">Chargé de cours d’aucun module.</p>'}${groupsHTML?`<h3 class="fiche-h3">Activités par classe</h3>${groupsHTML}`:''}`:`<h2>Cours par classe</h2>${groupsHTML}`}</section>
+        <section class="panel"><h2>À venir</h2><p class="help">${nx?`${W('Prochaine séance','Prochain cours')} : <b>${esc(nx.s.c.titre)}</b> (${esc(gName(nx.s.c.groupe))}), ${esc(dayLabel(parse(nx.s.date)).toLowerCase())}, ${momentIn(nx.s.start,nx.s.end).replace(/^en /,'')}.`:W('Aucune séance prévue prochainement.','Aucun cours prévu prochainement.')}</p>
         ${surv.length?`<h3 class="fiche-h3">Examens à surveiller</h3><div class="list">${examRows(surv,'admin')}</div>`:''}</section></div>`;
     }
     if(tab==='travail'){
@@ -1873,7 +1901,7 @@ function staffPage(){
   const nT=all.filter(isTeacher).length, nC=all.filter(onLeave).length;
   const tb=`<div class="toolbar">${segP}<p class="summary" style="margin:0"><span><b>${all.length}</b>membres</span><span><b>${nT}</b>${nT>1?'enseignants':'enseignant'}</span><span class="${nC?'need':''}"><b>${nC}</b>en congé</span></p><span class="grow"></span><button class="btn primary" type="button" data-act="new-staff">${icon('plus')}Ajouter un membre du personnel</button></div>`;
   if(!all.length) return tb+emptyBox('Aucun membre du personnel','Ajoutez les enseignants et le reste du personnel. Les enseignants pourront ensuite être assignés aux cours.');
-  return tb+`<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Nom</th><th>Statut</th><th>Courriel</th><th>Téléphone</th><th class="num">Cours cette semaine</th><th class="num">Absences ce mois</th></tr></thead><tbody>${all.map(p=>{const dz=S.data.dossiers[p.id]||{}, st=statOf(p), nc=isTeacher(p)?weekCount(p.id,baseMonday()):0;
+  return tb+`<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Nom</th><th>Statut</th><th>Courriel</th><th>Téléphone</th><th class="num">${W('Séances','Cours')} cette semaine</th><th class="num">Absences ce mois</th></tr></thead><tbody>${all.map(p=>{const dz=S.data.dossiers[p.id]||{}, st=statOf(p), nc=isTeacher(p)?weekCount(p.id,baseMonday()):0;
     return `<tr class="row-link" data-act="staff" data-id="${esc(p.id)}"><td><span class="tb-who">${avHTML(p.nom,'')}<span><button class="link" type="button" data-act="staff" data-id="${esc(p.id)}">${esc(p.nom)}</button><small class="tb-sub">${esc(p.fonction||'Enseignant')}${principalClasses(p.id).map(g=>`<span class="role-chip prin-chip">Principal · ${esc(g.nom.replace(/^(Classe|Groupe)\s+/i,''))}</span>`).join('')}</small></span></span></td><td><span class="chip ${STATUTS[st]||'off'}">${esc(st)}</span></td><td>${esc(p.courriel||'—')}</td><td>${esc(dz.telephone||'—')}</td><td class="num">${nc}</td><td class="num">${abs[p.id]||0}</td></tr>`;}).join('')}</tbody></table></div>`;
 }
 
@@ -1906,7 +1934,7 @@ function attStaff(tabs){
   return `<div class="toolbar">${tabs}<span class="grow"></span><div class="weeknav"><button class="icon-btn" type="button" id="sp-prev" data-act="sp-week" data-n="-7" aria-label="Semaine précédente">${icon('left')}</button><span class="range">Semaine du ${dn(mon)} ${fMonthS.format(mon)}</span><button class="icon-btn" type="button" id="sp-next" data-act="sp-week" data-n="7" aria-label="Semaine suivante">${icon('right')}</button></div></div>
     ${days}
     <section class="panel"><div class="t-head" style="margin-bottom:8px"><h2 style="margin:0">${esc(dayLabel(parse(ds)))}</h2><div class="att-sum">${['P','A','C','F'].filter(k=>cnt[k]).map(k=>`<span class="chip ${SCHIP[k]}">${cnt[k]} ${SLBL[k].toLowerCase()}</span>`).join('')}${people.length-marked?`<span class="chip off">${pl(people.length-marked,'non marqué','non marqués')}</span>`:''}</div></div>
-      ${off?`<div class="notice warn" style="margin-bottom:10px"><p>${esc(off)} : aucun cours ce jour-là.</p></div>`:''}${list}
+      ${off?`<div class="notice warn" style="margin-bottom:10px"><p>${esc(off)} : ${W('aucune séance','aucun cours')} ce jour-là.</p></div>`:''}${list}
       <div class="row" style="margin-top:12px"><button class="btn primary" type="button" data-act="sp-save"${S.busy||!dr.dirty?' disabled':''}>Enregistrer</button><button class="btn" type="button" data-act="sp-all"${people.length===marked?' disabled':''}>Marquer les autres présents</button><span class="state${dr.dirty?' dirty':''}">${state}</span></div></section>
     <div class="tbl-wrap"><table class="tbl"><thead><tr><th>Personnel</th>${[0,1,2,3,4].map(i=>{const d=addDays(mon,i);return `<th>${DAYS[i]} ${dn(d)}</th>`;}).join('')}</tr></thead><tbody>${wk}</tbody></table></div>`;
 }
@@ -1997,7 +2025,7 @@ function examsPage(){
   const B=examBoard(filter), tab=['up','todo','reps','done'].includes(st.xt)?st.xt:'up', nr=nextReprises();
   const sel=S.role==='admin'?`<select id="x-g" aria-label="Classe"><option value="">Toutes les classes</option>${groups().map(x=>`<option value="${esc(x.id)}"${g===x.id?' selected':''}>${esc(x.nom)}</option>`).join('')}</select>`:identitySelect();
   const can=canEditExam(null)&&S.conn==='shared';
-  const tb=`<div class="toolbar">${vseg}${sel}<span class="grow"></span>${can?`<button class="btn primary" type="button" data-act="new-exam">${icon('plus')}${acad()?'Ajouter un examen':'Planifier un examen'}</button>`:''}</div>`;
+  const tb=`<div class="toolbar">${vseg}${sel}<span class="grow"></span>${can?`<button class="btn primary" type="button" data-act="new-exam">${icon('plus')}Planifier un examen</button>`:''}</div>`;
   const nx=B.up.find(x=>!x.rep), nStud=new Set(B.reps.map(r=>r.e.id)).size;
   const tile=(k,lbl,val,cls,sub)=>`<button type="button" class="xm-tile" id="xt-${k}" data-act="pg-set" data-k="xt" data-v="${k}" aria-pressed="${tab===k}"><span class="lbl">${lbl}</span><b class="${cls}">${val}</b><small>${sub}</small></button>`;
   const tiles=`<div class="xm-tiles" role="group" aria-label="Tableau des examens">
@@ -2119,8 +2147,10 @@ function affIdx(){
 /* Module du programme (menu Modules) d’un cours, d’après son sigle « M7 » */
 const modKey=c=>{const m=/^M?(\d+)$/i.exec(String(c&&c.code||'').trim());return m?+m[1]:null;};
 const modOf=c=>{const k=modKey(c);return k==null?null:comps().find(x=>+x.code===k)||null;};
-/* Enseignants requis : réglé sur le cours lui-même, sinon la valeur du module, sinon 1 */
-const reqOf=s=>{const x=s.extra||s.sl||{};if(x.requis!=null&&x.requis!=='')return Math.max(0,+x.requis||0);if(isActivity(s.c))return 0;const m=modOf(s.c);return m&&+m.requis>0?+m.requis:1;};
+/* Enseignants requis : ceux du cours du module que la séance donne (le plus grand s’il y en a plusieurs).
+   Pour un examen, une reprise ou une activité : la valeur réglée sur la séance, sinon 1 (0 pour une activité). */
+const reqOf=s=>{const x=s.extra||s.sl||{}, m=modOf(s.c), ks=m?xCours(m,x):[];if(ks.length)return Math.max(...ks.map(cReq));if(x.requis!=null&&x.requis!=='')return Math.max(0,+x.requis||0);if(isActivity(s.c))return 0;return m&&+m.requis>0?+m.requis:1;};
+const linkedX=s=>!!(s&&s.extra&&acad()&&xCours(modOf(s.c),s.extra).length);
 function tchOf(c,key){
   const cs=affIdx().by[key];if(!cs) return [c.enseignant];
   const out=[];
@@ -2141,7 +2171,9 @@ const DISPO={J:'Toute la journée',AM:'Avant-midi',PM:'Après-midi'};
 const dispoOf=(tid,ds)=>{const d=S.data.dispos[tid];return (d&&d.jours&&d.jours[ds])||'';};
 const dispoCovers=(v,s)=>v==='J'||(v==='AM'&&momentOf(s)==='Avant-midi')||(v==='PM'&&momentOf(s)==='Après-midi');
 const hasComp=(t,c)=>{const k=modKey(c);return k==null||((t&&t.competences)||[]).some(x=>+x===k);};
-const busyAt=(tid,s)=>sessionsOn(s.date).some(o=>o.key!==s.key&&!o.cancelled&&o.tch.includes(tid)&&o.start<s.end&&s.start<o.end);
+/* Le même module donné à deux classes au même moment n’est pas un conflit : l’enseignant a les deux classes ensemble */
+const sameMod=(a,b)=>acad()&&modKey(a)!=null&&modKey(a)===modKey(b);
+const busyAt=(tid,s)=>sessionsOn(s.date).some(o=>o.key!==s.key&&!o.cancelled&&o.tch.includes(tid)&&o.start<s.end&&s.start<o.end&&!sameMod(o.c,s.c));
 const sHours=s=>Math.round((s.extra?sessMinutes(s.extra):s.end-s.start)/6)/10;
 const sTitle=s=>`${codeOf(s.c)}${esc(s.c.titre)}`;
 const sSub=s=>esc([sessLabel(s),cardKind(tagsOf(s)).kind].filter(Boolean).join(' · '));
@@ -2176,21 +2208,21 @@ function myCoursesPage(){
   const myMods=((B.t.competences||[]).map(Number).filter(n=>!isNaN(n)).sort((a,b)=>a-b));
   const hasDispo=Object.keys((S.data.dispos[tid]||{}).jours||{}).some(d=>d>=todayISO());
   const tb=`<div class="toolbar">${identitySelect()}<p class="summary" style="margin:0"><span>${myMods.length?`Vos modules : <b style="font-size:14px">${esc(myMods.map(n=>'M'+n).join(', '))}</b>`:'Aucun module inscrit à vos compétences'}</span></p><span class="grow"></span><button class="btn" type="button" id="go-dispos" data-act="nav" data-page="dispos">${icon('calok')}Mes disponibilités</button></div>`;
-  const tiles=`<div class="xm-tiles" role="group" aria-label="Mes cours">
+  const tiles=`<div class="xm-tiles" role="group" aria-label="${W('Mes séances','Mes cours')}">
     ${affTile('mt','open',tab,'À pourvoir',B.open.length,'','selon vos disponibilités')}
     ${affTile('mt','wait',tab,'En attente de réponse',nWait,nWait?'warn':'',nRef?pl(nRef,'candidature refusée','candidatures refusées'):nWait?(nWait>1?'candidatures envoyées':'candidature envoyée'):'Aucune candidature')}
-    ${affTile('mt','mine',tab,'Cours attribués',B.mine.length,'',nx?'Prochain : '+esc(sDay(nx.s).toLowerCase()):'Aucun cours à venir')}
-    ${affTile('mt','past',tab,'Cours donnés',B.past.length,'',B.past.length?`${hrs} h depuis la rentrée`:'Aucun pour l’instant')}
+    ${affTile('mt','mine',tab,W('Séances attribuées','Cours attribués'),B.mine.length,'',nx?'Prochain : '+esc(sDay(nx.s).toLowerCase()):W('Aucune séance à venir','Aucun cours à venir'))}
+    ${affTile('mt','past',tab,W('Séances données','Cours donnés'),B.past.length,'',B.past.length?`${hrs} h depuis la rentrée`:'Aucun pour l’instant')}
   </div>`;
-  const head=[['Date'],['Cours'],['Classe'],['Moment'],['','r']];
+  const head=[['Date'],[W('Séance','Cours')],['Classe'],['Moment'],['','r']];
   const cells=(s,end)=>`${xDate(s,sHot(s))}<div class="xm-t"><b>${sTitle(s)}</b>${sSub(s)?`<small>${sSub(s)}</small>`:''}</div>${xCls(s)}<span class="xm-m">${esc(momentOf(s))}</span><div class="xm-end">${end}</div>`;
   let body='';
   if(tab==='open'){
     body=B.open.length?xList('xm-a5',head,B.open.map(({s,st})=>xRow('xm-a5','',cells(s,`${st.requis>1?`<span class="chip off">${st.firm} sur ${st.requis}</span>`:''}${can?`<button class="btn sm" type="button" data-act="af-apply" ${sAt(s)}${dis()}>${icon('plus')}Postuler</button>`:''}`),'')).join(''))
-      :onLeave(B.t)?emptyBox('Vous êtes en congé','Les cours à pourvoir vous seront proposés à votre retour.')
-      :!myMods.length?emptyBox('Vos compétences ne sont pas encore inscrites','L’administration indique dans votre dossier les modules que vous pouvez donner. Les cours à pourvoir apparaîtront ici ensuite.')
-      :!hasDispo?emptyBox('Indiquez vos disponibilités','Les cours à pourvoir sont proposés selon les jours où vous êtes disponible.',`<button class="btn primary" type="button" data-act="nav" data-page="dispos">${icon('calok')}Indiquer mes disponibilités</button>`)
-      :`<section class="panel"><p class="help">Aucun cours à pourvoir les jours où vous êtes disponible.${B.noDispo?` ${pl(B.noDispo,'cours cherche','cours cherchent')} un enseignant d’autres jours : ajoutez des disponibilités pour les voir.`:''}</p></section>`;
+      :onLeave(B.t)?emptyBox('Vous êtes en congé',W('Les séances à pourvoir vous seront proposées à votre retour.','Les cours à pourvoir vous seront proposés à votre retour.'))
+      :!myMods.length?emptyBox('Vos compétences ne sont pas encore inscrites','L’administration indique dans votre dossier les modules que vous pouvez donner. '+W('Les séances','Les cours')+' à pourvoir apparaîtront ici ensuite.')
+      :!hasDispo?emptyBox('Indiquez vos disponibilités',W('Les séances à pourvoir sont proposées selon les jours où vous êtes disponible.','Les cours à pourvoir sont proposés selon les jours où vous êtes disponible.'),`<button class="btn primary" type="button" data-act="nav" data-page="dispos">${icon('calok')}Indiquer mes disponibilités</button>`)
+      :`<section class="panel"><p class="help">${W('Aucune séance','Aucun cours')} à pourvoir les jours où vous êtes disponible.${B.noDispo?` ${pl(B.noDispo,W('séance cherche','cours cherche'),W('séances cherchent','cours cherchent'))} un enseignant d’autres jours : ajoutez des disponibilités pour les voir.`:''}</p></section>`;
   }else if(tab==='wait'){
     body=B.wait.length?xList('xm-a5',head,B.wait.map(({s,v})=>xRow('xm-a5','',cells(s,v==='attente'?`<span class="chip warn">En attente</span>${can?`<button class="btn sm ghost" type="button" data-act="af-withdraw" ${sAt(s)}${dis()}>Retirer</button>`:''}`:'<span class="chip bad">Refusée</span>'),'')).join(''))
       :'<section class="panel"><p class="help">Aucune candidature en attente.</p></section>';
@@ -2201,12 +2233,12 @@ function myCoursesPage(){
         return xRow('xm-a5','',cells(s,remp?`<span class="chip warn">Remplacement demandé</span>${can?`<button class="btn sm ghost" type="button" data-act="af-remp-cancel" ${sAt(s)}${dis()}>Annuler</button>`:''}`:can&&!ask?`<button class="btn sm" type="button" data-act="pg-set" data-k="rp" data-v="${esc(s.key)}">Demander un remplacement</button>`:''),'')
           +(ask?`<form class="xm-row af-ask" data-form="af-remp" ${sAt(s)}><label class="field"><span>Raison du remplacement (facultatif)</span><input id="rp-motif" maxlength="140" autocomplete="off" placeholder="Ex. garde en caserne ce jour-là"></label><button class="btn sm primary" type="submit"${dis()}>Envoyer la demande</button><button class="btn sm ghost" type="button" data-act="pg-set" data-k="rp" data-v="">Annuler</button></form>`:'');}).join(''))
         +(B.mine.length>lim?`<div class="row" style="margin-top:12px"><button class="btn" type="button" data-act="pg-set" data-k="lim" data-v="${lim+25}">Afficher plus (${B.mine.length-lim})</button></div>`:'')
-      :'<section class="panel"><p class="help">Aucun cours attribué à venir.</p></section>';
+      :`<section class="panel"><p class="help">${W('Aucune séance attribuée','Aucun cours attribué')} à venir.</p></section>`;
   }else{
     const lim=+st.lim||25;
     body=B.past.length?xList('xm-a5',head,B.past.slice(0,lim).map(s=>xRow('xm-a5','',cells(s,`<span class="xm-m">${String(sHours(s)).replace('.',',')} h</span>`),'')).join(''))
         +(B.past.length>lim?`<div class="row" style="margin-top:12px"><button class="btn" type="button" data-act="pg-set" data-k="lim" data-v="${lim+25}">Afficher plus (${B.past.length-lim})</button></div>`:'')
-      :'<section class="panel"><p class="help">Aucun cours donné depuis la rentrée.</p></section>';
+      :`<section class="panel"><p class="help">${W('Aucune séance donnée','Aucun cours donné')} depuis la rentrée.</p></section>`;
   }
   return tb+tiles+body;
 }
@@ -2232,14 +2264,14 @@ function dispoCalHTML(tid,edit){
   let cells='';for(let i=0;i<lead;i++) cells+='<span class="dp-x" aria-hidden="true"></span>';
   for(const {d,ds,j} of days){
     const v=dr.jours[ds]||'', off=offDay(ds), lock=dispoLocked(ds);
-    cells+=`<button type="button" class="dp-c${v?' on v-'+v:''}${ds<today?' past':''}${off?' off':''}${ds===today?' is-today':''}" id="dp-${ds}" data-act="dp-day" data-date="${ds}"${edit&&!lock?'':' disabled'} aria-label="${esc(`${dayLabel(d)} : ${off||DISPO[v]||'non disponible'}${mine.has(ds)?', cours attribué':''}`)}"><b>${d.getDate()}</b><span>${off?esc(off):v?DISPO[v]:'—'}</span>${mine.has(ds)?'<i class="dp-dot" title="Cours attribué ce jour-là"></i>':''}</button>`;
+    cells+=`<button type="button" class="dp-c${v?' on v-'+v:''}${ds<today?' past':''}${off?' off':''}${ds===today?' is-today':''}" id="dp-${ds}" data-act="dp-day" data-date="${ds}"${edit&&!lock?'':' disabled'} aria-label="${esc(`${dayLabel(d)} : ${off||DISPO[v]||'non disponible'}${mine.has(ds)?W(', séance attribuée',', cours attribué'):''}`)}"><b>${d.getDate()}</b><span>${off?esc(off):v?DISPO[v]:'—'}</span>${mine.has(ds)?`<i class="dp-dot" title="${W('Séance attribuée','Cours attribué')} ce jour-là"></i>`:''}</button>`;
   }
   let state='Aucune modification';if(dr.dirty)state='Modifications non enregistrées';else if(dr.maj){const t=new Date(dr.maj);if(!isNaN(t))state=`Enregistrées le ${shortDate(t)}`;}
   return `<div class="toolbar dp-bar"><div class="weeknav"><button class="icon-btn" type="button" id="dp-prev" data-act="dp-month" data-n="-1" aria-label="Mois précédent">${icon('left')}</button><span class="range" id="dp-month">${esc(mName.charAt(0).toUpperCase()+mName.slice(1))} ${Y}</span><button class="icon-btn" type="button" id="dp-next" data-act="dp-month" data-n="1" aria-label="Mois suivant">${icon('right')}</button></div>
       <p class="summary" style="margin:0"><span><b>${n}</b>${n>1?'jours disponibles':'jour disponible'}</span></p><span class="grow"></span>
       ${edit?`<button class="btn sm" type="button" data-act="dp-all">Tout le mois</button><button class="btn sm ghost" type="button" data-act="dp-none">Effacer le mois</button>`:''}</div>
     <div class="dp-grid" role="group" aria-label="${esc('Disponibilités de '+mName+' '+Y)}">${DAYS.map((nm,i)=>edit?`<button type="button" class="dp-wd" data-act="dp-col" data-j="${i}" title="${esc('Tous les '+nm.toLowerCase()+'s du mois')}">${nm}</button>`:`<span class="dp-wd">${nm}</span>`).join('')}${cells}</div>
-    <div class="dp-legend"><span><i class="dp-k v-J"></i>Toute la journée</span><span><i class="dp-k v-AM"></i>Avant-midi</span><span><i class="dp-k v-PM"></i>Après-midi</span><span><i class="dp-dot"></i>Cours attribué</span></div>
+    <div class="dp-legend"><span><i class="dp-k v-J"></i>Toute la journée</span><span><i class="dp-k v-AM"></i>Avant-midi</span><span><i class="dp-k v-PM"></i>Après-midi</span><span><i class="dp-dot"></i>${W('Séance attribuée','Cours attribué')}</span></div>
     ${edit?`<div class="row dp-save"><button class="btn primary" type="button" id="dp-save" data-act="dp-save"${S.busy||!dr.dirty?' disabled':''}>Enregistrer</button><span class="muted sm" id="dp-state">${state}</span></div><p class="help">Un clic sur un jour : toute la journée, puis avant-midi, puis après-midi, puis non disponible. Un clic sur « Lundi » change tous les lundis du mois.</p>`:''}`;
 }
 function disposPage(){
@@ -2267,36 +2299,36 @@ function affPage(){
   const tb=`<div class="toolbar"><select id="x-g" aria-label="Classe"><option value="">Toutes les classes</option>${groups().map(x=>`<option value="${esc(x.id)}"${g===x.id?' selected':''}>${esc(x.nom)}</option>`).join('')}</select><select id="af-hz" aria-label="Période"><option value="7"${hz===7?' selected':''}>7 prochains jours</option><option value="30"${hz===30?' selected':''}>30 prochains jours</option><option value="90"${hz===90?' selected':''}>90 prochains jours</option></select></div>`;
   const full=up.filter(x=>x.st.open<=0&&!x.st.clash.length).length;
   const tiles=`<div class="xm-tiles" role="group" aria-label="Affectations">
-    ${affTile('at','open',tab,'Cours à régler',open.length,open.length?'warn':'',open.length?(nClash?`${pl(nClash,'conflit d’horaire','conflits d’horaire')}`:`à combler d’ici ${hz} jours`):'Tous les cours sont comblés')}
+    ${affTile('at','open',tab,W('Séances à régler','Cours à régler'),open.length,open.length?'warn':'',open.length?(nClash?`${pl(nClash,'conflit d’horaire','conflits d’horaire')}`:`à combler d’ici ${hz} jours`):W('Toutes les séances sont comblées','Tous les cours sont comblés'))}
     ${affTile('at','cand',tab,'Candidatures',cands.length,cands.length?'warn':'',cands.length?'en attente de votre réponse':'Aucune en attente')}
     ${affTile('at','remp',tab,'Remplacements',remps.length,remps.length?'bad':'',remps.length?(remps.length>1?'demandés':'demandé'):'Aucune demande')}
-    ${affTile('at','all',tab,'Tous les cours',up.length,'',`${full} ${full>1?'complets':'complet'} · ${hz} jours`)}
+    ${affTile('at','all',tab,W('Toutes les séances','Tous les cours'),up.length,'',`${full} ${full>1?'complets':'complet'} · ${hz} jours`)}
   </div>`;
   const sessRows=list=>{const lim=+st.lim||30;
-    return xList('xm-a6',[['Date'],['Cours'],['Classe'],['Moment'],['Enseignants'],['','r']],list.slice(0,lim).map(({s,st:a})=>xRow('xm-a6',`data-act="sess-at" ${sAt(s)}`,`${xDate(s,sHot(s))}<div class="xm-t"><b>${sTitle(s)}</b>${sSub(s)?`<small>${sSub(s)}</small>`:''}</div>${xCls(s)}<span class="xm-m">${esc(momentOf(s))}</span>${affCell(a)}<div class="xm-end">${a.clash.length?'<span class="chip bad">Conflit</span>':a.remp.length?'<span class="chip warn">Remplacement</span>':a.open>0?`<span class="chip ${a.firm?'warn':'bad'}">${a.open} à combler</span>`:'<span class="chip ok">Complet</span>'}</div>`,sAria(s))).join(''))
+    return xList('xm-a6',[['Date'],[W('Séance','Cours')],['Classe'],['Moment'],['Enseignants'],['','r']],list.slice(0,lim).map(({s,st:a})=>xRow('xm-a6',`data-act="sess-at" ${sAt(s)}`,`${xDate(s,sHot(s))}<div class="xm-t"><b>${sTitle(s)}</b>${sSub(s)?`<small>${sSub(s)}</small>`:''}</div>${xCls(s)}<span class="xm-m">${esc(momentOf(s))}</span>${affCell(a)}<div class="xm-end">${a.clash.length?'<span class="chip bad">Conflit</span>':a.remp.length?'<span class="chip warn">Remplacement</span>':a.open>0?`<span class="chip ${a.firm?'warn':'bad'}">${a.open} à combler</span>`:'<span class="chip ok">Complet</span>'}</div>`,sAria(s))).join(''))
       +(list.length>lim?`<div class="row" style="margin-top:12px"><button class="btn" type="button" data-act="pg-set" data-k="lim" data-v="${lim+30}">Afficher plus (${list.length-lim})</button></div>`:'');};
   let body='';
-  if(tab==='open') body=open.length?sessRows(open):`<div class="cl-list"><p class="miss-ok"><span class="chip ok">Complet</span>Tous les cours des ${hz} prochains jours ont leurs enseignants.</p></div>`;
-  else if(tab==='all') body=up.length?sessRows(up):'<section class="panel"><p class="help">Aucun cours dans cette période.</p></section>';
-  else if(tab==='cand') body=cands.length?xList('xm-afc',[['Enseignant'],['Cours'],['Quand'],['','r']],cands.map(({d,s})=>{const a=staffing(s), tt=byId(S.data.enseignants,d.enseignant);
+  if(tab==='open') body=open.length?sessRows(open):`<div class="cl-list"><p class="miss-ok"><span class="chip ok">Complet</span>${W('Toutes les séances','Tous les cours')} des ${hz} prochains jours ont leurs enseignants.</p></div>`;
+  else if(tab==='all') body=up.length?sessRows(up):`<section class="panel"><p class="help">${W('Aucune séance','Aucun cours')} dans cette période.</p></section>`;
+  else if(tab==='cand') body=cands.length?xList('xm-afc',[['Enseignant'],[W('Séance','Cours')],['Quand'],['','r']],cands.map(({d,s})=>{const a=staffing(s), tt=byId(S.data.enseignants,d.enseignant);
       return xRow('xm-afc',`data-act="sess-at" ${sAt(s)}`,`${whoCell(d.enseignant,`${dispoChip(d.enseignant,s)}${hasComp(tt,s.c)?'':'<span class="chip bad">Hors compétences</span>'}${onLeave(tt)?'<span class="chip warn">En congé</span>':''}`)}<div class="xm-t"><b>${sTitle(s)}</b><small>${esc(gName(s.grp))} · ${a.firm} sur ${a.requis}${sSub(s)?' · '+sSub(s):''}</small></div><span class="xm-m">${esc(sDay(s))}<br><span class="muted">${esc(momentOf(s))}</span></span><div class="xm-end">${can?`<button class="btn sm yes" type="button" data-act="af-approve" data-id="${esc(d.id)}"${dis()}>Approuver</button><button class="btn sm ghost" type="button" data-act="af-refuse" data-id="${esc(d.id)}"${dis()}>Refuser</button>`:''}</div>`,`${tName(d.enseignant)} · ${sAria(s)}`);}).join(''))
     :'<div class="cl-list"><p class="miss-ok"><span class="chip ok">À jour</span>Aucune candidature en attente.</p></div>';
-  else body=remps.length?xList('xm-afc',[['Enseignant'],['Cours'],['Quand'],['','r']],remps.map(({d,s})=>{const a=staffing(s);
+  else body=remps.length?xList('xm-afc',[['Enseignant'],[W('Séance','Cours')],['Quand'],['','r']],remps.map(({d,s})=>{const a=staffing(s);
       return xRow('xm-afc',`data-act="sess-at" ${sAt(s)}`,`${whoCell(d.enseignant,d.motif?esc(d.motif):'Aucune raison indiquée')}<div class="xm-t"><b>${sTitle(s)}</b><small>${esc(gName(s.grp))} · ${a.pending.length?pl(a.pending.length,'candidat','candidats'):'aucun candidat'}</small></div><span class="xm-m">${esc(sDay(s))}<br><span class="muted">${esc(momentOf(s))}</span></span><div class="xm-end">${can?`<button class="btn sm primary" type="button" data-act="af-retire" ${sAt(s)} data-t="${esc(d.enseignant)}"${dis()}>Libérer l’enseignant</button><button class="btn sm ghost" type="button" data-act="af-remp-no" data-id="${esc(d.id)}"${dis()}>Refuser</button>`:''}</div>`,`${tName(d.enseignant)} · ${sAria(s)}`);}).join(''))
     :'<div class="cl-list"><p class="miss-ok"><span class="chip ok">À jour</span>Aucune demande de remplacement.</p></div>';
   return tb+tiles+body;
 }
 /* Dans la fenêtre d’un cours (administration) : enseignants requis, attribués et candidats */
 function affBoxHTML(s){
-  const a=staffing(s), I=affIdx(), can=isAdmin()&&S.conn==='shared', past=isPast(s);
+  const a=staffing(s), I=affIdx(), can=isAdmin()&&S.conn==='shared', past=isPast(s), lk=linkedX(s);
   const li=(tid,sub,btns)=>`<li>${avHTML(tName(tid),'')}<span class="nm">${esc(tName(tid))}<small>${sub}</small></span><span class="af-btns">${btns}</span></li>`;
   const got=a.assigned.map(tid=>{const r=I.rp[s.key+'|'+tid];
-    return li(tid,(r?`<span class="need-t">Remplacement demandé${r.motif?' : '+esc(r.motif):''}</span>`:tid===s.c.enseignant?'Titulaire du module':'Approuvé')+(a.clash.includes(tid)?' · <span class="bad-t">déjà dans un autre cours à ce moment</span>':''),can?`<button class="btn sm ghost" type="button" data-act="af-retire" ${sAt(s)} data-t="${esc(tid)}"${dis()}>Retirer</button>`:'');}).join('');
+    return li(tid,(r?`<span class="need-t">Remplacement demandé${r.motif?' : '+esc(r.motif):''}</span>`:tid===s.c.enseignant?(modOf(s.c)?'Chargé de cours':acad()?'Responsable de l’activité':'Enseignant du cours'):'Approuvé')+(a.clash.includes(tid)?' · <span class="bad-t">'+W('déjà dans une autre séance à ce moment','déjà dans un autre cours à ce moment')+'</span>':''),can?`<button class="btn sm ghost" type="button" data-act="af-retire" ${sAt(s)} data-t="${esc(tid)}"${dis()}>Retirer</button>`:'');}).join('');
   const cand=a.pending.map(tid=>li(tid,`A postulé · ${dispoCovers(dispoOf(tid,s.date),s)?'disponible':'disponibilité non indiquée'}`,can?`<button class="btn sm yes" type="button" data-act="af-approve" data-id="${esc(candId(s.key,tid))}"${dis()}>Approuver</button><button class="btn sm ghost" type="button" data-act="af-refuse" data-id="${esc(candId(s.key,tid))}"${dis()}>Refuser</button>`:'')).join('');
   const others=teachers().filter(t=>!a.assigned.includes(t.id)&&!a.pending.includes(t.id)&&!onLeave(t));
-  const hint=t=>[dispoCovers(dispoOf(t.id,s.date),s)?'disponible':'',hasComp(t,s.c)?'':'hors compétences',busyAt(t.id,s)?'déjà en cours':''].filter(Boolean).join(', ');
+  const hint=t=>[dispoCovers(dispoOf(t.id,s.date),s)?'disponible':'',hasComp(t,s.c)?'':'hors compétences',busyAt(t.id,s)?W('déjà pris à ce moment','déjà en cours'):''].filter(Boolean).join(', ');
   return `<section class="af-box" id="af-box"><div class="af-box-h"><h3 class="sb-h3">Enseignants <span class="chip ${a.open>0?(a.firm?'warn':'bad'):'ok'}" id="af-count">${a.firm} sur ${a.requis}</span></h3>
-      ${can?`<div class="af-req" role="group" aria-label="Enseignants requis"><span>Requis</span><button type="button" class="icon-btn" id="af-req-m" data-act="af-req" ${sAt(s)} data-d="-1" aria-label="Un enseignant de moins"${S.busy||a.requis<=0?' disabled':''}>−</button><b id="af-req-n">${a.requis}</b><button type="button" class="icon-btn" id="af-req-p" data-act="af-req" ${sAt(s)} data-d="1" aria-label="Un enseignant de plus"${S.busy||a.requis>=9?' disabled':''}>+</button></div>`:''}</div>
+      ${lk?`<div class="af-req" id="af-req-ro"><span>Requis</span><b id="af-req-n">${a.requis}</b><small class="muted">selon le cours du module</small></div>`:can?`<div class="af-req" role="group" aria-label="Enseignants requis"><span>Requis</span><button type="button" class="icon-btn" id="af-req-m" data-act="af-req" ${sAt(s)} data-d="-1" aria-label="Un enseignant de moins"${S.busy||a.requis<=0?' disabled':''}>−</button><b id="af-req-n">${a.requis}</b><button type="button" class="icon-btn" id="af-req-p" data-act="af-req" ${sAt(s)} data-d="1" aria-label="Un enseignant de plus"${S.busy||a.requis>=9?' disabled':''}>+</button></div>`:''}</div>
     ${got||cand?`<ul class="af-list">${got}${cand}</ul>`:'<p class="help">Aucun enseignant attribué.</p>'}
     ${can&&!past&&others.length?`<label class="field af-add"><span>Attribuer un enseignant</span><select id="af-assign" data-af="assign" ${sAt(s)}${dis()}><option value="">Choisir…</option>${others.map(t=>`<option value="${esc(t.id)}">${esc(t.nom)}${hint(t)?' ('+hint(t)+')':''}</option>`).join('')}</select></label>`:''}</section>`;
 }
@@ -2307,21 +2339,47 @@ async function affSetStatus(s,tid,statut,msg){
   return affWrite(async()=>{await col('candidatures').doc(id).set(candDoc(s,tid,statut));if(statut==='retire'&&rp)await col('remplacements').doc(rp.id).delete();},msg);
 }
 async function affReq(s,d){
-  const c=byId(S.data.cours,s.c.id);if(!c)return;
+  const c=byId(S.data.cours,s.c.id);if(!c||linkedX(s))return;
   const doc=courseDoc(c), x=s.extra?doc.extras.find(e=>e.id===s.extra.id):doc.creneaux.find(e=>e.id===s.sl.id);if(!x)return;
   x.requis=Math.max(0,Math.min(9,reqOf(s)+d));
-  await affWrite(()=>col('cours').doc(c.id).set(doc),`${pl(x.requis,'enseignant requis','enseignants requis')}`);
+  await affWrite(()=>putCours(c.id,doc),`${pl(x.requis,'enseignant requis','enseignants requis')}`);
 }
 
 /* ---------- Administration : modules du programme ----------
-   Le catalogue est dans config/ecole.competences : { code, nom, heuresT, heuresP, heures, requis }.
-   Chaque classe a son « cours » (cours/<id>, sigle M7) dont les séances datées sont les cours du module. */
+   Le catalogue est dans config/ecole.competences : { code, nom, heuresT, heuresP, heures, charge, cours[], examens[] }.
+   · COURS du module : { id, num, type, requis } — ce qui compose le module, pareil pour toutes les classes.
+   · EXAMENS du module : { id, type (t : théorique, p : pratique), nom }.
+   · SÉANCE : un cours ou un examen donné à une classe, à une date. Chaque classe a son document cours/<id> (sigle M7) ;
+     ses séances pointent vers les cours (x.cours) ou les examens (x.examens) du module.
+   · CHARGÉ DE COURS (charge) : l’enseignant du module ; il donne ses séances à toutes les classes. */
 const modList=()=>comps().map(k=>({id:String(k.code),nom:k.nom,k}));
 const modCourses=code=>S.data.cours.filter(c=>modKey(c)===+code);
 const modT=k=>k.heuresT!=null&&k.heuresT!==''?+k.heuresT:null;
 const modP=k=>k.heuresP!=null&&k.heuresP!==''?+k.heuresP:null;
 const modTot=k=>modT(k)!=null||modP(k)!=null?(modT(k)||0)+(modP(k)||0):(+k.heures||0);
 const hTxt=v=>v==null?'<span class="muted">—</span>':v+' h';
+const COURS_TYPES=['theorie','pratique','simulation','visite','stage','activite'];
+const actLabel=k=>(ACTIVITES.find(a=>a.k===k)||{}).label||'';
+const EXAM_T={t:'Théorique',p:'Pratique'};
+const examActOf=e=>e.type==='t'?'examen-t':e.type==='p'?'examen-p':'examen';
+const mCours=k=>(k&&Array.isArray(k.cours)?k.cours:[]).slice().sort((a,b)=>collator.compare(String(a.num),String(b.num)));
+const mExams=k=>(k&&Array.isArray(k.examens)?k.examens:[]);
+const xCours=(k,x)=>k&&x&&Array.isArray(x.cours)?x.cours.map(id=>(k.cours||[]).find(c=>c.id===id)).filter(Boolean):[];
+const xExams=(k,x)=>k&&x&&Array.isArray(x.examens)?x.examens.map(id=>(k.examens||[]).find(e=>e.id===id)).filter(Boolean):[];
+const cReq=c=>c.requis==null||c.requis===''?1:Math.max(0,Math.min(9,+c.requis||0));
+const autoLabel=a=>a.length===2?a.join('–'):a.join(', ');
+const chargeName=k=>k&&k.charge&&byId(S.data.enseignants,k.charge)?tName(k.charge):'';
+/* Dans quelles classes chaque cours et chaque examen du module est à l’horaire */
+function modUse(code){
+  const use={};
+  for(const c of modCourses(code)) for(const x of datedOf(c)) for(const id of (x.cours||[]).concat(x.examens||[])) (use[id]||(use[id]=new Set())).add(c.groupe);
+  return {use,n:id=>use[id]?use[id].size:0};
+}
+function chargeSelect(id,cur,k){
+  const ts=teachers(), curT=cur?byId(S.data.enseignants,cur):null;
+  const opt=t=>`<option value="${esc(t.id)}"${cur===t.id?' selected':''}>${esc(t.nom)}${k&&!(t.competences||[]).some(x=>+x===+k.code)?' (hors compétences)':''}</option>`;
+  return `<select id="${id}"><option value="">À choisir plus tard</option>${ts.map(opt).join('')}${curT&&!ts.includes(curT)?opt(curT):''}</select>`;
+}
 /* Heures planifiées du module pour une classe, par type ; la reprise ne compte pas */
 function modHours(c){
   let T=0,P=0,O=0,ex=0;const rep=[], ann=(c&&c.annulees)||[];
@@ -2342,69 +2400,110 @@ function modulesPage(){
       <label class="field" style="flex:2 1 240px"><span>Nom du module</span><input id="md-nom" maxlength="90" autocomplete="off" required></label>
       <label class="field" style="flex:0 1 130px"><span>Heures de théorie</span><input type="number" id="md-ht" min="0" step="1" inputmode="numeric"></label>
       <label class="field" style="flex:0 1 130px"><span>Heures de pratique</span><input type="number" id="md-hp" min="0" step="1" inputmode="numeric"></label>
-      <label class="field" style="flex:0 1 150px"><span>Enseignants requis</span><input type="number" id="md-req" min="0" max="9" step="1" value="1" inputmode="numeric"></label>
+      <label class="field" style="flex:1 1 200px"><span>Chargé de cours</span>${chargeSelect('md-charge','',null)}</label>
       <button class="btn primary" type="submit"${dis()}>Créer le module</button><button class="btn ghost" type="button" data-act="pg-set" data-k="adding" data-v="">Annuler</button></form></section>`:'';
   const tb=`<div class="toolbar"><p class="summary" style="margin:0"><span><b>${ms.length}</b>${ms.length>1?'modules':'module'}</span><span><b>${tot}</b>heures au programme</span></p><span class="grow"></span>${can&&!st.adding?`<button class="btn primary" type="button" id="md-add-open" data-act="pg-set" data-k="adding" data-v="1">${icon('plus')}Créer un module</button>`:''}</div>`;
-  if(!ms.length) return tb+add+(st.adding?'':emptyBox('Aucun module pour l’instant','Créez les modules du programme : leur nom, leurs heures de théorie et de pratique et le nombre d’enseignants requis.'));
-  const rows=ms.map(({k})=>{const n=new Set(modCourses(k.code).map(c=>c.groupe)).size;
-    return xRow('md-cols',`id="md-${esc(k.code)}" data-act="module" data-id="${esc(k.code)}"`,`<span class="cl-num md-num" aria-hidden="true">M${esc(k.code)}</span><div class="xm-t"><b>${esc(k.nom)}</b></div><span class="md-h">${hTxt(modT(k))}</span><span class="md-h">${hTxt(modP(k))}</span><span class="md-h"><b>${modTot(k)} h</b></span><span class="md-h">${+k.requis>0?+k.requis:1}</span><span class="md-h">${n||'<span class="muted">—</span>'}</span>${icon('right')}`,'Ouvrir le module '+k.nom);}).join('');
-  return tb+add+xList('md-cols',[['Module'],[''],['Théorie','n'],['Pratique','n'],['Total','n'],['Ens. requis','n'],['Classes','n'],['']],rows);
+  if(!ms.length) return tb+add+(st.adding?'':emptyBox('Aucun module pour l’instant','Créez les modules du programme : leur numéro, leur nom, leurs heures de théorie et de pratique et leur chargé de cours.'));
+  const rows=ms.map(({k})=>{const n=new Set(modCourses(k.code).map(c=>c.groupe)).size, ch=chargeName(k), nc=mCours(k).length;
+    return xRow('md-cols',`id="md-${esc(k.code)}" data-act="module" data-id="${esc(k.code)}"`,`<span class="cl-num md-num" aria-hidden="true">M${esc(k.code)}</span><div class="xm-t"><b>${esc(k.nom)}</b></div><span class="xm-m md-ch">${ch?esc(ch):'<span class="muted">À choisir</span>'}</span><span class="md-h">${hTxt(modT(k))}</span><span class="md-h">${hTxt(modP(k))}</span><span class="md-h"><b>${modTot(k)} h</b></span><span class="md-h">${nc||'<span class="muted">—</span>'}</span><span class="md-h">${n||'<span class="muted">—</span>'}</span>${icon('right')}`,'Ouvrir le module '+k.nom);}).join('');
+  return tb+add+xList('md-cols',[['Module'],[''],['Chargé de cours'],['Théorie','n'],['Pratique','n'],['Total','n'],['Cours','n'],['Classes','n'],['']],rows);
 }
-const MOD_QUICK=[['examen-t','Examen théorique'],['examen-p','Examen pratique'],['reprise','Date de reprise']];
 function moduleFiche(){
   const list=modList(), cur=list.find(m=>m.id===String(S.pg.fiche));
   if(!cur&&S.pg.justAdded===String(S.pg.fiche)) return '<p class="help">Ouverture du module…</p>';
   if(!cur){S.pg.fiche=null;return modulesPage();}
   if(S.pg.justAdded===cur.id) S.pg.justAdded=null;
-  const k=cur.k, st=S.pg, cs=modCourses(k.code), gs=groups(), can=isAdmin()&&S.conn==='shared';
+  const k=cur.k, st=S.pg, cs=modCourses(k.code), gs=groups(), can=isAdmin()&&S.conn==='shared', U=modUse(k.code), kc=mCours(k), ke=mExams(k), ch=chargeName(k), code=esc(k.code);
   const item=m=>`<span class="fl-row"><span class="cl-num sm md-num" aria-hidden="true">M${esc(m.k.code)}</span><span class="fl-txt"><span class="fl-name">${esc(m.nom)}</span><span class="fl-sub">${modTot(m.k)} h</span></span></span>`;
   const nG=new Set(cs.map(c=>c.groupe)).size;
-  const head=ficheHead(k.nom,`<span class="chip off">${nG?pl(nG,'classe','classes'):'Aucune classe'}</span>`,'',[['Théorie',hTxt(modT(k)),''],['Pratique',hTxt(modP(k)),''],['Total',modTot(k)+' h',''],['Enseignants requis',String(+k.requis>0?+k.requis:1),'']],`<span class="cl-num lg md-num" aria-hidden="true">M${esc(k.code)}</span>`);
+  const head=ficheHead(k.nom,`<span class="chip off">${nG?pl(nG,'classe','classes'):'Aucune classe'}</span><span class="chip ${ch?'k0':'warn'}" id="md-charge-chip">${ch?'Chargé de cours · '+esc(ch):'Chargé de cours à choisir'}</span>`,'',[['Théorie',hTxt(modT(k)),''],['Pratique',hTxt(modP(k)),''],['Total',modTot(k)+' h',''],['Cours',String(kc.length),''],['Examens',String(ke.length),'']],`<span class="cl-num lg md-num" aria-hidden="true">M${code}</span>`);
+  const useCell=id=>{const n=U.n(id);return `<span class="md-h">${n?`${n}<small class="muted"> sur ${gs.length}</small>`:'<span class="muted">—</span>'}</span>`;};
+  /* × d’une ligne : on confirme ; si le cours ou l’examen est déjà à l’horaire, on explique pourquoi il reste */
+  const delCell=(key,act,id,lbl)=>{if(!can)return '';const n=U.n(id);
+    if(st[key]!==id) return `<button type="button" class="x" data-act="pg-set" data-k="${key}" data-v="${esc(id)}" aria-label="${esc('Retirer '+lbl)}" title="Retirer">×</button>`;
+    return n?`<span class="muted sm md-why">À l’horaire de ${pl(n,'classe','classes')} : retirez d’abord ses séances.</span><button class="btn sm ghost" type="button" data-act="pg-set" data-k="${key}" data-v="">OK</button>`
+      :`<button class="btn sm danger" type="button" data-act="${act}" data-code="${code}" data-id="${esc(id)}"${dis()}>Retirer</button><button class="btn sm ghost" type="button" data-act="pg-set" data-k="${key}" data-v="">Non</button>`;};
   const content=tab=>{
     if(tab==='reglages'){
-      const conf=st.ask==='mod';
-      return `<div class="fiche-two"><section class="panel"><h2>Le module</h2><form class="stackf" data-form="md-save" data-code="${esc(k.code)}">
+      const nS=cs.reduce((n,c)=>n+datedOf(c).length,0), left=[kc.length?pl(kc.length,'cours','cours'):'',ke.length?pl(ke.length,'examen','examens'):'',nS?pl(nS,'séance à l’horaire','séances à l’horaire'):''].filter(Boolean), blocked=left.length>0, conf=st.ask==='mod'&&!blocked;
+      return `<div class="fiche-two"><section class="panel"><h2>Le module</h2><form class="stackf" data-form="md-save" data-code="${code}">
           <label class="field"><span>Nom du module</span><input id="md-nom" value="${esc(k.nom)}" maxlength="90" autocomplete="off" required></label>
           <div class="grid2"><label class="field"><span>Heures de théorie requises</span><input type="number" id="md-ht" value="${modT(k)==null?'':modT(k)}" min="0" step="1" inputmode="numeric"></label><label class="field"><span>Heures de pratique requises</span><input type="number" id="md-hp" value="${modP(k)==null?'':modP(k)}" min="0" step="1" inputmode="numeric"></label></div>
-          <label class="field" style="max-width:260px"><span>Enseignants requis par cours</span><input type="number" id="md-req" value="${+k.requis>0?+k.requis:1}" min="0" max="9" step="1" inputmode="numeric"></label>
-          <p class="help">Ce nombre s’applique à chaque cours du module. Il se change aussi cours par cours, dans l’onglet Cours.</p>
+          <label class="field" style="max-width:340px"><span>Chargé de cours</span>${chargeSelect('md-charge',k.charge||'',k)}</label>
+          <p class="help">Le chargé de cours donne les séances du module à toutes les classes. Dans la fenêtre d’une séance, on peut le retirer ou lui ajouter des enseignants.</p>
           <div class="row"><button class="btn primary" type="submit"${can?dis():' disabled'}>Enregistrer</button></div></form></section>
-        <section class="panel"><h2>Retirer du programme</h2><p class="help">Le module disparaît de la liste. Les cours déjà à l’horaire des classes restent en place.</p>
-          ${conf?`<div class="confirm"><p>Retirer le module M${esc(k.code)} du programme ?</p><div class="row"><button class="btn sm danger" type="button" data-act="md-del" data-code="${esc(k.code)}"${dis()}>Retirer</button><button class="btn sm ghost" type="button" data-act="pg-set" data-k="ask" data-v="">Annuler</button></div></div>`:`<div class="row" style="margin-top:10px"><button class="btn sm danger" type="button" id="md-ask" data-act="pg-set" data-k="ask" data-v="mod"${can?dis():' disabled'}>Retirer le module</button></div>`}</section></div>`;
+        <section class="panel"><h2>Supprimer le module</h2>
+          ${blocked?`<p class="help" id="md-del-why">Un module qui a des cours ne peut pas être supprimé. Il reste ${esc(left.join(', '))}.</p>`:'<p class="help">Ce module n’a aucun cours : il peut être supprimé.</p>'}
+          ${conf?`<div class="confirm" style="margin-top:10px"><p>Supprimer le module M${code} ?</p><div class="row"><button class="btn sm danger" type="button" data-act="md-del" data-code="${code}"${dis()}>Supprimer</button><button class="btn sm ghost" type="button" data-act="pg-set" data-k="ask" data-v="">Annuler</button></div></div>`:`<div class="row" style="margin-top:10px"><button class="btn sm danger" type="button" id="md-ask" data-act="pg-set" data-k="ask" data-v="mod"${can&&!blocked?dis():' disabled'}>Supprimer le module</button></div>`}</section></div>`;
     }
-    if(!gs.length) return '<section class="panel"><p class="help">Créez d’abord une classe : les cours d’un module se planifient classe par classe.</p></section>';
+    if(tab==='cours'){
+      const tSel=(id,v,attrs)=>`<select id="${id}" ${attrs}>${COURS_TYPES.map(t=>`<option value="${t}"${v===t?' selected':''}>${actLabel(t)}</option>`).join('')}${COURS_TYPES.includes(v)?'':`<option value="${esc(v)}" selected>${esc(actLabel(v)||'Autre')}</option>`}</select>`;
+      const form=can?`<section class="panel md-add"><h2>Ajouter un cours au module</h2><form class="inline-add" data-form="mc-add" data-code="${code}">
+        <label class="field" style="flex:0 1 170px"><span>Numéro du cours</span><input id="mc-num" maxlength="30" autocomplete="off" placeholder="Ex. ${code}.${kc.length+1}" required></label>
+        <label class="field" style="flex:0 1 200px"><span>Type de cours</span>${tSel('mc-type','theorie','')}</label>
+        <label class="field" style="flex:0 1 170px"><span>Enseignants requis</span><input type="number" id="mc-req" min="0" max="9" step="1" value="1" inputmode="numeric"></label>
+        <button class="btn primary" type="submit"${dis()}>Ajouter le cours</button></form></section>`:'';
+      const rows=kc.map(c=>{const r=cReq(c), at=`data-code="${code}" data-id="${esc(c.id)}"`;
+        return `<article class="xm-row xm-cols md-c" id="mc-${esc(c.id)}"><div class="xm-t"><b>${esc(c.num)}</b></div>
+          ${can?tSel('mc-t-'+c.id,c.type,`data-mc="type" ${at} aria-label="${esc('Type du cours '+c.num)}"${dis()}`):`<span class="xm-m">${esc(actLabel(c.type))}</span>`}
+          ${can?`<div class="af-req" role="group" aria-label="${esc('Enseignants requis pour le cours '+c.num)}"><button type="button" class="icon-btn" id="mc-rm-${esc(c.id)}" data-act="mc-req" ${at} data-d="-1" aria-label="Un enseignant de moins"${S.busy||r<=0?' disabled':''}>−</button><b id="mc-rn-${esc(c.id)}">${r}</b><button type="button" class="icon-btn" id="mc-rp-${esc(c.id)}" data-act="mc-req" ${at} data-d="1" aria-label="Un enseignant de plus"${S.busy||r>=9?' disabled':''}>+</button></div>`:`<span class="md-h">${r}</span>`}
+          ${useCell(c.id)}<div class="xm-end">${delCell('askc','mc-del',c.id,'le cours '+c.num)}</div></article>`;}).join('');
+      const listH=kc.length?`<div class="cl-list xm-list"><div class="xm-hd xm-cols md-c" aria-hidden="true"><span>Cours</span><span>Type</span><span>Ens. requis</span><span class="n">Classes à l’horaire</span><span></span></div>${rows}</div>`:`<section class="panel"><p class="help" id="mc-none">Ce module n’a pas encore de cours.</p></section>`;
+      return `<p class="help md-lead">Les cours composent le module et valent pour toutes les classes. Leurs dates se choisissent classe par classe, dans l’onglet Séances.</p>${form}${listH}`;
+    }
+    if(tab==='examens'){
+      const eSel=(id,v,attrs)=>`<select id="${id}" ${attrs}>${EXAM_T[v]?'':'<option value="" selected>Type à préciser</option>'}${Object.entries(EXAM_T).map(([t,l])=>`<option value="${t}"${v===t?' selected':''}>${l}</option>`).join('')}</select>`;
+      const form=can?`<section class="panel md-add"><h2>Ajouter un examen au module</h2><form class="inline-add" data-form="me-add" data-code="${code}">
+        <label class="field" style="flex:0 1 200px"><span>Type d’examen</span>${eSel('me-type','t','')}</label>
+        <label class="field" style="flex:1 1 220px"><span>Nom de l’examen</span><input id="me-nom" maxlength="60" autocomplete="off" placeholder="Ex. Examen final" required></label>
+        <button class="btn primary" type="submit"${dis()}>Ajouter l’examen</button></form></section>`:'';
+      const rows=ke.map(e=>`<article class="xm-row xm-cols md-e" id="me-${esc(e.id)}"><div class="xm-t"><b>${esc(e.nom)}</b></div>
+          ${can?eSel('me-t-'+e.id,e.type||'',`data-me="type" data-code="${code}" data-id="${esc(e.id)}" aria-label="${esc('Type de l’examen '+e.nom)}"${dis()}`):`<span class="xm-m">${esc(EXAM_T[e.type]||'—')}</span>`}
+          ${useCell(e.id)}<div class="xm-end">${delCell('aske','me-del',e.id,'l’examen '+e.nom)}</div></article>`).join('');
+      const listH=ke.length?`<div class="cl-list xm-list"><div class="xm-hd xm-cols md-e" aria-hidden="true"><span>Examen</span><span>Type</span><span class="n">Classes à l’horaire</span><span></span></div>${rows}</div>`:`<section class="panel"><p class="help" id="me-none">Ce module n’a pas encore d’examen.</p></section>`;
+      return `<p class="help md-lead">Un examen est théorique ou pratique et vaut pour toutes les classes. Sa date se choisit classe par classe, dans l’onglet Séances.</p>${form}${listH}`;
+    }
+    if(!gs.length) return '<section class="panel"><p class="help">Créez d’abord une classe : les séances d’un module se planifient classe par classe.</p></section>';
     const gid=gs.some(g=>g.id===st.mg)?st.mg:((gs.find(g=>cs.some(c=>c.groupe===g.id))||gs[0]).id);
     const c=cs.find(x=>x.groupe===gid)||null, H=c?modHours(c):{T:0,P:0,O:0,ex:0,rep:[]};
     const meter=(lbl,got,need)=>{const p=need?Math.min(100,Math.round(got/need*100)):0, cls=need&&got>=need?'ok':'';
       return `<div class="md-m ${cls}"><span>${lbl}</span><b>${got} h${need!=null?` <small>/ ${need} h</small>`:''}</b>${need?`<div class="meter${cls?'':' todo'}" aria-hidden="true"><i style="width:${p}%"></i></div>`:''}</div>`;};
     const sum=`<div class="md-sum">${meter('Théorie planifiée',H.T,modT(k))}${meter('Pratique planifiée',H.P,modP(k))}<div class="md-m"><span>Examens</span><b>${H.ex}</b></div><div class="md-m"><span>Reprise</span><b>${H.rep.length?H.rep.map(d=>esc(dn(parse(d))+' '+fMonthS.format(parse(d)))).join(', '):'<span class="muted">Aucune date</span>'}</b></div></div>`;
-    const sel=`<select id="md-g" aria-label="Classe">${gs.map(g=>`<option value="${esc(g.id)}"${g.id===gid?' selected':''}>${esc(g.nom)}${cs.some(x=>x.groupe===g.id)?'':' (aucun cours)'}</option>`).join('')}</select>`;
+    const sel=`<select id="md-g" aria-label="Classe">${gs.map(g=>`<option value="${esc(g.id)}"${g.id===gid?' selected':''}>${esc(g.nom)}${cs.some(x=>x.groupe===g.id)?'':' (aucune séance)'}</option>`).join('')}</select>`;
     const xs=c?datedOf(c).slice().sort((a,b)=>a.date.localeCompare(b.date)||String(a.debut).localeCompare(String(b.debut))):[], today=todayISO();
-    const rows=xs.map(x=>{const s=findSess(x.date,`${c.id}_${x.id}_${x.date}`), ann=(c.annulees||[]).includes(`${x.date}@${x.id}`), past=x.date<today, a=s&&!ann?staffing(s):null, lab=s?sessLabel(s):'', ask=st.askx===x.id;
-      const req=s&&!ann&&can&&!past?`<div class="af-req" role="group" aria-label="Enseignants requis"><button type="button" class="icon-btn" data-act="af-req" ${sAt(s)} data-d="-1" aria-label="Un enseignant de moins"${S.busy||a.requis<=0?' disabled':''}>−</button><b>${a.requis}</b><button type="button" class="icon-btn" data-act="af-req" ${sAt(s)} data-d="1" aria-label="Un enseignant de plus"${S.busy||a.requis>=9?' disabled':''}>+</button></div>`:`<span class="md-h">${a?a.requis:'—'}</span>`;
-      return `<article class="xm-row xm-cols md-x${past?' is-past':''}" id="mx-${esc(x.id)}">${xDate({date:x.date},x.tags&&x.tags.includes('Reprise')?'rep':'')}<div class="xm-t"><b>${esc(lab||(x.tags||[]).includes('Reprise')?(lab||'Reprise'):'Cours')}</b><small>${esc(moment(toMin(x.debut),toMin(x.fin)))}${ann?' · annulé':''}</small></div>
-        ${can?actSelect('mx-t-'+x.id,actOf(x.tags||[]),`data-mod="type" data-c="${esc(c.id)}" data-x="${esc(x.id)}" aria-label="Type de cours"${dis()}`):`<span class="xm-m">${esc((ACTIVITES.find(y=>y.k===actOf(x.tags||[]))||{}).label||'')}</span>`}
+    const rows=xs.map(x=>{const s=findSess(x.date,`${c.id}_${x.id}_${x.date}`), ann=(c.annulees||[]).includes(`${x.date}@${x.id}`), past=x.date<today, a=s&&!ann?staffing(s):null, ask=st.askx===x.id, rep=(x.tags||[]).includes('Reprise');let lab=s?sessLabel(s):'';
+      const es=xExams(k,x), lk=xCours(k,x).length>0, linked=lk||es.length>0, tl=actLabel(actOf(x.tags||[]));
+      if(es.length&&!lk) lab='Examen '+es.map(e=>e.nom).join(', ');
+      const req=!lk&&s&&!ann&&can&&!past?`<div class="af-req" role="group" aria-label="Enseignants requis"><button type="button" class="icon-btn" data-act="af-req" ${sAt(s)} data-d="-1" aria-label="Un enseignant de moins"${S.busy||a.requis<=0?' disabled':''}>−</button><b>${a.requis}</b><button type="button" class="icon-btn" data-act="af-req" ${sAt(s)} data-d="1" aria-label="Un enseignant de plus"${S.busy||a.requis>=9?' disabled':''}>+</button></div>`:`<span class="md-h">${a?a.requis:'—'}</span>`;
+      return `<article class="xm-row xm-cols md-x${past?' is-past':''}" id="mx-${esc(x.id)}">${xDate({date:x.date},rep?'rep':'')}<div class="xm-t"><b>${esc(lab||(rep?'Reprise':'Séance'))}</b><small>${esc(moment(toMin(x.debut),toMin(x.fin)))}${ann?' · annulée':''}</small></div>
+        ${can&&!linked?actSelect('mx-t-'+x.id,actOf(x.tags||[]),`data-mod="type" data-c="${esc(c.id)}" data-x="${esc(x.id)}" aria-label="Type de la séance"${dis()}`):`<span class="xm-m">${esc(tl)}</span>`}
         ${req}${a?affCell(a):'<span class="md-h muted">—</span>'}
-        <div class="xm-end">${!can?'':ask?`<button class="btn sm danger" type="button" data-act="md-del-x" data-c="${esc(c.id)}" data-x="${esc(x.id)}"${dis()}>Supprimer</button><button class="btn sm ghost" type="button" data-act="pg-set" data-k="askx" data-v="">Non</button>`:`<button type="button" class="x" data-act="pg-set" data-k="askx" data-v="${esc(x.id)}" aria-label="${esc('Supprimer le cours du '+dayLabel(parse(x.date)))}" title="Supprimer ce cours">×</button>`}</div></article>`;}).join('');
-    const type=ACTIVITES.some(y=>y.k===st.xtype)?st.xtype:'theorie';
-    const form=can?`<section class="panel md-add"><h2>Ajouter un cours à ${esc(gName(gid))}</h2><form class="inline-add" data-form="md-add-x" data-code="${esc(k.code)}" data-g="${esc(gid)}">
-        <label class="field" style="flex:0 1 170px"><span>Date</span><input type="date" id="mx-date" required></label>
+        <div class="xm-end">${!can?'':ask?`<button class="btn sm danger" type="button" data-act="md-del-x" data-c="${esc(c.id)}" data-x="${esc(x.id)}"${dis()}>Supprimer</button><button class="btn sm ghost" type="button" data-act="pg-set" data-k="askx" data-v="">Non</button>`:`<button type="button" class="x" data-act="pg-set" data-k="askx" data-v="${esc(x.id)}" aria-label="${esc('Supprimer la séance du '+dayLabel(parse(x.date)))}" title="Supprimer cette séance">×</button>`}</div></article>`;}).join('');
+    const pkey=k.code+'|'+gid, pick=new Set(st.pick&&st.pick.key===pkey?st.pick.items:[]), done=id=>!!(U.use[id]&&U.use[id].has(gid));
+    const form=!can?'':kc.length||ke.length?`<section class="panel md-add"><h2>Ajouter une séance à ${esc(gName(gid))}</h2><form class="stackf" data-form="md-add-x" data-code="${code}" data-g="${esc(gid)}">
+        <fieldset class="pk-set"><legend>Cours ou examen donné</legend><div class="pk-list" id="mx-picks">${pickList(k,pick,done,`data-key="${esc(pkey)}"${dis()}`)}</div></fieldset>
+        <div class="mx-row"><label class="field" style="flex:0 1 170px"><span>Date</span><input type="date" id="mx-date" required></label>
         <label class="field" style="flex:0 1 180px"><span>Moment</span><select id="mx-per">${PERIODES.map(p=>`<option value="${p.k}"${p.k==='jour'?' selected':''}>${p.label}</option>`).join('')}</select></label>
-        <label class="field" style="flex:0 1 200px"><span>Type de cours</span>${actSelect('mx-type',type,'')}</label>
-        <label class="field" style="flex:0 1 130px"><span>Numéro (facultatif)</span><input id="mx-label" maxlength="30" autocomplete="off" placeholder="Ex. ${esc(k.code)}.3"></label>
-        <button class="btn primary" type="submit"${dis()}>Ajouter</button></form>
-        <div class="row md-quick"><span class="muted sm">Raccourcis :</span>${MOD_QUICK.map(([v,l])=>`<button class="btn sm${type===v?' on':''}" type="button" data-act="pg-set" data-k="xtype" data-v="${v}" aria-pressed="${type===v}">${icon('plus')}${l}</button>`).join('')}</div></section>`:'';
-    const listH=xs.length?`<div class="cl-list xm-list"><div class="xm-hd xm-cols md-x" aria-hidden="true"><span>Date</span><span>Cours</span><span>Type</span><span>Ens. requis</span><span>Enseignants</span><span></span></div>${rows}</div>`:`<section class="panel"><p class="help">Aucun cours de ce module pour ${esc(gName(gid))}.</p></section>`;
-    return `<div class="st-bar">${sel}<span class="grow"></span><p class="summary" style="margin:0"><span><b>${xs.length}</b>${xs.length>1?'cours':'cours'}</span></p></div>${sum}${form}${listH}`;
+        <button class="btn primary" type="submit"${dis()}>Ajouter la séance</button></div>
+        <p class="help">Une séance peut couvrir plusieurs cours. Un crochet marque ce qui est déjà à l’horaire de la classe.</p></form></section>`
+      :`<section class="panel md-add"><p class="help" id="mx-nocours">Ajoutez d’abord les cours du module, dans l’onglet Cours : une séance est un cours donné à une classe, à une date.</p></section>`;
+    const listH=xs.length?`<div class="cl-list xm-list"><div class="xm-hd xm-cols md-x" aria-hidden="true"><span>Date</span><span>Séance</span><span>Type</span><span>Ens. requis</span><span>Enseignants</span><span></span></div>${rows}</div>`:`<section class="panel"><p class="help">Aucune séance de ce module pour ${esc(gName(gid))}.</p></section>`;
+    return `<div class="st-bar">${sel}<span class="grow"></span><p class="summary" style="margin:0"><span><b>${xs.length}</b>${xs.length>1?'séances':'séance'}</span></p></div>${sum}${form}${listH}`;
   };
-  return ficheShell('modules',list,cur,item,head,[['cours','Cours'],['reglages','Réglages']],content);
+  return ficheShell('modules',list,cur,item,head,[['cours','Cours'],['examens','Examens'],['seances','Séances'],['reglages','Réglages']],content);
+}
+/* Les cours et les examens d’un module, à cocher pour composer une séance (plus la reprise) */
+function pickList(k,pick,done,attrs){
+  const pk=(v,lbl,sub,d)=>`<label class="pk${d?' done':''}"><input type="checkbox" data-pick="${esc(v)}" ${attrs}${pick.has(v)?' checked':''}><span>${lbl}${sub?`<small>${sub}</small>`:''}</span></label>`;
+  return mCours(k).map(c=>pk('c:'+c.id,esc(c.num),esc(actLabel(c.type)),done(c.id))).join('')+mExams(k).map(e=>pk('e:'+e.id,'Examen '+esc(e.nom),esc(EXAM_T[e.type]||''),done(e.id))).join('')+pk('rep','Reprise','',false);
 }
 /* Enregistre le catalogue des modules, puis accorde le nom et les heures des cours des classes */
 async function saveModule(code,vals,isNew){
   const c=configDoc(), i=c.competences.findIndex(x=>+x.code===+code);
   if(isNew&&i>=0){toast(`Le module M${code} existe déjà.`,'bad');return false;}
   const tot=vals.heuresT!=null||vals.heuresP!=null?(vals.heuresT||0)+(vals.heuresP||0):(i>=0?+c.competences[i].heures||0:0);
-  const k=Object.assign({},i>=0?c.competences[i]:{code:+code},{nom:vals.nom,heuresT:vals.heuresT,heuresP:vals.heuresP,heures:tot,requis:vals.requis});
+  const k=Object.assign({cours:[],examens:[]},i>=0?c.competences[i]:{code:+code},{nom:vals.nom,heuresT:vals.heuresT,heuresP:vals.heuresP,heures:tot,charge:vals.charge||''});
+  delete k.requis;
   if(i>=0)c.competences[i]=k;else c.competences.push(k);
   c.competences.sort((a,b)=>a.code-b.code);
   if(!await saveConfig(c,isNew?`Module M${code} créé`:'Module enregistré')) return false;
@@ -2412,53 +2511,83 @@ async function saveModule(code,vals,isNew){
   if(stale.length) await runAll(stale.map(x=>()=>col('cours').doc(x.id).update({titre:k.nom,heures:tot||null})),'');
   return true;
 }
+/* Modifie la structure d’un module (ses cours, ses examens) : fn reçoit la copie du module et la change */
+async function editModule(code,fn,msg){
+  if(S.busy) return false;
+  const c=configDoc(), k=c.competences.find(x=>String(x.code)===String(code));if(!k) return false;
+  k.cours=(k.cours||[]).map(x=>Object.assign({},x));k.examens=(k.examens||[]).map(x=>Object.assign({},x));
+  const r=fn(k);if(r===false) return false;
+  return saveConfig(c,typeof msg==='function'?msg():msg);
+}
+/* Après un changement de type dans le module : les séances de toutes les classes suivent */
+async function syncSeances(code,fn){
+  const jobs=[];
+  for(const c of modCourses(code)){const doc=courseDoc(c);let ch=false;for(const x of doc.extras) if(fn(x)) ch=true;if(ch) jobs.push(()=>putCours(c.id,doc));}
+  if(jobs.length) await runAll(jobs,'');
+}
 const numOrNull=v=>{const s=String(v==null?'':v).trim();if(s==='')return null;const n=Math.round(+s);return isNaN(n)||n<0?null:n;};
 
 /* ---------- Vocabulaire : un MODULE (M7 Autopompe) a des COURS (une journée ou une demi-journée d’une classe).
    Ce qui n’appartient à aucun module (Accueil, Graduation…) est une ACTIVITÉ.
    Une école sans catalogue de modules garde l’ancien fonctionnement : un cours et ses périodes de la semaine. ---------- */
 const acad=()=>comps().length>0;
+/* Vocabulaire : avec des modules, ce qui est à l’horaire d’une classe est une « séance » (un cours du module donné
+   à une date) ; dans une école sans modules, on garde « cours ». W(mot pour l’académie, mot d’origine). */
+const W=(a,b)=>acad()?a:b;
 const isActivity=c=>acad()&&!!c&&modKey(c)==null;
 /* Heures prévues : celles du module du programme, sinon celles inscrites sur le cours */
 const heuresOf=c=>{const m=acad()?modOf(c):null;return m?modTot(m):(+(c&&c.heures)||0);};
-/* Un seul formulaire pour ajouter un cours : depuis le calendrier, une classe, un module ou les examens */
+/* Un seul formulaire pour ajouter une séance : depuis le calendrier, une classe ou un module */
 function openAddCourse(preset){
   const gs=groups();
-  const draft=Object.assign({groupe:S.filtre.startsWith('g:')?S.filtre.slice(2):((gs[0]||{}).id||''),module:'',titre:'',date:'',per:'jour',type:'theorie',label:''},preset||{});
+  const draft=Object.assign({groupe:S.filtre.startsWith('g:')?S.filtre.slice(2):((gs[0]||{}).id||''),module:'',titre:'',date:'',per:'jour',type:'activite',items:[]},preset||{});
   openDrawer({kind:'addc',draft,err:''});
 }
 function addCourseDrawer(){
   const d=S.dr, f=d.draft, act=f.module==='__act', k=!act&&f.module?comps().find(x=>String(x.code)===String(f.module)):null;
   const gOpts='<option value="">Choisir une classe</option>'+groups().map(g=>`<option value="${esc(g.id)}"${f.groupe===g.id?' selected':''}>${esc(g.nom)}</option>`).join('');
   const mOpts='<option value="">Choisir un module…</option>'+comps().map(x=>`<option value="${esc(x.code)}"${String(f.module)===String(x.code)?' selected':''}>M${esc(x.code)} · ${esc(x.nom)}</option>`).join('')+`<option value="__act"${act?' selected':''}>Autre activité, sans module…</option>`;
+  const U=k?modUse(k.code):null, done=id=>!!(U&&f.groupe&&U.use[id]&&U.use[id].has(f.groupe));
+  const picks=!k?'':mCours(k).length||mExams(k).length
+    ?`<fieldset class="pk-set"><legend>Cours ou examen donné</legend><div class="pk-list" id="ac-picks">${pickList(k,new Set(f.items||[]),done,'')}</div><p class="help">Une séance peut couvrir plusieurs cours. Un crochet marque ce qui est déjà à l’horaire de la classe.</p></fieldset>`
+    :`<p class="help" id="ac-nocours">Ce module n’a pas encore de cours. Ajoutez-les dans le menu Modules, puis planifiez ses séances.</p>`;
   const body=`<form id="ac-form" data-form="addc" novalidate>
     <div class="grid2"><label class="field"><span>Classe</span><select id="ac-g" data-f="groupe">${gOpts}</select></label><label class="field"><span>Module</span><select id="ac-m" data-f="module">${mOpts}</select></label></div>
-    ${act?`<label class="field"><span>Nom de l’activité</span><input id="ac-titre" data-f="titre" value="${esc(f.titre)}" maxlength="80" placeholder="Ex. Accueil, Graduation" autocomplete="off"></label>`:''}
+    ${act?`<div class="grid2"><label class="field"><span>Nom de l’activité</span><input id="ac-titre" data-f="titre" value="${esc(f.titre)}" maxlength="80" placeholder="Ex. Accueil, Graduation" autocomplete="off"></label><label class="field"><span>Type</span>${actSelect('ac-type',f.type,'data-f="type"')}</label></div>`:''}
+    ${picks}
     <div class="grid2"><label class="field"><span>Date</span><input type="date" id="ac-date" data-f="date" value="${esc(f.date)}"></label><label class="field"><span>Moment</span><select id="ac-per" data-f="per">${PERIODES.map(p=>`<option value="${p.k}"${f.per===p.k?' selected':''}>${p.label}</option>`).join('')}</select></label></div>
-    <div class="grid2"><label class="field"><span>Type de cours</span>${actSelect('ac-type',f.type,'data-f="type"')}</label><label class="field"><span>Numéro (facultatif)</span><input id="ac-label" data-f="label" value="${esc(f.label)}" maxlength="30" placeholder="${k?'Ex. '+esc(k.code)+'.3':'Ex. 7.3'}" autocomplete="off"></label></div>
-    <p class="help">Un examen ou une reprise est un cours comme les autres : choisissez son type.</p>
     ${d.err?`<p class="form-err" role="alert">${esc(d.err)}</p>`:''}</form>`;
-  return dTop('Ajouter un cours',k?`<span class="chip k${(+k.code)%8}">M${esc(k.code)}</span><span>${esc(k.nom)}</span>`:act?esc(f.titre||'Activité'):'Nouveau cours',f.date?esc(dayLabel(parse(f.date))):'')
-    +`<div class="dr-body">${body}</div><div class="dr-foot"><button class="btn primary" type="submit" form="ac-form"${dis()}>Ajouter le cours</button></div>`;
+  return dTop(act?'Ajouter une activité':'Ajouter une séance',k?`<span class="chip k${(+k.code)%8}">M${esc(k.code)}</span><span>${esc(k.nom)}</span>`:act?esc(f.titre||'Activité'):'Nouvelle séance',f.date?esc(dayLabel(parse(f.date))):'')
+    +`<div class="dr-body">${body}</div><div class="dr-foot"><button class="btn primary" type="submit" form="ac-form"${dis()}>${act?'Ajouter l’activité':'Ajouter la séance'}</button></div>`;
 }
-/* Ajoute une journée de cours à une classe ; crée au besoin le module (ou l’activité) de cette classe. Renvoie un message d’erreur, ou '' */
+/* Ajoute une séance à une classe : un ou plusieurs cours (ou examens) du module, ou une activité sans module.
+   o.items : 'c:<id>' (cours), 'e:<id>' (examen), 'rep' (reprise). Renvoie un message d’erreur, ou '' */
 async function addCourseDay(o){
   const gid=o.groupe, date=o.date, per=PERIODES.find(p=>p.k===o.per)||PERIODES[2];
   const mk=o.module&&o.module!=='__act'?comps().find(x=>String(x.code)===String(o.module)):null, titre=mk?mk.nom:String(o.titre||'').trim();
   if(!gid) return 'Choisissez la classe.';
   if(!mk&&o.module!=='__act') return 'Choisissez le module, ou « Autre activité ».';
   if(!titre) return 'Écrivez le nom de l’activité.';
-  if(!date) return 'Indiquez la date du cours.';
+  const items=o.items||[], ks=mk?mCours(mk).filter(c=>items.includes('c:'+c.id)):[], es=mk?mExams(mk).filter(e=>items.includes('e:'+e.id)):[], rep=items.includes('rep');
+  if(mk&&!ks.length&&!es.length&&!rep) return mCours(mk).length||mExams(mk).length?'Cochez le cours ou l’examen donné à cette séance.':'Ce module n’a pas encore de cours : ajoutez-les dans le menu Modules.';
+  if(!date) return 'Indiquez la date de la séance.';
   const dd=parse(date), j=dd.getDay(), off=offDay(date);
   if(j===0||j===6) return 'Cette date tombe une fin de semaine.';
   if(off) return `Le ${dn(dd)} ${fMonth.format(dd)} n’est pas un jour de classe (${off}).`;
   const a0=toMin(per.debut), b0=toMin(per.fin), clash=sessionsOn(date).find(x=>x.grp===gid&&!x.cancelled&&x.start<b0&&a0<x.end);
   if(clash) return `${gName(gid)} a déjà ${clash.c.titre} ${momentIn(clash.start,clash.end)} ce jour-là.`;
-  const x={id:'a'+date.replace(/-/g,'')+per.k+Math.random().toString(36).slice(2,5),date,debut:per.debut,fin:per.fin,tags:withAct([],o.type||'theorie'),label:String(o.label||'').trim()||titre,minutes:per.k==='jour'?360:180};
+  const x={id:'a'+date.replace(/-/g,'')+per.k+Math.random().toString(36).slice(2,5),date,debut:per.debut,fin:per.fin,tags:[],label:titre,minutes:per.k==='jour'?360:180};
+  if(!mk) x.tags=withAct([],o.type||'activite');
+  else if(es.length||ks.length){
+    x.tags=withAct([],es.length?examActOf(es[0]):ks[0].type);
+    x.label=autoLabel(ks.map(c=>c.num).concat(es.map(e=>e.nom)));
+    if(ks.length) x.cours=ks.map(c=>c.id);
+    if(es.length) x.examens=es.map(e=>e.id);
+  }else{x.tags=['Reprise'];x.label='Reprise';}
   const c0=mk?modCourses(mk.code).find(c=>c.groupe===gid):S.data.cours.find(c=>c.groupe===gid&&modKey(c)==null&&String(c.titre||'').trim().toLowerCase()===titre.toLowerCase());
-  let ok;
-  if(c0){const doc=courseDoc(c0);doc.extras.push(x);ok=await affWrite(()=>col('cours').doc(c0.id).set(doc),'Cours ajouté');}
-  else ok=await affWrite(()=>col('cours').doc(genId('c')).set({titre,code:mk?'M'+mk.code:'',couleur:mk?(+mk.code)%8:7,groupe:gid,enseignant:'',salle:'',du:'',au:'',heures:mk?modTot(mk)||null:null,creneaux:[],annulees:[],extras:[x]}),'Cours ajouté');
+  const msg=mk?'Séance ajoutée':'Activité ajoutée';let ok;
+  if(c0){const doc=courseDoc(c0);doc.extras.push(x);ok=await affWrite(()=>putCours(c0.id,doc),msg);}
+  else ok=await affWrite(()=>putCours(genId('c'),{titre,code:mk?'M'+mk.code:'',couleur:mk?(+mk.code)%8:7,groupe:gid,enseignant:'',salle:'',du:'',au:'',heures:mk?modTot(mk)||null:null,creneaux:[],annulees:[],extras:[x]}),msg);
   return ok?'':'L’enregistrement a échoué.';
 }
 
@@ -2466,6 +2595,16 @@ async function addCourseDay(o){
    À chaque mise à jour du site, ajouter ici une ligne : [type, titre, explication, page à ouvrir].
    Types : new (nouvelle fonction), up (amélioration), fix (correction). La date la plus récente en premier. */
 const NOUVEAUTES=[
+  {date:'2026-10-13',items:[
+    ['new','Cours d’un module','Chaque module a maintenant ses cours : numéro, type et enseignants requis. Ils valent pour toutes les classes et ont été repris de l’horaire.','modules'],
+    ['new','Examens d’un module','Chaque module a sa liste d’examens, théoriques ou pratiques.','modules'],
+    ['new','Chargé de cours','Chaque module a son chargé de cours, qui donne ses séances à toutes les classes. Il remplace le titulaire par classe.','modules'],
+    ['up','Séances','Un cours donné à une classe, à une date, s’appelle maintenant une séance. Une séance peut couvrir plusieurs cours.','calendar'],
+    ['up','Enseignants requis','Le nombre se règle sur chaque cours du module, et plus dans les réglages du module.','modules'],
+    ['up','Supprimer un module','Un module qui a des cours ne peut plus être supprimé.','modules'],
+    ['fix','Deux personnes en même temps','Chaque séance s’enregistre à part : deux administrateurs ne s’écrasent plus en modifiant le même module.',''],
+    ['fix','Numéros avec un trait d’union','« 16-6 » s’affiche comme un seul cours, et non plus « 16 et 6 ».','calendar']
+  ]},
   {date:'2026-10-10',items:[
     ['new','Page Nouveautés','La liste des nouvelles fonctions, des améliorations et des corrections du site, ici même.','nouveautes'],
     ['new','Modules','Le catalogue du programme : heures de théorie et de pratique, enseignants requis, cours de chaque classe, examens et dates de reprise.','modules'],
@@ -2761,7 +2900,7 @@ function profilePage(){
     const chores=wk.filter(s=>choreOf(s)), nx=nextSession(s=>s.c.groupe===gid), ex=upcomingExams(x=>x.grp===gid,4);
     panels+=`<section class="panel"><h2>Mes informations</h2>${facts([['Classe',gName(gid)],['Enseignant principal',principalOf(gid)?tName(principalOf(gid)):''],['Numéro',rec.numero],['Fonction',rec.fonction||'Aucune'],['Date de naissance',rec.naissance?longDate(parse(rec.naissance)):''],['Contact d’urgence',rec.parent],['Courriel',rec.courriel],['Téléphone',rec.telephone]])}</section>`;
     panels+=`<section class="panel"><h2>Ma semaine</h2><p class="big">${wk.length}<span> ${wk.length>1?'cours':'cours'}</span></p>
-      <p class="help">${nx?`Prochain cours : ${esc(nx.s.c.titre)}, ${esc(sess(nx.s).toLowerCase())}.`:'Aucun cours prévu prochainement.'}</p>
+      <p class="help">${nx?`${W('Prochaine séance','Prochain cours')} : ${esc(nx.s.c.titre)}, ${esc(sess(nx.s).toLowerCase())}.`:W('Aucune séance prévue prochainement.','Aucun cours prévu prochainement.')}</p>
       ${chores.length?`<h2 style="margin-top:14px">Corvées de ménage</h2><ul class="acc-list">${[...new Set(chores.map(s=>s.date))].sort().map(ds=>`<li><span>${esc(dayLabel(parse(ds)))}</span><span class="muted sm">toute la journée</span></li>`).join('')}</ul>`:'<p class="help">Aucune corvée de ménage cette semaine.</p>'}</section>`;
     panels+=`<section class="panel"><h2>Prochains examens</h2>${ex.length?`<div class="list">${examRows(ex,'student')}</div>`:'<p class="help">Aucun examen prévu.</p>'}</section>`;
   }else if(r==='teacher'){
@@ -2772,7 +2911,7 @@ function profilePage(){
     const nx=nextSession(s=>s.tch.includes(id));
     panels+=`<section class="panel"><h2>Mes informations</h2>${facts([['Fonction',rec.fonction||'Enseignant'],['Statut',rec.statut||'Actif'],['Courriel',rec.courriel],['Téléphone',z.telephone||rec.telephone]])}</section>`;
     panels+=`<section class="panel"><h2>Mes classes</h2>${Object.keys(byG).length?`<ul class="acc-list">${Object.entries(byG).sort((x,y)=>collator.compare(gName(x[0]),gName(y[0]))).map(([g,n])=>`<li><span>${esc(gName(g))}${principalOf(g)===id?' <span class="chip k0">Enseignant principal</span>':''}</span><span class="muted">${pl(n,'cours','cours')}</span></li>`).join('')}</ul>`:'<p class="help">Aucun cours assigné pour l’instant.</p>'}</section>`;
-    panels+=`<section class="panel"><h2>Ma semaine</h2><p class="big">${wk.length}<span> cours</span></p><p class="help">${late?`<b class="need-t">${pl(late,'présence à prendre','présences à prendre')}</b> pour des cours passés. `:''}${nx?`Prochain cours : ${esc(nx.s.c.titre)}, ${esc(sess(nx.s).toLowerCase())}.`:'Aucun cours prévu prochainement.'}</p></section>`;
+    panels+=`<section class="panel"><h2>Ma semaine</h2><p class="big">${wk.length}<span> ${W(wk.length>1?'séances':'séance','cours')}</span></p><p class="help">${late?`<b class="need-t">${pl(late,'présence à prendre','présences à prendre')}</b> pour des ${W('séances passées','cours passés')}. `:''}${nx?`${W('Prochaine séance','Prochain cours')} : ${esc(nx.s.c.titre)}, ${esc(sess(nx.s).toLowerCase())}.`:W('Aucune séance prévue prochainement.','Aucun cours prévu prochainement.')}</p></section>`;
     if(a&&S.canWrite===false) warn='<div class="notice warn"><p>Votre accès à cette page ne permet pas encore d’enregistrer les présences. Demandez à l’administration l’accès <b>Contributeur</b> dans Partager.</p></div>';
   }else{
     const c=cfg(), all=S.data.comptes, n=k=>all.filter(x=>x.role===k).length;
@@ -2839,7 +2978,7 @@ function renderSide(){
   $('#logout-btn').hidden=!siteMode();
   const tg=$('#side-toggle'), tl=S.sideMini?'Afficher le menu':'Réduire le menu';
   tg.setAttribute('aria-expanded',String(!S.sideMini));tg.title=tl;tg.querySelector('span').textContent=tl;
-  setHTML($('#nav'),NAV[S.role].map(([k,l,i])=>`<li><button type="button" id="nav-${k}" title="${l}" data-act="nav" data-page="${k}"${S.page===k?' aria-current="page"':''}>${icon(i)}<span>${l}</span>${k==='nouveautes'&&nvUnseen()?`<i class="nav-n" id="nav-n" title="Changements depuis votre dernière visite">${nvUnseen()>9?'9+':nvUnseen()}</i>`:''}</button></li>`).join(''));
+  setHTML($('#nav'),NAV[S.role].map(([k,l,i])=>`<li><button type="button" id="nav-${k}" title="${navLbl(k,l)}" data-act="nav" data-page="${k}"${S.page===k?' aria-current="page"':''}>${icon(i)}<span>${navLbl(k,l)}</span>${k==='nouveautes'&&nvUnseen()?`<i class="nav-n" id="nav-n" title="Changements depuis votre dernière visite">${nvUnseen()>9?'9+':nvUnseen()}</i>`:''}</button></li>`).join(''));
   const P=subject(), own=!!P.a||S.role==='admin', sub=(S.role==='student'?'Élève · '+gName(S.group):ROLE_LBL[S.role])+(own?'':' · aperçu');
   setHTML($('#person'),`<button type="button" class="person-btn" id="person-btn" data-act="nav" data-page="profil" title="Mon profil"${S.page==='profil'?' aria-current="page"':''}>${avHTML(P.name,own?S.me.avatarUrl:'','')}<span class="pinfo"><b>${esc(P.name)}</b><small>${esc(sub)}</small></span></button>`);
 }
@@ -2884,8 +3023,20 @@ const HEAD={
   params:['Paramètres','L’établissement, l’année scolaire et les accès.'],
   nouveautes:['Nouveautés','Ce qui a changé sur le site : nouvelles fonctions, améliorations et corrections.']
 };
+/* Les mêmes titres, avec le mot « séance », quand l’école a des modules */
+const HEAD_AC={
+  admin:['Calendrier','Les séances et les examens de la semaine pour chaque classe.'],
+  teacher:['Mon horaire','Vos séances de la semaine et les présences à prendre.'],
+  student:['Mon horaire','Les séances et les examens de votre classe cette semaine.'],
+  classes:['Classes','Les élèves, les présences et les séances de chaque classe.'],
+  modules:['Modules','Les modules du programme : leurs cours, leurs examens, leur chargé de cours et les séances de chaque classe.'],
+  affectations:['Affectations','Les enseignants requis à chaque séance, les candidatures et les remplacements.'],
+  mescours:['Mes séances','Les séances à pourvoir, vos candidatures et vos séances attribuées.']
+};
+const navLbl=(k,l)=>k==='mescours'&&acad()?'Mes séances':l;
 function renderHeading(){
-  const h=S.page==='calendar'?HEAD[S.role]:S.page==='examens'&&S.role==='student'?['Mes examens','Vos prochains examens, vos résultats et vos reprises.']:S.page==='profil'&&S.role==='admin'?['Mon profil','Vos informations et les comptes du site.']:HEAD[S.page];
+  const h0=S.page==='calendar'?HEAD[S.role]:S.page==='examens'&&S.role==='student'?['Mes examens','Vos prochains examens, vos résultats et vos reprises.']:S.page==='profil'&&S.role==='admin'?['Mon profil','Vos informations et les comptes du site.']:HEAD[S.page];
+  const hk=S.page==='calendar'?S.role:S.page, h=acad()&&HEAD_AC[hk]&&h0===HEAD[hk]?HEAD_AC[hk]:h0;
   const show=demoHidden()?`<button type="button" class="demo-show" id="demo-show" data-act="demo" title="Réafficher le bandeau des profils et des données d’exemple">${icon('eye')}Afficher le bandeau</button>`:'';
   const sub=S.page==='calendar'?'':`<p>${h[1]}</p>`;
   setHTML($('#heading'),`<div><h1>${h[0]}</h1>${sub}</div>${show?`<div class="head-side">${show}</div>`:''}`);
@@ -2987,14 +3138,14 @@ function attDrawer(){
   for(const e of els){const v=st[e.id];if(cnt[v]!=null){cnt[v]++;marked++;}}
   const sub=esc(`${dayLabel(parse(s.date))} · ${momentOf(s)} · ${gName(c.groupe)}${s.salle?' · Local '+s.salle:''}`);
   let body=choreNote(s);
-  if(!isPast(s)) body+='<p class="help">Ce cours n’a pas encore commencé. Vous pouvez quand même préparer la liste.</p>';
+  if(!isPast(s)) body+='<p class="help">'+W('Cette séance n’a pas encore commencé.','Ce cours n’a pas encore commencé.')+' Vous pouvez quand même préparer la liste.</p>';
   if(!els.length) body+=`<div class="notice"><p>Aucun élève dans ${esc(gName(c.groupe))}. L’administration les inscrit dans le menu Classes.</p></div>`;
   else{
     const chips=['P','A','R','M'].filter(k=>cnt[k]).map(k=>`<span class="chip ${CHIP[k]}">${cnt[k]} ${LBLS[k][cnt[k]>1?1:0]}</span>`).join('');
     body+=`<div class="row"><div class="att-sum">${chips}${els.length-marked?`<span class="chip off">${pl(els.length-marked,'non marqué','non marqués')}</span>`:''}</div><span style="flex:1"></span><button class="btn sm" type="button" data-act="att-all"${els.length===marked?' disabled':''}>Marquer les autres présents</button></div>
     <ul class="att-list">${els.map(e=>`<li><span class="st-num sm" aria-hidden="true">${e.numero!=null&&e.numero!==''?esc(e.numero):'—'}</span><span class="nm">${esc(e.nom)}${e.fonction?`<span class="role-chip">${esc(e.fonction)}</span>`:''}</span><span class="att-btns" role="group" aria-label="${esc('Présence de '+e.nom)}">${['P','A','R','M'].map(v=>`<button type="button" class="ab ab-${v}" id="ab-${esc(e.id)}-${v}" data-act="att-set" data-el="${esc(e.id)}" data-v="${v}" aria-pressed="${st[e.id]===v}" title="${LBL[v]}"><span class="full">${LBL[v]}</span><span class="abbr">${v}</span></button>`).join('')}</span></li>`).join('')}</ul>`;
   }
-  body+=`<label class="field"><span>Remarque pour ce cours</span><textarea id="a-note" data-f="note" rows="2" placeholder="Ex. exercice à l’extérieur, matériel manquant…">${esc(d.draft.note)}</textarea></label>`;
+  body+=`<label class="field"><span>Remarque pour ${W('cette séance','ce cours')}</span><textarea id="a-note" data-f="note" rows="2" placeholder="Ex. exercice à l’extérieur, matériel manquant…">${esc(d.draft.note)}</textarea></label>`;
   let foot;
   if(d.confirmClose) foot=`<p>Les présences modifiées ne sont pas enregistrées.</p><button class="btn primary" type="button" data-act="att-save-close"${dis()}>Enregistrer et fermer</button><button class="btn danger" type="button" data-act="att-discard">Fermer sans enregistrer</button><button class="btn ghost" type="button" data-act="att-keep">Continuer</button>`;
   else{
@@ -3021,8 +3172,8 @@ function infoDrawer(){
   if(!s) return goneHTML();
   const c=s.c;
   const weekly=activeSlots(c).slice().sort((a,b)=>a.jour-b.jour||toMin(a.debut)-toMin(b.debut)).map(sl=>`<li><span class="d">${DAYS[sl.jour-1]?DAYS[sl.jour-1].slice(0,3)+'.':''}</span><span>${moment(toMin(sl.debut),toMin(sl.fin))}${(sl.salle||c.salle)?' · Local '+esc(sl.salle||c.salle):''}</span></li>`).join('');
-  return dTop('Cours',titleOf(c))+`<div class="dr-body">
-    ${s.cancelled?'<div class="notice warn"><p>Ce cours est annulé ce jour-là.</p></div>':choreNote(s)}
+  return dTop(W('Séance','Cours'),titleOf(c))+`<div class="dr-body">
+    ${s.cancelled?'<div class="notice warn"><p>'+W('Cette séance est annulée.','Ce cours est annulé ce jour-là.')+'</p></div>':choreNote(s)}
     <dl class="facts"><div><dt>Quand</dt><dd>${esc(dayLabel(parse(s.date)))}, ${momentOf(s).toLowerCase()}</dd></div><div><dt>Local</dt><dd>${esc(s.salle)||'À confirmer'}</dd></div><div><dt>Enseignant</dt><dd>${esc(tchNames(s))}</dd></div><div><dt>Classe</dt><dd>${esc(gName(c.groupe))}</dd></div></dl>
     <section class="dr-sec"><h3>Chaque semaine</h3><ul class="wlist">${weekly}</ul></section></div>`;
 }
@@ -3061,17 +3212,17 @@ function courseDrawer(){
     if(s){
       const a=attInfo(s), kind=cardKind(tagsOf(s)).kind, cnt={P:0,A:0,R:0,M:0}, lab=sessLabel(s);
       for(const v of Object.values((a.doc&&a.doc.statuts)||{})) if(cnt[v]!=null) cnt[v]++;
-      const status=s.cancelled?(s.movedX?`<span class="chip info">${esc(movedLabel(s))}</span>`:'<span class="chip bad">Cours annulé</span>'):profAbsent(s)?'<span class="chip bad">Enseignant absent</span>':'';
-      const pres=s.cancelled?'<span class="muted">Aucune : le cours est annulé.</span>':a.total?`<b>${a.marked} / ${a.total}</b> élèves marqués${a.marked?` <span class="muted">· ${['P','A','R','M'].filter(k=>cnt[k]).map(k=>pl(cnt[k],LBLS[k][0],LBLS[k][1])).join(' · ')}</span>`:a.past?' <span class="need-t">· à prendre</span>':''}`:'<span class="muted">Aucun élève dans la classe.</span>';
+      const status=s.cancelled?(s.movedX?`<span class="chip info">${esc(movedLabel(s))}</span>`:'<span class="chip bad">'+W('Séance annulée','Cours annulé')+'</span>'):profAbsent(s)?'<span class="chip bad">Enseignant absent</span>':'';
+      const pres=s.cancelled?'<span class="muted">'+W('Aucune : la séance est annulée.','Aucune : le cours est annulé.')+'</span>':a.total?`<b>${a.marked} / ${a.total}</b> élèves marqués${a.marked?` <span class="muted">· ${['P','A','R','M'].filter(k=>cnt[k]).map(k=>pl(cnt[k],LBLS[k][0],LBLS[k][1])).join(' · ')}</span>`:a.past?' <span class="need-t">· à prendre</span>':''}`:'<span class="muted">Aucun élève dans la classe.</span>';
       sessBox=`<section class="sess-box"><div class="sb-head"><p class="per-lg">${esc(dayLabel(parse(s.date)))} · ${momentOf(s)}</p><div class="sb-chips">${kind?`<span class="chip ${sessTone(s)}">${esc(kind)}</span>`:''}${choreChip(s)}${status}</div></div>
-        <dl class="facts sb-facts"><div><dt>Classe</dt><dd>${esc(gName(s.c.groupe))}</dd></div><div><dt>Local</dt><dd>${s.salle?esc(s.salle):'<span class="muted">—</span>'}</dd></div>${lab?`<div><dt>Numéro</dt><dd>${esc(lab.replace(/^Cours /,''))}</dd></div>`:''}<div class="wide"><dt>Présences</dt><dd>${pres}</dd></div></dl>
+        <dl class="facts sb-facts"><div><dt>Classe</dt><dd>${esc(gName(s.c.groupe))}</dd></div><div><dt>Local</dt><dd>${s.salle?esc(s.salle):'<span class="muted">—</span>'}</dd></div>${lab?`<div><dt>${tagsOf(s).includes('Examen')?'Examen':'Cours'}</dt><dd>${esc(lab.replace(/^Cours /,''))}</dd></div>`:''}<div class="wide"><dt>Présences</dt><dd>${pres}</dd></div></dl>
         ${s.cancelled?'':affBoxHTML(s)}
-        <div class="row">${s.cancelled?'':`<button class="btn sm primary" type="button" data-act="goto-att">${a.state==='done'?'Voir les présences':'Prendre les présences'}</button><button class="btn sm" type="button" data-act="move-open">${icon('move')}Déplacer</button>`}${acad()?'':`<button class="btn sm" type="button" data-act="new-exam" data-cours="${esc(s.c.id)}" data-date="${esc(s.date)}">Planifier un examen</button>`}<button class="btn sm${s.cancelled?'':' danger'}" type="button" data-act="s-cancel"${dis()}>${s.cancelled?'Rétablir ce cours':'Annuler ce cours'}</button></div>${s.extra&&!s.cancelled?`<h3 class="sb-h3">Modifier ce cours</h3><div class="grid2"><label class="field"><span>Moment</span>${periodSelect('sb-per',s.sl.debut,s.sl.fin,'data-sb="per"'+(S.busy?' disabled':''))}</label><label class="field"><span>Type de cours</span>${actSelect('sb-act',actOf(tagsOf(s)),'data-sb="act"'+(S.busy?' disabled':''))}</label></div>`:''}${s.cancelled?'':`<label class="chore-check"><input type="checkbox" id="sb-menage" data-sb="menage"${choreOf(s)?' checked':''}${S.busy?' disabled':''}>${icon('broom')}Corvée de ménage pour ${esc(gName(s.grp))}, toute la journée du ${esc(dayLabel(parse(s.date)).toLowerCase())}</label>`}</section>`;
+        <div class="row">${s.cancelled?'':`<button class="btn sm primary" type="button" data-act="goto-att">${a.state==='done'?'Voir les présences':'Prendre les présences'}</button><button class="btn sm" type="button" data-act="move-open">${icon('move')}Déplacer</button>`}${acad()?'':`<button class="btn sm" type="button" data-act="new-exam" data-cours="${esc(s.c.id)}" data-date="${esc(s.date)}">Planifier un examen</button>`}<button class="btn sm${s.cancelled?'':' danger'}" type="button" data-act="s-cancel"${dis()}>${s.cancelled?W('Rétablir cette séance','Rétablir ce cours'):W('Annuler cette séance','Annuler ce cours')}</button></div>${s.extra&&!s.cancelled?`<h3 class="sb-h3">${acad()?'Modifier cette séance':'Modifier ce cours'}</h3><div class="grid2"><label class="field"><span>Moment</span>${periodSelect('sb-per',s.sl.debut,s.sl.fin,'data-sb="per"'+(S.busy?' disabled':''))}</label>${acad()&&(xCours(modOf(s.c),s.extra).length||xExams(modOf(s.c),s.extra).length)?'':`<label class="field"><span>Type</span>${actSelect('sb-act',actOf(tagsOf(s)),'data-sb="act"'+(S.busy?' disabled':''))}</label>`}</div>`:''}${s.cancelled?'':`<label class="chore-check"><input type="checkbox" id="sb-menage" data-sb="menage"${choreOf(s)?' checked':''}${S.busy?' disabled':''}>${icon('broom')}Corvée de ménage pour ${esc(gName(s.grp))}, toute la journée du ${esc(dayLabel(parse(s.date)).toLowerCase())}</label>`}</section>`;
       if(acad()){
         const mk=modOf(s.c), foot=d.confirmDel
-          ?`<p>Supprimer ce cours du ${esc(dayLabel(parse(s.date)).toLowerCase())} ? Les présences déjà prises restent enregistrées.</p><button class="btn danger" type="button" data-act="sx-del-yes"${dis()}>Supprimer</button><button class="btn ghost" type="button" data-act="c-del-no">Annuler</button>`
-          :`${mk?`<button class="btn" type="button" id="c-open-mod" data-act="module" data-id="${esc(mk.code)}" data-g="${esc(s.c.groupe)}">Ouvrir le module ${esc(s.c.code)}</button>`:`<button class="btn" type="button" data-act="edit-course" data-id="${esc(s.c.id)}">Réglages de l’activité</button>`}${s.extra?'<button class="btn ghost" type="button" data-act="c-del">Supprimer ce cours</button>':''}`;
-        return dTop(mk?'Cours':'Activité',titleOf(s.c),esc(gName(s.c.groupe)))+`<div class="dr-body">${sessBox}</div><div class="dr-foot">${foot}</div>`;
+          ?`<p>Supprimer ${mk?'cette séance':'cette activité'} du ${esc(dayLabel(parse(s.date)).toLowerCase())} ? Les présences déjà prises restent enregistrées.</p><button class="btn danger" type="button" data-act="sx-del-yes"${dis()}>Supprimer</button><button class="btn ghost" type="button" data-act="c-del-no">Annuler</button>`
+          :`${mk?`<button class="btn" type="button" id="c-open-mod" data-act="module" data-id="${esc(mk.code)}" data-g="${esc(s.c.groupe)}">Ouvrir le module ${esc(s.c.code)}</button>`:`<button class="btn" type="button" data-act="edit-course" data-id="${esc(s.c.id)}">Réglages de l’activité</button>`}${s.extra?`<button class="btn ghost" type="button" data-act="c-del">${mk?'Supprimer cette séance':'Supprimer cette journée'}</button>`:''}`;
+        return dTop(mk?'Séance':'Activité',titleOf(s.c),esc(gName(s.c.groupe)))+`<div class="dr-body">${sessBox}</div><div class="dr-foot">${foot}</div>`;
       }
       sessBox+='<h3 class="dr-h3">Le cours, toutes les semaines</h3>';
     }
@@ -3089,7 +3240,7 @@ function courseDrawer(){
   const extras=prevC?(prevC.extras||[]).filter(x=>x.de&&x.date>=t0).sort((a,b)=>a.date.localeCompare(b.date)):[];
   const dated=prevC?datedOf(prevC).slice().sort((a,b)=>a.date.localeCompare(b.date)||a.debut.localeCompare(b.debut)):[], tday=todayISO(), upc=dated.filter(x=>x.date>=tday);
   const plannedH=Math.round(dated.reduce((n,x)=>n+((prevC.annulees||[]).includes(`${x.date}@${x.id}`)?0:sessMinutes(x)),0)/60);
-  const datedHTML=dated.length?`<section class="dr-sec"><h3>${acad()?'Les cours':'Cours datés de l’horaire annuel'}</h3><p class="help">${pl(dated.length,'cours','cours')} · ${plannedH} h planifiées${heuresOf(prevC)?` sur ${heuresOf(prevC)} h prévues`:''} · ${upc.length} à venir.</p>${upc.length?`<ul class="plist">${upc.slice(0,6).map(x=>`<li><span><b>${esc(dayLabel(parse(x.date)))}</b> <span class="muted">${moment(toMin(x.debut),toMin(x.fin)).toLowerCase()}${x.label&&x.label.toLowerCase()!==String(prevC.titre).toLowerCase()?' · '+esc(x.label):''}</span></span><span class="cc-tags">${(x.tags||[]).map(t=>`<span class="chip ${TAGCHIP[t]||'off'}">${esc(t)}</span>`).join('')}</span></li>`).join('')}</ul>${upc.length>6?`<p class="help">Et ${upc.length-6} autres cours.</p>`:''}`:''}</section>`:'';
+  const datedHTML=dated.length?`<section class="dr-sec"><h3>${acad()?'Les séances':'Cours datés de l’horaire annuel'}</h3><p class="help">${pl(dated.length,W('séance','cours'),W('séances','cours'))} · ${plannedH} h planifiées${heuresOf(prevC)?` sur ${heuresOf(prevC)} h prévues`:''} · ${upc.length} à venir.</p>${upc.length?`<ul class="plist">${upc.slice(0,6).map(x=>`<li><span><b>${esc(dayLabel(parse(x.date)))}</b> <span class="muted">${moment(toMin(x.debut),toMin(x.fin)).toLowerCase()}${x.label&&x.label.toLowerCase()!==String(prevC.titre).toLowerCase()?' · '+esc(x.label):''}</span></span><span class="cc-tags">${(x.tags||[]).map(t=>`<span class="chip ${TAGCHIP[t]||'off'}">${esc(t)}</span>`).join('')}</span></li>`).join('')}</ul>${upc.length>6?`<p class="help">Et ${upc.length-6} autres ${W('séances','cours')}.</p>`:''}`:''}</section>`:'';
   const extrasHTML=extras.length?`<section class="dr-sec"><h3>Changements ponctuels</h3><ul class="plist">${extras.map(x=>{const od=x.de?parse(x.de.split('@')[0]):null;return `<li><span><b>${esc(dayLabel(parse(x.date)))}, ${moment(toMin(x.debut),toMin(x.fin)).toLowerCase()}</b>${od?` <span class="muted">au lieu du ${esc(dayLabel(od).toLowerCase())}</span>`:''}</span><button type="button" class="btn sm ghost" data-act="x-extra" data-id="${esc(x.id)}"${dis()}>Remettre comme avant</button></li>`;}).join('')}</ul></section>`:'';
   const ks=comps(), kSel=ks.find(k=>k.nom===f.titre), custom=!!ks.length&&(d.customName||(!!f.titre&&!kSel));
   const nameField=!ks.length
@@ -3100,15 +3251,15 @@ function courseDrawer(){
     const pc=prevC||{}, mk=modOf(pc), gl=gName(f.groupe);
     const bodyA=`<form id="c-form" data-form="course" novalidate>
       ${mk?'':`<label class="field"><span>Nom de l’activité</span><input id="c-titre" data-f="titre" value="${esc(f.titre)}" maxlength="80" autocomplete="off"></label>`}
-      <div class="grid2"><label class="field"><span>Classe</span><select id="c-groupe" data-f="groupe" disabled>${gOpts}</select></label><label class="field"><span>Titulaire</span><select id="c-ens" data-f="enseignant">${tOpts}</select></label></div>
+      <div class="grid2"><label class="field"><span>Classe</span><select id="c-groupe" data-f="groupe" disabled>${gOpts}</select></label>${mk?`<label class="field"><span>Chargé de cours</span><input id="c-ens-ro" value="${esc(f.enseignant&&byId(S.data.enseignants,f.enseignant)?tName(f.enseignant):'À choisir dans le module')}" disabled></label>`:`<label class="field"><span>Responsable</span><select id="c-ens" data-f="enseignant">${tOpts}</select></label>`}</div>
       <div class="grid2"><label class="field"><span>Local habituel</span><input id="c-salle" data-f="salle" value="${esc(f.salle)}" maxlength="40" placeholder="Ex. Salle 2" autocomplete="off"></label>
       <fieldset style="padding-top:4px"><legend>Couleur</legend><div class="swatches">${colors}</div></fieldset></div>
       ${f.creneaux.length?`<fieldset><legend>Périodes chaque semaine</legend>${rows}</fieldset>`:''}
-      <p class="help">${mk?'Le titulaire donne tous les cours du module pour cette classe, sauf ceux dont on le retire. Le nom et les heures se règlent dans le menu Modules.':'Une activité n’appartient à aucun module : aucun enseignant n’est requis par défaut.'}</p>
+      <p class="help">${mk?'Le chargé de cours donne les séances du module à toutes les classes. Il se choisit dans le menu Modules, comme le nom et les heures.':'Une activité n’appartient à aucun module : aucun enseignant n’est requis par défaut.'}</p>
       ${d.warn?`<div class="notice warn"><p><b>Conflits d’horaire.</b> Vérifiez avant d’enregistrer.</p><ul>${d.warn.map(w=>`<li>${esc(w)}</li>`).join('')}</ul></div>`:''}
       ${d.err?`<p class="form-err" role="alert">${esc(d.err)}</p>`:''}</form>${datedHTML}${extrasHTML}`;
     const footA=d.confirmDel
-      ?`<p>Retirer « ${esc(f.titre)} » de ${esc(gl)} ? Tous ses cours disparaissent de l’horaire. Les présences déjà prises restent enregistrées.</p><button class="btn danger" type="button" data-act="c-del-yes"${dis()}>Retirer</button><button class="btn ghost" type="button" data-act="c-del-no">Annuler</button>`
+      ?`<p>Retirer « ${esc(f.titre)} » de ${esc(gl)} ? Toutes ses séances disparaissent de l’horaire. Les présences déjà prises restent enregistrées.</p><button class="btn danger" type="button" data-act="c-del-yes"${dis()}>Retirer</button><button class="btn ghost" type="button" data-act="c-del-no">Annuler</button>`
       :`<button class="btn primary" type="submit" form="c-form"${dis()}>${d.warn?'Enregistrer quand même':'Enregistrer'}</button><button class="btn ghost" type="button" data-act="c-del">${mk?'Retirer le module de la classe':'Supprimer l’activité'}</button>`;
     return dTop(mk?'Module de la classe':'Activité',titleOf(Object.assign({},f,{titre:f.titre||'Sans nom'})),esc(gl))+`<div class="dr-body">${bodyA}</div><div class="dr-foot">${footA}</div>`;
   }
@@ -3149,7 +3300,7 @@ async function saveCourse(force){
     annulees:prev&&prev.annulees?[...prev.annulees]:[],extras:prev&&prev.extras?JSON.parse(JSON.stringify(prev.extras)):[]};
   const id=d.id||genId('c');
   S.busy=true;d.err='';renderDrawer();
-  const ok=await write(()=>col('cours').doc(id).set(doc),d.id?'Cours enregistré':'Cours ajouté');
+  const ok=await write(()=>putCours(id,doc),d.id?W('Enregistré','Cours enregistré'):'Cours ajouté');
   S.busy=false;
   if(ok&&S.dr===d) S.dr=null;
   render();
@@ -3185,7 +3336,7 @@ function moveWarnings(s,t,toDate,a,b){
   }
   for(const o of sessionsOn(toDate)){
     if(o.key===s.key||o.cancelled||!(o.start<b&&a<o.end)) continue;
-    if(o.grp===s.grp) w.push(`${gName(s.grp)} a déjà ${o.c.titre} ${momentIn(o.start,o.end)}. Glissez plutôt sur ce cours pour les échanger.`);
+    if(o.grp===s.grp) w.push(`${gName(s.grp)} a déjà ${o.c.titre} ${momentIn(o.start,o.end)}. Glissez plutôt sur ${W('cette séance','ce cours')} pour les échanger.`);
     else for(const tt of (s.tch||[]).filter(q=>q&&o.tch.includes(q))) w.push(`${tName(tt)} donne déjà ${o.c.titre} (${gName(o.grp)}) ${momentIn(o.start,o.end)}.`);
   }
   for(const e of S.data.examens) if(!e.seance&&e.date===toDate&&e.groupe===s.grp&&toMin(e.debut)<b&&a<toMin(e.fin)) w.push(`${gName(s.grp)} a un examen (${e.titre||'examen'}) ${momentIn(toMin(e.debut),toMin(e.fin))}.`);
@@ -3201,10 +3352,10 @@ function moveDrawer(){
   const warn=moveWarnings(s,t,d.toDate,a,b), off=offDay(d.toDate);
   let body, title, eyebrow;
   if(t){
-    eyebrow='Échanger deux cours';title=`${esc(s.c.titre)} ⇄ ${esc(t.c.titre)}`;
+    eyebrow=W('Échanger deux séances','Échanger deux cours');title=`${esc(s.c.titre)} ⇄ ${esc(t.c.titre)}`;
     body=`<div class="mv-route"><div class="mv-box"><small>${esc(s.c.titre)} passe au</small><b>${esc(dayLabel(parse(t.date)))}</b><span>${momentOf(t)}</span></div><span class="mv-arrow" aria-hidden="true">⇄</span><div class="mv-box"><small>${esc(t.c.titre)} passe au</small><b>${esc(dayLabel(src))}</b><span>${momentOf(s)}</span></div></div>`;
   }else{
-    eyebrow='Déplacer un cours';title=esc(s.c.titre);
+    eyebrow=W('Déplacer une séance','Déplacer un cours');title=esc(s.c.titre);
     const mon=monday(src);
     const dayOpts=[0,1,2,3,4].map(i=>{const x=addDays(mon,i),ds=iso(x),o=offDay(ds);return `<option value="${ds}"${ds===d.toDate?' selected':''}${o?' disabled':''}>${esc(dayLabel(x))}${o?' ('+esc(o)+')':''}</option>`;}).join('');
     const timeOpts=periodOptions(d.time).map(k=>{const [x,y]=k.split('-'),p=PERIODES.find(z=>z.debut===x&&z.fin===y);return `<option value="${k}"${k===d.time?' selected':''}>${p?p.label:moment(toMin(x),toMin(y))+' ('+fmtT(x)+' – '+fmtT(y)+')'}</option>`;}).join('');
@@ -3212,7 +3363,7 @@ function moveDrawer(){
       <div class="grid2"><label class="field"><span>Jour</span><select id="mv-day" data-mv="toDate">${dayOpts}</select></label><label class="field"><span>Période</span><select id="mv-time" data-mv="time">${timeOpts}</select></label></div>`;
   }
   const once=t?`Seulement cette semaine`:`Seulement le ${dn(src)} ${fMonth.format(src)}`;
-  const onceSub=t?'Les deux cours changent de place cette semaine. Les autres semaines ne changent pas.':`Le cours du ${wdS} ${dn(src)} est donné le ${wdT} ${dn(to)}. Les autres semaines ne changent pas.`;
+  const onceSub=t?W('Les deux séances changent de place.','Les deux cours changent de place cette semaine. Les autres semaines ne changent pas.'):acad()?`La séance du ${wdS} ${dn(src)} est donnée le ${wdT} ${dn(to)}.`:`Le cours du ${wdS} ${dn(src)} est donné le ${wdT} ${dn(to)}. Les autres semaines ne changent pas.`;
   const weeklySub=t?'Les deux périodes sont échangées pour cette semaine et les suivantes. Les semaines passées ne changent pas.':`Le cours du ${wdS} devient un cours du ${wdT} ${momentIn(a,b)}, dès cette semaine. Les semaines passées ne changent pas.`;
   body+=`<div class="choice" role="radiogroup" aria-label="Portée du changement">
     <label class="opt"><input type="radio" name="mv-scope" value="once"${d.scope==='once'?' checked':''}><div><b>${once}</b><span>${onceSub}</span></div></label>
@@ -3225,7 +3376,42 @@ function moveDrawer(){
   const foot=`<button class="btn primary" type="button" data-act="mv-apply"${S.busy||off?' disabled':''}>${t?'Échanger':'Déplacer'}${warn.length?' quand même':''}</button><button class="btn ghost" type="button" data-act="close">Annuler</button>`;
   return dTop(eyebrow,title,sub)+`<div class="dr-body">${body}</div><div class="dr-foot">${foot}</div>`;
 }
-const courseDoc=c=>{const o=JSON.parse(JSON.stringify(c));delete o.id;o.annulees=o.annulees||[];o.extras=o.extras||[];o.creneaux=o.creneaux||[];return o;};
+const courseDoc=c=>{const o=JSON.parse(JSON.stringify(c));delete o.id;delete o.ens0;delete o.seances;o.annulees=o.annulees||[];o.extras=o.extras||[];o.creneaux=o.creneaux||[];return o;};
+/* ---------- Séances : chaque séance d’une classe s’enregistre à part, dans cours/<id>.seances = { idSéance: {…} }.
+   Deux personnes peuvent ainsi modifier deux séances du même module sans s’écraser.
+   L’ancien tableau « extras » reste lu ; en mémoire, c.extras est toujours la liste des séances du cours. ---------- */
+let RAWC=[];
+function normCours(raw){
+  const ch=new Map(comps().filter(k=>k.charge).map(k=>[+k.code,k.charge]));
+  return raw.map(r=>{
+    const c=Object.assign({},r), m=new Map();
+    for(const x of r.extras||[]) if(x&&x.id) m.set(x.id,x);
+    for(const [id,v] of Object.entries(r.seances||{})){
+      if(!v){m.delete(id);continue;}
+      const o=Object.assign({},m.get(id),v,{id});
+      for(const k of Object.keys(o)) if(o[k]===null) delete o[k];
+      m.set(id,o);
+    }
+    c.extras=[...m.values()].sort((a,b)=>String(a.date).localeCompare(String(b.date))||String(a.debut).localeCompare(String(b.debut)));
+    delete c.seances;
+    /* Le chargé de cours du module donne ses séances à toutes les classes */
+    const t=ch.get(modKey(r));
+    if(t){c.ens0=r.enseignant||'';c.enseignant=t;}
+    return c;
+  });
+}
+/* Écrit seulement ce qui a changé dans cours/<id> : une séance ajoutée, modifiée ou retirée part seule */
+const xBody=(x,old)=>{const o=Object.assign({},x);delete o.id;if(old)for(const k of Object.keys(old))if(k!=='id'&&!(k in o))o[k]=null;return o;};
+function putCours(id,doc){
+  const c0=byId(S.data.cours,id), same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
+  if(!c0){const o=Object.assign({},doc);delete o.id;delete o.ens0;o.seances={};for(const x of doc.extras||[])o.seances[x.id]=xBody(x);delete o.extras;return col('cours').doc(id).set(o);}
+  const p={}, a=new Map((c0.extras||[]).map(x=>[x.id,x])), b=new Map((doc.extras||[]).map(x=>[x.id,x])), sx={};
+  for(const k of Object.keys(doc)) if(k!=='extras'&&k!=='seances'&&k!=='id'&&k!=='ens0'&&!same(doc[k],c0[k])) p[k]=doc[k];
+  for(const [xid,x] of b) if(!a.has(xid)||!same(a.get(xid),x)) sx[xid]=xBody(x,a.get(xid));
+  for(const xid of a.keys()) if(!b.has(xid)) sx[xid]=null;
+  if(Object.keys(sx).length) p.seances=sx;
+  return Object.keys(p).length?col('cours').doc(id).update(p):Promise.resolve();
+}
 function moveSlotWeekly(cr,sid,jour,debut,fin,eff){
   const i=cr.findIndex(s=>s.id===sid);if(i<0)return cr;
   const s=cr[i];
@@ -3269,11 +3455,11 @@ async function applyMove(){
   }else if(weekly){const dc=get(s.c);dc.creneaux=moveSlotWeekly(dc.creneaux,s.sl.id,jourOf(d.toDate),deb,fin,eff);}
   else moveOnce(get(s.c),s,d.toDate,deb,fin);
   S.busy=true;renderDrawer();
-  const ok=await write(async()=>{for(const [id,doc] of docs) await col('cours').doc(id).set(doc);});
+  const ok=await write(async()=>{for(const [id,doc] of docs) await putCours(id,doc);});
   S.busy=false;
   if(ok){
     if(S.dr===d) S.dr=null;
-    toast(t?'Cours échangés':'Cours déplacé',null,{label:'Annuler',fn:()=>write(async()=>{for(const [id,doc] of prev) await col('cours').doc(id).set(doc);},'Changement annulé')});
+    toast(t?W('Séances échangées','Cours échangés'):W('Séance déplacée','Cours déplacé'),null,{label:'Annuler',fn:()=>write(async()=>{for(const [id,doc] of prev) await putCours(id,doc);},'Changement annulé')});
   }
   render();
 }
@@ -3297,7 +3483,7 @@ function examDrawer(){
     const x=allExamItems().find(k=>k.key===d.sess);if(!x) return goneHTML('Examen');
     const can=canEditItem(x);
     const body=`<form id="x-form" data-form="exam" novalidate><dl class="facts"><div><dt>Quand</dt><dd>${esc(dayLabel(parse(x.date)))}, ${esc(momentOf(x).toLowerCase())}</dd></div><div><dt>Classe</dt><dd>${esc(gName(x.grp))}</dd></div><div><dt>Enseignant</dt><dd>${x.c&&x.c.enseignant?esc(tName(x.c.enseignant)):'—'}</dd></div></dl>${examResultsHTML(f,can)||'<p class="help">Aucun élève dans cette classe.</p>'}${d.err?`<p class="form-err" role="alert">${esc(d.err)}</p>`:''}</form>`;
-    const foot=can?`<button class="btn primary" type="submit" form="x-form"${dis()}>Enregistrer les résultats</button><button class="btn ghost" type="button" data-act="sess-at" data-key="${esc(x.key)}" data-date="${x.date}">Voir le cours</button>`:'';
+    const foot=can?`<button class="btn primary" type="submit" form="x-form"${dis()}>Enregistrer les résultats</button><button class="btn ghost" type="button" data-act="sess-at" data-key="${esc(x.key)}" data-date="${x.date}">Voir ${W('la séance','le cours')}</button>`:'';
     return dTop('Résultats de l’examen',xTitle(x),esc(x.e.titre&&x.e.titre!=='Examen'?x.e.titre:''))+`<div class="dr-body">${body}</div>${foot?`<div class="dr-foot">${foot}</div>`:''}`;
   }
   if(d.id&&!e) return goneHTML('Examen');
@@ -3436,7 +3622,7 @@ function staffDrawer(){
     <label class="field"><span>Remarques</span><textarea id="sf-notes" data-f="notes" rows="3">${esc(f.notes)}</textarea></label>
     <p class="help">Le téléphone, la date d’embauche et les remarques ne sont visibles que par l’administration.</p>
     ${d.err?`<p class="form-err" role="alert">${esc(d.err)}</p>`:''}</form>
-    ${cs.length?`<section class="dr-sec"><h3>Cours assignés</h3><ul class="plist">${cs.map(c=>`<li><span>${esc(c.titre)} · ${esc(gName(c.groupe))}</span><span class="muted sm">${pl(activeSlots(c).length,'période','périodes')}</span></li>`).join('')}</ul></section>`:''}`;
+    ${cs.length?`<section class="dr-sec"><h3>${W('Modules et activités','Cours assignés')}</h3><ul class="plist">${cs.map(c=>`<li><span>${esc(c.titre)} · ${esc(gName(c.groupe))}</span><span class="muted sm">${pl(activeSlots(c).length,'période','périodes')}</span></li>`).join('')}</ul></section>`:''}`;
   const foot=d.confirmDel
     ?`<p>Supprimer le dossier de ${esc(f.nom||'ce membre')} ? ${cs.length?`Ses ${cs.length} cours resteront à l’horaire, à assigner.`:''}</p><button class="btn danger" type="button" data-act="sf-del-yes"${dis()}>Supprimer</button><button class="btn ghost" type="button" data-act="sf-del-no">Annuler</button>`
     :`<button class="btn primary" type="submit" form="sf-form"${dis()}>${d.id?'Enregistrer':'Ajouter au personnel'}</button>${d.id?'<button class="btn ghost" type="button" data-act="sf-del">Supprimer le dossier</button>':''}`;
@@ -3582,7 +3768,7 @@ document.addEventListener('click',async e=>{
       if(!d||!d.id||S.busy)break;const c=byId(S.data.cours,d.id);if(!c)break;
       const doc=courseDoc(c), x=doc.extras.find(e=>e.id===b.dataset.id);if(!x)break;
       doc.extras=doc.extras.filter(e=>e.id!==x.id);if(x.de)doc.annulees=doc.annulees.filter(t=>t!==x.de);
-      S.busy=true;renderDrawer();await write(()=>col('cours').doc(c.id).set(doc),'Cours remis à son horaire habituel');S.busy=false;render();break;}
+      S.busy=true;renderDrawer();await write(()=>putCours(c.id,doc),'Cours remis à son horaire habituel');S.busy=false;render();break;}
     case 'exam':openExam(b.dataset.id);break;
     case 'sess-at':{const s=findSess(b.dataset.date,b.dataset.key);if(!s)break;const base={key:s.key,coursId:s.c.id,slotId:s.sl.id,date:s.date};
       if(S.role==='admin')openCourse(s.c.id,{key:s.key,date:s.date,slotId:s.sl.id});else if(S.role==='teacher'&&!s.cancelled)openDrawer(Object.assign({kind:'att',dirty:false,draft:{statuts:{},note:''}},base));else openDrawer(Object.assign({kind:'info'},base));break;}
@@ -3590,7 +3776,7 @@ document.addEventListener('click',async e=>{
     case 'x-open':openSessExam(b.dataset.key);break;
     case 'x-rep':await setExamResult(b.dataset.key,b.dataset.el,'reprise');break;
     case 'x-res':{if(!d||d.kind!=='exam')break;const r=d.draft.resultats||(d.draft.resultats={}),id=b.dataset.el,v=b.dataset.v;if(r[id]===v)delete r[id];else r[id]=v;renderDrawer();break;}
-    case 'new-exam':if(acad())openAddCourse(Object.assign({type:'examen-t'},S.pg.g?{groupe:S.pg.g}:null));else openExam(null,b.dataset.cours?{cours:b.dataset.cours,date:b.dataset.date||''}:null);break;
+    case 'new-exam':if(acad())openAddCourse(S.pg.g?{groupe:S.pg.g}:null);else openExam(null,b.dataset.cours?{cours:b.dataset.cours,date:b.dataset.date||''}:null);break;
     case 'student':openFiche('eleves',b.dataset.id);break;
     case 'st-edit':openStudent(b.dataset.id);break;
     case 'new-student':openStudent(null);break;
@@ -3637,18 +3823,18 @@ document.addEventListener('click',async e=>{
       if(!d||!d.sess||S.busy)break;const c=byId(S.data.cours,d.id);if(!c)break;
       const tag=`${d.sess.date}@${d.sess.slotId}`, arr=[...(c.annulees||[])], i=arr.indexOf(tag);
       if(i>=0)arr.splice(i,1);else arr.push(tag);
-      S.busy=true;renderDrawer();await write(()=>col('cours').doc(c.id).update({annulees:arr}),i>=0?'Cours rétabli':'Cours annulé pour cette date');S.busy=false;render();break;}
+      S.busy=true;renderDrawer();await write(()=>col('cours').doc(c.id).update({annulees:arr}),i>=0?W('Séance rétablie','Cours rétabli'):W('Séance annulée','Cours annulé pour cette date'));S.busy=false;render();break;}
     /* classes */
     case 'class':openFiche('classes',b.dataset.id);break;
-    case 'module':{const mg=b.dataset.g;openFiche('modules',String(b.dataset.id));if(mg){S.pg.mg=mg;render();}break;}
-    case 'sx-del-yes':{if(!d||!d.sess||S.busy)break;const c0=byId(S.data.cours,d.id);if(!c0)break;const doc=courseDoc(c0), xid=d.sess.slotId;doc.extras=doc.extras.filter(x=>x.id!==xid&&!(x.de&&String(x.de).endsWith('@'+xid)));doc.annulees=doc.annulees.filter(t=>!String(t).endsWith('@'+xid));S.dr=null;await affWrite(()=>col('cours').doc(c0.id).set(doc),'Cours supprimé');break;}
+    case 'module':{const mg=b.dataset.g;openFiche('modules',String(b.dataset.id));if(mg){S.pg.mg=mg;S.pg.tab='seances';render();}break;}
+    case 'sx-del-yes':{if(!d||!d.sess||S.busy)break;const c0=byId(S.data.cours,d.id);if(!c0)break;const doc=courseDoc(c0), xid=d.sess.slotId;doc.extras=doc.extras.filter(x=>x.id!==xid&&!(x.de&&String(x.de).endsWith('@'+xid)));doc.annulees=doc.annulees.filter(t=>!String(t).endsWith('@'+xid));S.dr=null;await affWrite(()=>putCours(c0.id,doc),acad()?'Séance supprimée':'Cours supprimé');break;}
     /* affectations */
     case 'af-apply':{const se=findSess(b.dataset.date,b.dataset.key);if(!se||!S.teacher)break;await affSetStatus(se,S.teacher,'attente','Candidature envoyée');break;}
     case 'af-withdraw':{const id=candId(b.dataset.key,S.teacher), c0=byId(S.data.candidatures,id);if(!c0||c0.statut!=='attente')break;await affWrite(()=>col('candidatures').doc(id).delete(),'Candidature retirée');break;}
     case 'af-remp-cancel':{const id=candId(b.dataset.key,S.teacher);if(!byId(S.data.remplacements,id))break;await affWrite(()=>col('remplacements').doc(id).delete(),'Demande de remplacement annulée');break;}
     case 'af-remp-no':{const id=b.dataset.id;if(!byId(S.data.remplacements,id))break;await affWrite(()=>col('remplacements').doc(id).delete(),'Demande de remplacement refusée');break;}
-    case 'af-approve':case 'af-refuse':{const c0=byId(S.data.candidatures,b.dataset.id);if(!c0)break;const ok=a==='af-approve';await affWrite(()=>col('candidatures').doc(c0.id).update({statut:ok?'approuve':'refuse',maj:new Date().toISOString()}),ok?`${tName(c0.enseignant)} est approuvé pour ce cours`:'Candidature refusée');break;}
-    case 'af-retire':{const se=findSess(b.dataset.date,b.dataset.key);if(!se)break;await affSetStatus(se,b.dataset.t,'retire',`${tName(b.dataset.t)} est retiré de ce cours`);break;}
+    case 'af-approve':case 'af-refuse':{const c0=byId(S.data.candidatures,b.dataset.id);if(!c0)break;const ok=a==='af-approve';await affWrite(()=>col('candidatures').doc(c0.id).update({statut:ok?'approuve':'refuse',maj:new Date().toISOString()}),ok?`${tName(c0.enseignant)} est approuvé pour ${W('cette séance','ce cours')}`:'Candidature refusée');break;}
+    case 'af-retire':{const se=findSess(b.dataset.date,b.dataset.key);if(!se)break;await affSetStatus(se,b.dataset.t,'retire',`${tName(b.dataset.t)} est retiré de ${W('cette séance','ce cours')}`);break;}
     case 'af-req':{const se=findSess(b.dataset.date,b.dataset.key);if(!se||S.busy)break;await affReq(se,+b.dataset.d||0);break;}
     /* disponibilités */
     case 'dp-month':{const ym=/^\d{4}-\d{2}$/.test(pg.dm||'')?pg.dm:todayISO().slice(0,7), [Y,M]=ym.split('-').map(Number), x=new Date(Y,M-1+(+b.dataset.n||0),1);pg.dm=x.getFullYear()+'-'+pad(x.getMonth()+1);render();const f=$('#'+b.id);if(f)f.focus({preventScroll:true});break;}
@@ -3660,8 +3846,17 @@ document.addEventListener('click',async e=>{
     case 'dp-save':{const dr=pg.dd;if(!dr||!dr.dirty||S.busy)break;const lim=iso(addDays(new Date(),-45)), jours={};for(const [k,v] of Object.entries(dr.jours))if(k>=lim&&DISPO[v])jours[k]=v;
       S.busy=true;render();const ok=await write(()=>col('disponibilites').doc(dr.tid).set({jours,maj:new Date().toISOString()}),'Disponibilités enregistrées');S.busy=false;if(ok)dr.dirty=false;render();break;}
     /* modules */
-    case 'md-del':{if(S.busy)break;const c0=configDoc();c0.competences=c0.competences.filter(x=>String(x.code)!==String(b.dataset.code));pg.fiche=null;pg.ask='';await saveConfig(c0,'Module retiré du programme');break;}
-    case 'md-del-x':{if(S.busy)break;const c0=byId(S.data.cours,b.dataset.c);if(!c0)break;const doc=courseDoc(c0), xid=b.dataset.x;doc.extras=doc.extras.filter(x=>x.id!==xid&&!(x.de&&String(x.de).endsWith('@'+xid)));doc.annulees=doc.annulees.filter(t=>!String(t).endsWith('@'+xid));pg.askx='';await affWrite(()=>col('cours').doc(c0.id).set(doc),'Cours supprimé');break;}
+    case 'md-del':{if(S.busy)break;const code=b.dataset.code, c0=configDoc(), k0=c0.competences.find(x=>String(x.code)===String(code));if(!k0)break;
+      /* Un module qui a des cours ne se supprime pas */
+      if(mCours(k0).length||mExams(k0).length||modCourses(code).some(c=>datedOf(c).length)){pg.ask='';toast(`Le module M${code} a des cours : il ne peut pas être supprimé.`,'bad');render();break;}
+      c0.competences=c0.competences.filter(x=>String(x.code)!==String(code));pg.fiche=null;pg.ask='';await saveConfig(c0,`Module M${code} supprimé`);break;}
+    case 'mc-req':{const id=b.dataset.id;let n=0;
+      await editModule(b.dataset.code,m=>{const c=m.cours.find(x=>x.id===id);if(!c)return false;c.requis=n=Math.max(0,Math.min(9,cReq(c)+(+b.dataset.d||0)));},()=>pl(n,'enseignant requis','enseignants requis'));break;}
+    case 'mc-del':case 'me-del':{const id=b.dataset.id, code=b.dataset.code, ex=a==='me-del';
+      if(modUse(code).n(id)){toast('Déjà à l’horaire d’une classe : retirez d’abord ses séances.','bad');break;}
+      pg.askc='';pg.aske='';
+      await editModule(code,m=>{if(ex)m.examens=m.examens.filter(x=>x.id!==id);else m.cours=m.cours.filter(x=>x.id!==id);},ex?'Examen retiré du module':'Cours retiré du module');break;}
+    case 'md-del-x':{if(S.busy)break;const c0=byId(S.data.cours,b.dataset.c);if(!c0)break;const doc=courseDoc(c0), xid=b.dataset.x;doc.extras=doc.extras.filter(x=>x.id!==xid&&!(x.de&&String(x.de).endsWith('@'+xid)));doc.annulees=doc.annulees.filter(t=>!String(t).endsWith('@'+xid));pg.askx='';await affWrite(()=>putCours(c0.id,doc),'Séance supprimée');break;}
     case 'sf-comp-all':document.querySelectorAll('[data-form=sf-comp] input[name=comp]').forEach(i=>{i.checked=!!b.dataset.v;});break;
     case 'stop':break;
     case 'm-adding':pg.adding=!pg.adding;render();if(pg.adding){const x=$('#m-gname');if(x)x.focus();}break;
@@ -3694,14 +3889,32 @@ document.addEventListener('submit',async e=>{
     const isNew=k==='md-add', code=isNew?Math.round(+$('#md-code').value):+f.dataset.code, nom=String($('#md-nom').value||'').trim();
     if(!code||code<1){toast('Indiquez le numéro du module.','bad');return;}
     if(!nom){toast('Indiquez le nom du module.','bad');return;}
-    const rq=numOrNull($('#md-req').value);
-    const ok=await saveModule(code,{nom,heuresT:numOrNull($('#md-ht').value),heuresP:numOrNull($('#md-hp').value),requis:rq==null?1:Math.min(9,rq)},isNew);
+    const ok=await saveModule(code,{nom,heuresT:numOrNull($('#md-ht').value),heuresP:numOrNull($('#md-hp').value),charge:$('#md-charge').value},isNew);
     if(ok&&isNew){S.pg.adding='';S.pg.justAdded=String(code);openFiche('modules',String(code));}
     return;
   }
   if(k==='md-add-x'){
-    const msg=await addCourseDay({groupe:f.dataset.g,module:f.dataset.code,date:$('#mx-date').value,per:$('#mx-per').value,type:$('#mx-type').value,label:$('#mx-label').value});
-    if(msg&&msg!=='L’enregistrement a échoué.')toast(msg,'bad');
+    const pkey=f.dataset.code+'|'+f.dataset.g, items=S.pg.pick&&S.pg.pick.key===pkey?S.pg.pick.items:[];
+    const msg=await addCourseDay({groupe:f.dataset.g,module:f.dataset.code,date:$('#mx-date').value,per:$('#mx-per').value,items});
+    if(msg){if(msg!=='L’enregistrement a échoué.')toast(msg,'bad');}else{S.pg.pick=null;render();}
+    return;
+  }
+  if(k==='mc-add'){
+    const code=f.dataset.code, num=String($('#mc-num').value||'').trim(), type=$('#mc-type').value, rq=numOrNull($('#mc-req').value);
+    if(!num){toast('Indiquez le numéro du cours.','bad');return;}
+    const ok=await editModule(code,m=>{
+      if(m.cours.some(c=>String(c.num).trim().toLowerCase()===num.toLowerCase())){toast(`Le cours ${num} existe déjà dans le module M${code}.`,'bad');return false;}
+      m.cours.push({id:genId('k'),num,type:COURS_TYPES.includes(type)?type:'theorie',requis:rq==null?1:Math.min(9,rq)});},'Cours ajouté au module');
+    if(ok){const i=$('#mc-num');if(i){i.value='';i.focus();}}
+    return;
+  }
+  if(k==='me-add'){
+    const code=f.dataset.code, nom=String($('#me-nom').value||'').trim(), type=$('#me-type').value;
+    if(!nom){toast('Indiquez le nom de l’examen.','bad');return;}
+    const ok=await editModule(code,m=>{
+      if(m.examens.some(x=>String(x.nom).trim().toLowerCase()===nom.toLowerCase())){toast(`L’examen « ${nom} » existe déjà dans le module M${code}.`,'bad');return false;}
+      m.examens.push({id:genId('e'),type:EXAM_T[type]?type:'t',nom});},'Examen ajouté au module');
+    if(ok){const i=$('#me-nom');if(i){i.value='';i.focus();}}
     return;
   }
   if(k==='exam'){if(d&&d.kind==='exam')await saveExam(!!d.warn);return;}
@@ -3771,7 +3984,7 @@ document.addEventListener('input',e=>{
     if(t.dataset.i!=null){const s=d.draft.creneaux[+t.dataset.i];if(s)s[f]=t.value;}else d.draft[f]=t.value;
     if(f==='titre'){const k=comps().find(x=>x.nom.toLowerCase()===t.value.trim().toLowerCase());if(k&&!d.draft.code){d.draft.code='M'+k.code;d.draft.couleur=(+k.code)%8;if(k.heures&&!d.draft.heures)d.draft.heures=String(k.heures);renderDrawer();}}
     if(d.err||d.warn){d.err='';d.warn=null;renderDrawer();}
-  }else if(d.kind==='addc'){d.draft[f]=t.value;if(f==='module'||f==='date'||d.err){d.err='';renderDrawer();const again=document.getElementById(t.id);if(again&&again!==t&&t.tagName==='INPUT'&&t.type!=='date'){again.focus();}}}
+  }else if(d.kind==='addc'){d.draft[f]=t.value;if(f==='module')d.draft.items=[];if(f==='module'||f==='groupe'||f==='date'||d.err){d.err='';renderDrawer();const again=document.getElementById(t.id);if(again&&again!==t&&t.tagName==='INPUT'&&t.type!=='date'){again.focus();}}}
   else if(d.kind==='att'&&f==='note'){d.draft.note=t.value;if(!d.dirty){d.dirty=true;renderDrawer();}}
   else if(d.kind==='exam'){
     d.draft[f]=t.value;
@@ -3782,6 +3995,12 @@ document.addEventListener('input',e=>{
 });
 document.addEventListener('change',async e=>{
   const t=e.target;
+  /* cours et examens cochés pour composer une séance (fenêtre « Ajouter une séance » ou fiche du module) */
+  if(t.dataset&&t.dataset.pick){
+    const v=t.dataset.pick, tog=a=>{const i=a.indexOf(v);if(t.checked&&i<0)a.push(v);else if(!t.checked&&i>=0)a.splice(i,1);};
+    if(S.dr&&S.dr.kind==='addc'){tog(S.dr.draft.items||(S.dr.draft.items=[]));if(S.dr.err){S.dr.err='';renderDrawer();}return;}
+    const key=t.dataset.key||'';if(!S.pg.pick||S.pg.pick.key!==key)S.pg.pick={key,items:[]};tog(S.pg.pick.items);return;
+  }
   if(t.dataset&&t.dataset.gp){
     const gid=t.dataset.gp, v=t.value;if(S.busy)return;
     S.busy=true;render();
@@ -3794,7 +4013,7 @@ document.addEventListener('change',async e=>{
   else if(t.id==='sel-teacher'){S.teacher=t.value;savePrefs();render();}
   else if(t.id==='sel-group'){S.group=t.value;savePrefs();render();}
   else if(t.id==='s-g'||t.id==='x-g'){S.pg.g=t.value;render();}
-  else if(t.dataset&&t.dataset.assign){const id=t.dataset.assign,v=t.value;S.busy=true;render();await write(()=>col('cours').doc(id).update({enseignant:v}),v?'Enseignant assigné':'Cours à assigner');S.busy=false;render();}
+  else if(t.dataset&&t.dataset.assign){const id=t.dataset.assign,v=t.value;S.busy=true;render();await write(()=>col('cours').doc(id).update({enseignant:v}),v?W('Responsable assigné','Enseignant assigné'):W('Activité sans responsable','Cours à assigner'));S.busy=false;render();}
   else if(t.name==='c-color'&&S.dr&&S.dr.kind==='course'){S.dr.draft.couleur=+t.value;}
   else if(t.dataset&&t.dataset.slotp!=null&&S.dr&&S.dr.kind==='course'){
     const sl=S.dr.draft.creneaux[+t.dataset.slotp];if(!sl)return;
@@ -3803,17 +4022,28 @@ document.addEventListener('change',async e=>{
   }
   else if(t.dataset&&t.dataset.af==='assign'){
     const se=findSess(t.dataset.date,t.dataset.key);if(!se||!t.value)return;
-    await affSetStatus(se,t.value,'approuve',`${tName(t.value)} est attribué à ce cours`);
+    await affSetStatus(se,t.value,'approuve',`${tName(t.value)} est attribué à ${W('cette séance','ce cours')}`);
+  }
+  else if(t.dataset&&t.dataset.mc==='type'){
+    /* le type d’un cours du module : les séances de toutes les classes suivent */
+    const id=t.dataset.id, code=t.dataset.code, v=t.value;
+    if(!await editModule(code,m=>{const c=m.cours.find(x=>x.id===id);if(!c||c.type===v)return false;c.type=v;},'Type du cours modifié'))return;
+    await syncSeances(code,x=>{if((x.cours||[])[0]!==id||(x.examens||[]).length)return false;const tg=withAct(x.tags,v);if(JSON.stringify(tg)===JSON.stringify(x.tags||[]))return false;x.tags=tg;return true;});
+  }
+  else if(t.dataset&&t.dataset.me==='type'){
+    const id=t.dataset.id, code=t.dataset.code, v=t.value;if(!EXAM_T[v])return;
+    if(!await editModule(code,m=>{const x=m.examens.find(y=>y.id===id);if(!x||x.type===v)return false;x.type=v;},'Type de l’examen modifié'))return;
+    await syncSeances(code,x=>{if((x.examens||[])[0]!==id)return false;const tg=withAct(x.tags,v==='t'?'examen-t':'examen-p');if(JSON.stringify(tg)===JSON.stringify(x.tags||[]))return false;x.tags=tg;return true;});
   }
   else if(t.dataset&&t.dataset.mod==='type'){
     const c0=byId(S.data.cours,t.dataset.c);if(!c0||S.busy)return;
     const doc=courseDoc(c0), x=doc.extras.find(e=>e.id===t.dataset.x);if(!x)return;
     x.tags=withAct(x.tags,t.value);
-    await affWrite(()=>col('cours').doc(c0.id).set(doc),'Type de cours modifié');
+    await affWrite(()=>putCours(c0.id,doc),'Type de la séance modifié');
   }
   else if(t.id==='x-per'&&S.dr&&S.dr.kind==='exam'){const dx=S.dr;if(t.value==='autre')dx.customT=true;else{const p=PERIODES.find(y=>y.k===t.value);dx.customT=false;dx.draft.debut=p.debut;dx.draft.fin=p.fin;}dx.err='';dx.warn=null;renderDrawer();}
   else if(t.id==='af-hz'){S.pg.hz=t.value;S.pg.lim='';render();}
-  else if(t.id==='md-g'){S.pg.mg=t.value;S.pg.askx='';render();}
+  else if(t.id==='md-g'){S.pg.mg=t.value;S.pg.askx='';S.pg.pick=null;render();}
   else if(t.dataset&&t.dataset.sb&&S.dr&&S.dr.kind==='course'&&S.dr.sess&&!S.busy){
     const d=S.dr, se=findSess(d.sess.date,d.sess.key);if(!se)return;
     if(t.dataset.sb==='menage'){await setChoreDay(se.grp,se.date,t.checked);return;}
@@ -3823,7 +4053,7 @@ document.addEventListener('change',async e=>{
     const doc=courseDoc(c), x=doc.extras.find(e=>e.id===se.extra.id);if(!x)return;
     if(t.dataset.sb==='per'){const p=PERIODES.find(y=>y.k===t.value);x.debut=p.debut;x.fin=p.fin;}
     else x.tags=withAct(x.tags,t.value);
-    S.busy=true;renderDrawer();await write(()=>col('cours').doc(c.id).set(doc),'Cours modifié');S.busy=false;render();
+    S.busy=true;renderDrawer();await write(()=>putCours(c.id,doc),acad()?'Séance modifiée':'Cours modifié');S.busy=false;render();
   }
   else if(t.id==='c-nom-sel'&&S.dr&&S.dr.kind==='course'){
     const d=S.dr,f=d.draft;d.err='';d.warn=null;
@@ -3942,9 +4172,9 @@ function ensureTerm(){
   }catch(e){onErr(e);}
 }
 function subscribe(){
-  DB.doc('config/ecole').onSnapshot(s=>{S.data.config=s.exists?s.data():null;S.loaded.config=true;schedule();},onErr);
+  DB.doc('config/ecole').onSnapshot(s=>{S.data.config=s.exists?s.data():null;S.loaded.config=true;S.data.cours=normCours(RAWC);schedule();},onErr);
   for(const k of ['cours','enseignants','groupes','eleves','examens']){
-    col(k).onSnapshot(q=>{S.data[k]=q.docs.map(d=>Object.assign({},d.data(),{id:d.id}));S.loaded[k]=true;schedule();},e=>{S.loaded[k]=true;onErr(e);});
+    col(k).onSnapshot(q=>{const a=q.docs.map(d=>Object.assign({},d.data(),{id:d.id}));if(k==='cours'){RAWC=a;S.data.cours=normCours(a);}else S.data[k]=a;S.loaded[k]=true;schedule();},e=>{S.loaded[k]=true;onErr(e);});
   }
   col('dossiers-personnel').onSnapshot(q=>{const m={};for(const d of q.docs)m[d.id]=d.data();S.data.dossiers=m;schedule();},()=>{});
   col('resultats').onSnapshot(q=>{const m={};for(const d of q.docs)m[d.id]=d.data();S.data.resultats=m;schedule();},()=>{});

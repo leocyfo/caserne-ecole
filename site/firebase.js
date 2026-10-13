@@ -31,7 +31,8 @@ if(!cfg||!cfg.apiKey||!cfg.projectId){
     return {id:r.id,path,
       get:()=>F.getDoc(r).then(dsnap,fail),
       set:d=>F.setDoc(r,d).catch(fail),
-      update:d=>F.updateDoc(r,d).catch(fail),
+      /* fusion en profondeur, comme la base de claude.ai : une séance modifiée ne réécrit pas les autres */
+      update:d=>F.setDoc(r,d,{merge:true}).catch(fail),
       delete:()=>F.deleteDoc(r).catch(fail),
       onSnapshot:(cb,err)=>F.onSnapshot(r,s=>cb(dsnap(s)),e=>{if(err)err(wrap(e));})};
   }

@@ -13,10 +13,12 @@ function q(colPath,filters){
     onSnapshot(cb,err){if(denied()){setTimeout(()=>{if(err)err({code:'invalid_argument',message:'lecture refusée'});},0);return ()=>{};}const l={fire:()=>setTimeout(()=>cb(run()),0)};L.add(l);l.fire();return ()=>L.delete(l);},
     doc:(id)=>docRef(colPath+'/'+(id||Math.random().toString(36).slice(2))),path:colPath};
 }
+/* update() fusionne comme la vraie base : les objets imbriqués se fusionnent, le reste (tableaux, null) remplace */
+const merge=(t,s)=>{for(const [k,v] of Object.entries(s)){if(v&&typeof v==='object'&&!Array.isArray(v)&&t[k]&&typeof t[k]==='object'&&!Array.isArray(t[k]))merge(t[k],v);else t[k]=v;}return t;};
 const fire=()=>{for(const l of L)l.fire();};
 function docRef(path){return {id:path.split('/').pop(),path,get:async()=>snapDoc(path),
   set:async(d)=>{await new Promise(r=>setTimeout(r,5));store.set(path,JSON.parse(JSON.stringify(d)));fire();},
-  update:async(d)=>{await new Promise(r=>setTimeout(r,5));if(!store.has(path))throw {code:'invalid_argument'};store.set(path,Object.assign(store.get(path),JSON.parse(JSON.stringify(d))));fire();},
+  update:async(d)=>{await new Promise(r=>setTimeout(r,5));if(!store.has(path))throw {code:'invalid_argument'};store.set(path,merge(store.get(path),JSON.parse(JSON.stringify(d))));fire();},
   delete:async()=>{await new Promise(r=>setTimeout(r,5));store.delete(path);fire();},
   onSnapshot(cb){const l={fire:()=>setTimeout(()=>cb(snapDoc(path)),0)};L.add(l);l.fire();return ()=>L.delete(l);}};}
 const db={doc:docRef,collection:(p)=>q(p,[])};
