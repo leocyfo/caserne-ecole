@@ -1200,7 +1200,7 @@ const S={
   conn:'loading', canAdmin:null, canWrite:null,
   me:{id:null,name:'',avatarUrl:''}, isOwner:false, myAcct:null, peers:[],
   loaded:{}, busy:false, confirmClear:false, termKey:'', termLoaded:false,
-  data:{comptes:[],demandes:[],config:null,cours:[],enseignants:[],dossiers:{},groupes:[],eleves:[],examens:[],presences:{},presTerm:{},staffPres:{},absProfs:{},candidatures:[],remplacements:[],dispos:{},resultats:{},mesRes:{},mesPct:{},journal:[]},
+  data:{comptes:[],demandes:[],config:null,cours:[],enseignants:[],dossiers:{},groupes:[],eleves:[],examens:[],presences:{},presTerm:{},presOne:{},staffPres:{},absProfs:{},candidatures:[],remplacements:[],dispos:{},resultats:{},mesRes:{},mesPct:{},journal:[]},
   dr:null
 };
 let DB=null, unsubPres=null, unsubTerm=null, unsubMR=null, uidSeq=0;
@@ -1250,7 +1250,17 @@ function offDay(ds){
   return null;
 }
 const activeSlots=c=>(c.creneaux||[]).filter(s=>!s.au||s.au>=todayISO());
+/* L’horaire d’un jour est gardé en mémoire tant que les séances, le calendrier scolaire et les affectations ne changent pas.
+   Le tableau rendu est figé : qui veut le trier ou le filtrer en fait une copie. */
+let _so={c:null,g:null,a:null,m:new Map()};
 function sessionsOn(ds){
+  const D=S.data;
+  if(_so.c!==D.cours||_so.g!==D.config||_so.a!==D.candidatures) _so={c:D.cours,g:D.config,a:D.candidatures,m:new Map()};
+  let r=_so.m.get(ds);
+  if(!r){r=Object.freeze(sessionsOnRaw(ds));_so.m.set(ds,r);}
+  return r;
+}
+function sessionsOnRaw(ds){
   const d=parse(ds), j=(d.getDay()+6)%7+1;
   if(j>5||offDay(ds)) return [];
   const out=[];
@@ -1703,6 +1713,7 @@ const rateCls=r=>r==null?'':r>=95?'ok':r>=90?'warn':'bad';
 function classesPage(){
   if(S.pg.fiche) return classFiche();
   const st=S.pg, gs=groups(), ts=teachers(), per=st.period||'mois', [from,to]=periodRange(per);
+  ensureTerm(from);
   const stats=studentStats(from,to), sess=S.termLoaded?sessionsBetween(from,to).filter(s=>!s.cancelled&&isPast(s)):[];
   const add=st.adding?`<section class="panel cl-add"><form class="inline-add" data-form="m-add-group"><label class="field"><span>Nom de la nouvelle classe</span><input id="m-gname" maxlength="60" placeholder="Ex. Classe 124" autocomplete="off"></label><button class="btn primary" type="submit"${dis()}>Ajouter</button><button class="btn ghost" type="button" data-act="m-adding">Annuler</button></form></section>`:'';
   const tb=`<div class="toolbar"><p class="summary" style="margin:0"><span><b>${gs.length}</b>${gs.length>1?'classes':'classe'}</span><span><b>${S.data.eleves.length}</b>${S.data.eleves.length>1?'élèves':'élève'}</span></p><span class="grow"></span>${periodSeg(per)}${isAdmin()&&!st.adding?`<button class="btn primary" type="button" id="m-add-open" data-act="m-adding">${icon('plus')}Ajouter une classe</button>`:''}</div>`;
@@ -1734,6 +1745,7 @@ function classFiche(){
   if(!g){S.pg.fiche=null;return classesPage();}
   if(S.pg.justAdded===g.id) S.pg.justAdded=null;
   const list=groups(), ts=teachers(), per=S.pg.period||'mois', [from,to]=periodRange(per);
+  ensureTerm(from);
   const stats=studentStats(from,to), sess=S.termLoaded?sessionsBetween(from,to).filter(s=>!s.cancelled&&isPast(s)):[], x=classAtt(g.id,from,to,stats,sess), els=x.els;
   const cs=S.data.cours.filter(c=>c.groupe===g.id).sort((a,b)=>collator.compare(a.code||'',b.code||'')||collator.compare(a.titre||'',b.titre||''));
   const pr=classProgress(g.id), ex=upcomingExams(y=>y.grp===g.id,1)[0], pid=principalOf(g.id);
@@ -1797,11 +1809,13 @@ function courseLoad(c){
 function studentsPage(){
   if(S.pg.fiche) return studentFiche();
   const st=S.pg, q=String(st.q||'').trim().toLowerCase(), g=st.g||'';
-  const [from,to]=[yearStart(),todayISO()], stats=studentStats(from,to);
+  const per=st.period||'mois', [from,to]=periodRange(per);
+  ensureTerm(from);
+  const stats=studentStats(from,to);
   let els=sortElsByClass(S.data.eleves);
   if(g) els=els.filter(e=>e.groupe===g);
   if(q) els=els.filter(e=>String(e.nom||'').toLowerCase().includes(q));
-  const tb=`<div class="toolbar"><input class="search" id="s-q" type="search" placeholder="Rechercher un élève" aria-label="Rechercher un élève" autocomplete="off"><select id="s-g" aria-label="Classe"><option value="">Toutes les classes</option>${groups().map(x=>`<option value="${esc(x.id)}"${g===x.id?' selected':''}>${esc(x.nom)}</option>`).join('')}</select><span class="grow"></span><button class="btn" type="button" id="st-import" data-act="st-import">${icon('up')}Importer une liste</button><button class="btn primary" type="button" data-act="new-student">${icon('plus')}Ajouter un élève</button></div>`;
+  const tb=`<div class="toolbar"><input class="search" id="s-q" type="search" placeholder="Rechercher un élève" aria-label="Rechercher un élève" autocomplete="off"><select id="s-g" aria-label="Classe"><option value="">Toutes les classes</option>${groups().map(x=>`<option value="${esc(x.id)}"${g===x.id?' selected':''}>${esc(x.nom)}</option>`).join('')}</select>${periodSeg(per)}<span class="grow"></span><button class="btn" type="button" id="st-import" data-act="st-import">${icon('up')}Importer une liste</button><button class="btn primary" type="button" data-act="new-student">${icon('plus')}Ajouter un élève</button></div>`;
   if(!S.data.eleves.length) return tb+emptyBox('Aucun élève inscrit','Ajoutez des élèves un à la fois ici, ou collez une liste complète dans le menu Classes.');
   const body=els.map(e=>{const s=stats[e.id], r=rateOf(s);
     const a=s?s.A+s.M:0, rt=s?s.R:0, cls=rateCls(r);
@@ -1879,6 +1893,7 @@ const rows=items=>items.length?`<ul class="plist">${items.join('')}</ul>`:'';
 function studentFiche(){
   const e=byId(S.data.eleves,S.pg.fiche);
   if(!e){S.pg.fiche=null;return studentsPage();}
+  ensureTerm(yearStart());
   const list=studentList(), s=studentStats(yearStart(),todayISO())[e.id], r=rateOf(s), age=ageOf(e.naissance);
   const up=upcomingExams(x=>x.grp===e.groupe,6), nextEx=up[0];
   const item=x=>`<span class="fl-name">${esc(x.nom)}</span><span class="fl-sub">${esc(gName(x.groupe))}${x.numero?` · n° ${esc(x.numero)}`:''}</span>`;
@@ -3249,7 +3264,13 @@ function printDrawer(){
    items : [type, titre, explication, page à ouvrir]. Types : new (nouvelle fonction), up (amélioration), fix (correction). */
 const NV_REPO='https://github.com/leocyfo/caserne-ecole';
 const NOUVEAUTES=[
-  {date:'2026-10-13',id:'',push:'Journées de reprise : modules à reprendre, une reprise par examen échoué, échec du module',items:[
+  {date:'2026-10-13',id:'',push:'Plus rapide et moins de lectures : horaire en mémoire, présences par période',items:[
+    ['up','Présences par période','Les pages Classes et Élèves ne chargent plus toutes les présences de l’année : seulement la période affichée, le mois en cours par défaut. « Depuis la rentrée » et la fiche d’un élève chargent l’année.','classes'],
+    ['up','Page Élèves','Elle a les mêmes périodes que la page Classes : cette semaine, ce mois, depuis la rentrée.','eleves'],
+    ['up','Horaire en mémoire','L’horaire de chaque journée se calcule une seule fois, puis sert à toutes les pages jusqu’au prochain changement.',''],
+    ['fix','Séance ancienne','Ouvrir une séance passée depuis l’historique ou les examens va chercher ses présences, au lieu de la montrer « à prendre ».','']
+  ]},
+  {date:'2026-10-13',id:'82e5d07',push:'Journées de reprise : modules à reprendre, une reprise par examen échoué, échec du module',items:[
     ['new','Journées de reprise','Dans Examens, l’onglet des reprises : on crée d’abord la journée (date, moment, classes), puis on y ajoute les modules à reprendre.','examens'],
     ['new','Une reprise par examen échoué','Chaque élève qui a échoué ou manqué un examen d’un module ajouté le reprend ce jour-là. La liste se fait toute seule.','examens'],
     ['new','Échec du module','Une reprise réussie devient « réussi en reprise ». Une reprise ratée devient « échec du module », visible dans la grille, la fiche de l’élève et le relevé.','examens'],
@@ -3892,7 +3913,12 @@ const dTop=(eyebrow,title,sub)=>`<div class="dr-top"><div class="dr-tt"><p class
 const goneHTML=(w)=>dTop(w||'Cours',(w||'Cours')+' introuvable')+'<div class="dr-body"><p class="help">Cet élément n’existe plus. Il a peut-être été modifié ou supprimé.</p></div>';
 const findSess=(date,key)=>sessionsOn(date).find(x=>x.key===key);
 const titleOf=c=>`${c.code?`<span class="chip ${tone(c)}">${esc(c.code)}</span>`:''}<span>${esc(c.titre)}</span>`;
-function openDrawer(dr){dr.uid=++uidSeq;S.dr=dr;renderDrawer();}
+function openDrawer(dr){
+  dr.uid=++uidSeq;S.dr=dr;
+  if(dr.kind==='att'||dr.kind==='info') loadPres(dr.key,dr.date);
+  else if(dr.kind==='course'&&dr.sess) loadPres(dr.sess.key,dr.sess.date);
+  renderDrawer();
+}
 function closeDrawer(force){
   const d=S.dr;if(!d)return;
   if(d.kind==='att'&&d.dirty&&!force){d.confirmClose=true;renderDrawer();return;}
@@ -4359,7 +4385,7 @@ function openStudent(id){
   const e=id?byId(S.data.eleves,id):null;
   const draft=e?{fonction:e.fonction||'',numero:e.numero!=null?String(e.numero):'',nom:e.nom||'',groupe:e.groupe||'',naissance:e.naissance||'',parent:e.parent||'',courriel:e.courriel||'',telephone:e.telephone||'',notes:e.notes||''}
     :{fonction:'',numero:'',nom:'',groupe:S.pg.g||((groups()[0]||{}).id||''),naissance:'',parent:'',courriel:'',telephone:'',notes:''};
-  ensureTerm();
+  ensureTerm(yearStart());
   openDrawer({kind:'student',id:id||null,draft,err:'',confirmDel:false});
 }
 function studentDrawer(){
@@ -4550,7 +4576,7 @@ document.addEventListener('click',async e=>{
     case 'view':{const v=b.dataset.v==='jour'?'jour':'semaine';if(v===S.view)break;S.view=v;if(v==='jour')S.dayDate=initDay();savePrefs();render();break;}
     case 'day':S.day=+b.dataset.i;render();break;
     case 'sess':openSession(b.dataset.key);break;
-    case 'open-att':ensureTerm();openSession(b.dataset.key,b.dataset.date);break;
+    case 'open-att':openSession(b.dataset.key,b.dataset.date);break;
     case 'new-course':if(acad())openAddCourse(Object.assign({},b.dataset.g?{groupe:b.dataset.g}:null,b.dataset.m?{module:b.dataset.m}:null,b.dataset.type?{type:b.dataset.type}:null));else openCourse(null,null,b.dataset.g?{groupe:b.dataset.g}:null);break;
     case 'edit-course':openCourse(b.dataset.id);break;
     case 'see-group':S.filtre='g:'+b.dataset.id;S.fmode='g';savePrefs();goPage('calendar');break;
@@ -5076,17 +5102,33 @@ function subWeek(){
     },onErr);
   }catch(e){onErr(e);}
 }
-function ensureTerm(){
+/* Présences passées : on ne charge que la période que la page affiche (le mois en cours par défaut), et on l’élargit
+   quand une page en demande plus (« Depuis la rentrée », la fiche d’un élève). Une fois élargie, elle le reste. */
+function ensureTerm(from){
   if(!DB)return;
-  const k=yearStart()+'|'+todayISO();
+  const t=todayISO(), now=new Date(), want=from||iso(new Date(now.getFullYear(),now.getMonth(),1)), f=S.termFrom&&S.termFrom<=want?S.termFrom:want, k=f+'|'+t;
   if(S.termKey===k)return;
   if(unsubTerm){unsubTerm();unsubTerm=null;}
-  S.termKey=k;S.termLoaded=false;
+  S.termKey=k;S.termFrom=f;S.termLoaded=false;
   try{
-    unsubTerm=col('presences').where('date','>=',yearStart()).where('date','<=',todayISO()).onSnapshot(q=>{
-      const m={};for(const d of q.docs)m[d.id]=d.data();S.data.presTerm=m;S.termLoaded=true;schedule();
+    unsubTerm=col('presences').where('date','>=',f).where('date','<=',t).onSnapshot(q=>{
+      const m={};for(const d of q.docs)m[d.id]=d.data();S.data.presTerm=Object.assign({},S.data.presOne,m);S.termLoaded=true;schedule();
     },e=>{S.termLoaded=true;onErr(e);});
   }catch(e){onErr(e);}
+}
+/* Les présences d’une séance hors de la période chargée (ouverte depuis l’historique ou les examens) se lisent à la demande,
+   pour ne jamais ouvrir une feuille vide par-dessus des présences déjà prises. */
+const _pw=new Set();
+function loadPres(key,date){
+  if(!DB||!key||!date||S.role==='student'||presDoc(key)||_pw.has(key)) return;
+  if(date>todayISO()||(date>=iso(S.week)&&date<=iso(addDays(S.week,6)))||(S.termLoaded&&S.termFrom&&date>=S.termFrom)) return;
+  _pw.add(key);
+  col('presences').doc(key).get().then(s=>{
+    if(!s.exists) return;
+    S.data.presOne[key]=s.data();
+    if(!S.data.presTerm[key]) S.data.presTerm=Object.assign({},S.data.presTerm,{[key]:s.data()});
+    schedule();
+  }).catch(()=>{_pw.delete(key);});
 }
 function subscribe(){
   DB.doc('config/ecole').onSnapshot(s=>{S.data.config=s.exists?s.data():null;S.loaded.config=true;S.data.cours=normCours(RAWC);schedule();},onErr);

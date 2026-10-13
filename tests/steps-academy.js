@@ -59,6 +59,21 @@ click($('[data-act=s-cancel]'));await wait(150);click($('#dr-close'));await wait
 ok('cancel badge',$$('#main .week .cc-badge.bad').some(x=>x.textContent==='Séance annulée'));
 click($('#main .week .cc.cancelled'));await wait(60);click($('[data-act=s-cancel]'));await wait(150);click($('#dr-close'));await wait(40);
 ok('cancel badge removed',!$$('#main .week .cc-badge').some(x=>x.textContent==='Séance annulée'));
+/* PRÉSENCES : seulement la période affichée, et à la demande pour une séance ancienne */
+{const term=()=>(window.__subs||[]).filter(x=>/^presences\?date>=.*&date<=2026-10-09$/.test(x));
+ ok('year attendance not loaded at start',term().length===0,(window.__subs||[]).filter(x=>x.startsWith('presences')).join(' | '));
+ click($('#nav-examens'));await wait(100);click($('#xt-done'));await wait(100);
+ click($('#main [data-act=x-open][data-key="k119-m03_a20260928am_2026-09-28"]'));await wait(100);
+ click($('#drawer [data-act=sess-at]'));await wait(250);
+ ok('old session loads its attendance on demand',/[1-9]\d? \/ 12/.test($('.sb-facts').textContent)&&!/à prendre/.test($('.sb-facts').textContent)&&term().length===0,$('.sb-facts').textContent.replace(/\s+/g,' ').slice(0,120));
+ click($('#dr-close'));await wait(40);
+ click($('#nav-classes'));await wait(150);
+ ok('classes page loads the month only',term().length===1&&/date>=2026-10-01&/.test(term()[0])&&/%/.test($('#cl-c119 .cl-rate').textContent),term().join(' | '));
+ click($('#nav-eleves'));await wait(150);
+ ok('students page has the same periods',!!$('#pp-mois')&&$('#pp-mois').getAttribute('aria-pressed')==='true'&&/depuis le 1er octobre 2026/.test($('#main .summary').textContent)&&term().length===1,$('#main .summary').textContent);
+ click($('#pp-annee'));await wait(150);
+ ok('since the start of the year loads the year',term().length===2&&/date>=2026-08-/.test(term()[1])&&/août 2026/.test($('#main .summary').textContent),term().join(' | '));
+ click($('#nav-calendar'));await wait(100);}
 /* SIDE */
 document.head.insertAdjacentHTML('beforeend','<style id="no-tr">.app{transition:none!important}</style>');
 click($('#side-toggle'));await wait(400);

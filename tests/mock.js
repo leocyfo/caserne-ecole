@@ -10,7 +10,7 @@ function q(colPath,filters){
   const denied=()=>{const D=window.__DENY||[];if(D.includes(colPath))return true;return colPath==='resultats-eleves'&&!!window.__SELF_REF&&!filters.some(([f,o,x])=>f==='eleve'&&o==='=='&&x===window.__SELF_REF);};
   const run=()=>{const docs=[];for(const [p,v] of store){const seg=p.split('/');if(seg.length!==colPath.split('/').length+1||!p.startsWith(colPath+'/'))continue;if(filters.every(([f,o,x])=>ops[o](v[f],x)))docs.push(snapDoc(p));}docs.sort((a,b)=>a.id<b.id?-1:1);return {docs,size:docs.length,empty:!docs.length,docChanges:()=>[],metadata:{fromCache:false,hasPendingWrites:false}};};
   return {where:(f,o,x)=>q(colPath,[...filters,[f,o,x]]),orderBy(){return this;},limit(){return this;},get:async()=>{if(denied())throw {code:'invalid_argument',message:'lecture refusée'};return run();},
-    onSnapshot(cb,err){if(denied()){setTimeout(()=>{if(err)err({code:'invalid_argument',message:'lecture refusée'});},0);return ()=>{};}const l={fire:()=>setTimeout(()=>cb(run()),0)};L.add(l);l.fire();return ()=>L.delete(l);},
+    onSnapshot(cb,err){(window.__subs=window.__subs||[]).push(colPath+(filters.length?'?'+filters.map(f=>f.join('')).join('&'):''));if(denied()){setTimeout(()=>{if(err)err({code:'invalid_argument',message:'lecture refusée'});},0);return ()=>{};}const l={fire:()=>setTimeout(()=>cb(run()),0)};L.add(l);l.fire();return ()=>L.delete(l);},
     doc:(id)=>docRef(colPath+'/'+(id||Math.random().toString(36).slice(2))),path:colPath};
 }
 /* update() fusionne comme la vraie base : les objets imbriqués se fusionnent, le reste (tableaux, null) remplace */
