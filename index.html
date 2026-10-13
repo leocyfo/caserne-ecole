@@ -680,7 +680,13 @@ button.dp-wd{cursor:pointer}button.dp-wd:hover{background:#E3EDF7}
 .md-x select{width:100%;min-width:0;min-height:36px;border:1px solid var(--line-strong);border-radius:6px;background:var(--surface);padding:0 8px;font-size:14px;color:var(--ink)}
 .md-x .xm-end{gap:6px}
 .md-x.is-past .xm-d{opacity:.6}
-.md-c{grid-template-columns:minmax(0,1.3fr) minmax(0,1.3fr) 124px 150px minmax(40px,auto)}
+.md-c{grid-template-columns:minmax(0,1fr) minmax(0,1.1fr) 124px minmax(0,1.5fr) 130px minmax(40px,auto)}
+.md-rs-b{display:block;width:100%;min-height:36px;padding:6px 9px;border:1px solid var(--line-strong);border-radius:6px;background:var(--surface);font:inherit;font-size:14px;color:var(--ink);text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer}
+.md-rs-b:hover{background:var(--surface-2)}
+.md-rs-b[aria-expanded="true"]{border-color:var(--role);box-shadow:inset 0 0 0 1px var(--role)}
+.md-rs{padding:4px 22px 14px;background:var(--surface-2);border-top:1px dashed var(--line)}
+.rs-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.rs-list li{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;font-size:13.5px}
 .md-e{grid-template-columns:minmax(0,1.6fr) minmax(0,1.2fr) 150px minmax(40px,auto)}
 .md-c select,.md-e select{width:100%;min-width:0;min-height:36px;border:1px solid var(--line-strong);border-radius:6px;background:var(--surface);padding:0 8px;font-size:14px;color:var(--ink)}
 .md-c .xm-end,.md-e .xm-end{gap:6px;align-items:center}
@@ -1416,7 +1422,7 @@ function cardStatus(s,mode){
   if(mode==='student') return moved;
   const a=attInfo(s);
   let aff='';
-  if(mode==='admin'&&!isPast(s)){const f=staffing(s);aff=(f.clash.length?`<span class="cc-st bad" title="${esc(f.clash.map(tName).join(', ')+W(' : aussi dans une autre séance à ce moment',' : aussi dans un autre cours à ce moment'))}">Conflit</span>`:'')+(f.open>0?`<span class="cc-st warn" title="Enseignants attribués sur enseignants requis">${f.firm}/${f.requis} ens.</span>`:f.requis>1?`<span class="cc-st ok">${f.firm}/${f.requis} ens.</span>`:'')+(f.pending.length?`<span class="cc-st info">${f.pending.length} cand.</span>`:'')+(f.remp.length?'<span class="cc-st warn">Remplacement</span>':'');}
+  if(mode==='admin'&&!isPast(s)){const f=staffing(s);aff=(f.clash.length?`<span class="cc-st bad" title="${esc(f.clash.map(tName).join(', ')+W(' : aussi dans une autre séance à ce moment',' : aussi dans un autre cours à ce moment'))}">Conflit</span>`:'')+(f.rclash.length?`<span class="cc-st bad" title="${esc(ressNames([...new Set(f.rclash.map(x=>x.id))])+' : déjà pris à ce moment')}">${ressClashLbl(f.rclash)}</span>`:'')+(f.open>0?`<span class="cc-st warn" title="Enseignants attribués sur enseignants requis">${f.firm}/${f.requis} ens.</span>`:f.requis>1?`<span class="cc-st ok">${f.firm}/${f.requis} ens.</span>`:'')+(f.pending.length?`<span class="cc-st info">${f.pending.length} cand.</span>`:'')+(f.remp.length?'<span class="cc-st warn">Remplacement</span>':'');}
   return moved+aff+(a.state==='done'?'<span class="cc-st ok">Présences faites</span>':a.state==='partial'?`<span class="cc-st warn">${a.marked}/${a.total} marqués</span>`:a.state==='todo'?'<span class="cc-st warn">Présences à faire</span>':'');
 }
 const cardTop=(time,kind,ch)=>`<span class="cc-top"><span class="cc-time">${time}</span><span class="cc-tr">${ch?`<span class="cc-chore-pill${ch==='maybe'?' maybe':''}" title="Corvée de ménage de la classe, toute la journée">${icon('broom')}<span class="vh">Corvée de ménage</span></span>`:''}${kind?`<span class="cc-kind">${esc(kind)}</span>`:''}</span></span>`;
@@ -2267,7 +2273,7 @@ function staffing(s){
   const pending=cs.filter(d=>d.statut==='attente'&&known(d.enseignant)).map(d=>d.enseignant);
   const remp=assigned.filter(t=>I.rp[s.key+'|'+t]);
   const requis=reqOf(s), firm=assigned.length-remp.length, clash=isPast(s)?[]:assigned.filter(t=>busyAt(t,s));
-  return {requis,assigned,pending,remp,st,firm,clash,open:Math.max(0,requis-firm)};
+  return {requis,assigned,pending,remp,st,firm,clash,rclash:isPast(s)?[]:ressClash(s),open:Math.max(0,requis-firm)};
 }
 const DISPO={J:'Toute la journée',AM:'Avant-midi',PM:'Après-midi'};
 const dispoOf=(tid,ds)=>{const d=S.data.dispos[tid];return (d&&d.jours&&d.jours[ds])||'';};
@@ -2393,13 +2399,13 @@ function affCell(st){
 function affPage(){
   const st=S.pg, g=st.g||'', hz=[7,30,90].includes(+st.hz)?+st.hz:30, tab=['open','cand','remp','all'].includes(st.at)?st.at:'open', t=todayISO(), can=isAdmin()&&S.conn==='shared';
   const up=upcomingSessions(hz).filter(s=>!g||s.grp===g).map(s=>({s,st:staffing(s)}));
-  const open=up.filter(x=>x.st.open>0||x.st.clash.length), nClash=open.filter(x=>x.st.clash.length).length;
+  const open=up.filter(x=>x.st.open>0||x.st.clash.length||x.st.rclash.length), nClash=open.filter(x=>x.st.clash.length||x.st.rclash.length).length;
   const live=d=>{if(d.date<t||(g&&d.groupe!==g))return null;const s=findSess(d.date,d.seance);return s&&!s.cancelled&&!isPast(s)&&byId(S.data.enseignants,d.enseignant)?s:null;};
   const cands=[];for(const d of S.data.candidatures){if(d.statut!=='attente')continue;const s=live(d);if(s)cands.push({d,s});}
   const remps=[];for(const d of S.data.remplacements){const s=live(d);if(s&&s.tch.includes(d.enseignant))remps.push({d,s});}
   const bySess=(a,b)=>a.s.date.localeCompare(b.s.date)||a.s.start-b.s.start;cands.sort(bySess);remps.sort(bySess);
   const tb=`<div class="toolbar"><select id="x-g" aria-label="Classe"><option value="">Toutes les classes</option>${groups().map(x=>`<option value="${esc(x.id)}"${g===x.id?' selected':''}>${esc(x.nom)}</option>`).join('')}</select><select id="af-hz" aria-label="Période"><option value="7"${hz===7?' selected':''}>7 prochains jours</option><option value="30"${hz===30?' selected':''}>30 prochains jours</option><option value="90"${hz===90?' selected':''}>90 prochains jours</option></select></div>`;
-  const full=up.filter(x=>x.st.open<=0&&!x.st.clash.length).length;
+  const full=up.filter(x=>x.st.open<=0&&!x.st.clash.length&&!x.st.rclash.length).length;
   const tiles=`<div class="xm-tiles" role="group" aria-label="Affectations">
     ${affTile('at','open',tab,W('Séances à régler','Cours à régler'),open.length,open.length?'warn':'',open.length?(nClash?`${pl(nClash,'conflit d’horaire','conflits d’horaire')}`:`à combler d’ici ${hz} jours`):W('Toutes les séances sont comblées','Tous les cours sont comblés'))}
     ${affTile('at','cand',tab,'Candidatures',cands.length,cands.length?'warn':'',cands.length?'en attente de votre réponse':'Aucune en attente')}
@@ -2407,7 +2413,7 @@ function affPage(){
     ${affTile('at','all',tab,W('Toutes les séances','Tous les cours'),up.length,'',`${full} ${full>1?'complets':'complet'} · ${hz} jours`)}
   </div>`;
   const sessRows=list=>{const lim=+st.lim||30;
-    return xList('xm-a6',[['Date'],[W('Séance','Cours')],['Classe'],['Moment'],['Enseignants'],['','r']],list.slice(0,lim).map(({s,st:a})=>xRow('xm-a6',`data-act="sess-at" ${sAt(s)}`,`${xDate(s,sHot(s))}<div class="xm-t"><b>${sTitle(s)}</b>${sSub(s)?`<small>${sSub(s)}</small>`:''}</div>${xCls(s)}<span class="xm-m">${esc(momentOf(s))}</span>${affCell(a)}<div class="xm-end">${a.clash.length?'<span class="chip bad">Conflit</span>':a.remp.length?'<span class="chip warn">Remplacement</span>':a.open>0?`<span class="chip ${a.firm?'warn':'bad'}">${a.open} à combler</span>`:'<span class="chip ok">Complet</span>'}</div>`,sAria(s))).join(''))
+    return xList('xm-a6',[['Date'],[W('Séance','Cours')],['Classe'],['Moment'],['Enseignants'],['','r']],list.slice(0,lim).map(({s,st:a})=>xRow('xm-a6',`data-act="sess-at" ${sAt(s)}`,`${xDate(s,sHot(s))}<div class="xm-t"><b>${sTitle(s)}</b>${sSub(s)?`<small>${sSub(s)}</small>`:''}</div>${xCls(s)}<span class="xm-m">${esc(momentOf(s))}</span>${affCell(a)}<div class="xm-end">${a.clash.length?'<span class="chip bad">Conflit</span>':a.rclash.length?`<span class="chip bad">${ressClashLbl(a.rclash)}</span>`:a.remp.length?'<span class="chip warn">Remplacement</span>':a.open>0?`<span class="chip ${a.firm?'warn':'bad'}">${a.open} à combler</span>`:'<span class="chip ok">Complet</span>'}</div>`,sAria(s))).join(''))
       +(list.length>lim?`<div class="row" style="margin-top:12px"><button class="btn" type="button" data-act="pg-set" data-k="lim" data-v="${lim+30}">Afficher plus (${list.length-lim})</button></div>`:'');};
   let body='';
   if(tab==='open') body=open.length?sessRows(open):`<div class="cl-list"><p class="miss-ok"><span class="chip ok">Complet</span>${W('Toutes les séances','Tous les cours')} des ${hz} prochains jours ont leurs enseignants.</p></div>`;
@@ -2545,12 +2551,15 @@ function moduleFiche(){
         <label class="field" style="flex:0 1 200px"><span>Type de cours</span>${tSel('mc-type','theorie','')}</label>
         <label class="field" style="flex:0 1 170px"><span>Enseignants requis</span><input type="number" id="mc-req" min="0" max="9" step="1" value="1" inputmode="numeric"></label>
         <button class="btn primary" type="submit"${dis()}>Ajouter le cours</button></form></section>`:'';
+      const hasR=ressAll().length>0;
+      const rsCell=c=>{const names=ressNames(c.ress||[]), on=st.rc===c.id;
+        return can&&hasR?`<button type="button" class="md-rs-b" id="mc-rs-${esc(c.id)}" data-act="pg-set" data-k="rc" data-v="${on?'':esc(c.id)}" aria-expanded="${on}" title="Choisir les locaux et équipements de ce cours">${names?esc(names):'<span class="muted">Aucun</span>'}</button>`:`<span class="xm-m">${names?esc(names):'<span class="muted">—</span>'}</span>`;};
       const rows=kc.map(c=>{const r=cReq(c), at=`data-code="${code}" data-id="${esc(c.id)}"`;
         return `<article class="xm-row xm-cols md-c" id="mc-${esc(c.id)}"><div class="xm-t"><b>${esc(c.num)}</b></div>
           ${can?tSel('mc-t-'+c.id,c.type,`data-mc="type" ${at} aria-label="${esc('Type du cours '+c.num)}"${dis()}`):`<span class="xm-m">${esc(actLabel(c.type))}</span>`}
           ${can?`<div class="af-req" role="group" aria-label="${esc('Enseignants requis pour le cours '+c.num)}"><button type="button" class="icon-btn" id="mc-rm-${esc(c.id)}" data-act="mc-req" ${at} data-d="-1" aria-label="Un enseignant de moins"${S.busy||r<=0?' disabled':''}>−</button><b id="mc-rn-${esc(c.id)}">${r}</b><button type="button" class="icon-btn" id="mc-rp-${esc(c.id)}" data-act="mc-req" ${at} data-d="1" aria-label="Un enseignant de plus"${S.busy||r>=9?' disabled':''}>+</button></div>`:`<span class="md-h">${r}</span>`}
-          ${useCell(c.id)}<div class="xm-end">${delCell('askc','mc-del',c.id,'le cours '+c.num)}</div></article>`;}).join('');
-      const listH=kc.length?`<div class="cl-list xm-list"><div class="xm-hd xm-cols md-c" aria-hidden="true"><span>Cours</span><span>Type</span><span>Ens. requis</span><span class="n">Classes à l’horaire</span><span></span></div>${rows}</div>`:`<section class="panel"><p class="help" id="mc-none">Ce module n’a pas encore de cours.</p></section>`;
+          ${rsCell(c)}${useCell(c.id)}<div class="xm-end">${delCell('askc','mc-del',c.id,'le cours '+c.num)}</div></article>${can&&hasR&&st.rc===c.id?`<div class="md-rs" id="mc-rsp-${esc(c.id)}"><div class="pk-list">${ressPicks(c.ress||[],`data-mcr="1" ${at}`)}</div></div>`:''}`;}).join('');
+      const listH=kc.length?`<div class="cl-list xm-list"><div class="xm-hd xm-cols md-c" aria-hidden="true"><span>Cours</span><span>Type</span><span>Ens. requis</span><span>Locaux et équipements</span><span class="n">Classes à l’horaire</span><span></span></div>${rows}</div>`:`<section class="panel"><p class="help" id="mc-none">Ce module n’a pas encore de cours.</p></section>`;
       return `<p class="help md-lead">Les cours composent le module et valent pour toutes les classes. Leurs dates se choisissent classe par classe, dans l’onglet Séances.</p>${form}${listH}`;
     }
     if(tab==='examens'){
@@ -2694,6 +2703,65 @@ async function addCourseDay(o){
   return ok?'':'L’enregistrement a échoué.';
 }
 
+/* ---------- Locaux et équipements (salles, camions, tour, bassin…) ----------
+   Le catalogue est dans config/ecole.ressources : { id, nom, type } — type : local | equip.
+   Chaque cours d’un module peut en demander (cours[].ress), pour toutes les classes ; une séance peut avoir les siens (x.ress).
+   Deux séances au même moment avec le même local ou équipement sont en conflit, sauf si c’est le même module
+   (les classes sont alors réunies), comme pour les enseignants. */
+const RES_T={local:'Local',equip:'Équipement'};
+const ressAll=()=>(cfg().ressources||[]).slice().sort((a,b)=>(a.type===b.type?0:a.type==='local'?-1:1)||collator.compare(a.nom||'',b.nom||''));
+const ressName=id=>{const r=(cfg().ressources||[]).find(x=>x.id===id);return r?r.nom:'';};
+const ressNames=ids=>ids.map(ressName).filter(Boolean).join(', ');
+function ressOf(s){
+  if(!s||s.kind!=='cours'||!(cfg().ressources||[]).length) return [];
+  const x=s.extra||{};
+  if(Array.isArray(x.ress)) return x.ress.filter(ressName);
+  const out=[];for(const c of xCours(modOf(s.c),x)) for(const id of c.ress||[]) if(ressName(id)&&!out.includes(id)) out.push(id);
+  return out;
+}
+function ressClash(s){
+  const mine=ressOf(s);if(!mine.length||s.cancelled) return [];
+  const out=[];
+  for(const o of sessionsOn(s.date)){
+    if(o.key===s.key||o.cancelled||o.kind!=='cours'||!(o.start<s.end&&s.start<o.end)||sameMod(o.c,s.c)) continue;
+    const theirs=ressOf(o);for(const id of mine) if(theirs.includes(id)) out.push({id,o});
+  }
+  return out;
+}
+const ressClashLbl=cl=>{const types=new Set(cl.map(x=>((cfg().ressources||[]).find(r=>r.id===x.id)||{}).type));return types.size===1&&types.has('local')?'Conflit de local':types.size===1?'Conflit d’équipement':'Conflit de local et d’équipement';};
+/* Cases à cocher des locaux et équipements (dans la fenêtre d’une séance, ou pour un cours du module) */
+const ressPicks=(ids,attrs)=>ressAll().map(r=>`<label class="pk"><input type="checkbox" value="${esc(r.id)}" ${attrs}${ids.includes(r.id)?' checked':''}${dis()}><span>${esc(r.nom)}<small>${RES_T[r.type]||''}</small></span></label>`).join('');
+/* Dans la fenêtre d’une séance : ce qu’elle utilise, les conflits, et la modification pour cette séance seulement */
+function ressBoxHTML(s){
+  const all=ressAll(), ids=ressOf(s);
+  if(!all.length) return '';
+  const cl=isPast(s)?[]:ressClash(s), can=isAdmin()&&S.conn==='shared'&&!!s.extra, own=Array.isArray((s.extra||{}).ress), ed=!!(S.dr&&S.dr.ressEd)&&can;
+  const li=ids.map(id=>{const c=cl.filter(x=>x.id===id);return `<li><span class="chip ${c.length?'bad':'off'}">${esc(ressName(id))}</span>${c.length?`<span class="bad-t">aussi pour ${esc(c.map(x=>gName(x.o.grp)+(x.o.c.code?' ('+x.o.c.code+')':'')).join(', '))} à ce moment</span>`:''}</li>`;}).join('');
+  return `<section class="af-box" id="rs-box"><div class="af-box-h"><h3 class="sb-h3">Locaux et équipements${cl.length?' <span class="chip bad" id="rs-clash">Conflit</span>':''}</h3>${can?`<button class="btn sm ghost" type="button" id="rs-edit" data-act="rs-edit">${ed?'Terminer':'Modifier'}</button>`:''}</div>
+    ${ids.length?`<ul class="rs-list">${li}</ul>`:'<p class="help" id="rs-none">Aucun pour cette séance.</p>'}
+    ${ed?`<div class="pk-list" id="rs-picks" style="margin-top:10px">${ressPicks(ids,`data-rs="1" ${sAt(s)}`)}</div>${own&&linkedX(s)?`<div class="row" style="margin-top:8px"><button class="btn sm ghost" type="button" id="rs-reset" data-act="rs-reset" ${sAt(s)}${dis()}>Revenir à ceux du cours du module</button></div>`:''}`
+      :!own&&ids.length&&linkedX(s)?'<p class="help" style="margin-top:6px">Selon le cours du module.</p>':own&&linkedX(s)?'<p class="help" style="margin-top:6px">Choisis pour cette séance seulement.</p>':''}</section>`;
+}
+/* Enregistre les locaux et équipements d’une séance (null : revenir à ceux du cours du module) */
+async function saveSessRess(s,ids){
+  const c=byId(S.data.cours,s.c.id);if(!c||!s.extra||S.busy) return false;
+  const doc=courseDoc(c), x=doc.extras.find(e=>e.id===s.extra.id);if(!x) return false;
+  if(ids) x.ress=ids; else delete x.ress;
+  S.busy=true;renderDrawer();
+  const ok=await write(()=>putCours(c.id,doc),ids?'Locaux et équipements enregistrés':'Locaux et équipements du module repris');
+  S.busy=false;render();
+  return ok;
+}
+/* Paramètres : la liste des locaux et des équipements de l’école */
+function ressPanel(){
+  const all=ressAll(), can=isAdmin()&&S.conn==='shared';
+  const used=id=>comps().some(k=>(k.cours||[]).some(c=>(c.ress||[]).includes(id)));
+  return `<section class="dr-sec" id="p-ress"><h2 class="sec-title">Locaux et équipements</h2>
+    <p class="help">Les salles, camions, tours ou bassins que les séances se partagent. On les relie aux cours dans le menu Modules ; deux séances qui veulent le même au même moment sont signalées.</p>
+    ${all.length?`<ul class="plist" id="p-ress-list" style="margin-top:8px">${all.map(r=>`<li><span><b>${esc(r.nom)}</b> <span class="muted sm">${RES_T[r.type]||''}${used(r.id)?' · relié à des cours':''}</span></span>${can?`<button type="button" class="x" data-act="p-del-res" data-id="${esc(r.id)}" aria-label="${esc('Retirer '+r.nom)}" title="Retirer"${dis()}>×</button>`:''}</li>`).join('')}</ul>`:''}
+    ${can?`<form class="inline-add" data-form="p-add-res" style="margin-top:10px"><label class="field" style="flex:2 1 200px"><span>Nom</span><input id="p-rnom" maxlength="50" autocomplete="off" placeholder="Ex. Tour d’entraînement"></label><label class="field" style="flex:0 1 160px"><span>Type</span><select id="p-rtype"><option value="equip">Équipement</option><option value="local">Local</option></select></label><button class="btn" type="submit"${dis()}>Ajouter</button></form>`:''}</section>`;
+}
+
 /* ---------- Import : liste d’élèves, copie de l’horaire d’une classe ----------
    Liste d’élèves collée ou lue d’un fichier, une ligne par élève. Colonnes séparées par une tabulation (cellules copiées
    d’Excel), un point-virgule ou une virgule : numéro, nom (ou prénom et nom), courriel, téléphone.
@@ -2709,7 +2777,7 @@ function csvCells(line,sep){
   return out.map(c=>c.replace(/\s+/g,' ').trim());
 }
 function parseStudents(text){
-  const lines=String(text||'').replace(/^﻿/,'').split(/\r?\n/).map(l=>l.trim()).filter(Boolean).slice(0,400);
+  const lines=String(text||'').replace(/^\uFEFF/,'').split(/\r?\n/).map(l=>l.trim()).filter(Boolean).slice(0,400);
   if(!lines.length) return [];
   const count=ch=>lines.slice(0,10).reduce((n,l)=>n+l.split(ch).length-1,0), sep=count('\t')?'\t':count(';')?';':count(',')?',':null;
   let rows=lines.map(l=>sep?csvCells(l,sep):[l.replace(/\s+/g,' ').trim()]), map=null;
@@ -2735,7 +2803,7 @@ function parseStudents(text){
 function readTextFile(file){
   return new Promise((res,rej)=>{
     const r=new FileReader();r.onerror=()=>rej(r.error);
-    r.onload=()=>{const t=String(r.result||'');if(!t.includes('�')){res(t);return;}const r2=new FileReader();r2.onerror=()=>res(t);r2.onload=()=>res(String(r2.result||''));r2.readAsText(file,'windows-1252');};
+    r.onload=()=>{const t=String(r.result||'');if(!t.includes(String.fromCharCode(0xFFFD))){res(t);return;}const r2=new FileReader();r2.onerror=()=>res(t);r2.onload=()=>res(String(r2.result||''));r2.readAsText(file,'windows-1252');};
     r.readAsText(file);
   });
 }
@@ -2950,7 +3018,7 @@ function prSess(s,who){
   const where=who==='g'?(s.tch||[]).filter(id=>id&&byId(S.data.enseignants,id)).map(id=>shortName(tName(id))).join(', '):gName(s.grp);
   if(s.kind==='exam') return `<div class="pr-s ex"><b>${esc(s.c?(s.c.code?s.c.code+' ':'')+s.c.titre:(s.e.titre||'Examen'))}</b><span>${esc(s.c?(s.e.titre||'Examen'):'Examen')}</span><span>${esc([where,s.salle?'Local '+s.salle:''].filter(Boolean).join(' · '))}</span></div>`;
   const tg=tagsOf(s);
-  return `<div class="pr-s${s.cancelled?' off':''}${tg.includes('Examen')?' ex':''}"><b>${esc((s.c.code?s.c.code+' ':'')+s.c.titre)}</b><span>${esc([sessLabel(s),cardKind(tg).kind].filter(Boolean).join(' · '))}</span><span>${esc([where,s.salle?'Local '+s.salle:''].filter(Boolean).join(' · '))}</span>${s.cancelled?`<i>${W('Séance annulée','Cours annulé')}</i>`:''}</div>`;
+  return `<div class="pr-s${s.cancelled?' off':''}${tg.includes('Examen')?' ex':''}"><b>${esc((s.c.code?s.c.code+' ':'')+s.c.titre)}</b><span>${esc([sessLabel(s),cardKind(tg).kind].filter(Boolean).join(' · '))}</span><span>${esc([where,s.salle?'Local '+s.salle:'',ressNames(ressOf(s))].filter(Boolean).join(' · '))}</span>${s.cancelled?`<i>${W('Séance annulée','Cours annulé')}</i>`:''}</div>`;
 }
 /* Une page : les cinq jours en colonnes, l’avant-midi et l’après-midi en lignes ; une journée complète occupe les deux */
 function prWeekPage(title,sub,items,mon,who,gid){
@@ -3041,7 +3109,14 @@ function printDrawer(){
    items : [type, titre, explication, page à ouvrir]. Types : new (nouvelle fonction), up (amélioration), fix (correction). */
 const NV_REPO='https://github.com/leocyfo/caserne-ecole';
 const NOUVEAUTES=[
-  {date:'2026-10-13',id:'',push:'Import d’une liste d’élèves et copie de l’horaire d’une classe',items:[
+  {date:'2026-10-13',id:'',push:'Locaux et équipements, avec détection des conflits',items:[
+    ['new','Locaux et équipements','La liste des salles, camions, tours ou bassins de l’école se tient dans Paramètres.','params'],
+    ['new','Par cours de module','Dans l’onglet Cours d’un module, on choisit ce que chaque cours demande. Cela vaut pour toutes les classes.','modules'],
+    ['new','Conflits','Deux séances qui veulent le même local ou le même équipement au même moment sont signalées dans le calendrier, dans Affectations et dans la fenêtre de la séance.','affectations'],
+    ['up','Pour une séance seulement','La fenêtre d’une séance permet de changer ses locaux et équipements sans toucher au module.','calendar'],
+    ['fix','Fichiers exportés','Un caractère invisible traînait dans le code des exports ; il est maintenant écrit proprement.','']
+  ]},
+  {date:'2026-10-13',id:'37dc969',push:'Import d’une liste d’élèves et copie de l’horaire d’une classe',items:[
     ['new','Liste d’élèves depuis un fichier','Dans la fiche d’une classe, « Inscrire des élèves » accepte un fichier CSV ou une liste collée d’Excel : numéro, nom, courriel, téléphone. Les élèves déjà dans la classe sont ignorés.','classes'],
     ['new','Copier l’horaire d’une classe','Dans l’onglet Modules d’une classe : on choisit la classe à copier et la première journée. Les séances suivent dans le même ordre, en sautant les fins de semaine et les congés.','classes'],
     ['up','Importer depuis la page Élèves','Le bouton « Importer une liste » mène à l’inscription de la classe choisie.','eleves']
@@ -3276,6 +3351,7 @@ function paramsPage(){
     <p class="help">Les étapes et les congés se gèrent dans Calendrier scolaire.</p>
     <div class="row"><button class="btn primary" type="submit"${dis()}>Enregistrer</button></div></form>
   <section class="dr-sec"><h2 class="sec-title">Modules du programme</h2><p class="help">${pl(comps().length,'module','modules')}. Leur nom, leurs heures de théorie et de pratique et leurs cours se gèrent dans le menu Modules.</p><div class="row" style="margin-top:8px"><button class="btn sm" type="button" id="p-modules" data-act="nav" data-page="modules">Ouvrir les modules</button></div></section>
+  ${acad()?ressPanel():''}
   <section class="dr-sec"><h2 class="sec-title">Qui voit quoi</h2>${siteMode()?'<p class="help">Chaque personne a son compte sur le site, approuvé dans le menu <b>Comptes</b>. Son rôle décide de ce qu’elle voit.</p><ul class="access"><li><b>Administrateur</b><span>Tous les menus, y compris les comptes, les dossiers et les présences du personnel.</span></li><li><b>Enseignant</b><span>Son horaire, ses disponibilités, les cours à pourvoir et ses candidatures, ainsi que les présences et les examens de ses cours.</span></li><li><b>Élève</b><span>L’horaire et les examens de sa classe, et le calendrier scolaire. Les listes d’élèves, les présences et les dossiers du personnel lui restent cachés.</span></li></ul></section>':`<p class="help">Chaque profil suit le niveau de partage de cette page dans claude.ai. Reliez ensuite chaque personne à sa fiche dans le menu <b>Comptes</b> : elle arrivera directement sur son horaire et son profil.</p>
     <ul class="access"><li><b>Éditeur</b><span>Administrateur : tous les menus, y compris les dossiers et les présences du personnel.</span></li><li><b>Contributeur</b><span>Enseignant : son horaire, ses disponibilités, les cours à pourvoir et ses candidatures, ainsi que les présences et les examens de ses cours.</span></li><li><b>Lecteur</b><span>Élève : l’horaire et les examens de sa classe, et le calendrier scolaire. Les listes d’élèves, les présences et les dossiers du personnel lui restent cachés.</span></li></ul></section>`}
   ${n?`<section class="dr-sec"><h2 class="sec-title">Données d’exemple</h2><p class="help">${pl(n,'élément d’exemple est encore présent','éléments d’exemple sont encore présents')}.</p><div class="row"><button class="btn sm danger" type="button" data-act="clear-ex"${dis()}>Effacer les exemples</button></div></section>`:''}</section>`;
@@ -3778,7 +3854,7 @@ function courseDrawer(){
       const pres=s.cancelled?'<span class="muted">'+W('Aucune : la séance est annulée.','Aucune : le cours est annulé.')+'</span>':a.total?`<b>${a.marked} / ${a.total}</b> élèves marqués${a.marked?` <span class="muted">· ${['P','A','R','M'].filter(k=>cnt[k]).map(k=>pl(cnt[k],LBLS[k][0],LBLS[k][1])).join(' · ')}</span>`:a.past?' <span class="need-t">· à prendre</span>':''}`:'<span class="muted">Aucun élève dans la classe.</span>';
       sessBox=`<section class="sess-box"><div class="sb-head"><p class="per-lg">${esc(dayLabel(parse(s.date)))} · ${momentOf(s)}</p><div class="sb-chips">${kind?`<span class="chip ${sessTone(s)}">${esc(kind)}</span>`:''}${choreChip(s)}${status}</div></div>
         <dl class="facts sb-facts"><div><dt>Classe</dt><dd>${esc(gName(s.c.groupe))}</dd></div><div><dt>Local</dt><dd>${s.salle?esc(s.salle):'<span class="muted">—</span>'}</dd></div>${lab?`<div><dt>${tagsOf(s).includes('Examen')?'Examen':'Cours'}</dt><dd>${esc(lab.replace(/^Cours /,''))}</dd></div>`:''}<div class="wide"><dt>Présences</dt><dd>${pres}</dd></div></dl>
-        ${s.cancelled?'':affBoxHTML(s)}
+        ${s.cancelled?'':affBoxHTML(s)+ressBoxHTML(s)}
         <div class="row">${s.cancelled?'':`<button class="btn sm primary" type="button" data-act="goto-att">${a.state==='done'?'Voir les présences':'Prendre les présences'}</button><button class="btn sm" type="button" data-act="move-open">${icon('move')}Déplacer</button>`}${acad()?'':`<button class="btn sm" type="button" data-act="new-exam" data-cours="${esc(s.c.id)}" data-date="${esc(s.date)}">Planifier un examen</button>`}<button class="btn sm${s.cancelled?'':' danger'}" type="button" data-act="s-cancel"${dis()}>${s.cancelled?W('Rétablir cette séance','Rétablir ce cours'):W('Annuler cette séance','Annuler ce cours')}</button></div>${s.extra&&!s.cancelled?`<h3 class="sb-h3">${acad()?'Modifier cette séance':'Modifier ce cours'}</h3><div class="grid2"><label class="field"><span>Moment</span>${periodSelect('sb-per',s.sl.debut,s.sl.fin,'data-sb="per"'+(S.busy?' disabled':''))}</label>${acad()&&(xCours(modOf(s.c),s.extra).length||xExams(modOf(s.c),s.extra).length)?'':`<label class="field"><span>Type</span>${actSelect('sb-act',actOf(tagsOf(s)),'data-sb="act"'+(S.busy?' disabled':''))}</label>`}</div>`:''}${s.cancelled?'':`<label class="chore-check"><input type="checkbox" id="sb-menage" data-sb="menage"${choreOf(s)?' checked':''}${S.busy?' disabled':''}>${icon('broom')}Corvée de ménage pour ${esc(gName(s.grp))}, toute la journée du ${esc(dayLabel(parse(s.date)).toLowerCase())}</label>`}</section>`;
       if(acad()){
         const mk=modOf(s.c), foot=d.confirmDel
@@ -4203,7 +4279,7 @@ async function saveStaff(){
 
 /* ---------- Écriture ---------- */
 /* Texte CSV lisible par Excel en français : point-virgule, guillemets au besoin, accents conservés */
-const csvText=lines=>'﻿'+lines.map(l=>l.map(v=>{const s=String(v==null?'':v);return /[;"\n\r]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s;}).join(';')).join('\r\n')+'\r\n';
+const csvText=lines=>String.fromCharCode(0xFEFF)+lines.map(l=>l.map(v=>{const s=String(v==null?'':v);return /[;"\n\r]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s;}).join(';')).join('\r\n')+'\r\n';
 /* Remet un fichier à la personne : par la fenêtre de claude.ai quand la page y est ouverte, sinon par le navigateur */
 async function saveFile(name,data){
   try{
@@ -4257,7 +4333,7 @@ async function runAll(fns,okMsg){
   return !fail;
 }
 const col=n=>DB.collection(n);
-const configDoc=()=>{const c=Object.assign({nom:'',annee:'',debut:'',fin:'',conges:[],etapes:[],competences:[]},S.data.config||{});c.conges=[...(c.conges||[])];c.etapes=[...(c.etapes||[])];c.competences=(c.competences||[]).map(k=>Object.assign({},k));return c;};
+const configDoc=()=>{const c=Object.assign({nom:'',annee:'',debut:'',fin:'',conges:[],etapes:[],competences:[]},S.data.config||{});c.conges=[...(c.conges||[])];c.etapes=[...(c.etapes||[])];c.competences=(c.competences||[]).map(k=>Object.assign({},k));c.ressources=(c.ressources||[]).map(r=>Object.assign({},r));return c;};
 async function saveConfig(c,msg){S.busy=true;render();const ok=await write(()=>DB.doc('config/ecole').set(c),msg);S.busy=false;render();return ok;}
 async function importDemo(){
   if(S.busy)return;
@@ -4460,6 +4536,12 @@ document.addEventListener('click',async e=>{
     case 'hr-export':{const r=hoursCSV(b.dataset.m);if(r)await saveFile(r.name,r.text);break;}
     case 'sf-comp-all':document.querySelectorAll('[data-form=sf-comp] input[name=comp]').forEach(i=>{i.checked=!!b.dataset.v;});break;
     case 'stop':break;
+    case 'rs-edit':if(d){d.ressEd=!d.ressEd;renderDrawer();}break;
+    case 'rs-reset':{const se=findSess(b.dataset.date,b.dataset.key);if(se)await saveSessRess(se,null);break;}
+    case 'p-del-res':{if(S.busy)break;const rid=b.dataset.id, c0=configDoc();
+      c0.ressources=c0.ressources.filter(r=>r.id!==rid);
+      for(const k0 of c0.competences) if(k0.cours) k0.cours=k0.cours.map(x=>(x.ress||[]).includes(rid)?Object.assign({},x,{ress:x.ress.filter(y=>y!==rid)}):x);
+      await saveConfig(c0,'Retiré de la liste');break;}
     case 'm-file':{const fi=document.getElementById('m-file-'+b.dataset.g);if(fi)fi.click();break;}
     case 'st-import':{const g0=pg.g||(groups().length===1?groups()[0].id:'');
       if(!g0){toast('Choisissez d’abord la classe, dans la liste « Toutes les classes ».','bad');const s0=$('#s-g');if(s0)s0.focus();break;}
@@ -4553,6 +4635,15 @@ document.addEventListener('submit',async e=>{
     else if(S.pg.fiche===gid){S.pg.enrol=null;render();}
     return;
   }
+  if(k==='p-add-res'){
+    const ni=$('#p-rnom'), nom=String(ni.value||'').replace(/\s+/g,' ').trim(), type=$('#p-rtype').value==='local'?'local':'equip';
+    if(!nom){ni.focus();return;}
+    const c0=configDoc();
+    if(c0.ressources.some(r=>String(r.nom).toLowerCase()===nom.toLowerCase())){toast(`« ${nom} » est déjà dans la liste.`,'bad');return;}
+    c0.ressources.push({id:genId('r'),nom,type});
+    if(await saveConfig(c0,'Ajouté à la liste')){const n2=$('#p-rnom');if(n2){n2.value='';n2.focus();}}
+    return;
+  }
   if(k==='cp-go'){
     const src=S.pg.cps||'', start=S.pg.cpd||'';
     if(!src||!start){toast('Choisissez la classe à copier et la première journée.','bad');return;}
@@ -4611,6 +4702,16 @@ document.addEventListener('input',e=>{
 });
 document.addEventListener('change',async e=>{
   const t=e.target;
+  /* locaux et équipements : d’une séance (pour elle seule), ou d’un cours du module (pour toutes les classes) */
+  if(t.dataset&&t.dataset.rs){
+    const se=findSess(t.dataset.date,t.dataset.key);if(!se)return;
+    const ids=new Set(ressOf(se));if(t.checked)ids.add(t.value);else ids.delete(t.value);
+    await saveSessRess(se,[...ids]);return;
+  }
+  if(t.dataset&&t.dataset.mcr){
+    const cid=t.dataset.id, rid=t.value, on=t.checked;
+    await editModule(t.dataset.code,m=>{const c=m.cours.find(x=>x.id===cid);if(!c)return false;const set=new Set(c.ress||[]);if(on)set.add(rid);else set.delete(rid);c.ress=[...set];},'Locaux et équipements du cours enregistrés');return;
+  }
   /* liste d’élèves lue d’un fichier : elle arrive dans la zone de texte, à vérifier avant d’inscrire */
   if(t.dataset&&t.dataset.imp&&t.files){
     const f0=t.files[0], ta=document.getElementById('m-bulk-'+t.dataset.imp);
@@ -4621,7 +4722,7 @@ document.addEventListener('change',async e=>{
     t.value='';
     const n=parseStudents(txt).length;
     if(!n){toast('Aucun élève reconnu dans ce fichier.','bad');return;}
-    ta.value=txt.replace(/^﻿/,'').trim();ta.focus();
+    ta.value=txt.replace(/^\uFEFF/,'').trim();ta.focus();
     toast(`${pl(n,'élève reconnu','élèves reconnus')} dans ${f0.name}. Vérifiez la liste, puis Inscrire.`);return;
   }
   /* copie d’horaire : classe à copier et première journée */

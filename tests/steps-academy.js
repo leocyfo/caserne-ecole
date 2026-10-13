@@ -364,15 +364,54 @@ click($('#fi-tab-reglages'));await wait(100);
 click($('#md-ask'));await wait(80);click($('[data-act=md-del]'));await wait(350);
 ok('module removed',window.__store.get('config/ecole').competences.length===25&&$$('#main .xm-row').length===25);
 await DBX.doc(MC).delete();await DBX.doc('groupes/c999').delete();await wait(200);
+// ---- locaux et équipements : la liste, ce que demande un cours du module, une séance, les conflits ----
+click($('#nav-params'));await wait(120);
+{const RS=()=>window.__store.get('config/ecole').ressources||[];
+ const K9=()=>window.__store.get('config/ecole').competences.find(k=>k.code===9), C97=K9().cours.find(c=>c.num==='9.7').id, c97=()=>K9().cours.find(c=>c.id===C97);
+ ok('resources panel',!!$('#p-ress')&&$$('#p-ress-list li').length===6&&/Tour d’entraînement/.test($('#p-ress-list').textContent)&&/relié à des cours/.test($('#p-ress-list').textContent),$$('#p-ress-list li').length);
+ $('#p-rnom').value='Simulateur de fumée';$('#p-rtype').value='equip';$('[data-form=p-add-res]').requestSubmit();await wait(350);
+ const SIM=(RS().find(r=>r.nom==='Simulateur de fumée')||{}).id;
+ ok('resource added',!!SIM&&RS().length===7&&$$('#p-ress-list li').length===7);
+ $('#p-rnom').value='simulateur de fumée';$('[data-form=p-add-res]').requestSubmit();await wait(250);
+ ok('resource name unique',RS().length===7&&$$('.toast').some(t=>/déjà dans la liste/.test(t.textContent)));
+ // dans le module : ce que chaque cours demande, pour toutes les classes
+ click($('#nav-modules'));await wait(120);click($('#md-9'));await wait(150);
+ ok('course resources column',/Locaux et équipements/.test($('.xm-hd.md-c').textContent)&&!!$('#mc-rs-'+C97)&&/Aucun/.test($('#mc-rs-'+C97).textContent)&&!$('.md-rs'));
+ click($('#mc-rs-'+C97));await wait(80);
+ ok('course resources picker',!!$('#mc-rsp-'+C97)&&$$('#mc-rsp-'+C97+' input').length===7);
+ click($('#mc-rsp-'+C97+' input[value="r-tour"]'));await wait(450);
+ ok('resource set on the course',(c97().ress||[]).join()==='r-tour'&&/Tour d’entraînement/.test($('#mc-rs-'+C97).textContent),JSON.stringify(c97()));
+ // la tour sert déjà au module M8 : les séances de M8 et de M9 du même jour sont en conflit
+ click($('#nav-affectations'));await wait(200);
+ ok('resource conflict in affectations',/conflit/i.test($('#at-open').textContent)&&$$('#main .xm-row .chip.bad').some(c=>/Conflit d’équipement/.test(c.textContent)),$('#at-open').textContent.replace(/\s+/g,' '));
+ const row=$$('#main .xm-row').find(r=>[...r.querySelectorAll('.chip.bad')].some(c=>/Conflit d’équipement/.test(c.textContent))), K=row.dataset.key, xk=()=>{const [cid,xid]=K.split('_');return XS(cid).find(e=>e.id===xid);};
+ click(row);await wait(150);
+ ok('resource conflict in the session window',!!$('#rs-box')&&!!$('#rs-clash')&&/Tour d’entraînement/.test($('#rs-box').textContent)&&/aussi pour Classe 1\d\d \(M[89]\)/.test($('#rs-box').textContent)&&/Selon le cours du module/.test($('#rs-box').textContent),$('#rs-box').textContent.replace(/\s+/g,' ').slice(0,170));
+ // pour cette séance seulement : sans la tour, plus de conflit ; puis retour à ce que demande le module
+ click($('#rs-edit'));await wait(60);
+ ok('session resources picker',$$('#rs-picks input').length===7&&$('#rs-picks input[value="r-tour"]').checked);
+ click($('#rs-picks input[value="r-tour"]'));await wait(450);
+ ok('session override saved',Array.isArray(xk().ress)&&xk().ress.length===0&&!$('#rs-clash')&&/Aucun pour cette séance/.test($('#rs-box').textContent)&&!!$('#rs-reset'),JSON.stringify(xk().ress));
+ click($('#rs-reset'));await wait(450);
+ ok('session back to module resources',xk().ress===undefined&&!!$('#rs-clash')&&!$('#rs-reset'),JSON.stringify(xk().ress));
+ click($('#dr-close'));await wait(40);
+ // on remet tout comme avant
+ click($('#nav-modules'));await wait(120);click($('#md-9'));await wait(150);
+ click($('#mc-rs-'+C97));await wait(80);click($('#mc-rsp-'+C97+' input[value="r-tour"]'));await wait(450);
+ click($('#nav-params'));await wait(120);
+ click($('#p-ress-list [data-act=p-del-res][data-id="'+SIM+'"]'));await wait(350);
+ ok('resources cleaned up',RS().length===6&&!(c97().ress||[]).length);
+ click($('#nav-affectations'));await wait(200);
+ ok('no conflict left',!/conflit/i.test($('#at-open').textContent),$('#at-open').textContent.replace(/\s+/g,' '));}
 // ---- import : liste d’élèves (fichier ou collage) et copie de l’horaire d’une classe ----
 await DBX.doc('groupes/c998').set({nom:'Classe 998'});await wait(250);
 click($('#nav-classes'));await wait(120);click($('#cl-c998'));await wait(150);
 {const EL=()=>[...window.__store.entries()].filter(([k,v])=>k.startsWith('eleves/')&&v.groupe==='c998').map(([k,v])=>v);
  const FR0=window.FileReader, TXT={};window.FileReader=class{readAsText(f){setTimeout(()=>{this.result=TXT[f.name]||'';if(this.onload)this.onload();},0);}};
- const drop=(name,text)=>{TXT[name]=text.replace(/^﻿/,'');const dt=new DataTransfer();dt.items.add(new File([text],name,{type:'text/csv'}));const fi=$('#m-file-c998');fi.files=dt.files;fi.dispatchEvent(new Event('change',{bubbles:true}));};
+ const drop=(name,text)=>{TXT[name]=text.replace(/^\uFEFF/,'');const dt=new DataTransfer();dt.items.add(new File([text],name,{type:'text/csv'}));const fi=$('#m-file-c998');fi.files=dt.files;fi.dispatchEvent(new Event('change',{bubbles:true}));};
  ok('empty class shows the import form',!!$('#m-bulk-c998')&&!!$('#m-file-c998')&&!!$('#m-file-btn')&&/fichier CSV/.test($('.st-enrol').textContent));
  // un fichier CSV (titres, point-virgule, guillemets) arrive dans la zone de texte, à vérifier
- drop('liste.csv','﻿N°;Prénom;Nom;Courriel\r\n1;Zoé;Lemieux;zoe@exemple.ca\r\n2;Marc-André;"Roy; Jr";\r\n');await wait(300);
+ drop('liste.csv','\uFEFFN°;Prénom;Nom;Courriel\r\n1;Zoé;Lemieux;zoe@exemple.ca\r\n2;Marc-André;"Roy; Jr";\r\n');await wait(300);
  ok('file read into the list',/Zoé;Lemieux/.test($('#m-bulk-c998').value)&&$$('.toast').some(t=>/2 élèves reconnus dans liste\.csv/.test(t.textContent))&&EL().length===0,$('#m-bulk-c998').value.slice(0,60));
  $('[data-form=m-add-els]').requestSubmit();await wait(400);
  {const z=EL().find(e=>e.numero===1), m=EL().find(e=>e.numero===2);

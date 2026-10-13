@@ -52,7 +52,10 @@ Chaque classe a un document `cours/<id>` par module (sigle `M7`). Ses séances s
 - **Notifications** (la cloche) : rien de plus n’est enregistré, la liste se déduit des données que la personne lit déjà (candidatures, remplacements, séances annulées). Ce qui a été vu est noté dans le navigateur. Le courriel demandera un serveur (Firebase).
 - **Historique** (administration) : chaque séance annulée, rétablie, déplacée, ajoutée ou supprimée, chaque candidature, approbation, attribution ou retrait, et chaque changement de module y est inscrit avec le nom de la personne et l’heure.
 
-Données : `journal/<AAAA-MM>` (un document par mois, une entrée par action dans `ev` : `{ le, par, role, cat, txt, obj, seance, date, groupe }`) et `cours/<id>.annule` (`{ "date@séance": { le, par } }` pour chaque séance annulée).
+- **Locaux et équipements** : la liste (salles, camions, tour, bassin) se tient dans Paramètres. Dans l’onglet Cours d’un module, on choisit ce que chaque cours demande, pour toutes les classes ; la fenêtre d’une séance permet de le changer pour elle seule. Deux séances au même moment qui veulent le même local ou équipement sont en conflit, sauf si c’est le même module.
+- **Import** : la fiche d’une classe inscrit des élèves depuis un fichier CSV ou une liste collée d’Excel (numéro, nom, courriel, téléphone), et son onglet Modules copie l’horaire d’une autre classe à partir d’une date, en sautant les fins de semaine et les congés.
+
+Données : `config/ecole.ressources` (`{ id, nom, type }`, type `local` ou `equip`), `cours[].ress` dans un module et `ress` sur une séance (listes d’identifiants), `journal/<AAAA-MM>` (un document par mois, une entrée par action dans `ev` : `{ le, par, role, cat, txt, obj, seance, date, groupe }`) et `cours/<id>.annule` (`{ "date@séance": { le, par } }` pour chaque séance annulée).
 
 ## Essayer le site sur cet ordinateur
 
