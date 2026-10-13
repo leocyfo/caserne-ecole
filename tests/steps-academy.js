@@ -163,6 +163,11 @@ click($('#fi-tab-presences'));await wait(80);
 ok('tab presences',/Absences et retards/.test($('.fiche-body').textContent)&&/Par module/.test($('.fiche-body').textContent)&&!/Parent ou tuteur/.test($('.fiche-body').textContent));
 click($('#fi-tab-examens'));await wait(80);
 ok('tab examens',/Résultats/.test($('.fiche-body').textContent)&&/À venir/.test($('.fiche-body').textContent)&&/de réussite/.test($('.fiche-body .summary').textContent));
+// impression du relevé de résultats (la fenêtre d’impression du navigateur est simulée)
+{const p0=window.print;let got='';window.print=()=>{got=$('#print-root').innerHTML;window.dispatchEvent(new Event('beforeprint'));window.dispatchEvent(new Event('afterprint'));};
+ const b=$('#pr-releve');if(b){click(b);await wait(500);}
+ ok('print transcript',!!b&&/Relevé de résultats/.test(got)&&/Camille Bergeron/.test(got)&&/pr-res/.test(got)&&/Réussi|Échec|Absent/.test(got)&&/Signature/.test(got)&&/@page\{size:letter portrait/.test(got)&&$('#print-root').innerHTML===''&&!document.body.classList.contains('printing'),got.length);
+ window.print=p0;}
 click($('#fi-tab-dossier'));await wait(80);
 ok('account in header',/Compte élève · compte d’exemple/.test($('#fi-acct-chip').textContent)&&/Modifier le compte/.test($('#fi-acct-btn').textContent));
 click($('#fi-next'));await wait(80);
@@ -425,11 +430,34 @@ ok('student board',$$('#main .week button.cc').length>0&&/Prochains examens/.tes
 click($('#nav-examens'));await wait(80);
 ok('student exams page',/Prochains examens/.test($('#main').textContent)&&!$('.xm-tile')&&!$('[data-act=x-rep]'));
 ok('student sees own results',/Mes résultats/.test($('#main').textContent)&&$$('#main .xm-me .chip.ok').length>=5,$$('#main .xm-me .chip.ok').length);
+ok('student can print own transcript',!!$('#pr-releve')&&/Imprimer mon relevé/.test($('#pr-releve').textContent));
 /* DEMO */
 {const st=document.createElement('style');st.textContent='.demo,.demo.is-hidden{transition:none!important}';document.head.appendChild(st);}
 click($('[data-role=admin]'));await wait(80);
 /* CTL */
 ok('one-row toolbar',!$('.ctl-bottom')&&!$('.keys')&&!$('#heading p')&&!$('.saved'));
+// impression de l’horaire de la semaine et de la feuille de présences
+{const p0=window.print;let got='';window.print=()=>{got=$('#print-root').innerHTML;window.dispatchEvent(new Event('beforeprint'));window.dispatchEvent(new Event('afterprint'));};
+ const pages=()=>(got.match(/class="pr-page"/g)||[]).length;
+ click($('#pr-open'));await wait(80);
+ ok('print drawer',/Imprimer/.test($('#drawer .eyebrow').textContent)&&!!$('#pr-week')&&$$('#pr-who option').length>=14&&!!$('#pr-horaire')&&!!$('#pr-feuille'),$$('#pr-who option').length);
+ pick0('#pr-who','');await wait(60);
+ click($('#pr-horaire'));await wait(500);
+ ok('print week: one page per class',pages()===5&&/Horaire · Classe 119/.test(got)&&/Horaire · Classe 123/.test(got)&&/Avant-midi/.test(got)&&/Après-midi/.test(got)&&/<b>M\d+ /.test(got)&&/@page\{size:letter landscape/.test(got),pages());
+ pick0('#pr-who','e:e-mleduc');await wait(60);got='';
+ click($('#pr-horaire'));await wait(500);
+ ok('print week of a teacher',pages()===1&&/Horaire · Marie Leduc/.test(got)&&/M9 /.test(got)&&/Classe 1\d\d/.test(got),pages());
+ pick0('#pr-who','g:c119');await wait(60);got='';
+ click($('#pr-feuille'));await wait(500);
+ ok('print attendance sheet',pages()===1&&/Feuille de présences · Classe 119/.test(got)&&(got.match(/<td class="nm">/g)||[]).length===12&&/Signature de l’enseignant/.test(got)&&/<td class="c">P<\/td>/.test(got)&&!/Accueil/.test(got),(got.match(/<td class="nm">/g)||[]).length);
+ // la semaine choisie est ramenée au lundi
+ {const w=$('#pr-week');w.value='2026-10-22';w.dispatchEvent(new Event('change',{bubbles:true}));}await wait(60);
+ ok('print week snaps to monday',$('#pr-week').value==='2026-10-19'&&/19 au 23 octobre 2026/.test($('#dr-title').textContent),$('#pr-week').value);
+ // sans fenêtre d’impression (page intégrée dans une autre) : la feuille est remise en fichier
+ const u0=window.claude.use;window.__saved=null;window.claude.use=async n=>n==='downloads'?{save:async o=>{window.__saved=o;}}:u0(n);window.print=()=>{};
+ click($('#pr-horaire'));await wait(700);
+ ok('print falls back to a file',(window.__saved||{}).filename==='horaire-2026-10-19.html'&&/^<!doctype html>/.test((window.__saved||{}).data||'')&&/Horaire · Classe 119/.test((window.__saved||{}).data||'')&&$('#print-root').innerHTML==='',(window.__saved||{}).filename);
+ window.claude.use=u0;window.print=p0;click($('#dr-close'));await wait(40);}
 ok('late pill',!!$('#late-pill')&&/en retard/.test($('#late-pill').textContent));
 ok('demo hide button',!!$('#demo-hide')&&!$('#demo').classList.contains('is-hidden')&&!$('#demo-show'));
 click($('#demo-hide'));await wait(400);

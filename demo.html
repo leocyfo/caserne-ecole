@@ -242,6 +242,11 @@ table.tbl{width:100%;border-collapse:collapse;min-width:640px}
 .hr-m[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:inset 0 0 0 1px var(--role)}
 .hr-tot td{font-weight:700;background:var(--head);border-top:1px solid var(--line)}
 .hr-tot td.on{background:var(--role-bg)}
+#print-root{display:none}
+@media print{body.printing{background:#fff}body.printing>*:not(#print-root){display:none!important}body.printing>#print-root{display:block}}
+.pr-btns{display:flex;flex-wrap:wrap;gap:8px}
+.ctl-print{width:40px;height:40px;flex:none}
+.ctl-print .ic{width:18px;height:18px}
 .link{background:none;border:0;padding:0;font-weight:700;color:var(--ink);text-align:left}
 .link:hover{text-decoration:underline;color:var(--head-ink)}
 .help{font-size:13px;color:var(--muted);margin:0}
@@ -1072,6 +1077,7 @@ body.is-dragging .cell-add{opacity:0!important}
 <div class="scrim" id="scrim" hidden></div>
 <aside class="drawer" id="drawer" hidden aria-modal="true" role="dialog" aria-labelledby="dr-title"></aside>
 <div class="toasts" id="toasts" aria-live="polite"></div>
+<div id="print-root" aria-hidden="true"></div>
 
 <script>
 (function(){
@@ -1528,7 +1534,7 @@ function toolbarHTML(){
     if(late) right+=`<button type="button" class="late" id="late-pill" data-act="nav" data-page="classes" title="${W('Séances passées','Cours passés')} de la semaine dont les présences n’ont pas été prises. Ouvrir les classes.">${late} ${late>1?'présences en retard':'présence en retard'} cette semaine</button>`;
     if(ready&&S.canAdmin!==false) right+=`<button class="btn primary" type="button" data-act="new-course">${icon('plus')}${acad()?'Ajouter une séance':'Planifier un cours'}</button>`;
   }else right=identitySelect();
-  return `<section class="ctl" aria-label="Affichage de l’horaire">${dd?navDay:nav}${viewSeg}${mid?'<span class="vsep" aria-hidden="true"></span>'+mid:''}<span class="grow"></span>${right}</section>`;
+  return `<section class="ctl" aria-label="Affichage de l’horaire">${dd?navDay:nav}${viewSeg}${mid?'<span class="vsep" aria-hidden="true"></span>'+mid:''}<span class="grow"></span>${ready?`<button type="button" class="icon-btn ctl-print" id="pr-open" data-act="pr-open" aria-label="Imprimer" title="Imprimer l’horaire de la semaine ou la feuille de présences">${icon('print')}</button>`:''}${right}</section>`;
 }
 function viewSelHTML(){
   const mode=S.fmode, f=S.filtre;
@@ -1697,7 +1703,7 @@ function classFiche(){
   const numOf=y=>String(y.nom).replace(/^(Classe|Groupe)\s+/i,'').slice(0,4);
   const item=y=>`<span class="fl-row"><span class="cl-num sm" aria-hidden="true">${esc(numOf(y))}</span><span class="fl-txt"><span class="fl-name">${esc(y.nom)}</span><span class="fl-sub">${pl(studentsOf(y.id).length,'élève','élèves')}${principalOf(y.id)?' · '+esc(shortName(tName(principalOf(y.id)))):''}</span></span></span>`;
   const chips=`${g.description?`<span class="chip off">${esc(g.description)}</span>`:''}<span class="chip ${pid?'k0':'off'}">${pid?'Enseignant principal · '+esc(tName(pid)):'Sans enseignant principal'}</span>`;
-  const curTab=S.pg.tab||'eleves', actions=`${curTab==='eleves'||curTab==='rattraper'?periodSeg(per):''}<button class="btn sm" type="button" data-act="see-group" data-id="${esc(g.id)}">${icon('cal')}Voir l’horaire</button>`;
+  const curTab=S.pg.tab||'eleves', actions=`${curTab==='eleves'||curTab==='rattraper'?periodSeg(per):''}<button class="btn sm" type="button" data-act="see-group" data-id="${esc(g.id)}">${icon('cal')}Voir l’horaire</button><button class="btn sm" type="button" id="cl-print" data-act="pr-open" data-g="${esc(g.id)}">${icon('print')}Imprimer</button>`;
   const stat=[['Élèves',String(els.length),''],['Présence',!S.termLoaded?'…':x.rate==null?'—':x.rate+' %',rateCls(x.rate)],['À rattraper',String(x.missing.length),x.missing.length?'warn':''],['Avancement',pr.pct==null?'—':pr.pct+' %',''],['Prochain examen',ex?esc(dn(parse(ex.date))+' '+fMonthS.format(parse(ex.date))):'Aucun','']];
   const head=ficheHead(g.nom,chips,actions,stat,`<span class="cl-num lg" aria-hidden="true">${esc(numOf(g))}</span>`);
   const content=tab=>{
@@ -2144,7 +2150,7 @@ function studentExams(){
   const mine=B.items.filter(x=>x.past&&!x.rep&&x.res[sid]).sort((a,b)=>b.date.localeCompare(a.date)||b.start-a.start);
   const todo=mine.filter(x=>resKo(x.res[sid])), n=nr[S.group];
   const up=B.items.filter(x=>!x.past).sort((a,b)=>a.date.localeCompare(b.date)||a.start-b.start).slice(0,6);
-  const tb=`<div class="toolbar">${identitySelect()}</div>`;
+  const tb=`<div class="toolbar">${identitySelect()}<span class="grow"></span>${me&&mine.length?`<button class="btn" type="button" id="pr-releve" data-act="pr-releve" data-id="${esc(sid)}">${icon('print')}Imprimer mon relevé</button>`:''}</div>`;
   const note=todo.length?`<div class="notice warn"><p><b>${pl(todo.length,'reprise à faire','reprises à faire')}</b> : ${todo.map(x=>esc((x.c&&x.c.code?x.c.code+' ':'')+(x.c?x.c.titre:'Examen'))).join(', ')}.${n?` Prochaine journée de reprise : ${esc(dayLabel(parse(n.date)).toLowerCase())}.`:''}</p></div>`:'';
   const upH=up.length?xList('xm-me',[['Date'],['Examen'],['Moment'],['','r']],up.map(x=>{const k=daysBetween(todayISO(),x.date);return xRow('xm-me',examAct(x),`${xDate(x,x.rep?'rep':k<=2?'hot':'')}<div class="xm-t"><b>${xTitle(x)}</b>${xSub(x)?`<small>${xSub(x)}</small>`:''}</div><span class="xm-m">${esc(momentOf(x))}</span><div class="xm-end">${x.rep?'<span class="chip info">Reprise</span>':xWhen(x)}</div>`,xLabel(x));}).join('')):`<section class="panel"><p class="help">Les examens de votre classe apparaîtront ici dès qu’ils seront planifiés.</p></section>`;
   const resH=!me?'':mine.length?xList('xm-me',[['Date'],['Examen'],['Moment'],['Résultat','r']],mine.map(x=>{const v=x.res[sid];return xRow('xm-me','',`${xDate(x,'')}<div class="xm-t"><b>${xTitle(x)}</b></div><span class="xm-m">${esc(momentOf(x))}</span><div class="xm-end"><span class="chip ${RES[v][0]}">${RES[v][1]}</span></div>`,'');}).join('')):`<section class="panel"><p class="help">Aucun résultat pour l’instant.</p></section>`;
@@ -2192,7 +2198,7 @@ function studentExamsTab(e){
   const B=examBoard(x=>x.grp===e.groupe), nr=nextReprises(), n=nr[e.groupe];
   const mine=B.items.filter(x=>x.past&&!x.rep&&x.res[e.id]).sort((a,b)=>b.date.localeCompare(a.date)||b.start-a.start);
   const pend=mine.filter(x=>resKo(x.res[e.id])), ok=mine.filter(x=>resOk(x.res[e.id])).length, t=ok+pend.length, rate=t?Math.round(ok/t*100):null;
-  const bar=`<div class="st-bar"><p class="summary"><span><b>${mine.length}</b>${mine.length>1?'résultats':'résultat'}</span><span><b class="${passCls(rate)}">${rate==null?'—':rate+' %'}</b>de réussite</span><span class="${pend.length?'need':''}"><b>${pend.length}</b>à reprendre</span></p></div>`;
+  const bar=`<div class="st-bar"><p class="summary"><span><b>${mine.length}</b>${mine.length>1?'résultats':'résultat'}</span><span><b class="${passCls(rate)}">${rate==null?'—':rate+' %'}</b>de réussite</span><span class="${pend.length?'need':''}"><b>${pend.length}</b>à reprendre</span></p><span class="grow"></span>${mine.length?`<button class="btn sm" type="button" id="pr-releve" data-act="pr-releve" data-id="${esc(e.id)}">${icon('print')}Imprimer le relevé</button>`:''}</div>`;
   const note=pend.length?`<div class="notice warn"><p><b>À reprendre :</b> ${pend.map(x=>esc((x.c&&x.c.code?x.c.code+' ':'')+(x.c?x.c.titre:x.e.titre||'Examen'))+` (${RES[x.res[e.id]][1].toLowerCase()})`).join(', ')}.${n?` Prochaine journée de reprise : ${esc(dayLabel(parse(n.date)).toLowerCase())}.`:''}</p></div>`:'';
   const res=mine.length?xList('xm-sres',[['Date'],['Examen'],['Résultat'],['','r']],mine.map(x=>{const v=x.res[e.id], can=canEditItem(x);
     return xRow('xm-sres',can?xOpen(x):'',`${xDate(x,'')}<div class="xm-t"><b>${xTitle(x)}</b>${xSub(x)?`<small>${xSub(x)}</small>`:''}</div><div><span class="chip ${RES[v][0]}">${RES[v][1]}</span></div><div class="xm-end">${resKo(v)&&can?`<button class="btn sm" type="button" data-act="x-rep" data-key="${esc(x.key)}" data-el="${esc(e.id)}"${dis()}>Réussi en reprise</button>`:''}</div>`,xLabel(x));}).join('')):'<section class="panel"><p class="help">Aucun résultat inscrit.</p></section>';
@@ -2672,6 +2678,141 @@ async function addCourseDay(o){
   return ok?'':'L’enregistrement a échoué.';
 }
 
+/* ---------- Impression (et PDF) ----------
+   La page prépare une feuille, puis ouvre la fenêtre d’impression du navigateur, qui sait aussi enregistrer en PDF.
+   Si cette fenêtre ne peut pas s’ouvrir (page intégrée dans une autre), la feuille est remise en fichier à ouvrir et à imprimer.
+   Trois feuilles : l’horaire de la semaine (classe ou enseignant), la feuille de présences d’une classe, le relevé de résultats d’un élève. */
+const prCSS=land=>`@page{size:letter ${land?'landscape':'portrait'};margin:12mm}
+.pr-doc{font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;color:#111;font-size:10.5pt;line-height:1.35;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.pr-page{break-after:page;page-break-after:always}
+.pr-page:last-child{break-after:auto;page-break-after:auto}
+.pr-head{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;border-bottom:2px solid #111;padding-bottom:6px;margin-bottom:10px}
+.pr-head h1{margin:0;font-size:16pt;line-height:1.2}
+.pr-head p{margin:3px 0 0;font-size:10.5pt;color:#333}
+.pr-org{text-align:right;font-size:10pt;color:#333}
+.pr-t{width:100%;border-collapse:collapse;table-layout:fixed}
+.pr-t th,.pr-t td{border:1px solid #777;padding:5px 6px;vertical-align:top;text-align:left;overflow-wrap:anywhere}
+.pr-t thead th{background:#e8e8e8;font-size:9.5pt}
+.pr-t th small{display:block;font-weight:400;font-size:8.5pt}
+.pr-wk .pr-m{width:22mm;background:#f3f3f3;font-size:9.5pt;vertical-align:middle}
+.pr-wk tbody td{height:66mm}
+.pr-s{margin-bottom:7px}
+.pr-s b{display:block;font-size:10.5pt}
+.pr-s span{display:block;font-size:9.5pt;color:#222}
+.pr-s i{display:block;font-size:9.5pt}
+.pr-s.ex{border-left:3px solid #111;padding-left:5px}
+.pr-s.off b,.pr-s.off span{text-decoration:line-through;color:#666}
+.pr-off{background:#f0f0f0;text-align:center!important;vertical-align:middle!important;color:#333}
+.pr-none{color:#999}
+.pr-att th,.pr-att td{padding:3px 4px;font-size:9pt}
+.pr-att .n{width:8mm;text-align:center}
+.pr-att .nm{width:52mm}
+.pr-att .c{text-align:center}
+.pr-att thead th.c{font-weight:400;line-height:1.2}
+.pr-att thead th.c b{display:block}
+.pr-att tbody td{height:7.2mm;vertical-align:middle}
+.pr-res td,.pr-res th{font-size:10.5pt;padding:6px 8px}
+.pr-sum{margin:10px 0 0;font-size:10.5pt}
+.pr-foot{display:flex;justify-content:space-between;gap:20px;margin-top:10px;font-size:9.5pt;color:#222}
+.pr-sign{display:flex;justify-content:space-between;gap:20px;margin-top:26px;font-size:10.5pt}
+`;
+const prSlug=v=>String(v||'').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^A-Za-z0-9]+/g,'-').replace(/^-|-$/g,'').toLowerCase()||'feuille';
+function prHead(title,sub){const c=cfg();return `<header class="pr-head"><div><h1>${esc(title)}</h1><p>${sub}</p></div><div class="pr-org"><b>${esc(c.nom||'')}</b><br>${esc(c.annee||'')}</div></header>`;}
+const prWeekLbl=mon=>{const a=mon, b=addDays(mon,4);return a.getMonth()===b.getMonth()?`${dn(a)} au ${dn(b)} ${fMonth.format(b)} ${b.getFullYear()}`:`${dn(a)} ${fMonth.format(a)} au ${dn(b)} ${fMonth.format(b)} ${b.getFullYear()}`;};
+/* Tout ce qui est à l’horaire d’une semaine (du lundi au vendredi) */
+function weekItemsOf(mon){
+  let out=[];for(let i=0;i<5;i++) out=out.concat(sessionsOn(iso(addDays(mon,i))));
+  const a=iso(mon), b=iso(addDays(mon,4));
+  return out.concat(S.data.examens.filter(e=>!e.seance&&e.date>=a&&e.date<=b).map(examItem));
+}
+function prSess(s,who){
+  const where=who==='g'?(s.tch||[]).filter(id=>id&&byId(S.data.enseignants,id)).map(id=>shortName(tName(id))).join(', '):gName(s.grp);
+  if(s.kind==='exam') return `<div class="pr-s ex"><b>${esc(s.c?(s.c.code?s.c.code+' ':'')+s.c.titre:(s.e.titre||'Examen'))}</b><span>${esc(s.c?(s.e.titre||'Examen'):'Examen')}</span><span>${esc([where,s.salle?'Local '+s.salle:''].filter(Boolean).join(' · '))}</span></div>`;
+  const tg=tagsOf(s);
+  return `<div class="pr-s${s.cancelled?' off':''}${tg.includes('Examen')?' ex':''}"><b>${esc((s.c.code?s.c.code+' ':'')+s.c.titre)}</b><span>${esc([sessLabel(s),cardKind(tg).kind].filter(Boolean).join(' · '))}</span><span>${esc([where,s.salle?'Local '+s.salle:''].filter(Boolean).join(' · '))}</span>${s.cancelled?`<i>${W('Séance annulée','Cours annulé')}</i>`:''}</div>`;
+}
+/* Une page : les cinq jours en colonnes, l’avant-midi et l’après-midi en lignes ; une journée complète occupe les deux */
+function prWeekPage(title,sub,items,mon,who,gid){
+  const days=[0,1,2,3,4].map(i=>{const d=addDays(mon,i), ds=iso(d), list=items.filter(s=>s.date===ds).sort((a,b)=>a.start-b.start), part=k=>list.filter(s=>moment(s.start,s.end)===k);
+    return {d,off:offDay(ds),full:part('Toute la journée'),am:part('Avant-midi'),pm:part('Après-midi'),chore:gid?choreDay(gid,ds):''};});
+  const lines=a=>a.map(s=>prSess(s,who)).join('')||'<span class="pr-none">—</span>';
+  const span=x=>x.off||(x.full.length&&!x.am.length&&!x.pm.length);
+  const head=days.map(x=>`<th>${esc(WD[x.d.getDay()])} ${dn(x.d)} ${esc(fMonthS.format(x.d))}${x.chore?`<small>Corvée de ménage${x.chore==='maybe'?' ?':''}</small>`:''}</th>`).join('');
+  const am=days.map(x=>x.off?`<td rowspan="2" class="pr-off">${esc(x.off)}</td>`:span(x)?`<td rowspan="2">${lines(x.full)}</td>`:`<td>${lines(x.full.concat(x.am))}</td>`).join('');
+  const pm=days.map(x=>span(x)?'':`<td>${lines(x.full.concat(x.pm))}</td>`).join('');
+  return `<section class="pr-page">${prHead(title,sub)}<table class="pr-t pr-wk"><thead><tr><th class="pr-m"></th>${head}</tr></thead><tbody><tr><th class="pr-m">Avant-midi</th>${am}</tr><tr><th class="pr-m">Après-midi</th>${pm}</tr></tbody></table></section>`;
+}
+/* Pour qui on imprime : la classe ou l’enseignant choisi, sinon toutes les classes ; un enseignant ou un élève imprime le sien */
+function printTargets(d){
+  if(S.role==='student') return S.group?[{k:'g',id:S.group}]:[];
+  if(S.role==='teacher') return S.teacher?[{k:'t',id:S.teacher}]:[];
+  if(d.t) return [{k:'t',id:d.t}];
+  return (d.g?[d.g]:groups().map(g=>g.id)).map(id=>({k:'g',id}));
+}
+function weekSheet(d){
+  const mon=parse(d.week), items=weekItemsOf(mon), wk='Semaine du '+esc(prWeekLbl(mon));
+  return printTargets(d).map(t=>t.k==='g'
+    ?prWeekPage('Horaire · '+gName(t.id),wk+(principalOf(t.id)?' · Enseignant principal : '+esc(tName(principalOf(t.id))):''),items.filter(s=>s.grp===t.id),mon,'g',t.id)
+    :prWeekPage('Horaire · '+tName(t.id),wk,items.filter(s=>(s.tch||[]).includes(t.id)),mon,'t','')).join('');
+}
+/* Feuille de présences : une page par classe, les élèves en lignes, les séances de la semaine en colonnes.
+   Les présences déjà prises y sont inscrites ; le reste est à cocher à la main. */
+function attSheet(d){
+  const mon=parse(d.week), tid=S.role==='teacher'?S.teacher:(d.t||''), wk='Semaine du '+esc(prWeekLbl(mon));
+  const items=weekItemsOf(mon).filter(s=>s.kind==='cours'&&!s.cancelled&&!isActivity(s.c)&&(!tid||(s.tch||[]).includes(tid)));
+  const gs=tid?groups().map(g=>g.id).filter(id=>items.some(s=>s.grp===id)):(d.g?[d.g]:groups().map(g=>g.id));
+  return gs.map(gid=>{
+    const ss=items.filter(s=>s.grp===gid).sort((a,b)=>a.date.localeCompare(b.date)||a.start-b.start), els=studentsOf(gid);
+    if(!ss.length||!els.length) return '';
+    const th=ss.map(s=>{const dd=parse(s.date);return `<th class="c"><b>${esc(WD[dd.getDay()].slice(0,3))} ${dn(dd)}</b>${esc(momentShort(s))}<br>${esc((s.c.code||s.c.titre)+(sessLabel(s)?' '+sessLabel(s).replace(/^Cours /,''):''))}</th>`;}).join('');
+    const rows=els.map(e=>`<tr><td class="n">${e.numero!=null&&e.numero!==''?esc(e.numero):''}</td><td class="nm">${esc(e.nom)}</td>${ss.map(s=>{const p=presDoc(s.key), v=p&&p.statuts&&p.statuts[e.id];return `<td class="c">${v&&LBL[v]?v:''}</td>`;}).join('')}<td></td></tr>`).join('');
+    return `<section class="pr-page">${prHead('Feuille de présences · '+gName(gid),wk+(tid?' · '+esc(tName(tid)):''))}<table class="pr-t pr-att"><thead><tr><th class="n">N°</th><th class="nm">Élève</th>${th}<th>Remarques</th></tr></thead><tbody>${rows}</tbody></table>
+      <div class="pr-foot"><span>P : présent · A : absent · R : retard · M : absence motivée</span><span>Signature de l’enseignant : ______________________________</span></div></section>`;
+  }).join('');
+}
+/* Relevé de résultats d’un élève */
+function transcriptHTML(e){
+  const B=examBoard(x=>x.grp===e.groupe), mine=B.items.filter(x=>x.past&&!x.rep&&x.res[e.id]).sort((a,b)=>a.date.localeCompare(b.date)||a.start-b.start);
+  const ok=mine.filter(x=>resOk(x.res[e.id])).length, ko=mine.filter(x=>resKo(x.res[e.id])).length, rate=ok+ko?Math.round(ok/(ok+ko)*100):null;
+  const rows=mine.map(x=>{const dd=parse(x.date);return `<tr><td>${esc(shortDate(dd))} ${dd.getFullYear()}</td><td>${esc(x.c?(x.c.code?x.c.code+' ':'')+x.c.titre:'')}</td><td>${esc((x.e&&x.e.titre)||'Examen')}</td><td><b>${esc(RES[x.res[e.id]][1])}</b></td></tr>`;}).join('');
+  return `<section class="pr-page">${prHead('Relevé de résultats',esc(e.nom)+(e.numero!=null&&e.numero!==''?' · n° '+esc(e.numero):'')+' · '+esc(gName(e.groupe)))}
+    ${mine.length?`<table class="pr-t pr-res"><thead><tr><th style="width:17%">Date</th><th>Module</th><th style="width:22%">Examen</th><th style="width:21%">Résultat</th></tr></thead><tbody>${rows}</tbody></table>`:'<p>Aucun résultat inscrit pour l’instant.</p>'}
+    <p class="pr-sum">${pl(mine.length,'examen','examens')} · ${ok} ${ok>1?'réussis':'réussi'}${ko?` · ${ko} à reprendre`:''}${rate!=null?` · ${rate} % de réussite`:''}</p>
+    <div class="pr-sign"><span>Remis le ${esc(longDate(new Date()))}</span><span>Signature : ______________________________</span></div></section>`;
+}
+async function printDoc(title,body,land,file){
+  const root=$('#print-root'), css=prCSS(land), t0=document.title;
+  let shown=false, done=false;
+  const clean=()=>{if(done)return;done=true;window.removeEventListener('afterprint',clean);document.title=t0;document.body.classList.remove('printing');root.innerHTML='';};
+  const on=()=>{shown=true;};
+  root.innerHTML=`<style>${css}</style><div class="pr-doc">${body}</div>`;
+  document.body.classList.add('printing');document.title=title;
+  window.addEventListener('beforeprint',on);window.addEventListener('afterprint',clean);
+  try{window.print();}catch(e){}
+  await new Promise(r=>setTimeout(r,350));
+  window.removeEventListener('beforeprint',on);
+  if(shown){setTimeout(clean,120000);return true;}
+  clean();
+  /* la fenêtre d’impression ne s’est pas ouverte : la feuille part en fichier */
+  const ok=await saveFile(file+'.html',`<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>${esc(title)}</title><style>${css}body{margin:0}</style></head><body><div class="pr-doc">${body}</div></body></html>`);
+  if(ok) toast('Ouvrez ce fichier, puis imprimez-le (Ctrl+P).');
+  return ok;
+}
+/* Fenêtre « Imprimer » : la semaine, pour qui, et la feuille voulue */
+function openPrint(preset){
+  const f=S.role==='admin'?S.filtre:'';
+  openDrawer(Object.assign({kind:'print',week:iso(S.week),g:f.startsWith('g:')?f.slice(2):'',t:f.startsWith('e:')?f.slice(2):''},preset||{}));
+}
+function printDrawer(){
+  const d=S.dr, mon=parse(d.week), cur=d.t?'e:'+d.t:d.g?'g:'+d.g:'';
+  const who=S.role!=='admin'?'':`<label class="field"><span>Pour</span><select id="pr-who" data-pr="who"><option value="">Toutes les classes</option>${groups().map(g=>`<option value="g:${esc(g.id)}"${cur==='g:'+g.id?' selected':''}>${esc(g.nom)}</option>`).join('')}<optgroup label="Enseignants">${teachers().map(t=>`<option value="e:${esc(t.id)}"${cur==='e:'+t.id?' selected':''}>${esc(t.nom)}</option>`).join('')}</optgroup></select></label>`;
+  const sub=S.role==='student'?esc(gName(S.group)):S.role==='teacher'?esc(tName(S.teacher)):d.t?esc(tName(d.t)):d.g?esc(gName(d.g)):'Toutes les classes';
+  return dTop('Imprimer','Semaine du '+esc(prWeekLbl(mon)),sub)+`<div class="dr-body"><div class="stackf">
+    <label class="field"><span>Semaine du</span><input type="date" id="pr-week" data-pr="week" data-f="week" value="${esc(d.week)}"></label>${who}
+    <div class="pr-btns"><button class="btn primary" type="button" id="pr-horaire" data-act="pr-go" data-doc="horaire">${icon('print')}Horaire de la semaine</button>${S.role==='student'?'':`<button class="btn" type="button" id="pr-feuille" data-act="pr-go" data-doc="feuille">${icon('print')}Feuille de présences</button>`}</div>
+    <p class="help">Une page par classe. La fenêtre d’impression permet aussi d’enregistrer en PDF.</p></div></div>`;
+}
+
 /* ---------- Nouveautés : ce qui a changé sur le site (administration) ----------
    Une entrée par PUSH (un envoi du site sur GitHub), le plus récent en premier :
    { date, id, push, items } — push : le titre du push ; id : son identifiant court sur GitHub. L’identifiant n’est connu
@@ -2679,7 +2820,13 @@ async function addCourseDay(o){
    items : [type, titre, explication, page à ouvrir]. Types : new (nouvelle fonction), up (amélioration), fix (correction). */
 const NV_REPO='https://github.com/leocyfo/caserne-ecole';
 const NOUVEAUTES=[
-  {date:'2026-10-13',id:'',push:'Heures enseignées par enseignant et par mois, avec export',items:[
+  {date:'2026-10-13',id:'',push:'Impression : horaire de la semaine, feuille de présences, relevé de résultats',items:[
+    ['new','Imprimer l’horaire de la semaine','Le bouton d’impression du calendrier (ou « Imprimer » dans la fiche d’une classe) prépare une page par classe, ou l’horaire d’un enseignant.','calendar'],
+    ['new','Feuille de présences','Au même endroit : les élèves en lignes, les séances de la semaine en colonnes, à cocher à la main. Les présences déjà prises y sont inscrites.','classes'],
+    ['new','Relevé de résultats','Dans l’onglet Examens de la fiche d’un élève, « Imprimer le relevé ». L’élève peut imprimer le sien depuis « Mes examens ».','eleves'],
+    ['up','PDF','La fenêtre d’impression du navigateur permet d’enregistrer chaque feuille en PDF.','']
+  ]},
+  {date:'2026-10-13',id:'71e0fc1',push:'Heures enseignées par enseignant et par mois, avec export',items:[
     ['new','Heures enseignées','Dans Personnel, l’affichage « Heures » donne les heures données par chaque enseignant, mois par mois, depuis la rentrée.','personnel'],
     ['new','Export pour la paie','Le bouton Exporter remet un fichier (CSV, lisible dans Excel) pour le mois choisi ou pour l’année : un sommaire par enseignant, puis le détail séance par séance.','personnel']
   ]},
@@ -2834,16 +2981,18 @@ function newsPage(){
     NOUVEAUTES.forEach((v,i)=>{const g=m.get(v.date)||{date:v.date,items:[],n:0,fresh:false};g.items=g.items.concat(v.items);g.n++;if(nvKey(i)>st.since)g.fresh=true;m.set(v.date,g);});
     groups=[...m.values()];
   }else groups=NOUVEAUTES.map((v,i)=>({p:v,num:N-i,date:v.date,items:v.items,fresh:nvKey(i)>st.since}));
-  const lim=byDate?2:5, shown=all?groups:groups.slice(0,lim);
+  /* avec un filtre, on garde seulement les blocs qui ont ce type de changement, puis on en montre les premiers */
+  const vis=groups.map(g=>Object.assign({},g,{its:g.items.filter(it=>!f||it[0]===f)})).filter(g=>g.its.length);
+  const lim=byDate?2:5, shown=all?vis:vis.slice(0,lim);
   const blocks=shown.map(g=>{
-    const items=g.items.filter(it=>!f||it[0]===f);if(!items.length) return '';
+    const items=g.its;
     const d=parse(g.date), day=`${dayLabel(d)} ${d.getFullYear()}`, fresh=g.fresh?'<span class="chip exam">Depuis votre dernière visite</span>':'', n=`<span class="nv-n">${pl(items.length,'changement','changements')}</span>`;
     const link=g.p?(g.p.id?`<a href="${NV_REPO}/commit/${esc(g.p.id)}" target="_blank" rel="noopener" title="Voir ce push sur GitHub">${esc(g.p.id)}</a>`:`<a href="${NV_REPO}/commits/main" target="_blank" rel="noopener" title="Voir les pushes sur GitHub">le plus récent</a>`):'';
     const head=g.p?`<div class="xm-hd nv-hd nv-push"><span class="cl-num sm nv-num" title="Push n° ${g.num}">${g.num}</span><div class="nv-pt"><b>${esc(g.p.push)}</b><small>${esc(day)} · push ${link}</small></div>${fresh}${n}</div>`
       :`<div class="xm-hd nv-hd"><span>${esc(day)}</span>${g.n>1?`<span class="nv-k">${g.n} pushes</span>`:''}${fresh}${n}</div>`;
     return `<section class="cl-list nv-list" id="nv-${g.p?'p'+g.num:g.date}">${head}${items.map(row).join('')}</section>`;
   }).join('');
-  const more=!all&&groups.length>lim?`<div class="row" style="margin-top:4px"><button class="btn" type="button" id="nv-more" data-act="pg-set" data-k="nall" data-v="1">${byDate?'Voir les jours précédents':`Voir les ${groups.length-lim} pushes précédents`}</button></div>`:'';
+  const more=!all&&vis.length>lim?`<div class="row" style="margin-top:4px"><button class="btn" type="button" id="nv-more" data-act="pg-set" data-k="nall" data-v="1">${byDate?'Voir les jours précédents':`Voir les ${vis.length-lim} pushes précédents`}</button></div>`:'';
   return `<div class="toolbar">${view}${seg}</div>`+(blocks||'<section class="panel"><p class="help">Rien de ce type dans les dernières mises à jour.</p></section>')+more;
 }
 
@@ -3287,7 +3436,7 @@ function renderDrawer(){
   }
   const d=S.dr;
   if(d.kind==='att') syncAtt();
-  const html=d.kind==='att'?attDrawer():d.kind==='addc'?addCourseDrawer():d.kind==='course'?courseDrawer():d.kind==='exam'?examDrawer():d.kind==='student'?studentDrawer():d.kind==='staff'?staffDrawer():d.kind==='move'?moveDrawer():d.kind==='acct'?accountDrawer():infoDrawer();
+  const html=d.kind==='att'?attDrawer():d.kind==='addc'?addCourseDrawer():d.kind==='course'?courseDrawer():d.kind==='exam'?examDrawer():d.kind==='student'?studentDrawer():d.kind==='staff'?staffDrawer():d.kind==='move'?moveDrawer():d.kind==='acct'?accountDrawer():d.kind==='print'?printDrawer():infoDrawer();
   const fresh=el._k!==d.uid;
   el.classList.toggle('dialog',d.kind==='move');
   setHTML(el,html,d.uid);
@@ -4048,6 +4197,11 @@ document.addEventListener('click',async e=>{
       pg.askc='';pg.aske='';
       await editModule(code,m=>{if(ex)m.examens=m.examens.filter(x=>x.id!==id);else m.cours=m.cours.filter(x=>x.id!==id);},ex?'Examen retiré du module':'Cours retiré du module');break;}
     case 'md-del-x':{if(S.busy)break;const c0=byId(S.data.cours,b.dataset.c);if(!c0)break;const doc=courseDoc(c0), xid=b.dataset.x;doc.extras=doc.extras.filter(x=>x.id!==xid&&!(x.de&&String(x.de).endsWith('@'+xid)));doc.annulees=doc.annulees.filter(t=>!String(t).endsWith('@'+xid));pg.askx='';await affWrite(()=>putCours(c0.id,doc),'Séance supprimée');break;}
+    case 'pr-open':openPrint(b.dataset.g?{g:b.dataset.g,t:''}:null);break;
+    case 'pr-go':{if(!d||d.kind!=='print')break;const fe=b.dataset.doc==='feuille', html=fe?attSheet(d):weekSheet(d);
+      if(!html){toast(fe?'Aucune séance avec des présences à prendre cette semaine-là.':'Rien à imprimer pour cette semaine.','bad');break;}
+      await printDoc((fe?'Feuille de présences':'Horaire')+' · semaine du '+d.week,html,true,(fe?'feuille-presences-':'horaire-')+d.week);break;}
+    case 'pr-releve':{const el=byId(S.data.eleves,b.dataset.id);if(!el)break;await printDoc('Relevé de résultats · '+el.nom,transcriptHTML(el),false,'releve-'+prSlug(el.nom));break;}
     case 'hr-export':{const r=hoursCSV(b.dataset.m);if(r)await saveFile(r.name,r.text);break;}
     case 'sf-comp-all':document.querySelectorAll('[data-form=sf-comp] input[name=comp]').forEach(i=>{i.checked=!!b.dataset.v;});break;
     case 'stop':break;
@@ -4187,6 +4341,13 @@ document.addEventListener('input',e=>{
 });
 document.addEventListener('change',async e=>{
   const t=e.target;
+  /* fenêtre « Imprimer » : la semaine (ramenée au lundi) et pour qui */
+  if(t.dataset&&t.dataset.pr&&S.dr&&S.dr.kind==='print'){
+    const dp=S.dr;
+    if(t.dataset.pr==='week'){if(t.value)dp.week=iso(monday(parse(t.value)));}
+    else{dp.g=t.value.startsWith('g:')?t.value.slice(2):'';dp.t=t.value.startsWith('e:')?t.value.slice(2):'';}
+    renderDrawer();return;
+  }
   /* cours et examens cochés pour composer une séance (fenêtre « Ajouter une séance » ou fiche du module) */
   if(t.dataset&&t.dataset.pick){
     const v=t.dataset.pick, tog=a=>{const i=a.indexOf(v);if(t.checked&&i<0)a.push(v);else if(!t.checked&&i>=0)a.splice(i,1);};
