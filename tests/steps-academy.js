@@ -227,10 +227,45 @@ $('#x-form').requestSubmit();await wait(250);
 {const full=[...window.__store.keys()].filter(k=>k.startsWith('resultats/sx-')&&window.__store.get(k).groupe==='c119'&&Object.keys(window.__store.get(k).resultats||{}).length===12);ok('session results saved apart',full.length>=9&&![...window.__store.keys()].some(k=>k.startsWith('examens/sx-')),full.length);
  const own=[...window.__store.entries()].filter(([k,v])=>k.startsWith('resultats-eleves/')&&v.eleve==='el-119-01');ok('student result docs',own.length>=9&&own.every(([k,v])=>v.examen&&v.v),own.length);}
 click($('#xt-reps'));await wait(60);
-{const n=$$('#main [data-act=x-rep]').length;ok('reprises list',n>=4,n);
- const b=$('#main [data-act=x-rep]'),key=b.dataset.key,el=b.dataset.el;click(b);await wait(250);
- const rid='sx-'+key.replace(/[^A-Za-z0-9_-]/g,'-'), doc=window.__store.get('resultats/'+rid), own=window.__store.get('resultats-eleves/'+(el+'__'+rid).replace(/[^A-Za-z0-9_-]/g,'-'));
- ok('reprise marked',$$('#main [data-act=x-rep]').length===n-1&&!!doc&&doc.resultats[el]==='reprise'&&!!own&&own.v==='reprise',$$('#main [data-act=x-rep]').length+' / '+n);}
+{const todo=()=>$$('#main [data-act=rp-set][data-v=ok]'), n=todo().length, day=$('#rd-2026-10-16'), ridOf=k=>'sx-'+k.replace(/[^A-Za-z0-9_-]/g,'-'), RD=k=>window.__store.get('resultats/'+ridOf(k));
+ const mods=()=>$$('#rd-2026-10-16 .rd-mod').map(x=>parseInt(x.textContent.replace('M',''),10)), X16=()=>XS('k119-reprise').find(x=>x.id==='a20261016am');
+ ok('reprise day with its modules',!!day&&/16 octobre/.test(day.textContent)&&mods().join()==='3,5,22'&&n>=4&&$$('#rd-2026-10-16 [data-act=rp-set][data-v=ok]').length>=3&&/reprises? à faire/.test(day.textContent)&&!!$('#rd-new-open'),n+' · '+mods().join());
+ // une reprise réussie : « réussi en reprise », avec la date de la journée et le premier résultat
+ {const b=$('#rd-2026-10-16 [data-act=rp-set][data-v=ok]'), key=b.dataset.key, el=b.dataset.el;click(b);await wait(300);
+  const own=window.__store.get('resultats-eleves/'+(el+'__'+ridOf(key)).replace(/[^A-Za-z0-9_-]/g,'-')), rp=(RD(key).reprises||{})[el]||{};
+  ok('reprise marked',todo().length===n-1&&RD(key).resultats[el]==='reprise'&&!!own&&own.v==='reprise'&&rp.v==='reussi'&&rp.date==='2026-10-16'&&/^(echec|absent)$/.test(rp.de)&&$$('#rd-2026-10-16 .xm-rp.is-done').length===1,todo().length+' / '+n+' '+JSON.stringify(rp));}
+ // une reprise ratée : échec du module pour cet élève
+ const b2=$('#rd-2026-10-16 [data-act=rp-set][data-v=ko]'), key2=b2.dataset.key, el2=b2.dataset.el;click(b2);await wait(300);
+ ok('failed reprise is a module failure',RD(key2).resultats[el2]==='echecf'&&RD(key2).reprises[el2].v==='echec'&&!!$('#rd-fails')&&/Échec du module/.test($('#rd-fails').textContent)&&/échec de module/.test($('#main .st-bar').textContent)&&todo().length===n-2,todo().length+' / '+n);
+ // une note de reprise en % inscrit l’issue selon le seuil ; puis on annule cette reprise
+ {const i=$('#rd-2026-10-16 input[data-rpn]'), key3=i.dataset.key, el3=i.dataset.el;i.value='72';i.dispatchEvent(new Event('change',{bubbles:true}));await wait(300);
+  ok('reprise grade',RD(key3).resultats[el3]==='reprise'&&RD(key3).reprises[el3].pct===72&&$$('#main .xm-rp.is-done').some(r=>/72 %/.test(r.textContent)),JSON.stringify(RD(key3).reprises));
+  click($$('#main [data-act=rp-undo]').find(u=>u.dataset.key===key3&&u.dataset.el===el3));await wait(300);
+  ok('reprise undone',/^(echec|absent)$/.test(RD(key3).resultats[el3])&&!RD(key3).reprises[el3]&&todo().length===n-2,RD(key3).resultats[el3]);}
+ // les modules d’une journée : on en retire un, puis on le rajoute ; les reprises suivent
+ {const before=todo().length;
+  click($('#rd-2026-10-16 [data-act=rd-mod-del][data-m="22"]'));await wait(600);
+  ok('module removed from the day',mods().join()==='3,5'&&X16().modules.join()==='3,5'&&XS('k120-reprise').find(x=>x.id==='a20261016am').modules.join()==='5,6,7'&&todo().length<=before,mods().join()+' '+todo().length);
+  pick0('#rd-add-2026-10-16','22');await wait(600);
+  ok('module added back',mods().join()==='3,5,22'&&X16().modules.join()==='3,5,22'&&todo().length===before,mods().join()+' '+todo().length+'/'+before);}
+ // créer une journée de reprise : refusée la fin de semaine ; créée pour la classe libre, signalée pour la classe occupée
+ {const db0=await window.claude.use('db');await db0.doc('groupes/c997').set({nom:'Classe 997'});await wait(250);
+  click($('#rd-new-open'));await wait(80);
+  ok('new reprise day form',!!$('#rd-form')&&$$('#rd-classes input').length===6&&$$('#rd-classes input:checked').length===1&&$('#rd-classes input:checked').value==='c119');
+  $('#rd-date').value='2026-10-31';$('[data-form=rd-new]').requestSubmit();await wait(300);
+  ok('reprise day refused on a weekend',$$('.toast').some(t=>/fin de semaine/.test(t.textContent))&&!XS('k119-reprise').some(x=>x.date==='2026-10-31')&&!!$('#rd-form'));
+  $('#rd-date').value='2026-10-28';$('#rd-classes input[value=c119]').checked=false;$('#rd-classes input[value=c120]').checked=true;$('#rd-classes input[value=c997]').checked=true;
+  $('[data-form=rd-new]').requestSubmit();await wait(900);
+  const kd=[...window.__store.keys()].find(k=>k.startsWith('cours/')&&window.__store.get(k).groupe==='c997'), x=kd?Object.values(window.__store.get(kd).seances||{})[0]:null;
+  ok('reprise day created',!!x&&x.date==='2026-10-28'&&x.tags.join()==='Reprise'&&window.__store.get(kd).titre==='Reprise'&&!XS('k120-reprise').some(y=>y.date==='2026-10-28')&&!$('#rd-form')&&$$('.toast').some(t=>/créée pour 1 classe · Classe 120 a déjà/.test(t.textContent)),JSON.stringify(x||null)+' '+$$('.toast').slice(-1).map(t=>t.textContent).join());
+  pick0('#x-g','');await wait(150);
+  ok('new day waits for its modules',!!$('#rd-2026-10-28')&&/Aucun module/.test($('#rd-2026-10-28').textContent)&&/997/.test($('#rd-2026-10-28').textContent)&&!!$('#rd-add-2026-10-28'),($('#rd-2026-10-28')||{}).textContent);
+  if(kd) await db0.doc(kd).delete();await db0.doc('groupes/c997').delete();await wait(250);pick0('#x-g','c119');await wait(150);}
+ // la fiche de l’élève dit quel module est échoué, et quand se font ses reprises
+ click($('#nav-eleves'));await wait(100);click($('[data-act=student][data-id="'+el2+'"]'));await wait(120);click($('#fi-tab-examens'));await wait(100);
+ ok('student fiche shows the failed module',!!$('#rp-fail')&&/Module échoué/.test($('#rp-fail').textContent)&&/Échec du module/.test($('.fiche-body').textContent),($('#rp-fail')||{}).textContent);
+ click($('#nav-examens'));await wait(100);pick0('#x-g','c119');await wait(100);click($('#xt-reps'));await wait(80);
+ ok('pending reprises keep their day',!!$('#rd-2026-10-16')&&todo().length===n-2);}
 click($('#xt-done'));await wait(60);
 ok('results list',$$('#main .xm-done.xm-row').length>=8&&/%/.test($('#xt-done b').textContent),$$('#main .xm-done.xm-row').length);
 click($('#xv-grille'));await wait(80);

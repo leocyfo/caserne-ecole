@@ -732,6 +732,21 @@ button.dp-wd{cursor:pointer}button.dp-wd:hover{background:#E3EDF7}
 .xg-c.warn{background:var(--warn);color:#FFFFFF;font-size:12px}
 .xg-c.info{background:var(--info-bg);color:var(--info);font-size:12px}
 .xg-c.none{background:transparent;color:#B5C0CC;border:1px dashed var(--line-strong)}
+.xg-c.fail{background:#6E1F26;color:#FFFFFF;font-size:12px}
+.notice.bad{border-color:#F1C4C8;background:#FFF5F5}
+.rd-day{margin-bottom:14px}
+.rd-hd{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;padding:12px 22px;background:var(--head);border-bottom:1px solid var(--line)}
+.rd-hd .xm-t{flex:1 1 200px}
+.rd-hd+.xm-row{border-top:0}
+.rd-mods{display:flex;flex-wrap:wrap;align-items:center;gap:6px;flex:2 1 260px}
+.rd-mod{display:inline-flex;align-items:center;gap:4px}
+.rd-x{border:0;background:none;color:inherit;font-size:15px;line-height:1;padding:0 2px;cursor:pointer;opacity:.7}
+.rd-x:hover{opacity:1}
+.rd-add{min-height:34px;max-width:270px;border:1px solid var(--line-strong);border-radius:6px;background:var(--surface);padding:0 8px;font-size:13.5px;color:var(--ink)}
+.xm-rp{grid-template-columns:minmax(0,1.3fr) minmax(0,1.8fr) minmax(250px,auto)}
+.rp-acts{gap:6px;align-items:center;flex-wrap:wrap}
+.rd-none{margin:0;padding:14px 22px;font-size:14px;color:var(--muted)}
+.rd-more{padding:12px 22px;border-top:1px solid var(--line-2)}
 button.xg-c:hover{filter:brightness(.95)}
 .xg-c:focus-visible,.xg-who:focus-visible,.xg-h button:focus-visible{outline:3px solid var(--focus);outline-offset:1px}
 .xg-f{font-variant-numeric:tabular-nums}
@@ -2038,7 +2053,7 @@ function attStaff(tabs){
 
 /* ---------- Pages : examens ---------- */
 /* Résultats : réussi, échec, absent (à reprendre) et réussi en reprise */
-const RES={reussi:['ok','Réussi'],echec:['bad','Échec'],absent:['warn','Absent'],reprise:['info','Réussi en reprise']};
+const RES={reussi:['ok','Réussi'],echec:['bad','Échec'],absent:['warn','Absent'],reprise:['info','Réussi en reprise'],echecf:['bad','Échec du module']};
 const resOk=v=>v==='reussi'||v==='reprise', resKo=v=>v==='echec'||v==='absent';
 /* Notes en % : facultatives. resultats/<examen>.pct = { élève: note } ; une note inscrit le résultat (réussi à partir du seuil). */
 const seuil=()=>{const n=+cfg().seuil;return n>=1&&n<=100?Math.round(n):60;};
@@ -2061,11 +2076,15 @@ function examResOf(x){
   return mine&&S.student&&!r[S.student]?Object.assign({},r,{[S.student]:mine}):r;
 }
 /* Enregistre les résultats d’un examen, et le résultat de chaque élève touché dans sa propre fiche */
-/* pct : les notes en % par élève ; sans ce paramètre, les notes déjà inscrites sont gardées */
-async function writeResults(x,res,msg,pct){
-  const id=resKeyOf(x), prev=examResOf(x), cur=S.data.resultats[id]||null, p0=(cur&&cur.pct)||{}, p1={}, now=new Date().toISOString(), ex=!!(cur&&cur.exemple);
-  for(const el of Object.keys(res)){const n=pct?pct[el]:p0[el];if(n!=null&&n!==''&&!isNaN(+n)&&res[el]!=='absent') p1[el]=Math.max(0,Math.min(100,+n));}
-  const doc={examen:x.fromSess?'':x.e.id,seance:x.fromSess?x.key:'',cours:x.c?x.c.id:'',groupe:x.grp||'',titre:(x.e&&x.e.titre)||'Examen',date:x.date,resultats:res,pct:p1,maj:now};
+/* pct : les notes en % par élève ; reps : l’issue des reprises. Sans ces paramètres, ce qui est déjà inscrit est gardé.
+   Une reprise n’est gardée que tant que le résultat de l’élève en vient (réussi en reprise, ou échec du module). */
+async function writeResults(x,res,msg,pct,reps){
+  const id=resKeyOf(x), prev=examResOf(x), cur=S.data.resultats[id]||null, p0=(cur&&cur.pct)||{}, p1={}, r0=reps||(cur&&cur.reprises)||{}, r1={}, now=new Date().toISOString(), ex=!!(cur&&cur.exemple);
+  for(const el of Object.keys(res)){
+    const n=pct?pct[el]:p0[el];if(n!=null&&n!==''&&!isNaN(+n)&&res[el]!=='absent') p1[el]=Math.max(0,Math.min(100,+n));
+    if(r0[el]&&(res[el]==='reprise'||res[el]==='echecf')) r1[el]=r0[el];
+  }
+  const doc={examen:x.fromSess?'':x.e.id,seance:x.fromSess?x.key:'',cours:x.c?x.c.id:'',groupe:x.grp||'',titre:(x.e&&x.e.titre)||'Examen',date:x.date,resultats:res,pct:p1,reprises:r1,maj:now};
   if(ex) doc.exemple=true;
   const fns=[()=>col('resultats').doc(id).set(doc)];
   for(const el of new Set([...Object.keys(prev),...Object.keys(res)])){
@@ -2089,16 +2108,16 @@ const canEditItem=x=>x.fromSess?(S.role==='admin'?S.canAdmin!==false:S.role==='t
 function examBoard(filter){
   const items=allExamItems().filter(filter).map(x=>{
     const res=examResOf(x), doc=S.data.resultats[resKeyOf(x)]||null, els=studentsOf(x.grp);
-    let ok=0,ko=0,got=0;for(const e of els){const v=res[e.id];if(!v)continue;got++;if(resOk(v))ok++;else if(resKo(v))ko++;}
+    let ok=0,ko=0,kf=0,got=0;for(const e of els){const v=res[e.id];if(!v)continue;got++;if(resOk(v))ok++;else if(resKo(v))ko++;else if(v==='echecf')kf++;}
     const pct=examPctOf(x), ps=els.map(e=>pct[e.id]).filter(n=>n!=null);
-    return Object.assign(x,{doc,res,els,ok,ko,got,pct,avg:ps.length?Math.round(ps.reduce((a,b)=>a+ +b,0)/ps.length):null,past:isPast(x)});
+    return Object.assign(x,{doc,res,els,ok,ko,kf,got,pct,avg:ps.length?Math.round(ps.reduce((a,b)=>a+ +b,0)/ps.length):null,past:isPast(x)});
   });
   const asc=(a,b)=>a.date.localeCompare(b.date)||a.start-b.start, desc=(a,b)=>-asc(a,b);
   const up=items.filter(x=>!x.past&&(!x.rep||x.els.length)).sort(asc), graded=items.filter(x=>x.past&&!x.rep&&x.els.length);
   const todo=graded.filter(x=>x.got<x.els.length).sort(desc), done=graded.filter(x=>x.got).sort(desc);
   const reps=[];for(const x of graded) for(const e of x.els) if(resKo(x.res[e.id])) reps.push({x,e,v:x.res[e.id]});
   reps.sort((a,b)=>collator.compare(gName(a.x.grp),gName(b.x.grp))||asc(a.x,b.x)||byElNum(a.e,b.e));
-  let ok=0,got=0;for(const x of done){ok+=x.ok;got+=x.ok+x.ko;}
+  let ok=0,got=0;for(const x of done){ok+=x.ok;got+=x.ok+x.ko+x.kf;}
   return {items,up,todo,done,reps,rate:got?Math.round(ok/got*100):null,got};
 }
 /* Prochaine journée de reprise de chaque classe */
@@ -2144,9 +2163,10 @@ function examsPage(){
   </div>`;
   let body='';
   if(tab==='up'){
-    const lim=+st.lim||25, list=B.up.slice(0,lim), pend={};for(const r of B.reps)pend[r.x.grp]=(pend[r.x.grp]||0)+1;
+    const lim=+st.lim||25, list=B.up.slice(0,lim), RSu=repSessions();
     body=list.length?xList('xm-up',[['Date'],['Examen'],['Classe'],['Moment'],['','r']],list.map(x=>{const k=daysBetween(todayISO(),x.date);
-      const sub=x.rep?(pend[x.grp]&&nr[x.grp]&&nr[x.grp].key===x.key?`${pl(pend[x.grp],'reprise à faire','reprises à faire')} dans cette classe`:'Reprise des examens manqués ou échoués'):xSub(x);
+      const rs=x.rep?RSu.find(y=>y.key===x.key):null, nq=rs?B.reps.filter(q=>{const dq=repDayFor(q.x,RSu);return dq&&dq.key===rs.key;}).length:0;
+      const sub=x.rep?(rs&&rs.mods.length?`${rs.mods.map(m=>'M'+m).join(', ')}${nq?' · '+pl(nq,'reprise à faire','reprises à faire'):''}`:'Modules à reprendre : à choisir'):xSub(x);
       return xRow('xm-up'+(x.rep?' is-rep':''),xOpen(x),`${xDate(x,x.rep?'rep':k<=2?'hot':'')}<div class="xm-t"><b>${xTitle(x)}</b>${sub?`<small>${sub}</small>`:''}</div>${xCls(x)}<span class="xm-m">${esc(momentOf(x))}</span><div class="xm-end">${x.rep?'<span class="chip info">Reprise</span>':xWhen(x)}</div>`,xLabel(x));}).join(''))
       +(B.up.length>lim?`<div class="row" style="margin-top:12px"><button class="btn" type="button" data-act="pg-set" data-k="lim" data-v="${lim+25}">Afficher plus (${B.up.length-lim})</button></div>`:'')
       :`<section class="panel"><p class="help">Aucun examen à venir.</p></section>`;
@@ -2155,12 +2175,10 @@ function examsPage(){
       return xRow('xm-todo',xOpen(x),`${xDate(x,'')}<div class="xm-t"><b>${xTitle(x)}</b><small>${esc(dayLabel(parse(x.date)))} · ${esc(momentOf(x))}</small></div>${xCls(x)}<div class="cl-big xm-p"><b>${x.got} / ${x.els.length}</b><div class="meter" aria-hidden="true"><i style="width:${p}%"></i></div></div><div class="xm-end">${canEditItem(x)?'<span class="btn sm">Entrer les résultats</span>':'<span class="chip warn">À entrer</span>'}</div>`,'Entrer les résultats : '+xLabel(x));}).join(''))
       :`<div class="cl-list"><p class="miss-ok"><span class="chip ok">À jour</span>Tous les résultats des examens passés sont entrés.</p></div>`;
   }else if(tab==='reps'){
-    body=B.reps.length?xList('xm-rep',[['Élève'],['Examen'],['Résultat'],['Prochaine reprise'],['','r']],B.reps.map(({x,e,v})=>{const n=nr[x.grp], d=parse(x.date);
-      return xRow('xm-rep',xOpen(x),`<div class="xm-who"><span class="st-num sm" aria-hidden="true">${e.numero!=null&&e.numero!==''?esc(e.numero):'—'}</span><span class="xm-t"><b>${esc(e.nom)}</b><small>${esc(gName(x.grp))}</small></span></div><div class="xm-t"><b>${xTitle(x)}</b><small>${esc(WD[d.getDay()]+' '+dn(d)+' '+fMonthS.format(d))}</small></div><div><span class="chip ${RES[v][0]}">${RES[v][1]}</span></div><span class="xm-m">${n?esc(WD[parse(n.date).getDay()]+' '+dn(parse(n.date))+' '+fMonthS.format(parse(n.date))):'<span class="muted">À planifier</span>'}</span><div class="xm-end">${canEditItem(x)?`<button class="btn sm" type="button" data-act="x-rep" data-key="${esc(x.key)}" data-el="${esc(e.id)}"${dis()}>Réussi en reprise</button>`:''}</div>`,`${e.nom} · ${xLabel(x)}`);}).join(''))
-      :`<div class="cl-list"><p class="miss-ok"><span class="chip ok">À jour</span>Aucune reprise à faire.</p></div>`;
+    body=repsTab(B,S.role==='admin'?g:'');
   }else{
-    body=B.done.length?xList('xm-done',[['Date'],['Examen'],['Classe'],['Réussite'],['','r']],B.done.map(x=>{const t=x.ok+x.ko, r=t?Math.round(x.ok/t*100):null, c=passCls(r);
-      return xRow('xm-done',xOpen(x),`${xDate(x,'')}<div class="xm-t"><b>${xTitle(x)}</b><small>${esc(dayLabel(parse(x.date)))}${x.avg!=null?` · moyenne ${x.avg} %`:''}</small></div>${xCls(x)}<div class="cl-big xm-p ${c}"><b>${x.ok} / ${t}</b><div class="meter ${c}" aria-hidden="true"><i style="width:${r||0}%"></i></div></div><div class="xm-end">${x.ko?`<span class="chip bad">${pl(x.ko,'à reprendre','à reprendre')}</span>`:'<span class="chip ok">Tous réussis</span>'}</div>`,xLabel(x));}).join(''))
+    body=B.done.length?xList('xm-done',[['Date'],['Examen'],['Classe'],['Réussite'],['','r']],B.done.map(x=>{const t=x.ok+x.ko+x.kf, r=t?Math.round(x.ok/t*100):null, c=passCls(r);
+      return xRow('xm-done',xOpen(x),`${xDate(x,'')}<div class="xm-t"><b>${xTitle(x)}</b><small>${esc(dayLabel(parse(x.date)))}${x.avg!=null?` · moyenne ${x.avg} %`:''}</small></div>${xCls(x)}<div class="cl-big xm-p ${c}"><b>${x.ok} / ${t}</b><div class="meter ${c}" aria-hidden="true"><i style="width:${r||0}%"></i></div></div><div class="xm-end">${x.ko?`<span class="chip bad">${pl(x.ko,'à reprendre','à reprendre')}</span>`:x.kf?`<span class="chip bad">${pl(x.kf,'échec de module','échecs de module')}</span>`:'<span class="chip ok">Tous réussis</span>'}</div>`,xLabel(x));}).join(''))
       :`<section class="panel"><p class="help">Aucun résultat pour l’instant.</p></section>`;
   }
   return tb+tiles+body;
@@ -2172,7 +2190,7 @@ function studentExams(){
   const todo=mine.filter(x=>resKo(x.res[sid])), n=nr[S.group];
   const up=B.items.filter(x=>!x.past).sort((a,b)=>a.date.localeCompare(b.date)||a.start-b.start).slice(0,6);
   const tb=`<div class="toolbar">${identitySelect()}<span class="grow"></span>${me&&mine.length?`<button class="btn" type="button" id="pr-releve" data-act="pr-releve" data-id="${esc(sid)}">${icon('print')}Imprimer mon relevé</button>`:''}</div>`;
-  const note=todo.length?`<div class="notice warn"><p><b>${pl(todo.length,'reprise à faire','reprises à faire')}</b> : ${todo.map(x=>esc((x.c&&x.c.code?x.c.code+' ':'')+(x.c?x.c.titre:'Examen'))).join(', ')}.${n?` Prochaine journée de reprise : ${esc(dayLabel(parse(n.date)).toLowerCase())}.`:''}</p></div>`:'';
+  const note=me?repNotice({id:sid},B.items):'';
   const upH=up.length?xList('xm-me',[['Date'],['Examen'],['Moment'],['','r']],up.map(x=>{const k=daysBetween(todayISO(),x.date);return xRow('xm-me',examAct(x),`${xDate(x,x.rep?'rep':k<=2?'hot':'')}<div class="xm-t"><b>${xTitle(x)}</b>${xSub(x)?`<small>${xSub(x)}</small>`:''}</div><span class="xm-m">${esc(momentOf(x))}</span><div class="xm-end">${x.rep?'<span class="chip info">Reprise</span>':xWhen(x)}</div>`,xLabel(x));}).join('')):`<section class="panel"><p class="help">Les examens de votre classe apparaîtront ici dès qu’ils seront planifiés.</p></section>`;
   const resH=!me?'':mine.length?xList('xm-me',[['Date'],['Examen'],['Moment'],['Résultat','r']],mine.map(x=>{const v=x.res[sid];return xRow('xm-me','',`${xDate(x,'')}<div class="xm-t"><b>${xTitle(x)}</b></div><span class="xm-m">${esc(momentOf(x))}</span><div class="xm-end"><span class="chip ${RES[v][0]}">${RES[v][1]}${x.pct[sid]!=null?' · '+esc(noteTxt(x.pct[sid])):''}</span></div>`,'');}).join('')):`<section class="panel"><p class="help">Aucun résultat pour l’instant.</p></section>`;
   return tb+note+`<h2 class="xm-h">Prochains examens</h2>${upH}${me?`<h2 class="xm-h">Mes résultats</h2>${resH}`:''}`;
@@ -2193,7 +2211,7 @@ async function setExamResult(key,el,v){
 }
 
 /* Grille des résultats d’une classe : une ligne par élève, une colonne par examen passé (le plus récent à gauche) */
-const GRID={reussi:['ok','✓'],echec:['bad','✗'],absent:['warn','Abs'],reprise:['info','✓R']};
+const GRID={reussi:['ok','✓'],echec:['bad','✗'],absent:['warn','Abs'],reprise:['info','✓R'],echecf:['fail','ÉM']};
 function resultsGrid(gid,filter){
   const B=examBoard(x=>x.grp===gid&&(!filter||filter(x)));
   const xs=B.items.filter(x=>x.past&&!x.rep).sort((a,b)=>b.date.localeCompare(a.date)||b.start-a.start);
@@ -2205,12 +2223,12 @@ function resultsGrid(gid,filter){
   const name=x=>x.c?(x.c.code?x.c.code+' ':'')+x.c.titre:(x.e.titre||'Examen');
   const head=xs.map(x=>{const d=parse(x.date),todo=x.got<x.els.length;
     return `<th scope="col" class="xg-h${todo?' todo':''}"><button type="button" ${xOpen(x)} title="${esc(`${name(x)}${sub(x)?' · '+sub(x):''} · ${dayLabel(d)}${todo?' · résultats à entrer':''}`)}"><b>${esc(code(x))}</b><small>${esc(sub(x))||'&nbsp;'}</small><small>${dn(d)} ${esc(fMonthS.format(d).replace('.',''))}</small></button></th>`;}).join('');
-  const rows=els.map(e=>{let ok=0,ko=0;
-    const cells=xs.map(x=>{const v=x.res[e.id], g=GRID[v];if(resOk(v))ok++;else if(resKo(v))ko++;
+  const rows=els.map(e=>{let ok=0,ko=0,kf=0;
+    const cells=xs.map(x=>{const v=x.res[e.id], g=GRID[v];if(resOk(v))ok++;else if(resKo(v))ko++;else if(v==='echecf')kf++;
       return `<td><button type="button" class="xg-c ${g?g[0]:'none'}" ${xOpen(x)} aria-label="${esc(`${e.nom} · ${name(x)} · ${v?RES[v][1]:'sans résultat'}`)}" title="${esc(v?RES[v][1]+(x.pct[e.id]!=null?' · '+noteTxt(x.pct[e.id]):''):'Sans résultat')}">${g&&x.pct[e.id]!=null?Math.round(x.pct[e.id]):g?g[1]:'·'}</button></td>`;}).join('');
-    const t=ok+ko, r=t?Math.round(ok/t*100):null;
-    return `<tr><th scope="row" class="xg-n"><button type="button" class="xg-who" data-act="student" data-id="${esc(e.id)}"><span class="st-num sm" aria-hidden="true">${e.numero!=null&&e.numero!==''?esc(e.numero):'—'}</span>${esc(e.nom)}</button></th><td class="xg-r ${passCls(r)}">${r==null?'—':r+' %'}${ko?`<small>${pl(ko,'à reprendre','à reprendre')}</small>`:''}</td>${cells}</tr>`;}).join('');
-  const foot=xs.map(x=>{const t=x.ok+x.ko;return `<td class="xg-f">${t?`${x.ok}/${t}`:'—'}</td>`;}).join('');
+    const t=ok+ko+kf, r=t?Math.round(ok/t*100):null;
+    return `<tr><th scope="row" class="xg-n"><button type="button" class="xg-who" data-act="student" data-id="${esc(e.id)}"><span class="st-num sm" aria-hidden="true">${e.numero!=null&&e.numero!==''?esc(e.numero):'—'}</span>${esc(e.nom)}</button></th><td class="xg-r ${passCls(r)}">${r==null?'—':r+' %'}${ko?`<small>${pl(ko,'à reprendre','à reprendre')}</small>`:''}${kf?`<small>${pl(kf,'échec de module','échecs de module')}</small>`:''}</td>${cells}</tr>`;}).join('');
+  const foot=xs.map(x=>{const t=x.ok+x.ko+x.kf;return `<td class="xg-f">${t?`${x.ok}/${t}`:'—'}</td>`;}).join('');
   const legend=`<div class="xg-legend">${Object.entries(GRID).map(([k,[c,l]])=>`<span><i class="xg-c ${c}" aria-hidden="true">${l}</i>${RES[k][1]}</span>`).join('')}<span><i class="xg-c none" aria-hidden="true">·</i>Sans résultat</span></div>`;
   return legend+`<div class="xg-wrap"><table class="xg"><thead><tr><th scope="col" class="xg-n">Élève</th><th scope="col" class="xg-r">Réussite</th>${head}</tr></thead><tbody>${rows}</tbody><tfoot><tr><th scope="row" class="xg-n">Réussis</th><td class="xg-r"></td>${foot}</tr></tfoot></table></div>`;
 }
@@ -2218,9 +2236,9 @@ function resultsGrid(gid,filter){
 function studentExamsTab(e){
   const B=examBoard(x=>x.grp===e.groupe), nr=nextReprises(), n=nr[e.groupe];
   const mine=B.items.filter(x=>x.past&&!x.rep&&x.res[e.id]).sort((a,b)=>b.date.localeCompare(a.date)||b.start-a.start);
-  const pend=mine.filter(x=>resKo(x.res[e.id])), ok=mine.filter(x=>resOk(x.res[e.id])).length, t=ok+pend.length, rate=t?Math.round(ok/t*100):null;
+  const pend=mine.filter(x=>resKo(x.res[e.id])), ok=mine.filter(x=>resOk(x.res[e.id])).length, t=ok+pend.length+mine.filter(x=>resFail(x.res[e.id])).length, rate=t?Math.round(ok/t*100):null;
   const bar=`<div class="st-bar"><p class="summary"><span><b>${mine.length}</b>${mine.length>1?'résultats':'résultat'}</span><span><b class="${passCls(rate)}">${rate==null?'—':rate+' %'}</b>de réussite</span><span class="${pend.length?'need':''}"><b>${pend.length}</b>à reprendre</span></p><span class="grow"></span>${mine.length?`<button class="btn sm" type="button" id="pr-releve" data-act="pr-releve" data-id="${esc(e.id)}">${icon('print')}Imprimer le relevé</button>`:''}</div>`;
-  const note=pend.length?`<div class="notice warn"><p><b>À reprendre :</b> ${pend.map(x=>esc((x.c&&x.c.code?x.c.code+' ':'')+(x.c?x.c.titre:x.e.titre||'Examen'))+` (${RES[x.res[e.id]][1].toLowerCase()})`).join(', ')}.${n?` Prochaine journée de reprise : ${esc(dayLabel(parse(n.date)).toLowerCase())}.`:''}</p></div>`:'';
+  const note=repNotice(e,B.items);
   const res=mine.length?xList('xm-sres',[['Date'],['Examen'],['Résultat'],['','r']],mine.map(x=>{const v=x.res[e.id], can=canEditItem(x);
     return xRow('xm-sres',can?xOpen(x):'',`${xDate(x,'')}<div class="xm-t"><b>${xTitle(x)}</b>${xSub(x)?`<small>${xSub(x)}</small>`:''}</div><div><span class="chip ${RES[v][0]}">${RES[v][1]}${x.pct[e.id]!=null?' · '+esc(noteTxt(x.pct[e.id])):''}</span></div><div class="xm-end">${resKo(v)&&can?`<button class="btn sm" type="button" data-act="x-rep" data-key="${esc(x.key)}" data-el="${esc(e.id)}"${dis()}>Réussi en reprise</button>`:''}</div>`,xLabel(x));}).join('')):'<section class="panel"><p class="help">Aucun résultat inscrit.</p></section>';
   const up=B.up.slice(0,5);
@@ -2696,11 +2714,121 @@ async function addCourseDay(o){
     if(es.length) x.examens=es.map(e=>e.id);
   }else{x.tags=['Reprise'];x.label='Reprise';}
   const c0=mk?modCourses(mk.code).find(c=>c.groupe===gid):S.data.cours.find(c=>c.groupe===gid&&modKey(c)==null&&String(c.titre||'').trim().toLowerCase()===titre.toLowerCase());
-  const msg=mk?'Séance ajoutée':'Activité ajoutée';let ok;
+  const msg=o.quiet?'':mk?'Séance ajoutée':'Activité ajoutée';let ok;
   if(c0){const doc=courseDoc(c0);doc.extras.push(x);ok=await affWrite(()=>putCours(c0.id,doc),msg);}
   else ok=await affWrite(()=>putCours(genId('c'),{titre,code:mk?'M'+mk.code:'',couleur:mk?(+mk.code)%8:7,groupe:gid,enseignant:'',salle:'',du:'',au:'',heures:mk?modTot(mk)||null:null,creneaux:[],annulees:[],extras:[x]}),msg);
   if(ok) logEv('horaire',mk?'a ajouté la séance':'a ajouté l’activité',`${mk?'M'+mk.code+' ':''}${titre}${mk&&x.label?' ('+x.label+')':''} · ${gName(gid)}, ${dayLabel(dd).toLowerCase()}`);
   return ok?'':'L’enregistrement a échoué.';
+}
+
+/* ---------- Journées de reprise ----------
+   Une journée de reprise est une séance « Reprise » à l’horaire d’une classe. On la crée d’abord, puis on y ajoute des
+   modules (x.modules). Chaque élève qui a échoué ou manqué un examen d’un de ces modules le reprend ce jour-là :
+   une reprise par examen échoué. Réussie : le résultat devient « réussi en reprise ». Ratée : « échec du module ».
+   La liste des reprises se déduit des résultats ; resultats/<examen>.reprises = { élève : { date, v, de, pct } }
+   garde la date et l’issue de chaque reprise (de : le premier résultat, pour pouvoir annuler). */
+const resFail=v=>v==='echecf';
+function repSessions(){
+  const out=[];
+  for(const c of S.data.cours) for(const x of datedOf(c)){
+    const tg=x.tags||[];if(!tg.includes('Reprise')||tg.includes('Examen')) continue;
+    if((c.annulees||[]).includes(`${x.date}@${x.id}`)||offDay(x.date)) continue;
+    const own=modKey(c), mods=[...new Set((own!=null?[own]:[]).concat((x.modules||[]).map(Number).filter(n=>n>0)))].sort((a,b)=>a-b);
+    out.push({c,x,own,date:x.date,grp:c.groupe,mods,key:`${c.id}_${x.id}_${x.date}`});
+  }
+  return out.sort((a,b)=>a.date.localeCompare(b.date)||collator.compare(gName(a.grp),gName(b.grp)));
+}
+/* La journée où se reprend un examen échoué : la première journée de reprise de la classe, après l’examen et pas encore passée, qui a son module */
+function repDayFor(x,RS){
+  const mk=x.c?modKey(x.c):null, t=todayISO();
+  return mk==null?null:(RS||repSessions()).find(r=>r.grp===x.grp&&r.date>=t&&r.date>x.date&&r.mods.includes(mk))||null;
+}
+const modLbl=code=>{const k=comps().find(m=>+m.code===+code);return k?`M${k.code} ${k.nom}`:'M'+code;};
+/* Modules échoués par un élève : une reprise ratée suffit */
+function failedModules(e,items){
+  const out=new Map();
+  for(const x of items) if(resFail(x.res[e.id])&&x.c) out.set(modKey(x.c)!=null?'M'+modKey(x.c):x.c.id,(x.c.code?x.c.code+' ':'')+x.c.titre);
+  return [...out.values()];
+}
+/* Ce qu’un élève doit reprendre, avec la date de chaque reprise quand elle est fixée */
+function repNotice(e,items,RS){
+  const pend=items.filter(x=>x.past&&!x.rep&&resKo(x.res[e.id])), fail=failedModules(e,items);
+  const one=x=>{const d=repDayFor(x,RS);return `${esc((x.c&&x.c.code?x.c.code+' ':'')+(x.c?x.c.titre:'Examen'))}${x.e&&x.e.titre&&x.e.titre!=='Examen'?' ('+esc(x.e.titre)+')':''} : ${d?'reprise le '+esc(dayLabel(parse(d.date)).toLowerCase()):'date de reprise à venir'}`;};
+  return (pend.length?`<div class="notice warn" id="rp-note"><p><b>${pl(pend.length,'reprise à faire','reprises à faire')}</b></p><ul>${pend.map(x=>`<li>${one(x)}</li>`).join('')}</ul></div>`:'')
+    +(fail.length?`<div class="notice bad" id="rp-fail"><p><b>${fail.length>1?'Modules échoués':'Module échoué'}</b> : ${esc(fail.join(', '))}. La reprise n’a pas été réussie.</p></div>`:'');
+}
+/* Inscrit l’issue d’une reprise : réussie → « réussi en reprise » ; ratée → « échec du module » ; ok === null : on annule */
+async function setRetake(key,el,ok,date,pct){
+  const x=allExamItems().find(k=>k.key===key);if(!x||S.busy) return false;
+  const cur=S.data.resultats[resKeyOf(x)]||{}, reps=Object.assign({},cur.reprises), res=Object.assign({},examResOf(x)), was=res[el], t=todayISO();
+  if(ok===null){const r=reps[el];if(!r) return false;res[el]=r.de||'echec';delete reps[el];}
+  else{
+    if(!resKo(was)&&!reps[el]) return false;
+    reps[el]=Object.assign({date:date||t,v:ok?'reussi':'echec',de:reps[el]?reps[el].de:was},pct!=null?{pct}:{});
+    res[el]=ok?'reprise':'echecf';
+  }
+  S.busy=true;render();
+  const done=await writeResults(x,res,ok===null?'Reprise annulée':ok?'Reprise réussie inscrite':'Échec du module inscrit',undefined,reps);
+  S.busy=false;render();
+  return done;
+}
+/* Ajoute ou retire un module d’une journée de reprise, pour toutes les classes qui ont cette journée */
+async function repModules(date,code,add){
+  const jobs=[];
+  for(const r of repSessions().filter(r=>r.date===date)){
+    if(r.own===+code) continue;
+    const doc=courseDoc(r.c), x=doc.extras.find(e=>e.id===r.x.id);if(!x) continue;
+    const set=new Set((x.modules||[]).map(Number));if(add)set.add(+code);else set.delete(+code);
+    x.modules=[...set].sort((a,b)=>a-b);
+    jobs.push(()=>putCours(r.c.id,doc));
+  }
+  if(!jobs.length) return false;
+  const lbl=dayLabel(parse(date)).toLowerCase(), ok=await runAll(jobs,add?`M${code} ajouté à la reprise du ${lbl}`:`M${code} retiré de la reprise du ${lbl}`);
+  if(ok) logEv('horaire',add?`a ajouté le module M${code} à la journée de reprise`:`a retiré le module M${code} de la journée de reprise`,lbl);
+  return ok;
+}
+/* Onglet « Reprises » des examens : les journées de reprise, les reprises à faire, les échecs de module */
+function repsTab(B,g){
+  const st=S.pg, adm=isAdmin()&&S.conn==='shared', t=todayISO(), RS=repSessions().filter(r=>!g||r.grp===g), dm=new Map();
+  for(const r of RS){const d=dm.get(r.date)||{date:r.date,items:[],mods:[],groups:[],own:[]};d.items.push(r);d.groups.push(r.grp);for(const k of r.mods)if(!d.mods.includes(k))d.mods.push(k);if(r.own!=null&&!d.own.includes(r.own))d.own.push(r.own);dm.set(r.date,d);}
+  for(const d of dm.values()) d.mods.sort((a,b)=>a-b);
+  const pend=B.reps.map(r=>Object.assign({day:repDayFor(r.x,RS)},r)), noDay=pend.filter(r=>!r.day), doneBy={}, fails=[];
+  for(const x of B.items){
+    for(const [el,r] of Object.entries((x.doc&&x.doc.reprises)||{})){const e=x.els.find(y=>y.id===el);if(e&&r&&r.date)(doneBy[r.date]||(doneBy[r.date]=[])).push({x,e,r});}
+    for(const e of x.els) if(resFail(x.res[e.id])) fails.push({x,e});
+  }
+  const days=[...dm.values()].filter(d=>d.date>=t||doneBy[d.date]).sort((a,b)=>(a.date>=t?0:1)-(b.date>=t?0:1)||(a.date>=t?a.date.localeCompare(b.date):b.date.localeCompare(a.date)));
+  const orphan=Object.keys(doneBy).filter(d=>!dm.has(d)).sort().reverse().reduce((a,d)=>a.concat(doneBy[d]),[]);
+  const num=e=>e.numero!=null&&e.numero!==''?esc(e.numero):'—';
+  const who=e=>`<div class="xm-who"><span class="st-num sm" aria-hidden="true">${num(e)}</span><span class="xm-t"><b>${esc(e.nom)}</b><small>${esc(gName(e.groupe))}</small></span></div>`;
+  const what=(x,sub)=>`<div class="xm-t"><b>${xTitle(x)}</b><small>${esc([x.e&&x.e.titre&&x.e.titre!=='Examen'?x.e.titre:'',sub].filter(Boolean).join(' · '))}</small></div>`;
+  const todoRow=(r,date)=>{const {x,e,v}=r, at=`data-key="${esc(x.key)}" data-el="${esc(e.id)}" data-date="${esc(date||'')}"`, p=x.pct[e.id];
+    return `<article class="xm-row xm-cols xm-rp" id="rp-${esc(e.id)}-${esc(resKeyOf(x))}">${who(e)}${what(x,RES[v][1]+(p!=null?' · '+noteTxt(p):''))}
+      <div class="xm-end rp-acts">${canEditItem(x)?`<input class="xr-n" type="number" min="0" max="100" step="1" inputmode="numeric" placeholder="%" aria-label="${esc('Note de reprise de '+e.nom+' en %')}" data-rpn="1" ${at}${dis()}><button class="btn sm yes" type="button" data-act="rp-set" data-v="ok" ${at}${dis()}>Réussi</button><button class="btn sm ghost" type="button" data-act="rp-set" data-v="ko" ${at}${dis()}>Échec</button>`:'<span class="chip bad">À reprendre</span>'}</div></article>`;};
+  const doneRow=({x,e,r})=>{const ok=r.v==='reussi';
+    return `<article class="xm-row xm-cols xm-rp is-done">${who(e)}${what(x,'Premier résultat : '+((RES[r.de]||RES.echec)[1]).toLowerCase())}
+      <div class="xm-end rp-acts"><span class="chip ${ok?'info':'bad'}">${ok?'Réussi en reprise':'Échec du module'}${r.pct!=null?' · '+esc(noteTxt(r.pct)):''}</span>${canEditItem(x)?`<button class="btn sm ghost" type="button" data-act="rp-undo" data-key="${esc(x.key)}" data-el="${esc(e.id)}"${dis()}>Annuler</button>`:''}</div></article>`;};
+  const dayBlock=d=>{
+    const up=d.date>=t, mine=pend.filter(r=>r.day&&r.day.date===d.date), done=(doneBy[d.date]||[]).filter(r=>d.groups.includes(r.x.grp)), pm={};
+    for(const r of B.reps) if(d.groups.includes(r.x.grp)&&r.x.c&&modKey(r.x.c)!=null&&r.x.date<d.date) pm[modKey(r.x.c)]=(pm[modKey(r.x.c)]||0)+1;
+    const chips=d.mods.map(m=>`<span class="chip k${m%8} rd-mod">M${m}${adm&&up&&!d.own.includes(m)?`<button type="button" class="rd-x" data-act="rd-mod-del" data-date="${d.date}" data-m="${m}" aria-label="${esc('Retirer '+modLbl(m)+' de cette journée')}" title="Retirer ce module"${dis()}>×</button>`:''}</span>`).join('');
+    const opts=comps().filter(k=>!d.mods.includes(+k.code)).sort((a,b)=>(pm[+b.code]?1:0)-(pm[+a.code]?1:0)||a.code-b.code);
+    const add=adm&&up&&opts.length?`<select class="rd-add" id="rd-add-${d.date}" data-rd="add" data-date="${d.date}" aria-label="Ajouter un module à cette journée de reprise"${dis()}><option value="">Ajouter un module…</option>${opts.map(k=>`<option value="${esc(k.code)}">M${esc(k.code)} · ${esc(k.nom)}${pm[+k.code]?` (${pm[+k.code]} à reprendre)`:''}</option>`).join('')}</select>`:'';
+    const cls=d.groups.map(id=>xNum(id)).join(', ');
+    const state=mine.length?`<span class="chip bad">${pl(mine.length,'reprise à faire','reprises à faire')}</span>`:done.length?`<span class="chip off">${pl(done.length,'reprise faite','reprises faites')}</span>`:`<span class="chip off">${d.mods.length?'Aucune reprise':'Aucun module'}</span>`;
+    return `<section class="cl-list xm-list rd-day${up?'':' is-past'}" id="rd-${d.date}"><div class="rd-hd">${xDate({date:d.date},'rep')}<div class="xm-t"><b>${esc(dayLabel(parse(d.date)))}${up?'':' · passée'}</b><small>${d.groups.length>1?'Classes':'Classe'} ${esc(cls)}</small></div><div class="rd-mods">${chips||'<span class="muted sm">Aucun module</span>'}${add}</div>${state}</div>
+      ${(st.rdx===d.date?mine:mine.slice(0,8)).map(r=>todoRow(r,d.date)).join('')}${mine.length>8&&st.rdx!==d.date?`<div class="rd-more"><button class="btn sm" type="button" id="rd-more-${d.date}" data-act="pg-set" data-k="rdx" data-v="${d.date}">Afficher les ${mine.length-8} autres reprises</button></div>`:''}${done.map(doneRow).join('')}${!mine.length&&!done.length&&up?`<p class="rd-none">${d.mods.length?'Aucun élève n’a d’examen à reprendre dans ces modules.':adm?'Ajoutez les modules à reprendre ce jour-là : les élèves concernés apparaîtront ici.':'Les modules à reprendre n’ont pas encore été choisis.'}</p>`:''}</section>`;};
+  const form=adm&&st.rnew?`<section class="panel md-add" id="rd-form"><h2>Créer une journée de reprise</h2><form class="stackf" data-form="rd-new">
+      <div class="mx-row"><label class="field" style="flex:0 1 190px"><span>Date</span><input type="date" id="rd-date" required></label><label class="field" style="flex:0 1 200px"><span>Moment</span><select id="rd-per">${PERIODES.map(p=>`<option value="${p.k}"${p.k==='jour'?' selected':''}>${p.label}</option>`).join('')}</select></label></div>
+      <fieldset class="pk-set"><legend>Classes</legend><div class="pk-list" id="rd-classes">${groups().map(x=>`<label class="pk"><input type="checkbox" name="rdg" value="${esc(x.id)}"${!g||g===x.id?' checked':''}${dis()}><span>${esc(x.nom)}</span></label>`).join('')}</div></fieldset>
+      <div class="row"><button class="btn primary" type="submit"${dis()}>Créer la journée</button><button class="btn ghost" type="button" data-act="pg-set" data-k="rnew" data-v="">Annuler</button></div>
+      <p class="help">La journée s’ajoute à l’horaire des classes choisies. On y ajoute ensuite les modules à reprendre.</p></form></section>`:'';
+  const bar=`<div class="st-bar"><p class="summary" style="margin:0"><span class="${B.reps.length?'need':''}"><b>${B.reps.length}</b>${B.reps.length>1?'reprises à faire':'reprise à faire'}</span>${fails.length?`<span><b class="bad">${fails.length}</b>${fails.length>1?'échecs de module':'échec de module'}</span>`:''}</p><span class="grow"></span>${adm&&!st.rnew?`<button class="btn" type="button" id="rd-new-open" data-act="pg-set" data-k="rnew" data-v="1">${icon('plus')}Créer une journée de reprise</button>`:''}</div>`;
+  return bar+form
+    +`<h2 class="xm-h">Journées de reprise</h2>`+(days.length?days.map(dayBlock).join(''):`<section class="panel"><p class="help" id="rd-empty">Aucune journée de reprise à venir.${adm?' Créez-en une, puis ajoutez-y les modules à reprendre.':''}</p></section>`)
+    +(noDay.length?`<h2 class="xm-h">Sans journée de reprise</h2><div class="cl-list xm-list" id="rd-noday">${noDay.map(r=>todoRow(r,'')).join('')}</div><p class="help" style="margin-top:8px">Ces examens seront repris quand leur module sera ajouté à une journée de reprise de la classe.</p>`:'')
+    +(orphan.length?`<h2 class="xm-h">Reprises inscrites hors journée</h2><div class="cl-list xm-list" id="rd-orphan">${orphan.map(doneRow).join('')}</div>`:'')
+    +(fails.length?`<h2 class="xm-h">Échecs de module</h2><div class="cl-list xm-list" id="rd-fails">${fails.map(({x,e})=>`<article class="xm-row xm-cols xm-rp">${who(e)}${what(x,'Reprise non réussie')}<div class="xm-end"><span class="chip bad">Échec du module</span></div></article>`).join('')}</div>`:'');
 }
 
 /* ---------- Locaux et équipements (salles, camions, tour, bassin…) ----------
@@ -3062,11 +3190,11 @@ function attSheet(d){
 /* Relevé de résultats d’un élève */
 function transcriptHTML(e){
   const B=examBoard(x=>x.grp===e.groupe), mine=B.items.filter(x=>x.past&&!x.rep&&x.res[e.id]).sort((a,b)=>a.date.localeCompare(b.date)||a.start-b.start);
-  const ok=mine.filter(x=>resOk(x.res[e.id])).length, ko=mine.filter(x=>resKo(x.res[e.id])).length, rate=ok+ko?Math.round(ok/(ok+ko)*100):null;
+  const ok=mine.filter(x=>resOk(x.res[e.id])).length, ko=mine.filter(x=>resKo(x.res[e.id])).length, kf=mine.filter(x=>resFail(x.res[e.id])).length, rate=ok+ko+kf?Math.round(ok/(ok+ko+kf)*100):null;
   const rows=mine.map(x=>{const dd=parse(x.date);return `<tr><td>${esc(shortDate(dd))} ${dd.getFullYear()}</td><td>${esc(x.c?(x.c.code?x.c.code+' ':'')+x.c.titre:'')}</td><td>${esc((x.e&&x.e.titre)||'Examen')}</td><td>${x.pct[e.id]!=null?esc(noteTxt(x.pct[e.id])):''}</td><td><b>${esc(RES[x.res[e.id]][1])}</b></td></tr>`;}).join('');
   return `<section class="pr-page">${prHead('Relevé de résultats',esc(e.nom)+(e.numero!=null&&e.numero!==''?' · n° '+esc(e.numero):'')+' · '+esc(gName(e.groupe)))}
     ${mine.length?`<table class="pr-t pr-res"><thead><tr><th style="width:17%">Date</th><th>Module</th><th style="width:20%">Examen</th><th style="width:11%">Note</th><th style="width:21%">Résultat</th></tr></thead><tbody>${rows}</tbody></table>`:'<p>Aucun résultat inscrit pour l’instant.</p>'}
-    <p class="pr-sum">${pl(mine.length,'examen','examens')} · ${ok} ${ok>1?'réussis':'réussi'}${ko?` · ${ko} à reprendre`:''}${rate!=null?` · ${rate} % de réussite`:''}</p>
+    <p class="pr-sum">${pl(mine.length,'examen','examens')} · ${ok} ${ok>1?'réussis':'réussi'}${ko?` · ${ko} à reprendre`:''}${kf?` · ${pl(kf,'échec de module','échecs de module')}`:''}${rate!=null?` · ${rate} % de réussite`:''}</p>
     <div class="pr-sign"><span>Remis le ${esc(longDate(new Date()))}</span><span>Signature : ______________________________</span></div></section>`;
 }
 async function printDoc(title,body,land,file){
@@ -3109,7 +3237,14 @@ function printDrawer(){
    items : [type, titre, explication, page à ouvrir]. Types : new (nouvelle fonction), up (amélioration), fix (correction). */
 const NV_REPO='https://github.com/leocyfo/caserne-ecole';
 const NOUVEAUTES=[
-  {date:'2026-10-13',id:'',push:'Examens : notes en % et seuil de réussite',items:[
+  {date:'2026-10-13',id:'',push:'Journées de reprise : modules à reprendre, une reprise par examen échoué, échec du module',items:[
+    ['new','Journées de reprise','Dans Examens, l’onglet des reprises : on crée d’abord la journée (date, moment, classes), puis on y ajoute les modules à reprendre.','examens'],
+    ['new','Une reprise par examen échoué','Chaque élève qui a échoué ou manqué un examen d’un module ajouté le reprend ce jour-là. La liste se fait toute seule.','examens'],
+    ['new','Échec du module','Une reprise réussie devient « réussi en reprise ». Une reprise ratée devient « échec du module », visible dans la grille, la fiche de l’élève et le relevé.','examens'],
+    ['up','Pour l’élève','« Mes examens » donne, pour chaque examen à reprendre, la date de sa reprise.',''],
+    ['up','Note de reprise','Une note en % inscrit l’issue de la reprise selon le seuil de réussite. Une reprise inscrite par erreur s’annule.','examens']
+  ]},
+  {date:'2026-10-13',id:'184d131',push:'Examens : notes en % et seuil de réussite',items:[
     ['new','Notes en %','Dans les résultats d’un examen, une case « % » par élève. La note est facultative et inscrit le résultat toute seule : réussi à partir du seuil.','examens'],
     ['new','Seuil de réussite','Il se règle dans Paramètres (60 % au départ).','params'],
     ['up','Notes affichées partout','Dans la grille des résultats, la fiche de l’élève, « Mes examens » et le relevé imprimé. La liste des examens corrigés donne la moyenne.','examens']
@@ -4199,12 +4334,12 @@ async function saveExam(force){
 function examResultsHTML(f,can){
   const els=f.groupe?studentsOf(f.groupe).slice().sort(byElNum):[];
   if(!els.length) return '';
-  const r=f.resultats||{}, p=f.pct||{}, cnt={reussi:0,reprise:0,echec:0,absent:0};for(const e of els){const v=r[e.id];if(cnt[v]!=null)cnt[v]++;}
+  const r=f.resultats||{}, p=f.pct||{}, cnt={reussi:0,reprise:0,echec:0,absent:0,echecf:0};for(const e of els){const v=r[e.id];if(cnt[v]!=null)cnt[v]++;}
   const ps=els.map(e=>p[e.id]).filter(n=>n!=null&&n!==''), avg=ps.length?Math.round(ps.reduce((a,b)=>a+ +b,0)/ps.length):null;
-  const none=els.length-cnt.reussi-cnt.reprise-cnt.echec-cnt.absent;
-  const sum=`<div class="att-sum">${cnt.reussi?`<span class="chip ok">${pl(cnt.reussi,'réussite','réussites')}</span>`:''}${cnt.reprise?`<span class="chip info">${pl(cnt.reprise,'réussi en reprise','réussis en reprise')}</span>`:''}${cnt.echec?`<span class="chip bad">${pl(cnt.echec,'échec','échecs')}</span>`:''}${cnt.absent?`<span class="chip warn">${pl(cnt.absent,'absent','absents')}</span>`:''}${none?`<span class="chip off">${none} sans résultat</span>`:''}${avg!=null?`<span class="chip off" id="xr-avg">Moyenne ${avg} %</span>`:''}</div>`;
+  const none=els.length-cnt.reussi-cnt.reprise-cnt.echec-cnt.absent-cnt.echecf;
+  const sum=`<div class="att-sum">${cnt.reussi?`<span class="chip ok">${pl(cnt.reussi,'réussite','réussites')}</span>`:''}${cnt.reprise?`<span class="chip info">${pl(cnt.reprise,'réussi en reprise','réussis en reprise')}</span>`:''}${cnt.echec?`<span class="chip bad">${pl(cnt.echec,'échec','échecs')}</span>`:''}${cnt.absent?`<span class="chip warn">${pl(cnt.absent,'absent','absents')}</span>`:''}${cnt.echecf?`<span class="chip bad">${pl(cnt.echecf,'échec de module','échecs de module')}</span>`:''}${none?`<span class="chip off">${none} sans résultat</span>`:''}${avg!=null?`<span class="chip off" id="xr-avg">Moyenne ${avg} %</span>`:''}</div>`;
   const btn=(e,v,k,cls,l)=>`<button type="button" class="ab ${cls}" id="xr-${esc(e.id)}-${k}" data-act="x-res" data-el="${esc(e.id)}" data-v="${v}" aria-pressed="${r[e.id]===v}">${l}</button>`;
-  const li=e=>{const v=r[e.id];return `<li><span class="st-num sm" aria-hidden="true">${e.numero!=null&&e.numero!==''?esc(e.numero):'—'}</span><span class="nm">${esc(e.nom)}${v==='reprise'?'<small>Réussi en reprise</small>':''}</span>${can?`<input class="xr-n" type="number" id="xn-${esc(e.id)}" data-xn="${esc(e.id)}" data-f="pct" min="0" max="100" step="1" inputmode="numeric" placeholder="%" aria-label="${esc('Note de '+e.nom+' en %')}" value="${p[e.id]!=null?esc(p[e.id]):''}"><span class="att-btns" role="group" aria-label="${esc('Résultat de '+e.nom)}">${btn(e,'reussi','r','ab-P','Réussi')}${btn(e,'echec','e','ab-A','Échec')}${btn(e,'absent','a','ab-R','Absent')}</span>`:v?`<span class="chip ${RES[v][0]}">${RES[v][1]}${p[e.id]!=null?' · '+esc(noteTxt(p[e.id])):''}</span>`:'<span class="chip off">—</span>'}</li>`;};
+  const li=e=>{const v=r[e.id];return `<li><span class="st-num sm" aria-hidden="true">${e.numero!=null&&e.numero!==''?esc(e.numero):'—'}</span><span class="nm">${esc(e.nom)}${v==='reprise'?'<small>Réussi en reprise</small>':v==='echecf'?'<small>Échec du module</small>':''}</span>${can?`<input class="xr-n" type="number" id="xn-${esc(e.id)}" data-xn="${esc(e.id)}" data-f="pct" min="0" max="100" step="1" inputmode="numeric" placeholder="%" aria-label="${esc('Note de '+e.nom+' en %')}" value="${p[e.id]!=null?esc(p[e.id]):''}"><span class="att-btns" role="group" aria-label="${esc('Résultat de '+e.nom)}">${btn(e,'reussi','r','ab-P','Réussi')}${btn(e,'echec','e','ab-A','Échec')}${btn(e,'absent','a','ab-R','Absent')}</span>`:v?`<span class="chip ${RES[v][0]}">${RES[v][1]}${p[e.id]!=null?' · '+esc(noteTxt(p[e.id])):''}</span>`:'<span class="chip off">—</span>'}</li>`;};
   return `<fieldset class="xr"><legend>Résultats</legend>${sum}<ul class="att-list">${els.map(li).join('')}</ul>${can?`<p class="help" style="margin-top:8px">La note en % est facultative. Elle inscrit le résultat : réussi à partir de ${seuil()} %.</p>`:''}${can&&none?'<div class="row" style="margin-top:10px"><button class="btn sm" type="button" data-act="x-res-all">Marquer les autres réussis</button></div>':''}</fieldset>`;
 }
 /* Dossier d’un élève */
@@ -4440,7 +4575,10 @@ document.addEventListener('click',async e=>{
       if(S.role==='admin')openCourse(s.c.id,{key:s.key,date:s.date,slotId:s.sl.id});else if(S.role==='teacher'&&!s.cancelled)openDrawer(Object.assign({kind:'att',dirty:false,draft:{statuts:{},note:''}},base));else openDrawer(Object.assign({kind:'info'},base));break;}
     case 'x-res-all':{if(!d||d.kind!=='exam')break;const r=d.draft.resultats||(d.draft.resultats={});for(const el of studentsOf(d.draft.groupe))if(!r[el.id])r[el.id]='reussi';renderDrawer();break;}
     case 'x-open':openSessExam(b.dataset.key);break;
-    case 'x-rep':await setExamResult(b.dataset.key,b.dataset.el,'reprise');break;
+    case 'x-rep':await setRetake(b.dataset.key,b.dataset.el,true,'',null);break;
+    case 'rp-set':await setRetake(b.dataset.key,b.dataset.el,b.dataset.v==='ok',b.dataset.date||'',null);break;
+    case 'rp-undo':await setRetake(b.dataset.key,b.dataset.el,null);break;
+    case 'rd-mod-del':await repModules(b.dataset.date,b.dataset.m,false);break;
     case 'x-res':{if(!d||d.kind!=='exam')break;const r=d.draft.resultats||(d.draft.resultats={}),id=b.dataset.el,v=b.dataset.v;if(r[id]===v)delete r[id];else r[id]=v;if(d.draft.pct)delete d.draft.pct[id];renderDrawer();break;}
     case 'new-exam':if(acad())openAddCourse(S.pg.g?{groupe:S.pg.g}:null);else openExam(null,b.dataset.cours?{cours:b.dataset.cours,date:b.dataset.date||''}:null);break;
     case 'student':openFiche('eleves',b.dataset.id);break;
@@ -4642,6 +4780,16 @@ document.addEventListener('submit',async e=>{
     else if(S.pg.fiche===gid){S.pg.enrol=null;render();}
     return;
   }
+  if(k==='rd-new'){
+    const date=$('#rd-date').value, per=$('#rd-per').value, gs=[...f.querySelectorAll('input[name=rdg]:checked')].map(i=>i.value);
+    if(!date){toast('Indiquez la date de la journée de reprise.','bad');return;}
+    if(!gs.length){toast('Cochez au moins une classe.','bad');return;}
+    let n=0, err='';
+    for(const gid of gs){const m=await addCourseDay({groupe:gid,module:'__act',titre:'Reprise',date,per,type:'reprise',quiet:true});if(m){if(!err)err=m;}else n++;}
+    if(n){S.pg.rnew='';toast(`Journée de reprise créée pour ${pl(n,'classe','classes')}${err?' · '+err:''}`);render();}
+    else toast(err||'La journée n’a pas pu être créée.','bad');
+    return;
+  }
   if(k==='p-add-res'){
     const ni=$('#p-rnom'), nom=String(ni.value||'').replace(/\s+/g,' ').trim(), type=$('#p-rtype').value==='local'?'local':'equip';
     if(!nom){ni.focus();return;}
@@ -4716,6 +4864,9 @@ document.addEventListener('input',e=>{
 });
 document.addEventListener('change',async e=>{
   const t=e.target;
+  /* reprises : une note en % inscrit l’issue selon le seuil ; ajout d’un module à une journée de reprise */
+  if(t.dataset&&t.dataset.rpn){const v=t.value.trim();if(v===''||isNaN(+v))return;const n=Math.max(0,Math.min(100,+v));await setRetake(t.dataset.key,t.dataset.el,n>=seuil(),t.dataset.date||'',n);return;}
+  if(t.dataset&&t.dataset.rd==='add'){if(t.value)await repModules(t.dataset.date,t.value,true);return;}
   /* locaux et équipements : d’une séance (pour elle seule), ou d’un cours du module (pour toutes les classes) */
   if(t.dataset&&t.dataset.rs){
     const se=findSess(t.dataset.date,t.dataset.key);if(!se)return;

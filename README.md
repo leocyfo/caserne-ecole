@@ -34,6 +34,8 @@ Une école sans modules garde l’ancien fonctionnement (un cours et ses périod
 
 Les résultats ne sont pas dans les fiches d’examen : `resultats/<examen>` contient ceux de toute la classe (personnel seulement) et `resultats-eleves/<élève__examen>` celui d’un élève (lui-même et le personnel). Un élève ne peut donc lire que ses propres résultats.
 
+**Journées de reprise** (Examens → Reprises à faire) : on crée d’abord la journée (une séance « Reprise » à l’horaire des classes choisies), puis on y ajoute des modules (`modules` sur cette séance). Chaque élève qui a échoué ou manqué un examen d’un de ces modules le reprend ce jour-là, une reprise par examen échoué ; la liste se déduit des résultats. Une reprise réussie donne le résultat `reprise` (réussi en reprise), une reprise ratée `echecf` (échec du module). `resultats/<examen>.reprises` garde, par élève, la date, l’issue, le premier résultat et la note de la reprise.
+
 Une note en % est facultative (`pct` dans les deux documents). Elle inscrit le résultat : réussi à partir du seuil réglé dans Paramètres (`config/ecole.seuil`, 60 au départ).
 
 ## Affectation des enseignants
