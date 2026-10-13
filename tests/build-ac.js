@@ -1,2 +1,2 @@
-const fs=require('fs');const page=fs.readFileSync('../src/calendrier-cours.html','utf8');const seed=fs.readFileSync('seed-academy.json','utf8');
+const fs=require('fs');const page=require('../outils/assembler.js').assembler();const seed=fs.readFileSync('seed-academy.json','utf8');
 fs.writeFileSync('test-ac.html','<!doctype html><html><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"></head><body><script>window.__SEED='+seed+';</script><script>'+fs.readFileSync('mock.js','utf8')+'</script>'+page+'<script>'+fs.readFileSync('steps-academy.js','utf8')+'</script></body></html>');

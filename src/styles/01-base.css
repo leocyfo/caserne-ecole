@@ -1,0 +1,30 @@
+:root{
+  /* Layout : barre latérale marine, contenu clair, tableau classes × jours avec cartes pastel (repris du site de l’Académie). Thème clair seulement. */
+  color-scheme:light;
+  --side:#142132; --side-ink:#E6EAF0; --side-soft:#C7CED8; --side-muted:#8C9AAD; --side-line:#2C394A; --side-hover:#1C2B3F; --side-active:#26364D;
+  --bg:#F5F7FA; --surface:#FFFFFF; --surface-2:#F7FAFD; --head:#F1F6FB; --head-ink:#2C4F78; --row-ink:#263F60;
+  --ink:#1A2940; --ink-2:#3D4F66; --muted:#64758A; --line:#DCE6EF; --line-2:#E4ECF4; --line-strong:#C3CFDB; --role:#1D2D44; --role-bg:#EEF2F6;
+  --accent:#BC322D; --accent-hover:#A92C27; --accent-ink:#FFFFFF; --eyebrow:#8A5551; --today:#B53536; --focus:#2563C9;
+  --ok:#1C7951; --ok-bg:#D7F6E6; --warn:#995D12; --warn-bg:#FFEBC7; --bad:#B1353F; --bad-bg:#FFE0E1; --info:#275F9D; --info-bg:#DCEAFD; --off:#5B6777; --off-bg:#E4E7EB;
+  --font:Arial,Helvetica,"Segoe UI",sans-serif;
+  --shadow:0 12px 40px rgba(20,33,50,.2);
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font:14px/1.45 var(--font);-webkit-font-smoothing:antialiased}
+body.lock{overflow:hidden}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+.ic{width:18px;height:18px;flex:none}
+.vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.k0{--card:#EDF4FE;--chip:#DCEAFD;--chip-ink:#275F9D;--bar:#7AA9E3}
+.k1{--card:#FFF6E6;--chip:#FFEBC7;--chip-ink:#995D12;--bar:#E5A84B}
+.k2{--card:#F5EFFE;--chip:#EADCFC;--chip-ink:#7043A5;--bar:#A982DB}
+.k3{--card:#FDF0F6;--chip:#FBDCEC;--chip-ink:#A3326B;--bar:#DA7BA8}
+.k4{--card:#F8F6E8;--chip:#F0EAC2;--chip-ink:#6F6311;--bar:#C2B04A}
+.k5{--card:#EBF8F6;--chip:#D2F1EC;--chip-ink:#146C62;--bar:#4DB3A5}
+.k6{--card:#EDF9F2;--chip:#D7F6E6;--chip-ink:#1C7951;--bar:#56B486}
+.k7{--card:#F0F3F8;--chip:#E1E7F2;--chip-ink:#546C91;--bar:#9AA8BD}
+.kx{--card:#FFF0F1;--chip:#FFE0E1;--chip-ink:#B1353F;--bar:#E26A70}
+.role-chip{display:inline-flex;align-items:center;margin-left:6px;padding:1px 6px;border-radius:4px;font-size:11px;font-weight:700;background:#FFF1E0;color:#995D12;vertical-align:1px}

@@ -1,4 +1,4 @@
-const fs=require('fs');const page=fs.readFileSync('../src/calendrier-cours.html','utf8');
+const fs=require('fs');const page=require('../outils/assembler.js').assembler();
 const seed=JSON.parse(fs.readFileSync('seed-academy.json','utf8'));
 const mk=(file,user,acct,deny)=>{const sd=seed.concat([{path:'comptes/'+user.id,data:acct}]);
 fs.writeFileSync(file,'<!doctype html><html><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"></head><body><script>try{localStorage.clear()}catch(e){}window.__USER='+JSON.stringify(user)+';'+(deny||'')+'window.__SEED='+JSON.stringify(sd)+';</script><script>'+fs.readFileSync('mock.js','utf8')+'</script>'+page+'<script>'+fs.readFileSync('steps-lock.js','utf8')+'</script></body></html>');};

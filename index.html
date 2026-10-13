@@ -3184,7 +3184,11 @@ function printDrawer(){
    items : [type, titre, explication, page à ouvrir]. Types : new (nouvelle fonction), up (amélioration), fix (correction). */
 const NV_REPO='https://github.com/leocyfo/caserne-ecole';
 const NOUVEAUTES=[
-  {date:'2026-10-13',id:'',push:'Nettoyage du code : fonctions et styles inutilisés retirés',items:[
+  {date:'2026-10-13',id:'',push:'Le code en plusieurs fichiers, et les tests lancés à chaque envoi sur GitHub',items:[
+    ['up','Code en plusieurs fichiers','La page n’est plus un seul gros fichier : 28 fichiers de code et 14 de styles, un par sujet (horaire, classes, examens, reprises…), assemblés automatiquement. Rien ne change à l’écran.',''],
+    ['up','Tests à chaque envoi','À chaque envoi sur GitHub, toute la suite de tests se lance toute seule. Le résultat est dans l’onglet Actions du dépôt : coche verte ou croix rouge.','']
+  ]},
+  {date:'2026-10-13',id:'0d5d387',push:'Nettoyage du code : fonctions et styles inutilisés retirés',items:[
     ['up','Code allégé','Six fonctions qui ne servaient plus, les restes de l’ancienne liste « Noms des cours » des Paramètres et 22 styles sans usage sont retirés. Rien ne change à l’écran.','']
   ]},
   {date:'2026-10-13',id:'7bc2f25',push:'Plus rapide et moins de lectures : horaire en mémoire, présences par période',items:[

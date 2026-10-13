@@ -1,0 +1,49 @@
+/* Classes : cartes */
+.cl-list{container-type:inline-size;background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.cl-cols{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1.6fr) 64px minmax(0,1fr) minmax(0,.9fr) 124px 132px;align-items:center;column-gap:18px}
+.cl-hd{padding:11px 22px;background:var(--head);border-bottom:1px solid var(--line);color:var(--head-ink);font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;white-space:nowrap}
+.cl-hd .n{text-align:center}
+.cl-row{padding:16px 22px;border-top:1px solid var(--line-2);cursor:pointer;transition:background-color .12s}
+.cl-hd+.cl-row{border-top:0}
+.cl-row:hover{background:var(--surface-2)}
+.cl-row:focus-visible{outline:3px solid var(--focus);outline-offset:-3px}
+.cl-c{display:flex;align-items:center;gap:12px;min-width:0}
+.cl-num{width:48px;height:48px;border-radius:12px;background:var(--role);color:#FFFFFF;display:grid;place-items:center;flex:none;font-size:18px;font-weight:700;font-variant-numeric:tabular-nums}
+.cl-name{display:flex;flex-direction:column;gap:3px;min-width:0}
+.cl-name b{font-size:18px;line-height:1.2;color:var(--ink);white-space:nowrap}
+.cl-name small{font-size:13px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cl-prin{display:flex;align-items:center;gap:10px;min-width:0;cursor:default}
+.cl-prin .av{width:36px;height:36px;font-size:12.5px}
+.cl-prin .av.none{background:var(--off-bg);color:var(--off)}
+.cl-prin select{flex:1 1 0;min-width:0;width:auto;min-height:36px;font-size:15px;font-weight:700;color:var(--ink);border:1px solid transparent;border-radius:8px;background-color:transparent;padding:0 20px 0 6px;margin-left:-6px;cursor:pointer;text-overflow:ellipsis}
+.cl-prin select:hover,.cl-prin select:focus{border-color:var(--line-strong);background-color:var(--surface)}
+.cl-prin b{font-size:15px;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cl-prin .none-t{color:var(--muted);font-weight:400}
+.cl-n{text-align:center;font-size:24px;font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums}
+.cl-n.zero{color:var(--muted)}
+.cl-big{display:flex;flex-direction:column;gap:7px;min-width:0}
+.cl-big b{font-size:24px;line-height:1;color:var(--ink);font-variant-numeric:tabular-nums}
+.cl-big .meter{margin:0;height:8px}
+.cl-big.ok b{color:var(--ok)}.cl-big.warn b{color:var(--warn)}.cl-big.bad b{color:var(--bad)}
+.cl-big .none{color:var(--muted);font-weight:400}
+.cl-st .chip{font-size:13px;padding:5px 10px;border-radius:7px}
+.cl-go{display:flex;align-items:center;justify-content:flex-end;gap:10px}
+.cl-go>.ic{width:18px;height:18px;color:var(--muted);flex:none}
+.cl-row [data-l]::before{display:none}
+/* largeur moyenne : l’avancement se retire et le bouton Horaire devient une icône */
+@container (max-width:1180px){
+  .cl-cols{grid-template-columns:minmax(0,1.4fr) minmax(0,1.6fr) 64px minmax(0,1fr) 124px 44px}
+  .cl-adv,.cl-go-t,.cl-go>.ic{display:none}
+  .cl-go .btn{padding-inline:9px}
+}
+/* petit écran : chaque classe devient une carte */
+@container (max-width:880px){
+  .cl-hd{display:none}
+  .cl-cols{grid-template-columns:1fr 1fr;grid-template-areas:"c c" "p p" "n s" "r a" "go go";row-gap:14px}
+  .cl-c{grid-area:c}.cl-prin{grid-area:p;flex-wrap:wrap;row-gap:6px}.cl-n{grid-area:n;text-align:left}.cl-st{grid-area:s}.cl-rate{grid-area:r}.cl-adv{grid-area:a;display:flex}.cl-go{grid-area:go;justify-content:space-between}
+  .cl-go-t,.cl-go>.ic{display:inline}
+  .cl-go .btn{padding-inline:12px}
+  .cl-row [data-l]::before{content:attr(data-l);display:block;flex-basis:100%;margin-bottom:6px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+  .cl-prin[data-l]::before{margin-bottom:0}
+}
+.cl-add{margin-bottom:0}

@@ -13,7 +13,7 @@ Tant que Firebase n’est pas configuré (`config.js` vide), `index.html` renvoi
 
 Le menu **Nouveautés** (administration, sous Paramètres) liste les nouvelles fonctions, les améliorations et les corrections du site, regroupées **par push** (chaque envoi sur GitHub a son bloc : numéro, titre, date, identifiant avec un lien vers GitHub) ou **par date**.
 
-La liste est dans `src/calendrier-cours.html` (constante `NOUVEAUTES`). À chaque push, on ajoute un bloc en haut : `{ date, id: '', push: 'titre du push', items: [...] }`, et on remplit l’`id` du bloc précédent avec l’identifiant court de son push (connu seulement après l’envoi).
+La liste est dans `src/js/20-nouveautes.js` (constante `NOUVEAUTES`). À chaque push, on ajoute un bloc en haut : `{ date, id: '', push: 'titre du push', items: [...] }`, et on remplit l’`id` du bloc précédent avec l’identifiant court de son push (connu seulement après l’envoi).
 
 ## Vocabulaire
 
@@ -79,7 +79,7 @@ Le premier compte créé devient l’administrateur ; l’écran de première in
 
 ## Version claude.ai
 
-`src/calendrier-cours.html` est aussi publié comme artefact claude.ai. Là-bas, les comptes sont reliés à l’accès claude.ai de chaque personne (menu Partager) et il n’y a pas d’écran de connexion.
+La page assemblée (`node outils/assembler.js page.html`) est aussi publiée comme artefact claude.ai. Là-bas, les comptes sont reliés à l’accès claude.ai de chaque personne (menu Partager) et il n’y a pas d’écran de connexion.
 
 ## Contenu du dépôt
 
@@ -92,26 +92,54 @@ site/connexion.js           écran de connexion et demandes de compte
 site/firebase.js            branchement sur Firebase (connexion + base de données)
 demo/connexion-demo.js      connexion et base de données simulées de la démo (localStorage)
 demo/donnees.js             données d’exemple (générées)
-src/calendrier-cours.html   la page de l’horaire
+src/page.html               la coquille de la page (titre, structure, emplacement des styles et du code)
+src/styles/NN-nom.css       les styles, un fichier par sujet (14 fichiers)
+src/js/NN-nom.js            le code, un fichier par sujet (28 fichiers)
 tests/                      tests automatiques (Chrome sans fenêtre)
+outils/assembler.js         réunit les fichiers de src/ en une seule page
 outils/construire.js        régénère index.html, demo.html et demo/donnees.js
+.github/workflows/tests.yml lance les tests à chaque envoi sur GitHub
 ```
+
+## Les fichiers source
+
+La page est découpée par sujet. Les fichiers sont réunis dans l’ordre de leur numéro ; ceux du code partagent la même portée, comme s’ils étaient écrits à la suite.
+
+| Fichier de `src/js/` | Contenu |
+| --- | --- |
+| `01-outils`, `02-etat` | petites fonctions communes, état de la page |
+| `03-seances`, `04-stats-presence` | calcul des séances d’une journée, taux de présence |
+| `05-horaire-rendu`, `06-horaire-pages` | le tableau de la semaine et les pages de l’horaire |
+| `07-classes`, `08-eleves-fiches`, `09-personnel-heures` | pages Classes, Élèves (et fiches), Personnel et heures enseignées |
+| `10-presences`, `11-examens`, `12-affectations` | présences, examens et résultats, affectation des enseignants |
+| `13-modules`, `14-reprises`, `15-locaux-equipements` | modules du programme, journées de reprise, locaux et équipements |
+| `16-import`, `17-historique`, `18-notifications`, `19-impression` | import d’élèves et copie d’horaire, historique, cloche, impression |
+| `20-nouveautes`, `21-annee-parametres`, `22-comptes` | Nouveautés, calendrier scolaire et paramètres, comptes et profils |
+| `23-cadre`, `24-tiroir` | menu, en-tête et rendu général ; panneau latéral |
+| `25-enregistrement`, `26-evenements`, `27-glisser` | écritures dans la base ; clics et formulaires ; glisser-déposer |
+| `28-donnees` | lecture de la base et démarrage |
+
+Pour ajouter un fichier, donnez-lui un numéro : `outils/assembler.js` prend tous les fichiers `NN-nom.js` et `NN-nom.css` dans l’ordre.
 
 ## Modifier la page
 
-1. Modifiez `src/calendrier-cours.html` (ou `site/connexion.js`).
+1. Modifiez le fichier concerné dans `src/js/` ou `src/styles/` (ou `site/connexion.js`).
 2. Régénérez : `node outils/construire.js`
-3. Lancez les tests : `powershell -File tests/lancer-tests.ps1`
-4. Poussez le dépôt : GitHub Pages met le site à jour en une ou deux minutes.
+3. Lancez les tests : `node tests/lancer.js`
+4. Poussez le dépôt : GitHub Pages met le site à jour en une ou deux minutes, et GitHub relance les tests de son côté.
 
 ## Tests
 
 Les tests tournent avec une date figée (vendredi 9 octobre 2026) : leurs dates restent valables. La base simulée peut refuser des lectures comme les vraies règles d’accès.
 
-`tests/lancer-tests.ps1` ouvre les pages de test dans Chrome sans fenêtre :
+`node tests/lancer.js` construit les pages de test à partir de `src/` et les ouvre dans Chrome sans fenêtre (`node tests/lancer.js ac` ne lance que les pages dont le nom contient « ac ») :
 
 - `test.html` et `test-ac.html` : un collège fictif et les données de l’Académie, parcours complet ;
 - `test-lock-s.html` et `test-lock-t.html` : un élève et un enseignant qui ouvrent la page avec leur propre compte ;
 - `test-auth-*.html` : la connexion avec un Firebase simulé (première installation, demande de compte, approbation, refus, connexion) et la démo (compte de démo, demande de compte).
+
+La commande se termine en erreur s’il y a un échec, une erreur de la page ou une page qui ne termine pas. Sous Windows, `tests/lancer-tests.ps1` lance la même chose.
+
+**À chaque envoi sur GitHub**, `.github/workflows/tests.yml` refait la même chose sur les serveurs de GitHub : il régénère le site, vérifie que `index.html` et `demo.html` envoyés correspondent bien aux sources, puis lance toute la suite. Le résultat est dans l’onglet **Actions** du dépôt (coche verte ou croix rouge à côté de chaque envoi) ; en cas d’échec, les pages de résultats y sont jointes pendant sept jours.
 
 Il faut Node.js et Google Chrome. Les vérifications suivent l’horaire d’exemple d’octobre 2026 : en dehors de cette période, certaines peuvent échouer sans que la page soit en cause.

@@ -1,9 +1,8 @@
 // Construit les pages de test du site avec connexion (test-auth-<scénario>.html)
 const fs=require('fs');
 const rd=f=>fs.readFileSync(f,'utf8');
-const PAGE=fs.existsSync('../src/calendrier-cours.html')?'../src/calendrier-cours.html':'calendrier-cours.html';
 const RT=fs.existsSync('../site/connexion.js')?'../site/connexion.js':'site-connexion.js';
-const page=rd(PAGE), runtime=rd(RT), mock=rd('mock-auth.js'), steps=rd('steps-auth.js');
+const page=require('../outils/assembler.js').assembler(), runtime=rd(RT), mock=rd('mock-auth.js'), steps=rd('steps-auth.js');
 const seed=JSON.parse(rd('seed-academy.json')).filter(d=>!d.path.startsWith('comptes/'));
 const owner={uid:'u-own',email:'own@academie.test',pw:'secret1',displayName:'Thierry Mayrand'};
 const ownDocs=[{path:'config/proprietaire',data:{uid:'u-own',cree:'2026-10-08T12:00:00Z'}},{path:'comptes/u-own',data:{role:'admin',ref:'',fiche:{nom:'Thierry Mayrand'},maj:'2026-10-08T12:00:00Z'}},{path:'profils/u-own',data:{nom:'Thierry Mayrand',courriel:'own@academie.test'}}];

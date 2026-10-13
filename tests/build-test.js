@@ -1,5 +1,5 @@
 const fs=require('fs');
-const page=fs.readFileSync('../src/calendrier-cours.html','utf8');
+const page=require('../outils/assembler.js').assembler();
 const seed=fs.readFileSync('seed-full.json','utf8');
 const html='<!doctype html><html><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"></head><body>'
   +'<script>window.__SEED='+seed+';</script><script>'+fs.readFileSync('mock.js','utf8')+'</script>'
