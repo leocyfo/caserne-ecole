@@ -534,6 +534,16 @@ legend{font-size:13px;color:var(--ink-2);font-weight:600;padding:0 4px}
 .nv-row .chip{justify-self:start;margin-top:2px}
 .nv-row .xm-t b{white-space:normal}
 .nv-row .xm-t small{white-space:normal;font-size:13.5px;line-height:1.45}
+.nv-push{white-space:normal;padding-top:12px;padding-bottom:12px}
+.nv-pt{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1}
+.nv-pt b{font-size:15.5px;line-height:1.3;color:var(--ink)}
+.nv-pt small{font-size:12.5px;font-weight:400;color:var(--muted)}
+.nv-pt a{color:inherit;text-decoration:underline;text-underline-offset:2px;font-variant-numeric:tabular-nums}
+.nv-pt a:hover{color:var(--ink)}
+.nv-hd .nv-k{font-size:12.5px;font-weight:400;color:var(--muted)}
+.nv-hd .chip{flex:none}
+.nv-hd .nv-n{flex:none}
+@media (max-width:640px){.nv-push{flex-wrap:wrap}.nv-pt{flex:1 1 calc(100% - 60px)}.nv-hd .nv-n{margin-left:0}}
 @media (max-width:640px){.nv-row{grid-template-columns:minmax(0,1fr);gap:6px}.nv-row .xm-end{justify-content:flex-start}}
 .nav-n{margin-left:auto;min-width:20px;height:20px;padding:0 6px;border-radius:10px;background:var(--accent);color:#FFFFFF;font-size:11.5px;font-weight:700;font-style:normal;display:grid;place-items:center;flex:none}
 .nav button[aria-current="page"] .nav-n{display:none}
@@ -2604,10 +2614,16 @@ async function addCourseDay(o){
 }
 
 /* ---------- Nouveautés : ce qui a changé sur le site (administration) ----------
-   À chaque mise à jour du site, ajouter ici une ligne : [type, titre, explication, page à ouvrir].
-   Types : new (nouvelle fonction), up (amélioration), fix (correction). La date la plus récente en premier. */
+   Une entrée par PUSH (un envoi du site sur GitHub), le plus récent en premier :
+   { date, id, push, items } — push : le titre du push ; id : son identifiant court sur GitHub. L’identifiant n’est connu
+   qu’après l’envoi : on laisse '' pour le push en cours et on le remplit au push suivant.
+   items : [type, titre, explication, page à ouvrir]. Types : new (nouvelle fonction), up (amélioration), fix (correction). */
+const NV_REPO='https://github.com/leocyfo/caserne-ecole';
 const NOUVEAUTES=[
-  {date:'2026-10-13',items:[
+  {date:'2026-10-13',id:'',push:'Nouveautés : les changements regroupés par push',items:[
+    ['new','Nouveautés par push','Chaque envoi du site (push) a son bloc : son numéro, son titre, sa date, son identifiant sur GitHub et ce qu’il a changé. Le regroupement par date reste disponible.','nouveautes']
+  ]},
+  {date:'2026-10-13',id:'12976b2',push:'Modules : cours, examens et chargé de cours ; séances par classe',items:[
     ['new','Cours d’un module','Chaque module a maintenant ses cours : numéro, type et enseignants requis. Ils valent pour toutes les classes et ont été repris de l’horaire.','modules'],
     ['new','Examens d’un module','Chaque module a sa liste d’examens, théoriques ou pratiques.','modules'],
     ['new','Chargé de cours','Chaque module a son chargé de cours, qui donne ses séances à toutes les classes. Il remplace le titulaire par classe.','modules'],
@@ -2617,12 +2633,10 @@ const NOUVEAUTES=[
     ['fix','Deux personnes en même temps','Chaque séance s’enregistre à part : deux administrateurs ne s’écrasent plus en modifiant le même module.',''],
     ['fix','Numéros avec un trait d’union','« 16-6 » s’affiche comme un seul cours, et non plus « 16 et 6 ».','calendar']
   ]},
-  {date:'2026-10-10',items:[
-    ['new','Page Nouveautés','La liste des nouvelles fonctions, des améliorations et des corrections du site, ici même.','nouveautes'],
-    ['new','Modules','Le catalogue du programme : heures de théorie et de pratique, enseignants requis, cours de chaque classe, examens et dates de reprise.','modules'],
-    ['new','Affectations','Les cours à régler, les candidatures à approuver ou refuser, les demandes de remplacement, et les enseignants attribués sur le nombre requis.','affectations'],
-    ['new','Disponibilités et « Mes cours » des enseignants','Chaque enseignant indique ses jours disponibles, postule aux cours à pourvoir, suit ses candidatures et peut demander un remplacement.',''],
-    ['new','Compétences des enseignants','Les modules que chacun peut donner se cochent dans son dossier. Les cours à pourvoir lui sont proposés selon cette liste.','personnel'],
+  {date:'2026-10-10',id:'37ca51b',push:'Page Nouveautés pour l’administration, sous Paramètres',items:[
+    ['new','Page Nouveautés','La liste des nouvelles fonctions, des améliorations et des corrections du site, ici même.','nouveautes']
+  ]},
+  {date:'2026-10-10',id:'ff60bf6',push:'Corrections après l’inspection complète du site (23 points)',items:[
     ['new','Conflits d’horaire','Un enseignant placé dans deux cours en même temps est signalé dans le calendrier et dans Affectations.','affectations'],
     ['up','Un seul formulaire « Ajouter un cours »','Le même depuis le calendrier, une classe, un module ou les examens. Un examen ou une reprise est un cours d’un type particulier.','calendar'],
     ['up','Vocabulaire','Un module a des cours ; ce qui n’appartient à aucun module est une activité. « Séance » a disparu et « Enseignant principal » remplace « Prof principal ».',''],
@@ -2639,52 +2653,135 @@ const NOUVEAUTES=[
     ['fix','Affichage sur téléphone','Le bouton du menu ne passe plus par-dessus le nom, et l’en-tête de la semaine est réparé.',''],
     ['fix','Connexion','Un administrateur qui se connecte après un enseignant arrive bien dans l’espace administrateur.','']
   ]},
-  {date:'2026-10-09',items:[
-    ['new','Examens : résultats et reprises','Un tableau de bord (à venir, résultats à entrer, reprises à faire, taux de réussite). Chaque élève reçoit Réussi, Échec ou Absent ; un échec devient une reprise.','examens'],
+  {date:'2026-10-10',id:'51263f0',push:'Gestion des cours : modules, enseignants requis, candidatures et disponibilités',items:[
+    ['new','Modules','Le catalogue du programme : heures de théorie et de pratique, enseignants requis, cours de chaque classe, examens et dates de reprise.','modules'],
+    ['new','Affectations','Les cours à régler, les candidatures à approuver ou refuser, les demandes de remplacement, et les enseignants attribués sur le nombre requis.','affectations'],
+    ['new','Disponibilités et « Mes cours » des enseignants','Chaque enseignant indique ses jours disponibles, postule aux cours à pourvoir, suit ses candidatures et peut demander un remplacement.',''],
+    ['new','Compétences des enseignants','Les modules que chacun peut donner se cochent dans son dossier. Les cours à pourvoir lui sont proposés selon cette liste.','personnel']
+  ]},
+  {date:'2026-10-09',id:'9c96822',push:'Examens : grille des résultats et onglets Examens dans les fiches',items:[
     ['new','Grille des résultats','Les élèves en lignes, les examens en colonnes, une case colorée par résultat.','examens'],
-    ['new','Examens dans les fiches','Un onglet Examens dans la fiche de chaque classe et de chaque élève.','classes'],
+    ['new','Examens dans les fiches','Un onglet Examens dans la fiche de chaque classe et de chaque élève.','classes']
+  ]},
+  {date:'2026-10-09',id:'c40025a',push:'Examens refaits : tableau de bord, résultats et reprises',items:[
+    ['new','Examens : résultats et reprises','Un tableau de bord (à venir, résultats à entrer, reprises à faire, taux de réussite). Chaque élève reçoit Réussi, Échec ou Absent ; un échec devient une reprise.','examens']
+  ]},
+  {date:'2026-10-09',id:'677ab77',push:'Fiche de classe : une ligne par élève, plus lisible',items:[
+    ['up','Fiche de classe','Une ligne par élève, avec sa présence, ses absences et ses retards en gros.','classes']
+  ]},
+  {date:'2026-10-09',id:'127a9dd',push:'Classes : une ligne par classe, plus lisible',items:[
+    ['up','Liste des classes','Une ligne par classe, avec les chiffres importants en gros.','classes']
+  ]},
+  {date:'2026-10-09',id:'6e4e148',push:'Classes et présences réunies sur une seule page',items:[
     ['up','Classes et présences réunies','Le menu Présences a disparu : le taux de présence et les cours à rattraper sont dans chaque classe, les présences du personnel dans Personnel.','classes'],
-    ['up','Liste des classes et fiche de classe','Une ligne par classe et par élève, avec les chiffres importants en gros.','classes'],
     ['fix','Classes sans élèves','Elles ne comptent plus de présences en retard.','classes']
   ]},
-  {date:'2026-10-08',items:[
-    ['new','Comptes et connexion','Un écran de connexion, des demandes de compte approuvées par l’administration, et la déconnexion.','comptes'],
-    ['new','Fiches en pleine page','Le dossier d’un élève ou d’un membre du personnel, avec Précédent et Suivant pour passer de l’un à l’autre.','eleves'],
-    ['new','Vue « Jour »','Une journée avec les classes en colonnes.','calendar'],
-    ['new','Enseignant principal','Chaque classe a son enseignant principal.','classes'],
-    ['up','Demi-journées','Avant-midi, après-midi ou toute la journée à la place des heures, et le code du module devant son nom.','calendar'],
-    ['up','Corvée de ménage','Elle vaut pour toute la classe, toute la journée, et colore la journée entière.','calendar'],
+  {date:'2026-10-09',id:'48db4a1',push:'Présences : moins d’information à l’écran',items:[
+    ['up','Présences : l’essentiel','La page garde seulement le taux de présence de chaque classe et ce qui reste à rattraper.','classes']
+  ]},
+  {date:'2026-10-09',id:'ba6cfd5',push:'Page Présences refaite : cartes par classe et fiche de présences',items:[
+    ['up','Page Présences refaite','Une carte par classe, et une fiche de présences pour chacune.','classes']
+  ]},
+  {date:'2026-10-09',id:'8cd2275',push:'Page Classes refaite : cartes et fiche de classe',items:[
+    ['up','Page Classes refaite','Une carte par classe, et une fiche de classe avec ses élèves, ses cours et ses réglages.','classes']
+  ]},
+  {date:'2026-10-09',id:'3163116',push:'Démo : un même cours avant-midi et après-midi devient « Toute la journée »',items:[
+    ['up','Journées complètes','Un même cours donné l’avant-midi et l’après-midi devient une seule journée dans l’horaire.','calendar']
+  ]},
+  {date:'2026-10-09',id:'b6e14fc',push:'Examens en couleur foncée',items:[
     ['up','Examens en couleur foncée','Ils se distinguent des cours au premier coup d’œil.','calendar']
   ]},
-  {date:'2026-10-07',items:[
+  {date:'2026-10-09',id:'5542221',push:'Prof principal de chaque classe',items:[
+    ['new','Enseignant principal','Chaque classe a son enseignant principal.','classes']
+  ]},
+  {date:'2026-10-09',id:'a30a465',push:'Vue Jour : une journée, les classes en colonnes',items:[
+    ['new','Vue « Jour »','Une journée avec les classes en colonnes.','calendar']
+  ]},
+  {date:'2026-10-09',id:'d1ace07',push:'Journée de corvée de ménage colorée en entier',items:[
+    ['up','Corvée de ménage en couleur','La journée de corvée est colorée en entier dans l’horaire.','calendar']
+  ]},
+  {date:'2026-10-08',id:'606328e',push:'Corvée de ménage : pour toute la classe, toute la journée',items:[
+    ['up','Corvée de ménage','Elle vaut pour toute la classe, toute la journée.','calendar']
+  ]},
+  {date:'2026-10-08',id:'b1ec9cb',push:'Avant-midi / après-midi au lieu des heures, sigle devant le nom du cours',items:[
+    ['up','Demi-journées','Avant-midi, après-midi ou toute la journée à la place des heures, et le code du module devant son nom.','calendar']
+  ]},
+  {date:'2026-10-08',id:'c9a9793',push:'Affichages des cours plus complets',items:[
+    ['up','Cartes et fenêtre d’un cours','Elles montrent le numéro du cours, le local et l’état des présences.','calendar']
+  ]},
+  {date:'2026-10-08',id:'69aeed5',push:'Listes : toute la ligne ouvre la fiche',items:[
+    ['up','Lignes cliquables','Dans les listes des élèves et du personnel, toute la ligne ouvre la fiche.','eleves']
+  ]},
+  {date:'2026-10-08',id:'626f432',push:'Fiches plus claires : chiffres clés et onglets',items:[
+    ['up','Fiches plus claires','Les chiffres clés en haut, puis des onglets : un sujet à la fois.','eleves']
+  ]},
+  {date:'2026-10-08',id:'d2fb7d2',push:'Fiches : le compte passe dans l’en-tête',items:[
+    ['up','Compte dans l’en-tête de la fiche','Le compte de la personne se voit et se modifie en haut de sa fiche.','eleves']
+  ]},
+  {date:'2026-10-08',id:'395018a',push:'Fiches en pleine page pour les élèves et le personnel',items:[
+    ['new','Fiches en pleine page','Le dossier d’un élève ou d’un membre du personnel, avec Précédent et Suivant pour passer de l’un à l’autre.','eleves']
+  ]},
+  {date:'2026-10-08',id:'f112874',push:'Le rôle et la classe sont choisis par l’administration',items:[
+    ['up','Rôle et classe choisis par l’administration','La demande de compte ne demande plus le rôle ni la classe : l’administration les choisit en l’approuvant.','comptes']
+  ]},
+  {date:'2026-10-08',id:'9518d74',push:'Ajoute un serveur local pour essayer le site sur son ordinateur',items:[
+    ['new','Site local','Un fichier à double-cliquer ouvre le site sur son ordinateur, pour l’essayer sans le mettre en ligne.','']
+  ]},
+  {date:'2026-10-08',id:'107269e',push:'Démo avec connexion : comptes de démo, déconnexion et demandes de compte',items:[
+    ['new','Démo avec connexion','Des comptes de démonstration, la déconnexion et les demandes de compte, pour essayer tout le parcours.','']
+  ]},
+  {date:'2026-10-08',id:'0c4388a',push:'Connexion par courriel et demandes de compte (Firebase)',items:[
+    ['new','Comptes et connexion','Un écran de connexion, des demandes de compte approuvées par l’administration, et la déconnexion.','comptes']
+  ]},
+  {date:'2026-10-08',id:'94669b1',push:'Renomme le projet en Caserne-École',items:[
+    ['up','Nom du site','Le site s’appelle maintenant Caserne-École.','']
+  ]},
+  {date:'2026-10-08',id:'aa1e47d',push:'Renomme le projet en Site Pompier School',items:[
+    ['up','Nom provisoire','Le projet s’est appelé « Site Pompier School » pendant quelques heures.','']
+  ]},
+  {date:'2026-10-07',id:'02b918a',push:'Calendrier des cours : page claude.ai, démo GitHub Pages et tests',items:[
+    ['new','Mise en service','L’horaire annuel des classes, les présences, les examens, le calendrier scolaire et les dossiers des élèves et du personnel.','calendar'],
     ['up','Cartes de l’horaire plus lisibles','Une ligne pour le moment et le type, puis le module.','calendar'],
     ['up','Barre d’outils sur une seule ligne','Moins d’informations, les mêmes commandes.','calendar'],
     ['up','Bandeau de démonstration masquable','Un bouton le cache pour voir le site comme en service.',''],
     ['up','Retour à la classe cliquée','En revenant au calendrier de toutes les classes, on retrouve la ligne de la classe qu’on regardait.','calendar']
-  ]},
-  {date:'2026-10-06',items:[
-    ['new','Mise en service','L’horaire annuel des classes, les présences, les examens, le calendrier scolaire et les dossiers des élèves et du personnel.','calendar']
   ]}
 ];
 const NV_TYPES={new:['ok','Nouveau'],up:['info','Amélioration'],fix:['warn','Correction']};
-const nvLatest=()=>NOUVEAUTES[0].date;
-const nvUnseen=()=>NOUVEAUTES.filter(v=>v.date>(S.nvSeen||'')).reduce((n,v)=>n+v.items.length,0);
+/* Ce qui a été vu : la clé du dernier push ouvert (date + numéro du push, car il y a souvent plusieurs pushes le même jour).
+   Une ancienne valeur enregistrée est une date seule : tout ce jour-là compte comme vu. */
+const nvKey=i=>NOUVEAUTES[i].date+'#'+String(NOUVEAUTES.length-i).padStart(3,'0');
+const nvSeenKey=()=>{const s=S.nvSeen||'';return s&&!s.includes('#')?s+'#999':s;};
+const nvLatest=()=>nvKey(0);
+const nvUnseen=()=>NOUVEAUTES.reduce((n,v,i)=>n+(nvKey(i)>nvSeenKey()?v.items.length:0),0);
 function newsPage(){
-  const st=S.pg, f=NV_TYPES[st.nf]?st.nf:'', all=!!st.nall;
-  if(st.since==null) st.since=S.nvSeen||'';
+  const st=S.pg, f=NV_TYPES[st.nf]?st.nf:'', all=!!st.nall, byDate=st.nv==='date', N=NOUVEAUTES.length;
+  if(st.since==null) st.since=nvSeenKey();
   // la pastille du menu disparaît dès qu’on a ouvert la page
   if(S.nvSeen!==nvLatest()){S.nvSeen=nvLatest();savePrefs();schedule();}
   const cnt={new:0,up:0,fix:0};let tot=0;for(const v of NOUVEAUTES)for(const it of v.items){cnt[it[0]]++;tot++;}
+  const view=`<div class="seg" role="group" aria-label="Regrouper les changements">${[['','push','Par push'],['date','date','Par date']].map(([k,id,l])=>`<button type="button" id="nv-v-${id}" data-act="pg-set" data-k="nv" data-v="${k}" aria-pressed="${byDate===(k==='date')}">${l}</button>`).join('')}</div>`;
   const seg=`<div class="seg" role="group" aria-label="Filtrer">${[['','Tout',tot],['new','Nouvelles fonctions',cnt.new],['up','Améliorations',cnt.up],['fix','Corrections',cnt.fix]].map(([k,l,n])=>`<button type="button" id="nv-f-${k||'all'}" data-act="pg-set" data-k="nf" data-v="${k}" aria-pressed="${f===k}">${l} · ${n}</button>`).join('')}</div>`;
   const pages=new Set(NAV.admin.map(n=>n[0]));
-  const shown=all?NOUVEAUTES:NOUVEAUTES.slice(0,2);
-  const blocks=shown.map(v=>{
-    const items=v.items.filter(it=>!f||it[0]===f);if(!items.length) return '';
-    const d=parse(v.date), fresh=v.date>st.since;
-    return `<section class="cl-list nv-list" id="nv-${v.date}"><div class="xm-hd nv-hd"><span>${esc(dayLabel(d))} ${d.getFullYear()}</span>${fresh?'<span class="chip exam">Depuis votre dernière visite</span>':''}<span class="nv-n">${pl(items.length,'changement','changements')}</span></div>${items.map(([t,titre,texte,page])=>`<article class="nv-row"><span class="chip ${NV_TYPES[t][0]}">${NV_TYPES[t][1]}</span><div class="xm-t"><b>${esc(titre)}</b><small>${esc(texte)}</small></div><div class="xm-end">${page&&pages.has(page)&&page!=='nouveautes'?`<button class="btn sm" type="button" data-act="nav" data-page="${page}">Ouvrir</button>`:''}</div></article>`).join('')}</section>`;
+  const row=([t,titre,texte,page])=>`<article class="nv-row"><span class="chip ${NV_TYPES[t][0]}">${NV_TYPES[t][1]}</span><div class="xm-t"><b>${esc(titre)}</b><small>${esc(texte)}</small></div><div class="xm-end">${page&&pages.has(page)&&page!=='nouveautes'?`<button class="btn sm" type="button" data-act="nav" data-page="${page}">Ouvrir</button>`:''}</div></article>`;
+  /* Un bloc par push, ou un bloc par jour (les pushes du même jour réunis) */
+  let groups;
+  if(byDate){
+    const m=new Map();
+    NOUVEAUTES.forEach((v,i)=>{const g=m.get(v.date)||{date:v.date,items:[],n:0,fresh:false};g.items=g.items.concat(v.items);g.n++;if(nvKey(i)>st.since)g.fresh=true;m.set(v.date,g);});
+    groups=[...m.values()];
+  }else groups=NOUVEAUTES.map((v,i)=>({p:v,num:N-i,date:v.date,items:v.items,fresh:nvKey(i)>st.since}));
+  const lim=byDate?2:5, shown=all?groups:groups.slice(0,lim);
+  const blocks=shown.map(g=>{
+    const items=g.items.filter(it=>!f||it[0]===f);if(!items.length) return '';
+    const d=parse(g.date), day=`${dayLabel(d)} ${d.getFullYear()}`, fresh=g.fresh?'<span class="chip exam">Depuis votre dernière visite</span>':'', n=`<span class="nv-n">${pl(items.length,'changement','changements')}</span>`;
+    const link=g.p?(g.p.id?`<a href="${NV_REPO}/commit/${esc(g.p.id)}" target="_blank" rel="noopener" title="Voir ce push sur GitHub">${esc(g.p.id)}</a>`:`<a href="${NV_REPO}/commits/main" target="_blank" rel="noopener" title="Voir les pushes sur GitHub">le plus récent</a>`):'';
+    const head=g.p?`<div class="xm-hd nv-hd nv-push"><span class="cl-num sm nv-num" title="Push n° ${g.num}">${g.num}</span><div class="nv-pt"><b>${esc(g.p.push)}</b><small>${esc(day)} · push ${link}</small></div>${fresh}${n}</div>`
+      :`<div class="xm-hd nv-hd"><span>${esc(day)}</span>${g.n>1?`<span class="nv-k">${g.n} pushes</span>`:''}${fresh}${n}</div>`;
+    return `<section class="cl-list nv-list" id="nv-${g.p?'p'+g.num:g.date}">${head}${items.map(row).join('')}</section>`;
   }).join('');
-  const more=!all&&NOUVEAUTES.length>2?`<div class="row" style="margin-top:4px"><button class="btn" type="button" id="nv-more" data-act="pg-set" data-k="nall" data-v="1">Voir les mises à jour précédentes</button></div>`:'';
-  return `<div class="toolbar">${seg}</div>`+(blocks||'<section class="panel"><p class="help">Rien de ce type dans les dernières mises à jour.</p></section>')+more;
+  const more=!all&&groups.length>lim?`<div class="row" style="margin-top:4px"><button class="btn" type="button" id="nv-more" data-act="pg-set" data-k="nall" data-v="1">${byDate?'Voir les jours précédents':`Voir les ${groups.length-lim} pushes précédents`}</button></div>`:'';
+  return `<div class="toolbar">${view}${seg}</div>`+(blocks||'<section class="panel"><p class="help">Rien de ce type dans les dernières mises à jour.</p></section>')+more;
 }
 
 /* ---------- Pages : calendrier scolaire ---------- */

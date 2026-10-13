@@ -11,7 +11,9 @@ Tant que Firebase n’est pas configuré (`config.js` vide), `index.html` renvoi
 
 ## Nouveautés
 
-Le menu **Nouveautés** (administration, sous Paramètres) liste les nouvelles fonctions, les améliorations et les corrections du site. La liste est dans `src/calendrier-cours.html` (constante `NOUVEAUTES`) : on y ajoute une ligne à chaque mise à jour.
+Le menu **Nouveautés** (administration, sous Paramètres) liste les nouvelles fonctions, les améliorations et les corrections du site, regroupées **par push** (chaque envoi sur GitHub a son bloc : numéro, titre, date, identifiant avec un lien vers GitHub) ou **par date**.
+
+La liste est dans `src/calendrier-cours.html` (constante `NOUVEAUTES`). À chaque push, on ajoute un bloc en haut : `{ date, id: '', push: 'titre du push', items: [...] }`, et on remplit l’`id` du bloc précédent avec l’identifiant court de son push (connu seulement après l’envoi).
 
 ## Vocabulaire
 

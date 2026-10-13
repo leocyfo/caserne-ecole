@@ -362,11 +362,18 @@ await DBX.doc(MC).delete();await DBX.doc('groupes/c999').delete();await wait(200
 // ---- nouveautés : sous Paramètres, pour l’administration ----
 {const nav=$$('#nav button').map(b=>b.id);ok('news under params',nav[nav.length-1]==='nav-nouveautes'&&nav[nav.length-2]==='nav-params'&&!!$('#nav-n'),nav.slice(-2).join(','));}
 click($('#nav-nouveautes'));await wait(150);
-ok('news page',/Nouveautés/.test($('#heading').textContent)&&$$('#main .nv-list').length===2&&$$('#main .nv-row').length>15&&/Depuis votre dernière visite/.test($('#main').textContent)&&!$('#nav-n'),$$('#main .nv-row').length);
+ok('news page',/Nouveautés/.test($('#heading').textContent)&&$$('#main .nv-list').length===5&&$$('#main .nv-row').length>15&&/Depuis votre dernière visite/.test($('#main').textContent)&&!$('#nav-n'),$$('#main .nv-row').length);
+// un bloc par push : numéro, titre du push, date, identifiant avec un lien vers GitHub
+{const h=$$('#main .nv-push'), n=h.map(x=>+x.querySelector('.nv-num').textContent), l=$('#main .nv-push a[href*="/commit/12976b2"]');
+ ok('news by push',$('#nv-v-push').getAttribute('aria-pressed')==='true'&&h.length===5&&n[0]>=32&&n.every((x,i)=>i===0||x===n[i-1]-1)&&/Modules : cours, examens et chargé de cours/.test($('#main').textContent)&&!!l&&l.target==='_blank'&&/github\.com\/leocyfo\/caserne-ecole/.test(l.href)&&/13 octobre 2026/.test(l.closest('.nv-push').textContent)&&/pushes précédents/.test($('#nv-more').textContent),n.join(','));}
 click($('#nv-f-fix'));await wait(60);
 ok('news filter',$$('#main .nv-row').length>3&&$$('#main .nv-row>.chip').every(c=>c.textContent==='Correction'),$$('#main .nv-row').length);
 click($('#nv-f-all'));await wait(60);click($('#nv-more'));await wait(60);
-ok('news older',$$('#main .nv-list').length>=4&&!$('#nv-more')&&/Mise en service/.test($('#main').textContent));
+ok('news older',$$('#main .nv-list').length>=32&&!$('#nv-more')&&/Mise en service/.test($('#main').textContent)&&$$('#main .nv-push').every(x=>x.querySelector('.nv-pt b').textContent.length>5)&&$$('#main .nv-list').every(x=>x.querySelectorAll('.nv-row').length>=1),$$('#main .nv-list').length);
+// les mêmes changements regroupés par date : les pushes d’un même jour sont réunis
+{const rows=$$('#main .nv-row').length;click($('#nv-v-date'));await wait(80);
+ ok('news by date',$('#nv-v-date').getAttribute('aria-pressed')==='true'&&!$('#main .nv-push')&&$$('#main .nv-list').length>=5&&$$('#main .nv-list').length<12&&$$('#main .nv-row').length===rows&&/pushes/.test($('#main .nv-hd').textContent),$$('#main .nv-list').length+' '+$$('#main .nv-row').length+'/'+rows);
+ click($('#nv-v-push'));await wait(80);}
 click($('#main .nv-row [data-act=nav][data-page=modules]'));await wait(120);
 ok('news opens page',/Modules/.test($('#heading').textContent));
 click($('#nav-nouveautes'));await wait(120);
