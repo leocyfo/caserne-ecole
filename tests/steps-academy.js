@@ -364,6 +364,48 @@ click($('#fi-tab-reglages'));await wait(100);
 click($('#md-ask'));await wait(80);click($('[data-act=md-del]'));await wait(350);
 ok('module removed',window.__store.get('config/ecole').competences.length===25&&$$('#main .xm-row').length===25);
 await DBX.doc(MC).delete();await DBX.doc('groupes/c999').delete();await wait(200);
+// ---- import : liste d’élèves (fichier ou collage) et copie de l’horaire d’une classe ----
+await DBX.doc('groupes/c998').set({nom:'Classe 998'});await wait(250);
+click($('#nav-classes'));await wait(120);click($('#cl-c998'));await wait(150);
+{const EL=()=>[...window.__store.entries()].filter(([k,v])=>k.startsWith('eleves/')&&v.groupe==='c998').map(([k,v])=>v);
+ const FR0=window.FileReader, TXT={};window.FileReader=class{readAsText(f){setTimeout(()=>{this.result=TXT[f.name]||'';if(this.onload)this.onload();},0);}};
+ const drop=(name,text)=>{TXT[name]=text.replace(/^﻿/,'');const dt=new DataTransfer();dt.items.add(new File([text],name,{type:'text/csv'}));const fi=$('#m-file-c998');fi.files=dt.files;fi.dispatchEvent(new Event('change',{bubbles:true}));};
+ ok('empty class shows the import form',!!$('#m-bulk-c998')&&!!$('#m-file-c998')&&!!$('#m-file-btn')&&/fichier CSV/.test($('.st-enrol').textContent));
+ // un fichier CSV (titres, point-virgule, guillemets) arrive dans la zone de texte, à vérifier
+ drop('liste.csv','﻿N°;Prénom;Nom;Courriel\r\n1;Zoé;Lemieux;zoe@exemple.ca\r\n2;Marc-André;"Roy; Jr";\r\n');await wait(300);
+ ok('file read into the list',/Zoé;Lemieux/.test($('#m-bulk-c998').value)&&$$('.toast').some(t=>/2 élèves reconnus dans liste\.csv/.test(t.textContent))&&EL().length===0,$('#m-bulk-c998').value.slice(0,60));
+ $('[data-form=m-add-els]').requestSubmit();await wait(400);
+ {const z=EL().find(e=>e.numero===1), m=EL().find(e=>e.numero===2);
+  ok('students imported with number and e-mail',EL().length===2&&!!z&&z.nom==='Zoé Lemieux'&&z.courriel==='zoe@exemple.ca'&&!!m&&m.nom==='Marc-André Roy; Jr'&&m.courriel===undefined,JSON.stringify(EL()));}
+ // une liste collée d’Excel (tabulations, sans titres) ; l’élève déjà inscrit est ignoré
+ click($('#m-enrol-open'));await wait(80);
+ $('#m-bulk-c998').value='3\tLéa Gagné\tlea@exemple.ca\n\nZoé Lemieux\nSimon Petit';
+ $('[data-form=m-add-els]').requestSubmit();await wait(400);
+ ok('pasted list, duplicate skipped',EL().length===4&&EL().some(e=>e.nom==='Léa Gagné'&&e.numero===3&&e.courriel==='lea@exemple.ca')&&EL().some(e=>e.nom==='Simon Petit'&&e.numero===undefined)&&$$('.toast').some(t=>/2 élèves inscrits · 1 déjà dans la classe/.test(t.textContent)),JSON.stringify(EL().map(e=>e.nom)));
+ click($('#m-enrol-open'));await wait(80);
+ drop('liste.xlsx','PK');await wait(150);
+ ok('excel workbook refused with advice',$$('.toast').some(t=>/enregistrez la feuille en CSV/.test(t.textContent))&&$('#m-bulk-c998').value==='');
+ window.FileReader=FR0;
+ // copie de l’horaire de la classe 119, à partir du lundi 19 octobre 2026
+ click($('#fi-tab-cours'));await wait(100);
+ ok('copy button',!!$('#cp-open')&&!$('#cp-box'));
+ click($('#cp-open'));await wait(80);
+ ok('copy panel',!!$('#cp-box')&&$$('#cp-src option').length===6&&$('#cp-go').disabled&&/Choisissez la classe/.test($('#cp-info').textContent),$$('#cp-src option').length);
+ pick('#cp-src','c119');await wait(80);
+ {const di=$('#cp-date');di.value='2026-10-19';di.dispatchEvent(new Event('change',{bubbles:true}));}await wait(200);
+ const nCopy=parseInt(($('#cp-go').textContent.match(/\d+/)||['0'])[0],10);
+ ok('copy preview',nCopy>50&&!$('#cp-go').disabled&&$('#cp-date').value==='2026-10-19'&&/19 octobre 2026/.test($('#cp-info').textContent)&&/Classe 119/.test($('#cp-info').textContent)&&/fin de l’année scolaire/.test($('#cp-info').textContent),nCopy+' · '+$('#cp-info').textContent.slice(0,200));
+ $('[data-form=cp-go]').requestSubmit();await wait(1500);
+ {const docs=SK('cours').map(k=>window.__store.get(k)).filter(c=>c.groupe==='c998'), xs=[];for(const c of docs)for(const x of Object.values(c.seances||{}))if(x)xs.push(x);
+  const dates=xs.map(x=>x.date).sort(), hol=(window.__store.get('config/ecole').conges||[]), off=ds=>hol.some(k=>ds>=k.du&&ds<=(k.au||k.du));
+  const m7=docs.find(c=>c.code==='M7'), s71=m7&&Object.values(m7.seances).find(x=>x&&x.label==='7.1');
+  ok('schedule copied',xs.length===nCopy&&dates[0]==='2026-10-19'&&dates.every(ds=>{const j=new Date(ds+'T12:00').getDay();return j!==0&&j!==6&&!off(ds);})&&docs.length>=20&&docs.every(c=>!c.extras),xs.length+' '+dates[0]+' '+docs.length);
+  ok('copied sessions keep their course links',!!s71&&(s71.cours||[]).join()==='k1'&&s71.tags.join()==='Théorie'&&s71.minutes===360&&!xs.some(x=>(x.tags||[]).some(t=>/Ménage/.test(t)))&&m7.enseignant==='',JSON.stringify(s71||null));
+  ok('copy closes its panel and is logged',!$('#cp-box')&&$$('.tbl tbody tr').length>=20&&SK('journal').some(k=>Object.values(window.__store.get(k).ev||{}).some(e=>/a copié l’horaire de Classe 119 vers Classe 998/.test(e.txt))),$$('.tbl tbody tr').length);}
+ // on retire la classe d’essai, ses élèves et ses séances
+ for(const k of SK('cours')) if(window.__store.get(k).groupe==='c998') await DBX.doc(k).delete();
+ for(const k of SK('eleves')) if(window.__store.get(k).groupe==='c998') await DBX.doc(k).delete();
+ await DBX.doc('groupes/c998').delete();await wait(300);}
 // ---- notifications : la cloche (rien de plus n’est enregistré, tout se déduit des données) ----
 click($('#nav-calendar'));await wait(100);
 {const rows=()=>$$('#drawer .nf-row').map(r=>r.textContent);
