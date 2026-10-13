@@ -233,6 +233,15 @@ table.tbl{width:100%;border-collapse:collapse;min-width:640px}
 .tbl .num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
 .tbl th.num{text-align:right}
 .tbl select{min-height:34px;font-size:13px}
+.hr-tbl th,.hr-tbl td{padding-left:12px;padding-right:12px}
+.hr-tbl th:first-child,.hr-tbl td:first-child{padding-left:20px}
+.hr-tbl th.on,.hr-tbl td.on{background:var(--role-bg)}
+.hr-tbl tr.row-link:hover td.on{background:var(--role-bg)}
+.hr-m{border:0;background:none;font:inherit;color:inherit;text-transform:inherit;letter-spacing:inherit;padding:5px 8px;margin:-5px -8px;border-radius:6px;cursor:pointer}
+.hr-m:hover{background:var(--surface)}
+.hr-m[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:inset 0 0 0 1px var(--role)}
+.hr-tot td{font-weight:700;background:var(--head);border-top:1px solid var(--line)}
+.hr-tot td.on{background:var(--role-bg)}
 .link{background:none;border:0;padding:0;font-weight:700;color:var(--ink);text-align:left}
 .link:hover{text-decoration:underline;color:var(--head-ink)}
 .help{font-size:13px;color:var(--muted);margin:0}
@@ -1127,7 +1136,12 @@ const IC={
   move:'<path d="M5 9l-3 3 3 3M9 5l3-3 3 3M15 19l-3 3-3-3M19 9l3 3-3 3M2 12h20M12 2v20"/>',
   plus:'<path d="M12 5v14M5 12h14"/>',
   left:'<path d="m15 18-6-6 6-6"/>',
-  right:'<path d="m9 18 6-6-6-6"/>'
+  right:'<path d="m9 18 6-6-6-6"/>',
+  down:'<path d="M12 3v12M7 10l5 5 5-5M4 21h16"/>',
+  up:'<path d="M12 15V3M7 8l5-5 5 5M4 21h16"/>',
+  print:'<path d="M6 9V3h12v6M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v7H6z"/>',
+  bell:'<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>',
+  clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>'
 };
 const icon=k=>`<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${IC[k]}</svg>`;
 
@@ -1915,8 +1929,9 @@ function staffFiche(){
 function staffPage(){
   if(S.pg.fiche) return staffFiche();
   const who=S.pg.who||'liste';
-  const segP=`<div class="seg" role="group" aria-label="Affichage"><button type="button" id="st-liste" data-act="pg-set" data-k="who" data-v="liste" aria-pressed="${who==='liste'}">Liste</button><button type="button" id="pt-personnel" data-act="pg-set" data-k="who" data-v="presences" aria-pressed="${who==='presences'}">Présences</button></div>`;
+  const segP=`<div class="seg" role="group" aria-label="Affichage"><button type="button" id="st-liste" data-act="pg-set" data-k="who" data-v="liste" aria-pressed="${who==='liste'}">Liste</button><button type="button" id="pt-personnel" data-act="pg-set" data-k="who" data-v="presences" aria-pressed="${who==='presences'}">Présences</button><button type="button" id="st-heures" data-act="pg-set" data-k="who" data-v="heures" aria-pressed="${who==='heures'}">Heures</button></div>`;
   if(who==='presences') return attStaff(segP);
+  if(who==='heures') return hoursPage(segP);
   const all=staff(), d=new Date(), m0=iso(new Date(d.getFullYear(),d.getMonth(),1)), t=todayISO();
   const abs={};
   for(const [ds,doc] of Object.entries(S.data.staffPres)){ if(ds<m0||ds>t) continue; for(const [id,v] of Object.entries((doc&&doc.statuts)||{})) if(v==='A') abs[id]=(abs[id]||0)+1; }
@@ -1925,6 +1940,50 @@ function staffPage(){
   if(!all.length) return tb+emptyBox('Aucun membre du personnel','Ajoutez les enseignants et le reste du personnel. Les enseignants pourront ensuite être assignés aux cours.');
   return tb+`<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Nom</th><th>Statut</th><th>Courriel</th><th>Téléphone</th><th class="num">${W('Séances','Cours')} cette semaine</th><th class="num">Absences ce mois</th></tr></thead><tbody>${all.map(p=>{const dz=S.data.dossiers[p.id]||{}, st=statOf(p), nc=isTeacher(p)?weekCount(p.id,baseMonday()):0;
     return `<tr class="row-link" data-act="staff" data-id="${esc(p.id)}"><td><span class="tb-who">${avHTML(p.nom,'')}<span><button class="link" type="button" data-act="staff" data-id="${esc(p.id)}">${esc(p.nom)}</button><small class="tb-sub">${esc(p.fonction||'Enseignant')}${principalClasses(p.id).map(g=>`<span class="role-chip prin-chip">Principal · ${esc(g.nom.replace(/^(Classe|Groupe)\s+/i,''))}</span>`).join('')}</small></span></span></td><td><span class="chip ${STATUTS[st]||'off'}">${esc(st)}</span></td><td>${esc(p.courriel||'—')}</td><td>${esc(dz.telephone||'—')}</td><td class="num">${nc}</td><td class="num">${abs[p.id]||0}</td></tr>`;}).join('')}</tbody></table></div>`;
+}
+
+/* ---------- Heures enseignées : par enseignant et par mois, pour la paie des instructeurs ----------
+   Une séance compte une fois qu’elle a eu lieu (passée, non annulée), pour chaque enseignant qui y était attribué
+   et qui n’était pas marqué absent ce jour-là. */
+function taughtRows(){
+  const out=[];
+  for(const s of sessionsBetween(yearStart(),todayISO())){
+    if(s.kind!=='cours'||s.cancelled||!isPast(s)) continue;
+    const abs=S.data.absProfs[s.date]||[];
+    for(const id of new Set(s.tch)) if(id&&byId(S.data.enseignants,id)&&!abs.includes(id)) out.push({t:id,s,h:sHours(s)});
+  }
+  return out;
+}
+const hrMonths=()=>{const out=[];let d=parse(yearStart());d=new Date(d.getFullYear(),d.getMonth(),1);const end=new Date();while(d<=end&&out.length<14){out.push(d.getFullYear()+'-'+pad(d.getMonth()+1));d=new Date(d.getFullYear(),d.getMonth()+1,1);}return out;};
+const hrDate=m=>new Date(+m.slice(0,4),+m.slice(5)-1,1);
+const hrMonthName=m=>`${fMonth.format(hrDate(m))} ${hrDate(m).getFullYear()}`;
+const hrFmt=h=>String(Math.round(h*10)/10).replace('.',',');
+function hoursPage(segP){
+  const rows=taughtRows(), ms=hrMonths(), cur=S.pg.hm==='all'||ms.includes(S.pg.hm)?S.pg.hm:ms[ms.length-1], by={}, totM={};let tot=0;
+  for(const r of rows){const m=r.s.date.slice(0,7), o=by[r.t]||(by[r.t]={tot:0});o[m]=(o[m]||0)+r.h;o.tot+=r.h;totM[m]=(totM[m]||0)+r.h;tot+=r.h;}
+  const ts=staff().filter(p=>by[p.id]||(isTeacher(p)&&p.statut!=='Inactif')), all=cur==='all', sel=all?tot:(totM[cur]||0);
+  const cell=(h,m)=>`<td class="num${m===cur?' on':''}">${h?hrFmt(h):'<span class="muted">—</span>'}</td>`;
+  const tb=`<div class="toolbar">${segP}<p class="summary" style="margin:0"><span><b id="hr-sum">${hrFmt(sel)}</b>${sel>=2?'heures':'heure'} ${all?'depuis la rentrée':'en '+esc(hrMonthName(cur))}</span></p><span class="grow"></span><button class="btn primary" type="button" id="hr-export" data-act="hr-export" data-m="${esc(cur)}"${sel?'':' disabled'}>${icon('down')}Exporter ${all?'l’année':esc(fMonth.format(hrDate(cur)))}</button></div>`;
+  if(!ts.length) return tb+emptyBox('Aucun enseignant','Ajoutez les enseignants dans la liste du personnel.');
+  const th=m=>`<th class="num${m===cur?' on':''}"><button type="button" class="hr-m" id="hm-${m}" data-act="pg-set" data-k="hm" data-v="${m}" aria-pressed="${m===cur}" title="${esc('Choisir '+hrMonthName(m)+' pour l’export')}">${esc(fMonthS.format(hrDate(m)))}</button></th>`;
+  const body=ts.map(p=>{const o=by[p.id]||{tot:0};
+    return `<tr class="row-link" data-act="staff" data-id="${esc(p.id)}"><td><span class="tb-who">${avHTML(p.nom,'')}<span><button class="link" type="button" data-act="staff" data-id="${esc(p.id)}">${esc(p.nom)}</button><small class="tb-sub">${esc(p.fonction||'Enseignant')}</small></span></span></td>${ms.map(m=>cell(o[m],m)).join('')}<td class="num${all?' on':''}"><b>${o.tot?hrFmt(o.tot):'—'}</b></td></tr>`;}).join('');
+  const foot=`<tr class="hr-tot"><td>Total</td>${ms.map(m=>cell(totM[m],m)).join('')}<td class="num${all?' on':''}"><b>${tot?hrFmt(tot):'—'}</b></td></tr>`;
+  return tb+`<div class="tbl-wrap"><table class="tbl hr-tbl" id="hr-tbl"><thead><tr><th>Enseignant</th>${ms.map(th).join('')}<th class="num${all?' on':''}"><button type="button" class="hr-m" id="hm-all" data-act="pg-set" data-k="hm" data-v="all" aria-pressed="${all}" title="Choisir toute l’année pour l’export">Total</button></th></tr></thead><tbody>${body}${foot}</tbody></table></div>
+    <p class="help" style="margin-top:10px">Heures des ${W('séances données','cours donnés')} depuis la rentrée. Une ${W('séance annulée','période annulée')} ou un enseignant marqué absent ne compte pas. Cliquez un mois pour le choisir, puis Exporter.</p>`;
+}
+/* Fichier pour la paie : un sommaire par enseignant, puis le détail séance par séance */
+function hoursCSV(m){
+  const rows=taughtRows().filter(r=>m==='all'||r.s.date.slice(0,7)===m);
+  if(!rows.length){toast('Aucune heure à exporter pour cette période.','bad');return null;}
+  const T=id=>byId(S.data.enseignants,id)||{}, fn=id=>T(id).fonction||'Enseignant';
+  rows.sort((a,b)=>collator.compare(T(a.t).nom||'',T(b.t).nom||'')||a.s.date.localeCompare(b.s.date)||a.s.start-b.s.start);
+  const sum=new Map();for(const r of rows){const o=sum.get(r.t)||{n:0,h:0};o.n++;o.h+=r.h;sum.set(r.t,o);}
+  const L=[['Enseignant','Fonction',W('Séances','Cours'),'Heures']];
+  for(const [id,o] of sum) L.push([T(id).nom,fn(id),o.n,hrFmt(o.h)]);
+  L.push([],['Enseignant','Fonction','Date','Classe',W('Module','Cours'),W('Séance','Détail'),'Type','Moment','Heures']);
+  for(const r of rows){const s=r.s;L.push([T(r.t).nom,fn(r.t),s.date,gName(s.grp),(s.c.code?s.c.code+' ':'')+s.c.titre,sessLabel(s),cardKind(tagsOf(s)).kind||'',momentOf(s),hrFmt(r.h)]);}
+  return {name:`heures-${m==='all'?(String(cfg().annee||'').replace(/[^0-9A-Za-z]+/g,'-').replace(/^-|-$/g,'')||'annee'):m}.csv`,text:csvText(L)};
 }
 
 /* ---------- Présences : aides des classes et du personnel ---------- */
@@ -2620,7 +2679,11 @@ async function addCourseDay(o){
    items : [type, titre, explication, page à ouvrir]. Types : new (nouvelle fonction), up (amélioration), fix (correction). */
 const NV_REPO='https://github.com/leocyfo/caserne-ecole';
 const NOUVEAUTES=[
-  {date:'2026-10-13',id:'',push:'Nouveautés : les changements regroupés par push',items:[
+  {date:'2026-10-13',id:'',push:'Heures enseignées par enseignant et par mois, avec export',items:[
+    ['new','Heures enseignées','Dans Personnel, l’affichage « Heures » donne les heures données par chaque enseignant, mois par mois, depuis la rentrée.','personnel'],
+    ['new','Export pour la paie','Le bouton Exporter remet un fichier (CSV, lisible dans Excel) pour le mois choisi ou pour l’année : un sommaire par enseignant, puis le détail séance par séance.','personnel']
+  ]},
+  {date:'2026-10-13',id:'0a1cdbb',push:'Nouveautés : les changements regroupés par push',items:[
     ['new','Nouveautés par push','Chaque envoi du site (push) a son bloc : son numéro, son titre, sa date, son identifiant sur GitHub et ce qu’il a changé. Le regroupement par date reste disponible.','nouveautes']
   ]},
   {date:'2026-10-13',id:'12976b2',push:'Modules : cours, examens et chargé de cours ; séances par classe',items:[
@@ -3747,6 +3810,25 @@ async function saveStaff(){
 }
 
 /* ---------- Écriture ---------- */
+/* Texte CSV lisible par Excel en français : point-virgule, guillemets au besoin, accents conservés */
+const csvText=lines=>'﻿'+lines.map(l=>l.map(v=>{const s=String(v==null?'':v);return /[;"\n\r]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s;}).join(';')).join('\r\n')+'\r\n';
+/* Remet un fichier à la personne : par la fenêtre de claude.ai quand la page y est ouverte, sinon par le navigateur */
+async function saveFile(name,data){
+  try{
+    const C=window.claude, dl=C&&typeof C.use==='function'?await C.use('downloads'):null;
+    if(dl){await dl.save({filename:name,data});toast('Fichier enregistré : '+name);return true;}
+  }catch(e){
+    const c=e&&e.code;
+    if(c==='declined'||c==='rate_limited') return false;
+    if(c&&!['unavailable','not_granted','capability_disabled','capability_removed'].includes(c)){toast('Le fichier n’a pas pu être préparé.','bad');return false;}
+  }
+  try{
+    const u=URL.createObjectURL(data instanceof Blob?data:new Blob([data])), a=document.createElement('a');
+    a.href=u;a.download=name;a.style.display='none';document.body.appendChild(a);a.click();
+    setTimeout(()=>{URL.revokeObjectURL(u);a.remove();},1500);
+    toast('Fichier téléchargé : '+name);return true;
+  }catch(e){toast('Téléchargement impossible dans cette fenêtre.','bad');return false;}
+}
 function toast(msg,kind,action){
   const t=document.createElement('div');t.className='toast'+(kind?' '+kind:'');t.setAttribute('role','status');
   const s=document.createElement('span');s.textContent=msg;t.appendChild(s);
@@ -3966,6 +4048,7 @@ document.addEventListener('click',async e=>{
       pg.askc='';pg.aske='';
       await editModule(code,m=>{if(ex)m.examens=m.examens.filter(x=>x.id!==id);else m.cours=m.cours.filter(x=>x.id!==id);},ex?'Examen retiré du module':'Cours retiré du module');break;}
     case 'md-del-x':{if(S.busy)break;const c0=byId(S.data.cours,b.dataset.c);if(!c0)break;const doc=courseDoc(c0), xid=b.dataset.x;doc.extras=doc.extras.filter(x=>x.id!==xid&&!(x.de&&String(x.de).endsWith('@'+xid)));doc.annulees=doc.annulees.filter(t=>!String(t).endsWith('@'+xid));pg.askx='';await affWrite(()=>putCours(c0.id,doc),'Séance supprimée');break;}
+    case 'hr-export':{const r=hoursCSV(b.dataset.m);if(r)await saveFile(r.name,r.text);break;}
     case 'sf-comp-all':document.querySelectorAll('[data-form=sf-comp] input[name=comp]').forEach(i=>{i.checked=!!b.dataset.v;});break;
     case 'stop':break;
     case 'm-adding':pg.adding=!pg.adding;render();if(pg.adding){const x=$('#m-gname');if(x)x.focus();}break;

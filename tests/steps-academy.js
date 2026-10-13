@@ -385,6 +385,18 @@ ok('year without exam list',!!$('#yr-exams')&&/examens à venir/.test($('#yr-exa
 // personnel
 click($('#nav-personnel'));await wait(50);
 ok('10 staff',$$('#main tbody tr').length===10&&/Marie Leduc/.test($('#main').textContent)&&/Instructeur/.test($('#main').textContent)&&/Séances cette semaine/.test($('#main thead').textContent));
+// heures enseignées : par enseignant et par mois, avec export pour la paie
+click($('#st-heures'));await wait(120);
+{const tr=$$('#hr-tbl tbody tr'), ml=tr.find(r=>/Marie Leduc/.test(r.textContent)), months=$$('#hr-tbl thead .hr-m').length;
+ ok('hours table',tr.length>=9&&months>=3&&!!ml&&/\d/.test(ml.querySelector('td:last-child').textContent)&&$('#hm-2026-10').getAttribute('aria-pressed')==='true'&&/octobre 2026/.test($('.summary').textContent)&&/Exporter octobre/.test($('#hr-export').textContent)&&/Total/.test($('#hr-tbl .hr-tot').textContent),tr.length+' '+months);
+ const u0=window.claude.use;window.__saved=null;window.claude.use=async n=>n==='downloads'?{save:async o=>{window.__saved=o;}}:u0(n);
+ click($('#hr-export'));await wait(250);
+ const txt=(window.__saved||{}).data||'';
+ ok('hours export',(window.__saved||{}).filename==='heures-2026-10.csv'&&/Enseignant;Fonction;Séances;Heures/.test(txt)&&/Marie Leduc;Enseignant;\d+;[\d,]+/.test(txt)&&/;2026-10-0\d;Classe 1\d\d;M\d+ /.test(txt)&&!/2026-09-/.test(txt)&&$$('.toast').some(t=>/heures-2026-10\.csv/.test(t.textContent)),txt.slice(0,200));
+ click($('#hm-all'));await wait(80);click($('#hr-export'));await wait(250);
+ ok('hours export year',/^heures-2026.2027\.csv$/.test((window.__saved||{}).filename||'')&&/2026-09-/.test((window.__saved||{}).data||'')&&/depuis la rentrée/.test($('.summary').textContent),(window.__saved||{}).filename);
+ window.claude.use=u0;}
+click($('#st-liste'));await wait(80);
 // présences (dans les classes)
 ok('no presences menu',!$('#nav-presences'));
 click($('#nav-classes'));await wait(150);
