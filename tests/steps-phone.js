@@ -6,6 +6,7 @@ const click=el=>{if(!el)throw new Error('missing element');el.click();};
 const vis=e=>{const r=e.getBoundingClientRect();return r.width>0&&r.height>0&&getComputedStyle(e).visibility!=='hidden';};
 const rect=e=>e.getBoundingClientRect();
 const lbl=e=>e.id?'#'+e.id:(typeof e.className==='string'&&e.className?'.'+e.className.trim().split(/\s+/)[0]:e.tagName.toLowerCase());
+const PHONE_FIRST=860; // haut de la première classe, données d’exemple affichées (937 avant l’étape 2)
 const tooWide=()=>document.documentElement.scrollWidth>innerWidth+1;
 const smallFields=()=>$$('input:not([type=hidden]):not([type=checkbox]):not([type=radio]):not([type=range]):not([type=color]),select,textarea').filter(vis).filter(e=>parseFloat(getComputedStyle(e).fontSize)<16).map(lbl);
 const smallText=()=>{const out=[];const tw=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);let n;
@@ -35,6 +36,14 @@ ok('22 pages visited',seen===22,seen);
 ok('no page wider than the phone',!wide.length,wide.join(' ; '));
 ok('fields at 16 px (no zoom on iPhone)',!fields.length,fields.join(' ; '));
 ok('text at 12 px or more',!tiny.length,tiny.join(' ; '));
+
+/* Horaire de l’administration : la barre tient en trois rangées et la première classe arrive dans le premier écran */
+click($('[data-role=admin]'));await wait(150);click($('#nav-calendar'));await wait(220);window.scrollTo(0,0);
+{const kids=[...$('.ctl').children].filter(vis), tops=kids.map(k=>rect(k).top).sort((a,b)=>a-b);let rowsN=tops.length?1:0;for(let i=1;i<tops.length;i++)if(tops[i]-tops[i-1]>14)rowsN++;
+ const first=$$('#main .wk-row:not(.wk-head)').filter(vis)[0], late=$('#late-pill'), add=$('#new-course');
+ ok('admin toolbar on 3 rows',rowsN<=3,rowsN+' rangées · '+kids.map(lbl).join(' '));
+ ok('short labels on the phone',!!late&&!!add&&/^\d+ en retard$/.test(late.innerText.replace(/\s+/g,' ').trim())&&add.innerText.replace(/\s+/g,' ').trim()==='Ajouter'&&/présences? en retard cette semaine/.test(late.title+late.textContent),(late?late.innerText:'-')+' | '+(add?add.innerText:'-'));
+ ok('first class row in the first screen',!!first&&rect(first).top+scrollY<=PHONE_FIRST,first?Math.round(rect(first).top+scrollY):'-');}
 
 /* Enseignant : la journée et les présences à rattraper se lisent sur toute la largeur */
 click($('[data-role=teacher]'));await wait(150);click($('#nav-calendar'));await wait(220);

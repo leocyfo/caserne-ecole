@@ -33,8 +33,8 @@ function toolbarHTML(){
   if(S.role==='admin'){
     if(S.data.cours.length&&ready) mid=viewSelHTML();
     const late=S._stats?S._stats.late:0;
-    if(late) right+=`<button type="button" class="late" id="late-pill" data-act="nav" data-page="classes" title="${W('Séances passées','Cours passés')} de la semaine dont les présences n’ont pas été prises. Ouvrir les classes.">${late} ${late>1?'présences en retard':'présence en retard'} cette semaine</button>`;
-    if(ready&&S.canAdmin!==false) right+=`<button class="btn primary" type="button" data-act="new-course">${icon('plus')}${acad()?'Ajouter une séance':'Planifier un cours'}</button>`;
+    if(late) right+=`<button type="button" class="late" id="late-pill" data-act="nav" data-page="classes" title="${W('Séances passées','Cours passés')} de la semaine dont les présences n’ont pas été prises. Ouvrir les classes.">${late} <span class="t-long">${late>1?'présences en retard':'présence en retard'} cette semaine</span><span class="t-short">en retard</span></button>`;
+    if(ready&&S.canAdmin!==false) right+=`<button class="btn primary" type="button" id="new-course" data-act="new-course">${icon('plus')}<span class="t-long">${acad()?'Ajouter une séance':'Planifier un cours'}</span><span class="t-short">${acad()?'Ajouter':'Planifier'}</span></button>`;
   }else right=identitySelect();
   return `<section class="ctl" aria-label="Affichage de l’horaire">${dd?navDay:nav}${viewSeg}${mid?'<span class="vsep" aria-hidden="true"></span>'+mid:''}<span class="grow"></span>${right}</section>`;
 }

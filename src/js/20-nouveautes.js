@@ -5,7 +5,10 @@
    items : [type, titre, explication, page à ouvrir]. Types : new (nouvelle fonction), up (amélioration), fix (correction). */
 const NV_REPO='https://github.com/leocyfo/caserne-ecole';
 const NOUVEAUTES=[
-  {date:'2026-10-14',id:'',push:'Téléphone : corrections, et un test à la taille d’un téléphone',items:[
+  {date:'2026-10-14',id:'',push:'Téléphone : l’horaire arrive plus vite à l’écran',items:[
+    ['up','Barre de l’horaire','Sur téléphone, la barre de l’administration tient en trois rangées au lieu de cinq : la semaine ; Semaine/Jour et Classes/Enseignants côte à côte ; « 12 en retard » et « Ajouter » côte à côte. La première séance monte d’environ 90 px.','calendar']
+  ]},
+  {date:'2026-10-14',id:'0c1a88f',push:'Téléphone : corrections, et un test à la taille d’un téléphone',items:[
     ['fix','Page Comptes','Sur téléphone, elle ne dépasse plus de l’écran (un texte caché élargissait la page).','comptes'],
     ['fix','Champs','Sur téléphone, les champs et les listes sont en 16 px : l’iPhone ne zoome plus chaque fois qu’on touche un champ.',''],
     ['up','Présences au doigt','Les boutons P, A, R, M, « Marquer les autres présents », Enregistrer et la croix de fermeture font 44 px, la taille conseillée pour le doigt.',''],

@@ -1,6 +1,8 @@
 /* Téléphone : ce qui change sur un écran étroit (jusqu’à 760 px). Vérifié par tests/steps-phone.js à 390 px. */
 /* Un texte réservé aux lecteurs d’écran ne doit pas sortir de la boîte d’un tableau qui défile (il élargissait la page Comptes) */
 .tbl-wrap{position:relative}
+/* Texte long sur grand écran, texte court sur téléphone (même bouton) */
+.t-short{display:none}
 /* iPhone tenu à l’horizontale : rien sous l’encoche */
 body{padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
 .drawer{padding-right:env(safe-area-inset-right,0px)}
@@ -29,6 +31,16 @@ body{padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inse
   .xm-mini{grid-template-columns:52px minmax(0,1fr);row-gap:8px}
   .xm-mini>.chip{grid-column:2;justify-self:start}
   .xm-t b,.xm-t small,.xm-tile small{white-space:normal}
+  /* Barre de l’horaire sur trois rangées : la semaine ; l’affichage ; les retards et l’ajout */
+  .t-long{display:none}
+  .t-short{display:inline}
+  .ctl{gap:10px}
+  .ctl>.seg,.ctl>.viewsel{flex:1 1 40%;min-width:0}
+  .ctl>.viewsel:has(.chips){flex-basis:100%}
+  .ctl>.seg,.ctl>.viewsel>.seg{display:flex;flex-wrap:nowrap}
+  .ctl>.viewsel>.seg{flex:1 1 100%}
+  .ctl .seg.sm button{flex:1 1 auto;padding:8px 6px}
+  .ctl>.late,.ctl>#new-course{flex:1 1 40%;justify-content:center;min-height:40px}
   /* Petits textes : 12 px au moins */
   .chip,.chore-chip,.role-chip,.wk-corner,.wk-class small,.day-pick small,.cc-kind,.cc-flag,.kpi span,.tbl th,.eyebrow,.facts dt,
   .cl-hd,.cl-row [data-l]::before,.xm-tile .lbl,.xm-hd,.xm-d small,.nav-n,.dp-wd,.dp-c span,.md-m>span,.xg thead th,.xg tfoot .xg-n,
