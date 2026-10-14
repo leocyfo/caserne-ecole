@@ -5,7 +5,16 @@
    items : [type, titre, explication, page à ouvrir]. Types : new (nouvelle fonction), up (amélioration), fix (correction). */
 const NV_REPO='https://github.com/leocyfo/caserne-ecole';
 const NOUVEAUTES=[
-  {date:'2026-10-13',id:'',push:'Le code en plusieurs fichiers, et les tests lancés à chaque envoi sur GitHub',items:[
+  {date:'2026-10-14',id:'',push:'Téléphone : corrections, et un test à la taille d’un téléphone',items:[
+    ['fix','Page Comptes','Sur téléphone, elle ne dépasse plus de l’écran (un texte caché élargissait la page).','comptes'],
+    ['fix','Champs','Sur téléphone, les champs et les listes sont en 16 px : l’iPhone ne zoome plus chaque fois qu’on touche un champ.',''],
+    ['up','Présences au doigt','Les boutons P, A, R, M, « Marquer les autres présents », Enregistrer et la croix de fermeture font 44 px, la taille conseillée pour le doigt.',''],
+    ['fix','Aujourd’hui et À rattraper','Pour l’enseignant, le titre de la séance prend toute la largeur ; le bouton « Prendre les présences » passe dessous.',''],
+    ['fix','Prochains examens','Le titre s’affiche en entier et l’étiquette « Dans 5 semaines » passe dessous.',''],
+    ['up','Petits textes','Sur téléphone, aucun texte sous 12 px.',''],
+    ['up','Test à la taille d’un téléphone','Une page de test ouvre les 22 écrans des trois rôles à 390 px de large et vérifie tout cela à chaque envoi.','']
+  ]},
+  {date:'2026-10-13',id:'871b499',push:'Le code en plusieurs fichiers, et les tests lancés à chaque envoi sur GitHub',items:[
     ['up','Code en plusieurs fichiers','La page n’est plus un seul gros fichier : 28 fichiers de code et 14 de styles, un par sujet (horaire, classes, examens, reprises…), assemblés automatiquement. Rien ne change à l’écran.',''],
     ['up','Tests à chaque envoi','À chaque envoi sur GitHub, toute la suite de tests se lance toute seule. Le résultat est dans l’onglet Actions du dépôt : coche verte ou croix rouge.','']
   ]},

@@ -93,7 +93,7 @@ site/firebase.js            branchement sur Firebase (connexion + base de donné
 demo/connexion-demo.js      connexion et base de données simulées de la démo (localStorage)
 demo/donnees.js             données d’exemple (générées)
 src/page.html               la coquille de la page (titre, structure, emplacement des styles et du code)
-src/styles/NN-nom.css       les styles, un fichier par sujet (14 fichiers)
+src/styles/NN-nom.css       les styles, un fichier par sujet (15 fichiers ; 15-telephone.css : les écrans étroits)
 src/js/NN-nom.js            le code, un fichier par sujet (28 fichiers)
 tests/                      tests automatiques (Chrome sans fenêtre)
 outils/assembler.js         réunit les fichiers de src/ en une seule page
@@ -136,6 +136,7 @@ Les tests tournent avec une date figée (vendredi 9 octobre 2026) : leurs dates 
 
 - `test.html` et `test-ac.html` : un collège fictif et les données de l’Académie, parcours complet ;
 - `test-lock-s.html` et `test-lock-t.html` : un élève et un enseignant qui ouvrent la page avec leur propre compte ;
+- `test-phone.html` : la page dans un cadre de 390 × 844 px (un téléphone) : les 22 écrans des trois rôles ne dépassent pas de l’écran, les champs sont en 16 px, les textes en 12 px au moins, les boutons des présences font 44 px ;
 - `test-auth-*.html` : la connexion avec un Firebase simulé (première installation, demande de compte, approbation, refus, connexion) et la démo (compte de démo, demande de compte).
 
 La commande se termine en erreur s’il y a un échec, une erreur de la page ou une page qui ne termine pas. Sous Windows, `tests/lancer-tests.ps1` lance la même chose.

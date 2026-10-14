@@ -577,7 +577,7 @@ click($('#nv-f-all'));await wait(60);click($('#nv-more'));await wait(60);
 ok('news older',$$('#main .nv-list').length>=32&&!$('#nv-more')&&/Mise en service/.test($('#main').textContent)&&!!$('#main .nv-push a[href$="/commit/12976b2"]')&&/13 octobre 2026/.test($('#main .nv-push a[href$="/commit/12976b2"]').closest('.nv-push').textContent)&&/Modules : cours, examens et chargé de cours/.test($('#main').textContent)&&$$('#main .nv-push').every(x=>x.querySelector('.nv-pt b').textContent.length>5)&&$$('#main .nv-list').every(x=>x.querySelectorAll('.nv-row').length>=1),$$('#main .nv-list').length);
 // les mêmes changements regroupés par date : les pushes d’un même jour sont réunis
 {const rows=$$('#main .nv-row').length;click($('#nv-v-date'));await wait(80);
- ok('news by date',$('#nv-v-date').getAttribute('aria-pressed')==='true'&&!$('#main .nv-push')&&$$('#main .nv-list').length>=5&&$$('#main .nv-list').length<12&&$$('#main .nv-row').length===rows&&/pushes/.test($('#main .nv-hd').textContent),$$('#main .nv-list').length+' '+$$('#main .nv-row').length+'/'+rows);
+ ok('news by date',$('#nv-v-date').getAttribute('aria-pressed')==='true'&&!$('#main .nv-push')&&$$('#main .nv-list').length>=5&&$$('#main .nv-list').length<12&&$$('#main .nv-row').length===rows&&$$('#main .nv-hd').some(h=>/pushes/.test(h.textContent)),$$('#main .nv-list').length+' '+$$('#main .nv-row').length+'/'+rows);
  click($('#nv-v-push'));await wait(80);}
 click($('#main .nv-row [data-act=nav][data-page=modules]'));await wait(120);
 ok('news opens page',/Modules/.test($('#heading').textContent));
