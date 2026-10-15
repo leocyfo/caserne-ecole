@@ -5,7 +5,12 @@
    items : [type, titre, explication, page à ouvrir]. Types : new (nouvelle fonction), up (amélioration), fix (correction). */
 const NV_REPO='https://github.com/leocyfo/caserne-ecole';
 const NOUVEAUTES=[
-  {date:'2026-10-14',id:'',push:'Téléphone : l’horaire arrive plus vite à l’écran',items:[
+  {date:'2026-10-14',id:'',push:'Téléphone : Élèves, Personnel et Comptes en liste',items:[
+    ['up','Élèves','Sur téléphone, une ligne par élève : le nom et le taux de présence en haut, la classe, les absences, les retards et le téléphone dessous. Plus besoin de faire défiler le tableau de côté.','eleves'],
+    ['up','Personnel','Le nom et le statut en haut, le courriel dessous, puis les séances de la semaine et les absences du mois.','personnel'],
+    ['up','Comptes','La personne et son rôle en haut, sa fiche et le bouton Modifier dessous.','comptes']
+  ]},
+  {date:'2026-10-14',id:'8e2088a',push:'Téléphone : l’horaire arrive plus vite à l’écran',items:[
     ['up','Barre de l’horaire','Sur téléphone, la barre de l’administration tient en trois rangées au lieu de cinq : la semaine ; Semaine/Jour et Classes/Enseignants côte à côte ; « 12 en retard » et « Ajouter » côte à côte. La première séance monte d’environ 90 px.','calendar']
   ]},
   {date:'2026-10-14',id:'0c1a88f',push:'Téléphone : corrections, et un test à la taille d’un téléphone',items:[

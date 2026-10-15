@@ -41,6 +41,25 @@ body{padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inse
   .ctl>.viewsel>.seg{flex:1 1 100%}
   .ctl .seg.sm button{flex:1 1 auto;padding:8px 6px}
   .ctl>.late,.ctl>#new-course{flex:1 1 40%;justify-content:center;min-height:40px}
+  /* Élèves, Personnel, Comptes : un tableau devient une liste, une personne par bloc ;
+     l’essentiel en haut (nom, et à droite la présence, le statut ou le rôle), le reste dessous avec son libellé */
+  .tbl-wrap:has(>.tbl.stack){overflow:visible}
+  table.tbl.stack,.tbl.stack tbody{display:block;width:100%;min-width:0}
+  .tbl.stack thead{display:none}
+  .tbl.stack tr{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;padding:12px 14px;border-bottom:1px solid var(--line-2)}
+  .tbl.stack tr:last-child{border-bottom:0}
+  .tbl.stack td{display:block;padding:0;border:0;font-size:14px;text-align:left}
+  .tbl.stack td:first-child{flex:1 1 0;min-width:0}
+  .tbl.stack tr::after{content:"";order:1;flex-basis:100%;margin-top:-6px}
+  .tbl.stack td.tb-line{flex-basis:100%}
+  .tbl.stack td.tb-top{order:1;flex:none;margin-left:auto}
+  .tbl.stack td:not(:first-child):not(.tb-top){order:2;color:var(--ink-2)}
+  .tbl.stack td.tb-act{margin-left:auto}
+  .tbl.stack td[data-l]::before{content:attr(data-l) " ";color:var(--muted)}
+  .tbl.stack td:has(>.tb-empty){display:none}
+  .tbl.stack .tb-n{font-size:14px}
+  .tbl.stack .tb-cls .cl-num,.tbl.stack .tb-rate .meter{display:none}
+  .tbl.stack .tb-rate{min-width:0}
   /* Petits textes : 12 px au moins */
   .chip,.chore-chip,.role-chip,.wk-corner,.wk-class small,.day-pick small,.cc-kind,.cc-flag,.kpi span,.tbl th,.eyebrow,.facts dt,
   .cl-hd,.cl-row [data-l]::before,.xm-tile .lbl,.xm-hd,.xm-d small,.nav-n,.dp-wd,.dp-c span,.md-m>span,.xg thead th,.xg tfoot .xg-n,

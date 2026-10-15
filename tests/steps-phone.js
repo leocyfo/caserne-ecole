@@ -45,6 +45,26 @@ click($('[data-role=admin]'));await wait(150);click($('#nav-calendar'));await wa
  ok('short labels on the phone',!!late&&!!add&&/^\d+ en retard$/.test(late.innerText.replace(/\s+/g,' ').trim())&&add.innerText.replace(/\s+/g,' ').trim()==='Ajouter'&&/présences? en retard cette semaine/.test(late.title+late.textContent),(late?late.innerText:'-')+' | '+(add?add.innerText:'-'));
  ok('first class row in the first screen',!!first&&rect(first).top+scrollY<=PHONE_FIRST,first?Math.round(rect(first).top+scrollY):'-');}
 
+/* Élèves, Personnel, Comptes : le tableau devient une liste qui tient dans l’écran, l’essentiel sur la ligne du nom */
+{const bad=[];
+ for(const p of ['eleves','personnel','comptes']){
+   click($('#nav-'+p));await wait(250);window.scrollTo(0,0);
+   const w=$('#main .tbl-wrap'), t=w&&w.querySelector('table'), rows=$$('#main .tbl.stack tbody tr').filter(vis);
+   if(!t||!t.classList.contains('stack')){bad.push(p+' : pas en liste');continue;}
+   if(w.scrollWidth>w.clientWidth+1||rows.some(r=>rect(r).right>innerWidth+1))bad.push(p+' : '+w.scrollWidth+' px');
+   if(vis(t.querySelector('thead')))bad.push(p+' : en-têtes visibles');
+   const r0=rows[0], top=r0&&r0.querySelector('.tb-top');
+   if(!r0||!top||!vis(top)||Math.abs(rect(top).top-rect(r0.cells[0]).top)>30)bad.push(p+' : rien en haut à droite');
+ }
+ ok('students, staff and accounts as lists',!bad.length,bad.join(' ; '));
+ click($('#nav-comptes'));await wait(250);
+ const linked=$$('#main .tbl.stack tbody tr').filter(r=>/Élève|Enseignant/.test((r.querySelector('.tb-top')||{}).textContent||''));
+ ok('accounts keep the linked record on the phone',linked.length>=2&&linked.every(r=>{const f=r.querySelector('td[data-l=Fiche]');return f&&vis(f)&&f.textContent.trim().length>2;}),linked.map(r=>{const f=r.querySelector('td[data-l=Fiche]');return f&&vis(f)?f.textContent.trim():'(cachée)';}).join(' | '));
+ click($('#nav-eleves'));await wait(250);
+ const r1=$$('#main .tbl.stack tbody tr').filter(vis)[0];
+ const lab=r1?[...r1.querySelectorAll('td[data-l]')].filter(vis).map(td=>getComputedStyle(td,'::before').content):[];
+ ok('student row shows class, absences and lateness',!!r1&&/Classe \d+/.test(r1.innerText)&&lab.some(c=>/Absences/.test(c))&&lab.some(c=>/Retards/.test(c)),lab.join(','));}
+
 /* Enseignant : la journée et les présences à rattraper se lisent sur toute la largeur */
 click($('[data-role=teacher]'));await wait(150);click($('#nav-calendar'));await wait(220);
 const rows=$$('#main .panel .list .lrow').filter(vis);

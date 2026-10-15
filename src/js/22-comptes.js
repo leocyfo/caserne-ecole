@@ -76,12 +76,12 @@ function accountsPage(){
     const rec=acctRec(a);let who;
     if(a.exemple) who=`${avHTML(ficheName(a)||'?','')}<span><b>Compte d’exemple</b><small>Aucune personne reliée</small></span>`;
     else{const p=profOf(a.id);who=`${avHTML((p&&p.name)||'?',p?p.avatarUrl:'')}<span><b>${p?esc(p.name||'Personne non identifiée'):'Chargement…'}${a.id===S.me.id?' (vous)':''}</b><small>${p&&p.guest?'Invitée de l’extérieur':share?'Accès claude.ai':'Compte du site'}</small></span>`;}
-    const fiche=a.role==='admin'&&!a.ref?'<span class="muted">Aucune fiche</span>':rec.nom?`${esc(rec.nom)}${a.role==='student'&&rec.groupe?`<span class="muted sm"> · ${esc(gName(rec.groupe))}</span>`:''}`:'<span class="muted">Fiche supprimée</span>';
-    return `<tr><td><span class="who">${who}</span></td><td><span class="chip ${ROLE_CHIP[a.role]}">${ROLE_LBL[a.role]}</span></td><td>${fiche}</td>${share?`<td>${ACCESS[a.role]}</td>`:''}<td class="num"><button class="btn sm" type="button" id="ac-edit-${esc(a.id)}" data-act="ac-edit" data-id="${esc(a.id)}">Modifier</button></td></tr>`;
+    const fiche=a.role==='admin'&&!a.ref?'<span class="muted tb-empty">Aucune fiche</span>':rec.nom?`${esc(rec.nom)}${a.role==='student'&&rec.groupe?`<span class="muted sm"> · ${esc(gName(rec.groupe))}</span>`:''}`:'<span class="muted">Fiche supprimée</span>';
+    return `<tr><td><span class="who">${who}</span></td><td class="tb-top"><span class="chip ${ROLE_CHIP[a.role]}">${ROLE_LBL[a.role]}</span></td><td data-l="Fiche">${fiche}</td>${share?`<td data-l="Accès">${ACCESS[a.role]}</td>`:''}<td class="num tb-act"><button class="btn sm" type="button" id="ac-edit-${esc(a.id)}" data-act="ac-edit" data-id="${esc(a.id)}">Modifier</button></td></tr>`;
   }).join('');
   const linked=new Set(all.map(a=>a.ref).filter(Boolean));
   const noT=teachers().filter(t=>!linked.has(t.id)).length, noE=S.data.eleves.filter(e=>!linked.has(e.id)).length;
-  const table=all.length?`<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Personne</th><th>Rôle</th><th>Fiche</th>${share?'<th>Accès dans Partager</th>':''}<th class="num"><span class="vh">Actions</span></th></tr></thead><tbody>${rows||'<tr><td colspan="${share?5:4}" class="muted">Aucun compte de ce type.</td></tr>'}</tbody></table></div>`
+  const table=all.length?`<div class="tbl-wrap"><table class="tbl stack"><thead><tr><th>Personne</th><th>Rôle</th><th>Fiche</th>${share?'<th>Accès dans Partager</th>':''}<th class="num"><span class="vh">Actions</span></th></tr></thead><tbody>${rows||'<tr><td colspan="${share?5:4}" class="muted">Aucun compte de ce type.</td></tr>'}</tbody></table></div>`
     :emptyBox('Aucun compte pour l’instant','Créez le compte de chaque personne qui utilise la page : elle arrivera directement sur son horaire et son profil.');
   return tb+demHTML+how+table+(all.length?`<p class="help">${noT||noE?`Sans compte : ${pl(noT,'enseignant','enseignants')} et ${pl(noE,'élève','élèves')}.`:'Chaque enseignant et chaque élève a son compte.'}</p>`:'');
 }

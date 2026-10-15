@@ -1061,6 +1061,25 @@ body{padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inse
   .ctl>.viewsel>.seg{flex:1 1 100%}
   .ctl .seg.sm button{flex:1 1 auto;padding:8px 6px}
   .ctl>.late,.ctl>#new-course{flex:1 1 40%;justify-content:center;min-height:40px}
+  /* Élèves, Personnel, Comptes : un tableau devient une liste, une personne par bloc ;
+     l’essentiel en haut (nom, et à droite la présence, le statut ou le rôle), le reste dessous avec son libellé */
+  .tbl-wrap:has(>.tbl.stack){overflow:visible}
+  table.tbl.stack,.tbl.stack tbody{display:block;width:100%;min-width:0}
+  .tbl.stack thead{display:none}
+  .tbl.stack tr{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;padding:12px 14px;border-bottom:1px solid var(--line-2)}
+  .tbl.stack tr:last-child{border-bottom:0}
+  .tbl.stack td{display:block;padding:0;border:0;font-size:14px;text-align:left}
+  .tbl.stack td:first-child{flex:1 1 0;min-width:0}
+  .tbl.stack tr::after{content:"";order:1;flex-basis:100%;margin-top:-6px}
+  .tbl.stack td.tb-line{flex-basis:100%}
+  .tbl.stack td.tb-top{order:1;flex:none;margin-left:auto}
+  .tbl.stack td:not(:first-child):not(.tb-top){order:2;color:var(--ink-2)}
+  .tbl.stack td.tb-act{margin-left:auto}
+  .tbl.stack td[data-l]::before{content:attr(data-l) " ";color:var(--muted)}
+  .tbl.stack td:has(>.tb-empty){display:none}
+  .tbl.stack .tb-n{font-size:14px}
+  .tbl.stack .tb-cls .cl-num,.tbl.stack .tb-rate .meter{display:none}
+  .tbl.stack .tb-rate{min-width:0}
   /* Petits textes : 12 px au moins */
   .chip,.chore-chip,.role-chip,.wk-corner,.wk-class small,.day-pick small,.cc-kind,.cc-flag,.kpi span,.tbl th,.eyebrow,.facts dt,
   .cl-hd,.cl-row [data-l]::before,.xm-tile .lbl,.xm-hd,.xm-d small,.nav-n,.dp-wd,.dp-c span,.md-m>span,.xg thead th,.xg tfoot .xg-n,
@@ -1797,9 +1816,9 @@ function studentsPage(){
   if(!S.data.eleves.length) return tb+emptyBox('Aucun élève inscrit','Ajoutez des élèves un à la fois ici, ou collez une liste complète dans le menu Classes.');
   const body=els.map(e=>{const s=stats[e.id], r=rateOf(s);
     const a=s?s.A+s.M:0, rt=s?s.R:0, cls=rateCls(r);
-    return `<tr class="row-link" data-act="student" data-id="${esc(e.id)}"><td><span class="tb-who"><span class="st-num sm" aria-hidden="true">${e.numero!=null&&e.numero!==''?esc(e.numero):'—'}</span><span><button class="link" type="button" data-act="student" data-id="${esc(e.id)}">${esc(e.nom)}</button>${e.fonction?`<span class="role-chip">${esc(e.fonction)}</span>`:''}</span></span></td><td><span class="tb-who"><span class="cl-num sm" aria-hidden="true">${esc(String(gName(e.groupe)).replace(/^(Classe|Groupe)\s+/i,'').slice(0,4))}</span><span class="muted sm">${esc(gName(e.groupe))}</span></span></td><td>${r==null?'<span class="muted">—</span>':`<div class="cl-big tb-rate ${cls}"><b>${r} %</b><div class="meter ${cls}" aria-hidden="true"><i style="width:${r}%"></i></div></div>`}</td><td class="num"><span class="tb-n ${a?'bad':'zero'}">${a}</span></td><td class="num"><span class="tb-n ${rt?'warn':'zero'}">${rt}</span></td><td>${e.telephone?esc(e.telephone):'<span class="muted">—</span>'}</td></tr>`;}).join('');
+    return `<tr class="row-link" data-act="student" data-id="${esc(e.id)}"><td><span class="tb-who"><span class="st-num sm" aria-hidden="true">${e.numero!=null&&e.numero!==''?esc(e.numero):'—'}</span><span><button class="link" type="button" data-act="student" data-id="${esc(e.id)}">${esc(e.nom)}</button>${e.fonction?`<span class="role-chip">${esc(e.fonction)}</span>`:''}</span></span></td><td class="tb-cls"><span class="tb-who"><span class="cl-num sm" aria-hidden="true">${esc(String(gName(e.groupe)).replace(/^(Classe|Groupe)\s+/i,'').slice(0,4))}</span><span class="muted sm">${esc(gName(e.groupe))}</span></span></td><td class="tb-top">${r==null?'<span class="muted tb-empty">—</span>':`<div class="cl-big tb-rate ${cls}"><b>${r} %</b><div class="meter ${cls}" aria-hidden="true"><i style="width:${r}%"></i></div></div>`}</td><td class="num" data-l="Absences"><span class="tb-n ${a?'bad':'zero'}">${a}</span></td><td class="num" data-l="Retards"><span class="tb-n ${rt?'warn':'zero'}">${rt}</span></td><td>${e.telephone?esc(e.telephone):'<span class="muted tb-empty">—</span>'}</td></tr>`;}).join('');
   return tb+`<p class="summary"><span><b>${els.length}</b>${els.length>1?'élèves':'élève'}</span><span>Présences comptées depuis le ${esc(longDate(parse(from)))}</span>${S.termLoaded?'':'<span>Chargement des présences…</span>'}</p>
-    <div class="tbl-wrap"><table class="tbl"><thead><tr><th>Élève</th><th>Classe</th><th>Présence</th><th class="num">Absences</th><th class="num">Retards</th><th>Téléphone</th></tr></thead><tbody>${body||'<tr><td colspan="6" class="muted">Aucun élève ne correspond à la recherche.</td></tr>'}</tbody></table></div>`;
+    <div class="tbl-wrap"><table class="tbl stack"><thead><tr><th>Élève</th><th>Classe</th><th>Présence</th><th class="num">Absences</th><th class="num">Retards</th><th>Téléphone</th></tr></thead><tbody>${body||'<tr><td colspan="6" class="muted">Aucun élève ne correspond à la recherche.</td></tr>'}</tbody></table></div>`;
 }
 
 /* ---------- Fiches en pleine page (élèves et personnel) ----------
@@ -1973,8 +1992,8 @@ function staffPage(){
   const nT=all.filter(isTeacher).length, nC=all.filter(onLeave).length;
   const tb=`<div class="toolbar">${segP}<p class="summary" style="margin:0"><span><b>${all.length}</b>membres</span><span><b>${nT}</b>${nT>1?'enseignants':'enseignant'}</span><span class="${nC?'need':''}"><b>${nC}</b>en congé</span></p><span class="grow"></span><button class="btn primary" type="button" data-act="new-staff">${icon('plus')}Ajouter un membre du personnel</button></div>`;
   if(!all.length) return tb+emptyBox('Aucun membre du personnel','Ajoutez les enseignants et le reste du personnel. Les enseignants pourront ensuite être assignés aux cours.');
-  return tb+`<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Nom</th><th>Statut</th><th>Courriel</th><th>Téléphone</th><th class="num">${W('Séances','Cours')} cette semaine</th><th class="num">Absences ce mois</th></tr></thead><tbody>${all.map(p=>{const dz=S.data.dossiers[p.id]||{}, st=statOf(p), nc=isTeacher(p)?weekCount(p.id,baseMonday()):0;
-    return `<tr class="row-link" data-act="staff" data-id="${esc(p.id)}"><td><span class="tb-who">${avHTML(p.nom,'')}<span><button class="link" type="button" data-act="staff" data-id="${esc(p.id)}">${esc(p.nom)}</button><small class="tb-sub">${esc(p.fonction||'Enseignant')}${principalClasses(p.id).map(g=>`<span class="role-chip prin-chip">Principal · ${esc(g.nom.replace(/^(Classe|Groupe)\s+/i,''))}</span>`).join('')}</small></span></span></td><td><span class="chip ${STATUTS[st]||'off'}">${esc(st)}</span></td><td>${esc(p.courriel||'—')}</td><td>${esc(dz.telephone||'—')}</td><td class="num">${nc}</td><td class="num">${abs[p.id]||0}</td></tr>`;}).join('')}</tbody></table></div>`;
+  return tb+`<div class="tbl-wrap"><table class="tbl stack"><thead><tr><th>Nom</th><th>Statut</th><th>Courriel</th><th>Téléphone</th><th class="num">${W('Séances','Cours')} cette semaine</th><th class="num">Absences ce mois</th></tr></thead><tbody>${all.map(p=>{const dz=S.data.dossiers[p.id]||{}, st=statOf(p), nc=isTeacher(p)?weekCount(p.id,baseMonday()):0;
+    return `<tr class="row-link" data-act="staff" data-id="${esc(p.id)}"><td><span class="tb-who">${avHTML(p.nom,'')}<span><button class="link" type="button" data-act="staff" data-id="${esc(p.id)}">${esc(p.nom)}</button><small class="tb-sub">${esc(p.fonction||'Enseignant')}${principalClasses(p.id).map(g=>`<span class="role-chip prin-chip">Principal · ${esc(g.nom.replace(/^(Classe|Groupe)\s+/i,''))}</span>`).join('')}</small></span></span></td><td class="tb-top"><span class="chip ${STATUTS[st]||'off'}">${esc(st)}</span></td><td class="tb-line">${p.courriel?esc(p.courriel):'<span class="muted tb-empty">—</span>'}</td><td>${dz.telephone?esc(dz.telephone):'<span class="muted tb-empty">—</span>'}</td><td class="num" data-l="${W('Séances','Cours')} cette semaine">${nc}</td><td class="num" data-l="Absences ce mois">${abs[p.id]||0}</td></tr>`;}).join('')}</tbody></table></div>`;
 }
 
 /* ---------- Heures enseignées : par enseignant et par mois, pour la paie des instructeurs ----------
@@ -3233,7 +3252,12 @@ function printDrawer(){
    items : [type, titre, explication, page à ouvrir]. Types : new (nouvelle fonction), up (amélioration), fix (correction). */
 const NV_REPO='https://github.com/leocyfo/caserne-ecole';
 const NOUVEAUTES=[
-  {date:'2026-10-14',id:'',push:'Téléphone : l’horaire arrive plus vite à l’écran',items:[
+  {date:'2026-10-14',id:'',push:'Téléphone : Élèves, Personnel et Comptes en liste',items:[
+    ['up','Élèves','Sur téléphone, une ligne par élève : le nom et le taux de présence en haut, la classe, les absences, les retards et le téléphone dessous. Plus besoin de faire défiler le tableau de côté.','eleves'],
+    ['up','Personnel','Le nom et le statut en haut, le courriel dessous, puis les séances de la semaine et les absences du mois.','personnel'],
+    ['up','Comptes','La personne et son rôle en haut, sa fiche et le bouton Modifier dessous.','comptes']
+  ]},
+  {date:'2026-10-14',id:'8e2088a',push:'Téléphone : l’horaire arrive plus vite à l’écran',items:[
     ['up','Barre de l’horaire','Sur téléphone, la barre de l’administration tient en trois rangées au lieu de cinq : la semaine ; Semaine/Jour et Classes/Enseignants côte à côte ; « 12 en retard » et « Ajouter » côte à côte. La première séance monte d’environ 90 px.','calendar']
   ]},
   {date:'2026-10-14',id:'0c1a88f',push:'Téléphone : corrections, et un test à la taille d’un téléphone',items:[
@@ -3597,12 +3621,12 @@ function accountsPage(){
     const rec=acctRec(a);let who;
     if(a.exemple) who=`${avHTML(ficheName(a)||'?','')}<span><b>Compte d’exemple</b><small>Aucune personne reliée</small></span>`;
     else{const p=profOf(a.id);who=`${avHTML((p&&p.name)||'?',p?p.avatarUrl:'')}<span><b>${p?esc(p.name||'Personne non identifiée'):'Chargement…'}${a.id===S.me.id?' (vous)':''}</b><small>${p&&p.guest?'Invitée de l’extérieur':share?'Accès claude.ai':'Compte du site'}</small></span>`;}
-    const fiche=a.role==='admin'&&!a.ref?'<span class="muted">Aucune fiche</span>':rec.nom?`${esc(rec.nom)}${a.role==='student'&&rec.groupe?`<span class="muted sm"> · ${esc(gName(rec.groupe))}</span>`:''}`:'<span class="muted">Fiche supprimée</span>';
-    return `<tr><td><span class="who">${who}</span></td><td><span class="chip ${ROLE_CHIP[a.role]}">${ROLE_LBL[a.role]}</span></td><td>${fiche}</td>${share?`<td>${ACCESS[a.role]}</td>`:''}<td class="num"><button class="btn sm" type="button" id="ac-edit-${esc(a.id)}" data-act="ac-edit" data-id="${esc(a.id)}">Modifier</button></td></tr>`;
+    const fiche=a.role==='admin'&&!a.ref?'<span class="muted tb-empty">Aucune fiche</span>':rec.nom?`${esc(rec.nom)}${a.role==='student'&&rec.groupe?`<span class="muted sm"> · ${esc(gName(rec.groupe))}</span>`:''}`:'<span class="muted">Fiche supprimée</span>';
+    return `<tr><td><span class="who">${who}</span></td><td class="tb-top"><span class="chip ${ROLE_CHIP[a.role]}">${ROLE_LBL[a.role]}</span></td><td data-l="Fiche">${fiche}</td>${share?`<td data-l="Accès">${ACCESS[a.role]}</td>`:''}<td class="num tb-act"><button class="btn sm" type="button" id="ac-edit-${esc(a.id)}" data-act="ac-edit" data-id="${esc(a.id)}">Modifier</button></td></tr>`;
   }).join('');
   const linked=new Set(all.map(a=>a.ref).filter(Boolean));
   const noT=teachers().filter(t=>!linked.has(t.id)).length, noE=S.data.eleves.filter(e=>!linked.has(e.id)).length;
-  const table=all.length?`<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Personne</th><th>Rôle</th><th>Fiche</th>${share?'<th>Accès dans Partager</th>':''}<th class="num"><span class="vh">Actions</span></th></tr></thead><tbody>${rows||'<tr><td colspan="${share?5:4}" class="muted">Aucun compte de ce type.</td></tr>'}</tbody></table></div>`
+  const table=all.length?`<div class="tbl-wrap"><table class="tbl stack"><thead><tr><th>Personne</th><th>Rôle</th><th>Fiche</th>${share?'<th>Accès dans Partager</th>':''}<th class="num"><span class="vh">Actions</span></th></tr></thead><tbody>${rows||'<tr><td colspan="${share?5:4}" class="muted">Aucun compte de ce type.</td></tr>'}</tbody></table></div>`
     :emptyBox('Aucun compte pour l’instant','Créez le compte de chaque personne qui utilise la page : elle arrivera directement sur son horaire et son profil.');
   return tb+demHTML+how+table+(all.length?`<p class="help">${noT||noE?`Sans compte : ${pl(noT,'enseignant','enseignants')} et ${pl(noE,'élève','élèves')}.`:'Chaque enseignant et chaque élève a son compte.'}</p>`:'');
 }
