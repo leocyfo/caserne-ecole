@@ -1,4 +1,4 @@
-/* Caserne-École : branche le site sur Firebase (connexion + base de données Firestore).
+/* PompierNote : branche le site sur Firebase (connexion + base de données Firestore).
    Les réglages du projet sont dans config.js (window.FIREBASE_CONFIG). La base est exposée à la page
    avec la même forme que celle de claude.ai : doc(), collection(), where(), onSnapshot()… */
 const V='10.12.2';

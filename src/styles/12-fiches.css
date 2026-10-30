@@ -1,10 +1,10 @@
 /* Fiches en pleine page : liste à gauche, fiche à droite */
 .fiche{display:grid;grid-template-columns:250px minmax(0,1fr);gap:16px;align-items:start}
-.fiche-list{position:sticky;top:12px;max-height:calc(100vh - 24px);display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--line);border-radius:9px;overflow:hidden}
+.fiche-list{position:sticky;top:12px;max-height:calc(100vh - 24px);display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
 .fiche-list ul{list-style:none;margin:0;padding:4px;overflow-y:auto;flex:1}
 .fl-tools{display:flex;flex-direction:column;gap:6px;padding:10px;border-bottom:1px solid var(--line-2);background:var(--surface-2)}
 .fl-tools .search,.fl-tools select{width:100%;min-height:36px;font-size:13px}
-.fl-item{display:flex;flex-direction:column;gap:2px;width:100%;padding:8px 10px;border:0;border-radius:7px;background:none;text-align:left;color:var(--ink)}
+.fl-item{display:flex;flex-direction:column;gap:2px;width:100%;padding:8px 10px;border:0;border-radius:var(--r-sm);background:none;text-align:left;color:var(--ink)}
 .fl-item:hover{background:var(--surface-2)}
 .fl-item[aria-current="true"]{background:#E8F0FA;box-shadow:inset 3px 0 var(--role)}
 .fl-name{font-weight:700;font-size:14px;line-height:1.25}
@@ -37,7 +37,7 @@
 .fiche-h3{margin:14px 0 4px;font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted)}
 .panel h2+.fiche-h3{margin-top:0}
 .cg-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
-.cg-head{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface-2);text-align:left;color:var(--ink)}
+.cg-head{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:var(--r-sm);background:var(--surface-2);text-align:left;color:var(--ink)}
 .cg-head:hover{border-color:var(--line-strong)}
 .cg-head .ic{width:16px;height:16px;flex:none;transition:transform .15s}
 .cg-head[aria-expanded="true"] .ic{transform:rotate(90deg)}

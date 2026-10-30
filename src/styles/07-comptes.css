@@ -2,7 +2,7 @@
 .av{width:34px;height:34px;border-radius:50%;background:#2C4F78;color:#FFFFFF;display:inline-grid;place-items:center;flex:none;font-size:12px;font-weight:700;overflow:hidden}
 .av img{width:100%;height:100%;object-fit:cover;display:block}
 .av.lg{width:72px;height:72px;font-size:24px}
-.person-btn{display:flex;align-items:center;gap:10px;width:100%;min-width:0;padding:6px;margin:-6px;border:0;border-radius:8px;background:none;color:inherit;text-align:left;font:inherit}
+.person-btn{display:flex;align-items:center;gap:10px;width:100%;min-width:0;padding:6px;margin:-6px;border:0;border-radius:var(--r-sm);background:none;color:inherit;text-align:left;font:inherit}
 .person-btn:hover,.person-btn[aria-current="page"]{background:var(--side-hover)}
 .pinfo{min-width:0}
 .pinfo b,.pinfo small{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -19,7 +19,7 @@
 .prof-chips .role-chip{margin:0}
 .pf-pick{flex:0 1 280px}
 .pick-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
-.pick-person,.pick-sel{display:flex;align-items:center;gap:10px;width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface);text-align:left;color:var(--ink)}
+.pick-person,.pick-sel{display:flex;align-items:center;gap:10px;width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:var(--r-sm);background:var(--surface);text-align:left;color:var(--ink)}
 .pick-person:hover{border-color:var(--line-strong);background:var(--surface-2)}
 .pick-person b,.pick-sel b{display:block;font-size:14px}
 .pick-person small,.pick-sel small{display:block;font-size:12.5px;color:var(--muted);font-weight:400}

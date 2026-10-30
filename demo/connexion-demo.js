@@ -1,4 +1,4 @@
-/* Caserne-École · démo : connexion et base de données simulées, gardées dans ce navigateur (localStorage).
+/* PompierNote · démo : connexion et base de données simulées, gardées dans ce navigateur (localStorage).
    Sert à essayer la connexion, la demande de compte et l’approbation sans Firebase.
    Rien n’est envoyé ailleurs ; « Réinitialiser la démo » efface tout. */
 (function(){

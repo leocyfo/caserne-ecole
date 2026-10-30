@@ -1,24 +1,24 @@
 /* Panneaux, tableaux, indicateurs */
 .panels{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:12px;align-items:start}
-.panel,.page-panel{background:var(--surface);border:1px solid var(--line);border-radius:9px;padding:16px 18px;min-width:0}
+.panel,.page-panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:18px 20px;min-width:0;box-shadow:var(--shadow-sm)}
 .page-panel{display:flex;flex-direction:column;gap:16px}
 .narrow{max-width:860px}
-.panel h2{margin:0 0 10px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--eyebrow)}
+.panel h2{margin:0 0 12px;font-size:15px;font-weight:700;letter-spacing:-.005em;color:var(--ink)}
 .panel p{margin:0 0 8px}
 .big{font-weight:700;font-size:30px;line-height:1;margin:0 0 8px;font-variant-numeric:tabular-nums}
 .big span{font-size:18px;color:var(--muted)}
-.meter{height:7px;background:var(--role-bg);border-radius:4px;overflow:hidden;margin-bottom:8px}
+.meter{height:7px;background:var(--role-bg);border-radius:999px;overflow:hidden;margin-bottom:8px}
 .meter i{display:block;height:100%;background:var(--ok)}
 .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,170px),1fr));gap:12px}
-.kpi{background:var(--surface);border:1px solid var(--line);border-radius:9px;padding:14px 16px;min-width:0}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px 18px;min-width:0;box-shadow:var(--shadow-sm)}
 .kpi span{display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:var(--muted)}
 .kpi b{display:block;font-size:28px;margin-top:6px;color:var(--ink);font-variant-numeric:tabular-nums;line-height:1.1}
 .kpi small{display:block;color:var(--muted);font-size:13px;margin-top:3px}
 .kpi.need b{color:var(--warn)}
-.tbl-wrap{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:12px}
+.tbl-wrap{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow-sm)}
 table.tbl{width:100%;border-collapse:collapse;min-width:640px}
-.tbl th{background:var(--head);color:var(--head-ink);font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;text-align:left;padding:11px 20px;border-bottom:1px solid var(--line);white-space:nowrap}
-.tbl td{padding:12px 20px;border-bottom:1px solid var(--line-2);vertical-align:middle;font-size:15px}
+.tbl th{background:var(--head);color:var(--head-ink);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;text-align:left;padding:11px 20px;border-bottom:1px solid var(--line);white-space:nowrap}
+.tbl td{padding:12px 20px;border-bottom:1px solid var(--line-2);vertical-align:middle;font-size:14.5px}
 .tbl tr:last-child td{border-bottom:0}
 .tbl tr.row-link{cursor:pointer}
 .tbl tr.row-link:hover td{background:var(--surface-2)}
@@ -30,17 +30,17 @@ table.tbl{width:100%;border-collapse:collapse;min-width:640px}
 .hr-tbl th:first-child,.hr-tbl td:first-child{padding-left:20px}
 .hr-tbl th.on,.hr-tbl td.on{background:var(--role-bg)}
 .hr-tbl tr.row-link:hover td.on{background:var(--role-bg)}
-.hr-m{border:0;background:none;font:inherit;color:inherit;text-transform:inherit;letter-spacing:inherit;padding:5px 8px;margin:-5px -8px;border-radius:6px;cursor:pointer}
+.hr-m{border:0;background:none;font:inherit;color:inherit;text-transform:inherit;letter-spacing:inherit;padding:5px 8px;margin:-5px -8px;border-radius:var(--r-sm);cursor:pointer}
 .hr-m:hover{background:var(--surface)}
 .hr-m[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:inset 0 0 0 1px var(--role)}
 .hr-tot td{font-weight:700;background:var(--head);border-top:1px solid var(--line)}
 .hr-tot td.on{background:var(--role-bg)}
-.bell{position:relative;width:40px;height:40px;border:1px solid var(--line);border-radius:999px;background:var(--surface);display:inline-grid;place-items:center;color:var(--ink-2);flex:none}
+.bell{position:relative;width:40px;height:40px;border:1px solid var(--line);border-radius:var(--r-sm);box-shadow:0 1px 2px rgba(14,26,43,.05);background:var(--surface);display:inline-grid;place-items:center;color:var(--ink-2);flex:none}
 .bell:hover{background:var(--surface-2);color:var(--ink)}
 .bell .ic{width:19px;height:19px}
 .bell-n{position:absolute;top:-5px;right:-5px;min-width:19px;height:19px;padding:0 5px;border-radius:999px;background:var(--bad);color:#FFFFFF;font-size:11.5px;font-weight:700;font-style:normal;line-height:19px;text-align:center}
 .nf-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
-.nf-row{display:flex;flex-direction:column;gap:6px;width:100%;padding:11px 13px;border:1px solid var(--line);border-radius:10px;background:var(--surface);text-align:left;font:inherit;color:var(--ink);cursor:pointer}
+.nf-row{display:flex;flex-direction:column;gap:6px;width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:var(--r);background:var(--surface);text-align:left;font:inherit;color:var(--ink);cursor:pointer}
 .nf-row:hover{background:var(--surface-2)}
 .nf-row.new{border-color:var(--role);box-shadow:inset 3px 0 0 var(--role)}
 .nf-h{display:flex;align-items:center;justify-content:space-between;gap:10px}
@@ -77,11 +77,13 @@ button.lrow:hover .ti{text-decoration:underline}
 .tl .t b{display:block;font-size:15px}
 .tl .t span{color:var(--muted);font-size:13px}
 .tl li.past{opacity:.55}
-.empty{padding:34px 20px;text-align:center;background:var(--surface);border:1px dashed var(--line-strong);border-radius:9px}
-.empty h2{font-size:22px;margin:0 0 6px}
+.empty{padding:40px 20px;text-align:center;background:var(--surface);border:1px dashed var(--line-strong);border-radius:var(--r)}
+.empty h2{font-size:19px;font-weight:700;letter-spacing:-.01em;margin:0 0 6px}
 .empty p{margin:0 auto 14px;max-width:52ch;color:var(--muted)}
 .steps{text-align:left;max-width:52ch;margin:0 auto 18px;padding-left:22px;display:flex;flex-direction:column;gap:6px}
 .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .empty .row{justify-content:center}
 .two{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:14px;align-items:start}
 .stackp{display:flex;flex-direction:column;gap:14px;min-width:0}
+/* Les grands blocs blancs ont la même ombre légère que les panneaux */
+.boardbox,.cl-list,.xm-tile,.md-m,.fiche-list,.ctl{box-shadow:var(--shadow-sm)}

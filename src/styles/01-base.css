@@ -1,17 +1,19 @@
 :root{
-  /* Layout : barre latérale marine, contenu clair, tableau classes × jours avec cartes pastel (repris du site de l’Académie). Thème clair seulement. */
+  /* PompierNote v2 : menu marine, fond gris très clair, cartes blanches à coins arrondis, un seul rouge. Thème clair seulement. */
   color-scheme:light;
-  --side:#142132; --side-ink:#E6EAF0; --side-soft:#C7CED8; --side-muted:#8C9AAD; --side-line:#2C394A; --side-hover:#1C2B3F; --side-active:#26364D;
-  --bg:#F5F7FA; --surface:#FFFFFF; --surface-2:#F7FAFD; --head:#F1F6FB; --head-ink:#2C4F78; --row-ink:#263F60;
-  --ink:#1A2940; --ink-2:#3D4F66; --muted:#64758A; --line:#DCE6EF; --line-2:#E4ECF4; --line-strong:#C3CFDB; --role:#1D2D44; --role-bg:#EEF2F6;
-  --accent:#BC322D; --accent-hover:#A92C27; --accent-ink:#FFFFFF; --eyebrow:#8A5551; --today:#B53536; --focus:#2563C9;
-  --ok:#1C7951; --ok-bg:#D7F6E6; --warn:#995D12; --warn-bg:#FFEBC7; --bad:#B1353F; --bad-bg:#FFE0E1; --info:#275F9D; --info-bg:#DCEAFD; --off:#5B6777; --off-bg:#E4E7EB;
-  --font:Arial,Helvetica,"Segoe UI",sans-serif;
-  --shadow:0 12px 40px rgba(20,33,50,.2);
+  --side:#0E1A2B; --side-ink:#E9EEF5; --side-soft:#B9C4D3; --side-muted:#7F8DA3; --side-line:#1F2E44; --side-hover:#162539; --side-active:#1D2F4A;
+  --bg:#F3F5F8; --surface:#FFFFFF; --surface-2:#F8FAFC; --head:#F8FAFC; --head-ink:#52627A; --row-ink:#16294A;
+  --ink:#0E1A2B; --ink-2:#334256; --muted:#617086; --line:#E3E8EF; --line-2:#EDF1F6; --line-strong:#CBD4E0; --role:#0E1A2B; --role-bg:#EDF1F6;
+  --accent:#C62F2A; --accent-hover:#AD2722; --accent-ink:#FFFFFF; --eyebrow:#617086; --today:#C62F2A; --focus:#2563EB;
+  --ok:#17784E; --ok-bg:#DDF5E8; --warn:#93580C; --warn-bg:#FFEDCC; --bad:#B42F3A; --bad-bg:#FDE3E4; --info:#245C9A; --info-bg:#DFEBFC; --off:#5A6676; --off-bg:#E7EAEE;
+  --font:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+  --r:12px; --r-sm:8px;
+  --shadow-sm:0 1px 2px rgba(14,26,43,.05),0 1px 3px rgba(14,26,43,.07);
+  --shadow:0 16px 48px rgba(14,26,43,.22);
 }
 *{box-sizing:border-box}
 [hidden]{display:none!important}
-body{background:var(--bg);color:var(--ink);font:14px/1.45 var(--font);-webkit-font-smoothing:antialiased}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 var(--font);-webkit-font-smoothing:antialiased;font-feature-settings:"cv11"}
 body.lock{overflow:hidden}
 button,input,select,textarea{font:inherit;color:inherit}
 button{cursor:pointer}

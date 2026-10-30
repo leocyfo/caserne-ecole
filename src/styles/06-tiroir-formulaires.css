@@ -15,7 +15,7 @@
 .dr-foot p{margin:0;flex:1 1 200px;font-size:14px}
 .state{font-size:13px;color:var(--muted)}
 .state.dirty{color:var(--warn);font-weight:700}
-.sess-box{border:1px solid var(--line);border-radius:9px;padding:12px 14px;display:flex;flex-direction:column;gap:10px;background:var(--surface-2)}
+.sess-box{border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;display:flex;flex-direction:column;gap:10px;background:var(--surface-2)}
 .sess-box p{margin:0}
 .sess-box .per-lg{font-weight:700;font-size:16px}
 .sb-head{display:flex;flex-direction:column;gap:7px}
@@ -38,7 +38,7 @@
 .att-list .nm{flex:1;min-width:0;font-weight:600;font-size:15px;overflow-wrap:anywhere}
 .att-list .nm small{display:block;font-weight:400;font-size:12px;color:var(--muted)}
 .att-btns{display:inline-flex;gap:4px;flex:none;flex-wrap:wrap;justify-content:flex-end}
-.ab{font-weight:700;font-size:13px;border:1px solid var(--line);background:var(--surface);color:var(--muted);border-radius:6px;padding:6px 9px;min-width:36px}
+.ab{font-weight:700;font-size:13px;border:1px solid var(--line);background:var(--surface);color:var(--muted);border-radius:var(--r-sm);padding:6px 9px;min-width:36px}
 .ab:hover{color:var(--ink);border-color:var(--line-strong)}
 .ab .abbr{display:none}
 .ab-P[aria-pressed="true"]{background:var(--ok);border-color:var(--ok);color:#FFFFFF}
@@ -48,9 +48,9 @@
 /* Formulaires */
 form{display:flex;flex-direction:column;gap:12px;margin:0}
 .field{display:flex;flex-direction:column;gap:5px;font-size:13px;color:var(--ink-2);font-weight:600;min-width:0}
-.field input,.field select,.field textarea{border:1px solid var(--line-strong);border-radius:6px;background:var(--surface);padding:9px 10px;font-size:15px;font-weight:400;color:var(--ink);width:100%;min-width:0;min-height:40px}
+.field input,.field select,.field textarea{border:1px solid var(--line-strong);border-radius:var(--r-sm);background:var(--surface);padding:9px 10px;font-size:15px;font-weight:400;color:var(--ink);width:100%;min-width:0;min-height:40px}
 .field textarea{min-height:76px;resize:vertical}
-fieldset{border:1px solid var(--line);border-radius:9px;padding:8px 12px 12px;margin:0;min-width:0;display:flex;flex-direction:column;gap:10px}
+fieldset{border:1px solid var(--line);border-radius:var(--r);padding:8px 12px 12px;margin:0;min-width:0;display:flex;flex-direction:column;gap:10px}
 legend{font-size:13px;color:var(--ink-2);font-weight:600;padding:0 4px}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .grid-code{display:grid;grid-template-columns:minmax(0,1fr) 110px;gap:10px}
@@ -69,15 +69,15 @@ legend{font-size:13px;color:var(--ink-2);font-weight:600;padding:0 4px}
 .plist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
 .plist li{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 0;border-top:1px solid var(--line-2);font-size:14px}
 .plist li:first-child{border-top:0}
-.x{width:30px;height:30px;border:1px solid transparent;border-radius:6px;background:none;color:var(--muted);font-size:18px;line-height:1;flex:none}
+.x{width:30px;height:30px;border:1px solid transparent;border-radius:var(--r-sm);background:none;color:var(--muted);font-size:18px;line-height:1;flex:none}
 .x:hover{border-color:var(--line-strong);color:var(--bad)}
-.confirm{display:flex;flex-direction:column;gap:8px;padding:10px 12px;border-radius:9px;background:#FFF5F5;border:1px solid #F1C4C8}
+.confirm{display:flex;flex-direction:column;gap:8px;padding:10px 12px;border-radius:var(--r);background:#FFF5F5;border:1px solid #F1C4C8}
 .confirm p{margin:0;font-size:14px}
 .sec-title{margin:0;font-size:16px;font-weight:700}
 .access{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;font-size:14px}
 .access li{display:grid;grid-template-columns:120px minmax(0,1fr);gap:10px}
 /* Bande d’agrandissement (reprise de l’Encyclopédie de Sky-Helper) : ▶ agrandit, ◀ réduit */
-.boardbox{display:flex;background:var(--surface);border:1px solid var(--line);border-radius:9px;overflow:hidden}
+.boardbox{display:flex;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
 .boardbox>.week{flex:1;min-width:0;border:0;border-radius:0}
 .expander{display:flex;align-items:center;justify-content:center;gap:8px;width:32px;flex:none;border:0;border-right:1px solid var(--line);background:var(--surface-2);color:var(--ink-2);padding:0}
 .expander:hover{background:var(--head);color:var(--ink)}
@@ -109,7 +109,7 @@ legend{font-size:13px;color:var(--ink-2);font-weight:600;padding:0 4px}
 .cc.has-badge{position:relative;background:#F2F3F5;--bar:#B8C0CC;--chip:#E3E6EB;--chip-ink:#5E6B7D;padding-bottom:34px}
 .cc.has-badge strong{text-decoration:none}
 .cc.cancelled strong{color:var(--ink-2)}
-.cc-badge{position:absolute;right:0;bottom:0;padding:4px 10px;border-radius:7px 0 7px 0;font-size:12px;font-weight:700;line-height:1.3;color:#FFFFFF;white-space:nowrap}
+.cc-badge{position:absolute;right:0;bottom:0;padding:4px 10px;border-radius:var(--r-sm) 0 7px 0;font-size:12px;font-weight:700;line-height:1.3;color:#FFFFFF;white-space:nowrap}
 .cc-badge.bad{background:#E5484D}
 .cc-badge.info{background:#3B9BD9}
 .cc-note{font-size:12.5px;font-weight:600;color:var(--info);line-height:1.35}

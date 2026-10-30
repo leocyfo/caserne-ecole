@@ -1,4 +1,4 @@
-/* Caserne-École : écran de connexion et demandes de compte du site.
+/* PompierNote : écran de connexion et demandes de compte du site.
    La page de l’horaire a été écrite pour claude.ai : elle demande sa base de données et
    l’identité de la personne avec window.claude.use("db" | "user"). Ici, ces deux réponses
    arrivent seulement quand la personne est connectée ET que son compte est approuvé.
@@ -18,14 +18,15 @@
 
   /* ---------- Apparence (mêmes couleurs que l’horaire) ---------- */
   const css=`
-#gate{position:fixed;inset:0;z-index:200;overflow-y:auto;background:#F4F6F9;font-family:Arial,Helvetica,sans-serif;color:#142132;display:flex;align-items:center;justify-content:center;padding:24px 16px}
+#gate{position:fixed;inset:0;z-index:200;overflow-y:auto;background:#F3F5F8;font-family:Inter,system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;color:#0E1A2B;display:flex;align-items:center;justify-content:center;padding:24px 16px}
 #gate[hidden]{display:none!important}
 #gate *{box-sizing:border-box}
-.g-card{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,6fr);width:min(100%,920px);background:#FFFFFF;border:1px solid #DCE3EC;border-radius:14px;overflow:hidden;box-shadow:0 10px 30px rgba(20,33,50,.08)}
-.g-side{background:#142132;color:#E6EAF0;padding:34px 30px;display:flex;flex-direction:column;gap:22px}
-.g-brand{display:flex;align-items:center;gap:12px;font-weight:800;font-size:18px;letter-spacing:.035em;text-transform:uppercase;line-height:1.25}
-.g-brand small{display:block;font-size:11.5px;letter-spacing:.14em;color:#AEB8C6;font-weight:700}
-.g-logo{width:44px;height:44px;border-radius:11px;background:#BC322D;display:grid;place-items:center;flex:none}
+.g-card{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,6fr);width:min(100%,920px);background:#FFFFFF;border:1px solid #E3E8EF;border-radius:16px;overflow:hidden;box-shadow:0 16px 48px rgba(14,26,43,.12)}
+.g-side{background:#0E1A2B;color:#E9EEF5;padding:34px 30px;display:flex;flex-direction:column;gap:22px}
+.g-brand{display:flex;align-items:center;gap:12px;font-weight:800;font-size:20px;letter-spacing:-.015em;line-height:1.2}
+.g-brand i{font-style:normal;color:#F3A19D}
+.g-brand small{display:block;margin-top:2px;font-size:12.5px;letter-spacing:0;color:#9AA7B9;font-weight:500}
+.g-logo{width:42px;height:46px;border-radius:10px 10px 18px 18px;background:#C62F2A;box-shadow:inset 0 -3px 0 rgba(0,0,0,.18);display:grid;place-items:center;flex:none}
 .g-logo svg{width:24px;height:24px}
 .g-side p{margin:0;color:#C7CED8;font-size:14.5px;line-height:1.55}
 .g-side ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:10px;font-size:14px;color:#C7CED8}
@@ -35,20 +36,20 @@
 .g-main h1{margin:0;font-size:24px;line-height:1.2}
 .g-main .g-sub{margin:-8px 0 0;color:#5B6878;font-size:14.5px;line-height:1.5}
 .g-tabs{display:flex;gap:3px;padding:3px;background:#E9EEF4;border-radius:9px}
-.g-tabs button{flex:1;border:0;background:none;padding:9px 10px;border-radius:7px;font:700 13.5px Arial,Helvetica,sans-serif;color:#5B6878;cursor:pointer}
+.g-tabs button{flex:1;border:0;background:none;padding:9px 10px;border-radius:7px;font-family:inherit;font-size:13.5px;font-weight:600;color:#5B6878;cursor:pointer}
 .g-tabs button[aria-pressed="true"]{background:#FFFFFF;color:#142132;box-shadow:0 1px 3px rgba(20,33,50,.14)}
 .g-form{display:flex;flex-direction:column;gap:12px}
 .g-field{display:flex;flex-direction:column;gap:5px;font-size:13px;font-weight:700;color:#2C3B4F}
-.g-field input,.g-field select,.g-field textarea{width:100%;min-height:42px;border:1px solid #CBD5E1;border-radius:8px;background:#FFFFFF;padding:9px 11px;font:15px Arial,Helvetica,sans-serif;color:#142132}
+.g-field input,.g-field select,.g-field textarea{width:100%;min-height:42px;border:1px solid #CBD5E1;border-radius:8px;background:#FFFFFF;padding:9px 11px;font-family:inherit;font-size:15px;color:#0E1A2B}
 .g-field textarea{min-height:64px;resize:vertical}
 .g-field input:focus,.g-field select:focus,.g-field textarea:focus{outline:2px solid #2C6BC9;outline-offset:1px;border-color:#2C6BC9}
 .g-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.g-btn{min-height:44px;border:1px solid #BC322D;border-radius:8px;background:#BC322D;color:#FFFFFF;font:700 15px Arial,Helvetica,sans-serif;cursor:pointer;padding:0 16px}
-.g-btn:hover{background:#A42A26}
+.g-btn{min-height:44px;border:1px solid #C62F2A;border-radius:8px;background:#C62F2A;color:#FFFFFF;font-family:inherit;font-size:15px;font-weight:600;cursor:pointer;padding:0 16px}
+.g-btn:hover{background:#AD2722}
 .g-btn:disabled{opacity:.55;cursor:wait}
 .g-btn.alt{background:#FFFFFF;color:#142132;border-color:#CBD5E1}
 .g-btn.alt:hover{background:#F4F6F9}
-.g-link{border:0;background:none;padding:0;color:#2C4F78;font:700 13.5px Arial,Helvetica,sans-serif;cursor:pointer;text-align:left}
+.g-link{border:0;background:none;padding:0;color:#245C9A;font-family:inherit;font-size:13.5px;font-weight:600;cursor:pointer;text-align:left}
 .g-link:hover{text-decoration:underline}
 .g-err{margin:0;padding:10px 12px;border-radius:8px;background:#FDECEE;color:#B42318;font-size:14px;font-weight:700}
 .g-info{margin:0;padding:10px 12px;border-radius:8px;background:#EAF3FF;color:#1F4E8C;font-size:14px}
@@ -62,7 +63,7 @@
 .g-demo{display:flex;flex-direction:column;gap:9px;padding:12px 14px;border:1px dashed #B9C6D6;border-radius:10px;background:#F8FAFC;font-size:13.5px;color:#2C3B4F}
 .g-demo p{margin:0;color:#5B6878;font-size:12.5px;line-height:1.5}
 .g-demo-btns{display:flex;flex-wrap:wrap;gap:6px}
-.g-demo-btns button{border:1px solid #CBD5E1;background:#FFFFFF;border-radius:999px;padding:7px 12px;font:700 13px Arial,Helvetica,sans-serif;color:#142132;cursor:pointer}
+.g-demo-btns button{border:1px solid #CBD5E1;background:#FFFFFF;border-radius:999px;padding:7px 12px;font-family:inherit;font-size:13px;font-weight:600;color:#0E1A2B;cursor:pointer}
 .g-demo-btns button:hover{border-color:#2C4F78;background:#EEF4FB}
 .g-demo code{font:700 12.5px Consolas,monospace;background:#E9EEF4;padding:1px 5px;border-radius:4px}
 .vh-g{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
@@ -72,8 +73,8 @@
   document.body.appendChild(root);
 
   const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  const logo='<span class="g-logo" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"/></svg></span>';
-  const side=`<aside class="g-side"><div class="g-brand">${logo}<span>Caserne-École<small>Académie des pompiers</small></span></div>
+  const logo='<span class="g-logo" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c.5 2.6 2 4.2 3.4 5.7C17 10.4 18 12 18 14.3A6 6 0 0 1 6 14.3c0-1.8.7-3.2 1.8-4.3.2 1.5 1 2.6 2.2 3.1C9.6 9.6 10.6 6 12 3z"/></svg></span>';
+  const side=`<aside class="g-side"><div class="g-brand">${logo}<span>Pompier<i>Note</i><small>Académie des pompiers</small></span></div>
     <p>L’horaire des classes, les présences, les examens et les corvées, au même endroit.</p>
     <ul><li>Chaque élève voit son horaire, ses examens et ses résultats.</li><li>Chaque enseignant voit ses cours, indique ses disponibilités et prend les présences.</li><li>L’administration gère les classes, les modules, le personnel et les comptes.</li></ul></aside>`;
   const v=k=>esc(st.vals[k]||'');

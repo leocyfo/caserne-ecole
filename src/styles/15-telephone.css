@@ -7,6 +7,10 @@
 body{padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
 .drawer{padding-right:env(safe-area-inset-right,0px)}
 @media (max-width:760px){
+  /* Barre de titre plus basse et blocs plus serrés : l’horaire arrive plus vite */
+  .page-heading{min-height:0;padding-top:12px;padding-bottom:12px}
+  .page-heading h1{font-size:20px}
+  .content{gap:14px}
   /* Champs à 16 px : en dessous, l’iPhone zoome chaque fois qu’on touche un champ */
   :is(input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=color]),select,textarea){font-size:16px}
   /* Panneau latéral : marges de téléphone */

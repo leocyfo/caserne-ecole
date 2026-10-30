@@ -5,7 +5,13 @@
    items : [type, titre, explication, page à ouvrir]. Types : new (nouvelle fonction), up (amélioration), fix (correction). */
 const NV_REPO='https://github.com/leocyfo/caserne-ecole';
 const NOUVEAUTES=[
-  {date:'2026-10-14',id:'',push:'Téléphone : Élèves, Personnel et Comptes en liste',items:[
+  {date:'2026-10-30',id:'',push:'PompierNote v2 : nouveau nom et nouveau style',items:[
+    ['new','PompierNote','Le site s’appelle maintenant PompierNote : c’est la version 2 de Caserne-École. Les données et les pages restent les mêmes.',''],
+    ['up','Nouveau style','Menu marine plus net, barre de titre blanche en haut de chaque page, cartes blanches à coins arrondis avec une ombre légère, un seul rouge pour les actions et une police plus lisible (Inter).',''],
+    ['up','Menu en sections','Le menu de l’administration est regroupé en trois sections : Horaire, École et Administration.',''],
+    ['up','Écran de connexion','Aux couleurs et au nom de PompierNote.','']
+  ]},
+  {date:'2026-10-14',id:'dd2e054',push:'Téléphone : Élèves, Personnel et Comptes en liste',items:[
     ['up','Élèves','Sur téléphone, une ligne par élève : le nom et le taux de présence en haut, la classe, les absences, les retards et le téléphone dessous. Plus besoin de faire défiler le tableau de côté.','eleves'],
     ['up','Personnel','Le nom et le statut en haut, le courriel dessous, puis les séances de la semaine et les absences du mois.','personnel'],
     ['up','Comptes','La personne et son rôle en haut, sa fiche et le bouton Modifier dessous.','comptes']

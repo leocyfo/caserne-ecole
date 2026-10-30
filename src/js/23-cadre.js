@@ -11,8 +11,9 @@ function setHTML(el,html,key){
   if(same) el.scrollTop=st;
   if(fid){const f=document.getElementById(fid);if(f&&el.contains(f)){f.focus({preventScroll:true});if(sel&&sel[0]!=null){try{f.setSelectionRange(sel[0],sel[1]);}catch(e){}}}}
 }
+/* Menu : [page, libellé, icône, section qui commence à cette entrée] — l’administration a ses entrées en sections */
 const NAV={
-  admin:[['calendar','Calendrier','cal'],['classes','Classes','teach'],['eleves','Élèves','users'],['personnel','Personnel','card'],['modules','Modules','layers'],['affectations','Affectations','clip'],['examens','Examens','exam'],['annee','Calendrier scolaire','year'],['comptes','Comptes','key'],['historique','Historique','clock'],['params','Paramètres','gear'],['nouveautes','Nouveautés','spark']],
+  admin:[['calendar','Calendrier','cal','Horaire'],['affectations','Affectations','clip'],['annee','Calendrier scolaire','year'],['classes','Classes','teach','École'],['eleves','Élèves','users'],['personnel','Personnel','card'],['modules','Modules','layers'],['examens','Examens','exam'],['comptes','Comptes','key','Administration'],['historique','Historique','clock'],['params','Paramètres','gear'],['nouveautes','Nouveautés','spark']],
   teacher:[['calendar','Mon horaire','cal'],['mescours','Mes cours','clip'],['dispos','Disponibilités','calok'],['examens','Examens','exam'],['annee','Calendrier scolaire','year'],['profil','Mon profil','user']],
   student:[['calendar','Mon horaire','cal'],['examens','Examens','exam'],['annee','Calendrier scolaire','year'],['profil','Mon profil','user']]
 };
@@ -47,14 +48,14 @@ function ensureMyRes(){
 }
 function exampleCount(){let n=0;for(const k of ['cours','enseignants','groupes','eleves','examens','comptes','candidatures','remplacements']) n+=S.data[k].filter(d=>d.exemple).length;n+=Object.values(S.data.dispos).filter(d=>d&&d.exemple).length+Object.values(S.data.resultats).filter(d=>d&&d.exemple).length;return n;}
 function renderSide(){
-  const nom=(cfg().nom||'Calendrier des cours').trim(), sp=nom.indexOf(' ');
-  setHTML($('#brand-text'),siteMode()?`<span class="bn">Caserne‑École</span><small>${esc(nom)}</small>`:sp>0?`${esc(nom.slice(0,sp))}<small>${esc(nom.slice(sp+1))}</small>`:esc(nom));
+  const nom=(cfg().nom||'').trim();
+  setHTML($('#brand-text'),`<span class="bn">Pompier<i>Note</i></span><small>${nom?esc(nom):'v2'}</small>`);
   $('#ws-label').textContent='Espace '+(S.role==='admin'?'administrateur':S.role==='teacher'?'enseignant':'élève');
   $('.app').classList.toggle('side-mini',S.sideMini);
   $('#logout-btn').hidden=!siteMode();
   const tg=$('#side-toggle'), tl=S.sideMini?'Afficher le menu':'Réduire le menu';
   tg.setAttribute('aria-expanded',String(!S.sideMini));tg.title=tl;tg.querySelector('span').textContent=tl;
-  setHTML($('#nav'),NAV[S.role].map(([k,l,i])=>`<li><button type="button" id="nav-${k}" title="${navLbl(k,l)}" data-act="nav" data-page="${k}"${S.page===k?' aria-current="page"':''}>${icon(i)}<span>${navLbl(k,l)}</span>${k==='nouveautes'&&nvUnseen()?`<i class="nav-n" id="nav-n" title="Changements depuis votre dernière visite">${nvUnseen()>9?'9+':nvUnseen()}</i>`:''}</button></li>`).join(''));
+  setHTML($('#nav'),NAV[S.role].map(([k,l,i,sec])=>`${sec?`<li class="nav-sec">${sec}</li>`:''}<li><button type="button" id="nav-${k}" title="${navLbl(k,l)}" data-act="nav" data-page="${k}"${S.page===k?' aria-current="page"':''}>${icon(i)}<span>${navLbl(k,l)}</span>${k==='nouveautes'&&nvUnseen()?`<i class="nav-n" id="nav-n" title="Changements depuis votre dernière visite">${nvUnseen()>9?'9+':nvUnseen()}</i>`:''}</button></li>`).join(''));
   const P=subject(), own=!!P.a||S.role==='admin', sub=(S.role==='student'?'Élève · '+gName(S.group):ROLE_LBL[S.role])+(own?'':' · aperçu');
   setHTML($('#person'),`<button type="button" class="person-btn" id="person-btn" data-act="nav" data-page="profil" title="Mon profil"${S.page==='profil'?' aria-current="page"':''}>${avHTML(P.name,own?S.me.avatarUrl:'','')}<span class="pinfo"><b>${esc(P.name)}</b><small>${esc(sub)}</small></span></button>`);
 }

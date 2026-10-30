@@ -1,5 +1,5 @@
 /* Classes : cartes */
-.cl-list{container-type:inline-size;background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.cl-list{container-type:inline-size;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
 .cl-cols{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1.6fr) 64px minmax(0,1fr) minmax(0,.9fr) 124px 132px;align-items:center;column-gap:18px}
 .cl-hd{padding:11px 22px;background:var(--head);border-bottom:1px solid var(--line);color:var(--head-ink);font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;white-space:nowrap}
 .cl-hd .n{text-align:center}
@@ -8,14 +8,14 @@
 .cl-row:hover{background:var(--surface-2)}
 .cl-row:focus-visible{outline:3px solid var(--focus);outline-offset:-3px}
 .cl-c{display:flex;align-items:center;gap:12px;min-width:0}
-.cl-num{width:48px;height:48px;border-radius:12px;background:var(--role);color:#FFFFFF;display:grid;place-items:center;flex:none;font-size:18px;font-weight:700;font-variant-numeric:tabular-nums}
+.cl-num{width:48px;height:48px;border-radius:var(--r);background:var(--role);color:#FFFFFF;display:grid;place-items:center;flex:none;font-size:18px;font-weight:700;font-variant-numeric:tabular-nums}
 .cl-name{display:flex;flex-direction:column;gap:3px;min-width:0}
 .cl-name b{font-size:18px;line-height:1.2;color:var(--ink);white-space:nowrap}
 .cl-name small{font-size:13px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .cl-prin{display:flex;align-items:center;gap:10px;min-width:0;cursor:default}
 .cl-prin .av{width:36px;height:36px;font-size:12.5px}
 .cl-prin .av.none{background:var(--off-bg);color:var(--off)}
-.cl-prin select{flex:1 1 0;min-width:0;width:auto;min-height:36px;font-size:15px;font-weight:700;color:var(--ink);border:1px solid transparent;border-radius:8px;background-color:transparent;padding:0 20px 0 6px;margin-left:-6px;cursor:pointer;text-overflow:ellipsis}
+.cl-prin select{flex:1 1 0;min-width:0;width:auto;min-height:36px;font-size:15px;font-weight:700;color:var(--ink);border:1px solid transparent;border-radius:var(--r-sm);background-color:transparent;padding:0 20px 0 6px;margin-left:-6px;cursor:pointer;text-overflow:ellipsis}
 .cl-prin select:hover,.cl-prin select:focus{border-color:var(--line-strong);background-color:var(--surface)}
 .cl-prin b{font-size:15px;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .cl-prin .none-t{color:var(--muted);font-weight:400}
@@ -26,7 +26,7 @@
 .cl-big .meter{margin:0;height:8px}
 .cl-big.ok b{color:var(--ok)}.cl-big.warn b{color:var(--warn)}.cl-big.bad b{color:var(--bad)}
 .cl-big .none{color:var(--muted);font-weight:400}
-.cl-st .chip{font-size:13px;padding:5px 10px;border-radius:7px}
+.cl-st .chip{font-size:13px;padding:5px 10px;border-radius:var(--r-sm)}
 .cl-go{display:flex;align-items:center;justify-content:flex-end;gap:10px}
 .cl-go>.ic{width:18px;height:18px;color:var(--muted);flex:none}
 .cl-row [data-l]::before{display:none}
