@@ -113,14 +113,20 @@ const HEAD_AC={
   mescours:['Mes séances','Les séances à pourvoir, vos candidatures et vos séances attribuées.']
 };
 const navLbl=(k,l)=>k==='mescours'&&acad()?'Mes séances':l;
+let hdTools='';
 function renderHeading(){
   const h0=S.page==='calendar'?HEAD[S.role]:S.page==='examens'&&S.role==='student'?['Mes examens','Vos prochains examens, vos résultats et vos reprises.']:S.page==='profil'&&S.role==='admin'?['Mon profil','Vos informations et les comptes du site.']:HEAD[S.page];
   const hk=S.page==='calendar'?S.role:S.page, h=acad()&&HEAD_AC[hk]&&h0===HEAD[hk]?HEAD_AC[hk]:h0;
-  const show=demoHidden()?`<button type="button" class="demo-show" id="demo-show" data-act="demo" title="Réafficher le bandeau des profils et des données d’exemple">${icon('eye')}Afficher le bandeau</button>`:'';
+  const show=demoHidden()?`<button type="button" class="demo-show" id="demo-show" data-act="demo" title="Réafficher le bandeau des profils et des données d’exemple" aria-label="Afficher le bandeau">${icon('eye')}<span class="ds-t">Afficher le bandeau</span></button>`:'';
   const sub=S.page==='calendar'?'':`<p>${h[1]}</p>`;
   const prBtn=S.page==='calendar'&&S.conn==='shared'&&allLoaded()?`<button type="button" class="bell" id="pr-open" data-act="pr-open" aria-label="Imprimer" title="Imprimer l’horaire de la semaine ou la feuille de présences">${icon('print')}</button>`:'';
   const side=show+prBtn+bellHTML();
-  setHTML($('#heading'),`<div><h1>${h[0]}</h1>${sub}</div>${side?`<div class="head-side">${side}</div>`:''}`);
+  /* Calendrier : la barre de l’horaire (remplie par renderMain) se place dans la barre du titre, sur la même ligne */
+  const cal=S.page==='calendar';
+  $('#heading').classList.toggle('with-tools',cal);
+  setHTML($('#heading'),`<div class="ph-t"><h1>${h[0]}</h1>${sub}</div>${cal?'<div class="ph-tools" id="hd-tools"></div>':''}${side?`<div class="head-side">${side}</div>`:''}`);
+  /* la barre du titre peut se redessiner seule (cloche) : elle reprend la dernière barre de l’horaire */
+  const ht=$('#hd-tools');if(ht&&ht._h===undefined&&hdTools) setHTML(ht,hdTools);
 }
 function renderMain(){
   if(typeof DRAG!=='undefined'&&DRAG&&DRAG.active){pendingMain=true;return;}
@@ -128,11 +134,14 @@ function renderMain(){
   const wait=loading?'<div class="empty"><p>Chargement de l’horaire…</p></div>':S.conn==='off'?emptyBox('Horaire indisponible','L’horaire partagé n’est pas accessible dans cette fenêtre. Ouvrez la page dans claude.ai en étant connecté.'):'';
   let html;
   const p=S.page;
-  if(p==='calendar'){S._stats=null;const body=wait||(S.role==='admin'?adminMain():S.role==='teacher'?teacherMain():studentMain());html=toolbarHTML()+body;}
+  let tools='';
+  if(p==='calendar'){S._stats=null;html=wait||(S.role==='admin'?adminMain():S.role==='teacher'?teacherMain():studentMain());tools=toolbarHTML();}
   else html=wait||(p==='classes'?classesPage():p==='eleves'?studentsPage():p==='personnel'?staffPage():p==='modules'?modulesPage():p==='affectations'?affPage():p==='mescours'?myCoursesPage():p==='dispos'?disposPage():p==='examens'?examsPage():p==='annee'?yearPage():p==='nouveautes'?newsPage():p==='historique'?historyPage():p==='stock'?stockPage():p==='comptes'?accountsPage():p==='profil'?profilePage():paramsPage());
   const el=$('#main'), key=S.role+'/'+p;
   const before=el._k===key&&el._h!==html&&!reduceMotion()?measureCards(el):null;
   setHTML(el,html,key);
+  if(p==='calendar') hdTools=tools;
+  const ht=$('#hd-tools');if(ht) setHTML(ht,tools);
   const pin=S._pin;S._pin=null;
   if(pin) pinRow(pin);
   if(before) glide(el,before,!!pin);

@@ -5,7 +5,12 @@
    items : [type, titre, explication, page à ouvrir]. Types : new (nouvelle fonction), up (amélioration), fix (correction). */
 const NV_REPO='https://github.com/leocyfo/caserne-ecole';
 const NOUVEAUTES=[
-  {date:'2026-10-30',id:'',push:'Style compact : plus d’information à l’écran',items:[
+  {date:'2026-10-30',id:'',push:'Calendrier : le titre et la barre de l’horaire sur une seule ligne',items:[
+    ['up','Une seule ligne','Le titre, la semaine, Semaine/Jour, Classes/Enseignants, les présences en retard, « Ajouter », l’impression et la cloche tiennent sur une seule ligne en haut du calendrier. L’horaire commence une bande plus haut.','calendar'],
+    ['up','Libellés courts','Sur un écran de moins de 1 680 px de large : « 15 en retard » et « Ajouter ». Le texte complet reste dans l’info-bulle. Sous 1 180 px, la barre passe sous le titre.','calendar'],
+    ['fix','Cloche','Ouvrir la cloche ne fait plus disparaître la barre de l’horaire.','']
+  ]},
+  {date:'2026-10-30',id:'19f19d2',push:'Style compact : plus d’information à l’écran',items:[
     ['up','Style compact','Tout est resserré : menu plus étroit, barre de titre plus basse, marges, boutons, champs, tableaux et cartes plus petits. On voit plus de séances, de lignes et de chiffres sans faire défiler.',''],
     ['up','Horaire','La barre de l’horaire tient sur une seule ligne sur un écran d’ordinateur, et les cartes des séances prennent moins de place.','calendar'],
     ['up','Téléphone','Les boutons des présences gardent leur taille pour le doigt, les champs leurs 16 px, et aucun texte ne descend sous 12 px.','']

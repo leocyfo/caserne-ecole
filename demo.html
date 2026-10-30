@@ -118,6 +118,15 @@ button{cursor:pointer}
 .page-heading{display:flex;justify-content:space-between;align-items:center;gap:8px 16px;flex-wrap:wrap;margin:0 calc(-1 * clamp(12px,1.8vw,24px));padding:10px clamp(12px,1.8vw,24px);background:var(--surface);border-bottom:1px solid var(--line);min-height:54px}
 .page-heading h1{margin:0;font-size:18px;font-weight:700;letter-spacing:-.015em;line-height:1.2;color:var(--ink);text-wrap:balance}
 .page-heading p{margin:1px 0 0;color:var(--muted);font-size:12.5px}
+/* Calendrier : titre, barre de l’horaire, impression et cloche sur une seule ligne */
+.page-heading.with-tools{flex-wrap:nowrap;gap:8px 14px}
+.ph-t{min-width:0}
+.with-tools .ph-t{flex:none}
+.ph-tools{flex:1 1 auto;min-width:0}
+.ph-tools .ctl{flex-wrap:nowrap;padding:0;background:none;border:0;border-radius:0;box-shadow:none}
+.with-tools .head-side{flex:none;flex-wrap:nowrap}
+@media (max-width:1680px){.ph-tools .t-long,.with-tools .ds-t{display:none}.ph-tools .t-short{display:inline}.with-tools .demo-show{padding:0 9px}}
+@media (max-width:1180px){.page-heading.with-tools{flex-wrap:wrap}.with-tools .ph-tools{order:3;flex-basis:100%}.ph-tools .ctl{flex-wrap:wrap}}
 /* Boutons et champs */
 .btn{min-height:34px;padding:6px 12px;border:1px solid var(--line);border-radius:var(--r-sm);background:var(--surface);box-shadow:0 1px 2px rgba(14,26,43,.05);font-size:13px;font-weight:600;color:var(--ink);transition:background .12s,border-color .12s,box-shadow .12s;display:inline-flex;align-items:center;justify-content:center;gap:6px;white-space:nowrap}
 .btn:hover{background:var(--surface-2);border-color:var(--line-strong)}
@@ -3569,7 +3578,12 @@ function printDrawer(){
    items : [type, titre, explication, page à ouvrir]. Types : new (nouvelle fonction), up (amélioration), fix (correction). */
 const NV_REPO='https://github.com/leocyfo/caserne-ecole';
 const NOUVEAUTES=[
-  {date:'2026-10-30',id:'',push:'Style compact : plus d’information à l’écran',items:[
+  {date:'2026-10-30',id:'',push:'Calendrier : le titre et la barre de l’horaire sur une seule ligne',items:[
+    ['up','Une seule ligne','Le titre, la semaine, Semaine/Jour, Classes/Enseignants, les présences en retard, « Ajouter », l’impression et la cloche tiennent sur une seule ligne en haut du calendrier. L’horaire commence une bande plus haut.','calendar'],
+    ['up','Libellés courts','Sur un écran de moins de 1 680 px de large : « 15 en retard » et « Ajouter ». Le texte complet reste dans l’info-bulle. Sous 1 180 px, la barre passe sous le titre.','calendar'],
+    ['fix','Cloche','Ouvrir la cloche ne fait plus disparaître la barre de l’horaire.','']
+  ]},
+  {date:'2026-10-30',id:'19f19d2',push:'Style compact : plus d’information à l’écran',items:[
     ['up','Style compact','Tout est resserré : menu plus étroit, barre de titre plus basse, marges, boutons, champs, tableaux et cartes plus petits. On voit plus de séances, de lignes et de chiffres sans faire défiler.',''],
     ['up','Horaire','La barre de l’horaire tient sur une seule ligne sur un écran d’ordinateur, et les cartes des séances prennent moins de place.','calendar'],
     ['up','Téléphone','Les boutons des présences gardent leur taille pour le doigt, les champs leurs 16 px, et aucun texte ne descend sous 12 px.','']
@@ -4196,14 +4210,20 @@ const HEAD_AC={
   mescours:['Mes séances','Les séances à pourvoir, vos candidatures et vos séances attribuées.']
 };
 const navLbl=(k,l)=>k==='mescours'&&acad()?'Mes séances':l;
+let hdTools='';
 function renderHeading(){
   const h0=S.page==='calendar'?HEAD[S.role]:S.page==='examens'&&S.role==='student'?['Mes examens','Vos prochains examens, vos résultats et vos reprises.']:S.page==='profil'&&S.role==='admin'?['Mon profil','Vos informations et les comptes du site.']:HEAD[S.page];
   const hk=S.page==='calendar'?S.role:S.page, h=acad()&&HEAD_AC[hk]&&h0===HEAD[hk]?HEAD_AC[hk]:h0;
-  const show=demoHidden()?`<button type="button" class="demo-show" id="demo-show" data-act="demo" title="Réafficher le bandeau des profils et des données d’exemple">${icon('eye')}Afficher le bandeau</button>`:'';
+  const show=demoHidden()?`<button type="button" class="demo-show" id="demo-show" data-act="demo" title="Réafficher le bandeau des profils et des données d’exemple" aria-label="Afficher le bandeau">${icon('eye')}<span class="ds-t">Afficher le bandeau</span></button>`:'';
   const sub=S.page==='calendar'?'':`<p>${h[1]}</p>`;
   const prBtn=S.page==='calendar'&&S.conn==='shared'&&allLoaded()?`<button type="button" class="bell" id="pr-open" data-act="pr-open" aria-label="Imprimer" title="Imprimer l’horaire de la semaine ou la feuille de présences">${icon('print')}</button>`:'';
   const side=show+prBtn+bellHTML();
-  setHTML($('#heading'),`<div><h1>${h[0]}</h1>${sub}</div>${side?`<div class="head-side">${side}</div>`:''}`);
+  /* Calendrier : la barre de l’horaire (remplie par renderMain) se place dans la barre du titre, sur la même ligne */
+  const cal=S.page==='calendar';
+  $('#heading').classList.toggle('with-tools',cal);
+  setHTML($('#heading'),`<div class="ph-t"><h1>${h[0]}</h1>${sub}</div>${cal?'<div class="ph-tools" id="hd-tools"></div>':''}${side?`<div class="head-side">${side}</div>`:''}`);
+  /* la barre du titre peut se redessiner seule (cloche) : elle reprend la dernière barre de l’horaire */
+  const ht=$('#hd-tools');if(ht&&ht._h===undefined&&hdTools) setHTML(ht,hdTools);
 }
 function renderMain(){
   if(typeof DRAG!=='undefined'&&DRAG&&DRAG.active){pendingMain=true;return;}
@@ -4211,11 +4231,14 @@ function renderMain(){
   const wait=loading?'<div class="empty"><p>Chargement de l’horaire…</p></div>':S.conn==='off'?emptyBox('Horaire indisponible','L’horaire partagé n’est pas accessible dans cette fenêtre. Ouvrez la page dans claude.ai en étant connecté.'):'';
   let html;
   const p=S.page;
-  if(p==='calendar'){S._stats=null;const body=wait||(S.role==='admin'?adminMain():S.role==='teacher'?teacherMain():studentMain());html=toolbarHTML()+body;}
+  let tools='';
+  if(p==='calendar'){S._stats=null;html=wait||(S.role==='admin'?adminMain():S.role==='teacher'?teacherMain():studentMain());tools=toolbarHTML();}
   else html=wait||(p==='classes'?classesPage():p==='eleves'?studentsPage():p==='personnel'?staffPage():p==='modules'?modulesPage():p==='affectations'?affPage():p==='mescours'?myCoursesPage():p==='dispos'?disposPage():p==='examens'?examsPage():p==='annee'?yearPage():p==='nouveautes'?newsPage():p==='historique'?historyPage():p==='stock'?stockPage():p==='comptes'?accountsPage():p==='profil'?profilePage():paramsPage());
   const el=$('#main'), key=S.role+'/'+p;
   const before=el._k===key&&el._h!==html&&!reduceMotion()?measureCards(el):null;
   setHTML(el,html,key);
+  if(p==='calendar') hdTools=tools;
+  const ht=$('#hd-tools');if(ht) setHTML(ht,tools);
   const pin=S._pin;S._pin=null;
   if(pin) pinRow(pin);
   if(before) glide(el,before,!!pin);

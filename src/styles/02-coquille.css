@@ -69,3 +69,12 @@
 .page-heading{display:flex;justify-content:space-between;align-items:center;gap:8px 16px;flex-wrap:wrap;margin:0 calc(-1 * clamp(12px,1.8vw,24px));padding:10px clamp(12px,1.8vw,24px);background:var(--surface);border-bottom:1px solid var(--line);min-height:54px}
 .page-heading h1{margin:0;font-size:18px;font-weight:700;letter-spacing:-.015em;line-height:1.2;color:var(--ink);text-wrap:balance}
 .page-heading p{margin:1px 0 0;color:var(--muted);font-size:12.5px}
+/* Calendrier : titre, barre de l’horaire, impression et cloche sur une seule ligne */
+.page-heading.with-tools{flex-wrap:nowrap;gap:8px 14px}
+.ph-t{min-width:0}
+.with-tools .ph-t{flex:none}
+.ph-tools{flex:1 1 auto;min-width:0}
+.ph-tools .ctl{flex-wrap:nowrap;padding:0;background:none;border:0;border-radius:0;box-shadow:none}
+.with-tools .head-side{flex:none;flex-wrap:nowrap}
+@media (max-width:1680px){.ph-tools .t-long,.with-tools .ds-t{display:none}.ph-tools .t-short{display:inline}.with-tools .demo-show{padding:0 9px}}
+@media (max-width:1180px){.page-heading.with-tools{flex-wrap:wrap}.with-tools .ph-tools{order:3;flex-basis:100%}.ph-tools .ctl{flex-wrap:wrap}}

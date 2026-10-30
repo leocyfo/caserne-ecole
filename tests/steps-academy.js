@@ -636,6 +636,8 @@ ok('student can print own transcript',!!$('#pr-releve')&&/Imprimer mon relevé/.
 click($('[data-role=admin]'));await wait(80);
 /* CTL */
 ok('one-row toolbar',!$('.ctl-bottom')&&!$('.keys')&&!$('#heading p')&&!$('.saved'));
+{const mid=e=>{const r=e.getBoundingClientRect();return r.top+r.height/2;}, h=$('#heading h1'), parts=[$('#heading #w-prev'),$('#heading #fm-g'),$('#heading #new-course'),$('#heading #nf-bell')];
+ ok('title, toolbar and bell on one line',parts.every(Boolean)&&parts.every(p=>Math.abs(mid(p)-mid(h))<8)&&!$('#main .ctl'),parts.map(p=>p?Math.round(mid(p)):'-').join(',')+' / '+Math.round(mid(h)));}
 // impression de l’horaire de la semaine et de la feuille de présences
 {const p0=window.print;let got='';window.print=()=>{got=$('#print-root').innerHTML;window.dispatchEvent(new Event('beforeprint'));window.dispatchEvent(new Event('afterprint'));};
  const pages=()=>(got.match(/class="pr-page"/g)||[]).length;
