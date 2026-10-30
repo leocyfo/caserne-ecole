@@ -1,13 +1,13 @@
 /* Affectations, mes cours, modules */
-.xm-a5{grid-template-columns:52px minmax(0,2.4fr) 58px minmax(0,1fr) minmax(170px,auto)}
-.xm-a6{grid-template-columns:52px minmax(0,2.2fr) 58px minmax(0,.9fr) minmax(0,1.1fr) 130px}
+.xm-a5{grid-template-columns:44px minmax(0,2.4fr) 58px minmax(0,1fr) minmax(170px,auto)}
+.xm-a6{grid-template-columns:44px minmax(0,2.2fr) 58px minmax(0,.9fr) minmax(0,1.1fr) 130px}
 .xm-afc{grid-template-columns:minmax(0,1.5fr) minmax(0,1.8fr) minmax(0,1fr) 210px}
 .xm-jr{grid-template-columns:96px minmax(0,1fr) 130px}
 .jr-w{display:flex;flex-direction:column;gap:2px;font-size:14px;color:var(--ink);white-space:nowrap}
 .jr-w small{font-size:12.5px;color:var(--muted)}
 .xm-jr .xm-t b,.xm-jr .xm-t small{white-space:normal}
 .xm-a5 .xm-end,.xm-afc .xm-end{gap:8px;align-items:center;flex-wrap:wrap}
-.xm-hd.xm-a5{grid-template-columns:52px minmax(0,2.4fr) 58px minmax(0,1fr) 170px}
+.xm-hd.xm-a5{grid-template-columns:44px minmax(0,2.4fr) 58px minmax(0,1fr) 170px}
 .xm-who .xm-t small{display:flex;flex-wrap:wrap;gap:4px;white-space:normal}
 .xm-hd .n,.md-h{text-align:center}
 .af-n{display:flex;flex-direction:column;gap:2px;min-width:0}

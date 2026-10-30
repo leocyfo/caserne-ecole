@@ -5,7 +5,12 @@
    items : [type, titre, explication, page à ouvrir]. Types : new (nouvelle fonction), up (amélioration), fix (correction). */
 const NV_REPO='https://github.com/leocyfo/caserne-ecole';
 const NOUVEAUTES=[
-  {date:'2026-10-30',id:'',push:'Stock : équipement prêté, matériel et inspections, consommables, ventes',items:[
+  {date:'2026-10-30',id:'',push:'Style compact : plus d’information à l’écran',items:[
+    ['up','Style compact','Tout est resserré : menu plus étroit, barre de titre plus basse, marges, boutons, champs, tableaux et cartes plus petits. On voit plus de séances, de lignes et de chiffres sans faire défiler.',''],
+    ['up','Horaire','La barre de l’horaire tient sur une seule ligne sur un écran d’ordinateur, et les cartes des séances prennent moins de place.','calendar'],
+    ['up','Téléphone','Les boutons des présences gardent leur taille pour le doigt, les champs leurs 16 px, et aucun texte ne descend sous 12 px.','']
+  ]},
+  {date:'2026-10-30',id:'ebeb412',push:'Stock : équipement prêté, matériel et inspections, consommables, ventes',items:[
     ['new','Stock','Un nouveau menu pour l’administration, dans la section Ressources. Quatre tuiles : l’équipement prêté, le matériel, les consommables, les uniformes et ventes.','stock'],
     ['new','Équipement prêté aux élèves','Chaque pièce (habit de combat, casque, gants…) a son numéro, sa taille et son état. On la prête à un élève, puis on note son état au retour.','stock'],
     ['new','Matériel et inspections','Pour chaque APRIA, boyau, lance ou échelle : tous les combien de jours l’inspecter. Les inspections à faire et en retard sont signalées ; une inspection non conforme met le matériel hors service.','stock'],

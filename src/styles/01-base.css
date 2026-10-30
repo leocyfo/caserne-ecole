@@ -1,5 +1,5 @@
 :root{
-  /* PompierNote v2 : menu marine, fond gris très clair, cartes blanches à coins arrondis, un seul rouge. Thème clair seulement. */
+  /* PompierNote v2, style compact : menu marine étroit, fond gris très clair, cartes blanches serrées, un seul rouge. Thème clair seulement. */
   color-scheme:light;
   --side:#0E1A2B; --side-ink:#E9EEF5; --side-soft:#B9C4D3; --side-muted:#7F8DA3; --side-line:#1F2E44; --side-hover:#162539; --side-active:#1D2F4A;
   --bg:#F3F5F8; --surface:#FFFFFF; --surface-2:#F8FAFC; --head:#F8FAFC; --head-ink:#52627A; --row-ink:#16294A;
@@ -7,13 +7,13 @@
   --accent:#C62F2A; --accent-hover:#AD2722; --accent-ink:#FFFFFF; --eyebrow:#617086; --today:#C62F2A; --focus:#2563EB;
   --ok:#17784E; --ok-bg:#DDF5E8; --warn:#93580C; --warn-bg:#FFEDCC; --bad:#B42F3A; --bad-bg:#FDE3E4; --info:#245C9A; --info-bg:#DFEBFC; --off:#5A6676; --off-bg:#E7EAEE;
   --font:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
-  --r:12px; --r-sm:8px;
+  --r:10px; --r-sm:7px;
   --shadow-sm:0 1px 2px rgba(14,26,43,.05),0 1px 3px rgba(14,26,43,.07);
   --shadow:0 16px 48px rgba(14,26,43,.22);
 }
 *{box-sizing:border-box}
 [hidden]{display:none!important}
-body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 var(--font);-webkit-font-smoothing:antialiased;font-feature-settings:"cv11"}
+body{margin:0;background:var(--bg);color:var(--ink);font:13.5px/1.45 var(--font);-webkit-font-smoothing:antialiased;font-feature-settings:"cv11"}
 body.lock{overflow:hidden}
 button,input,select,textarea{font:inherit;color:inherit}
 button{cursor:pointer}
