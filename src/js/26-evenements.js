@@ -12,6 +12,7 @@ function openSession(key,date){
 document.addEventListener('click',async e=>{
   const b=e.target.closest('[data-act]');if(!b||b.disabled)return;
   const a=b.dataset.act, d=S.dr, pg=S.pg;
+  if(a.startsWith('stk-')){await stockClick(a,b);return;}
   switch(a){
     case 'role':setRole(b.dataset.role);break;
     case 'demo-reset':if(window.__DEMO_RESET)window.__DEMO_RESET();break;
@@ -168,6 +169,7 @@ document.addEventListener('click',async e=>{
     case 'nf-go':{const n=notifs()[+b.dataset.i];if(!n)break;const g=n.go;S.dr=null;
       if(g.k==='aff'){goPage('affectations');S.pg.at=g.tab;render();}
       else if(g.k==='mes'){goPage('mescours');S.pg.mt=g.tab;render();}
+      else if(g.k==='stock'){goPage('stock');S.pg.sk=g.tab;render();}
       else{const mon=monday(parse(g.date));if(iso(mon)!==iso(S.week)){S.week=mon;S.day=defaultDay();subWeek();}S.page='calendar';S.pg={};render();openSession(g.key,g.date);}
       break;}
     case 'pr-open':openPrint(b.dataset.g?{g:b.dataset.g,t:''}:null);break;
@@ -251,6 +253,7 @@ document.addEventListener('submit',async e=>{
   if(k==='student'){if(d&&d.kind==='student')await saveStudent();return;}
   if(k==='acct'){if(document.activeElement&&document.activeElement.id==='ac-q')return;if(d&&d.kind==='acct')await saveAccount();return;}
   if(k==='staff'){if(d&&d.kind==='staff')await saveStaff();return;}
+  if(k==='stk'){await stockSubmit();return;}
   if(k==='m-add-group'){
     const i=$('#m-gname'),nom=i.value.trim();if(!nom){i.focus();return;}
     if(S.data.groupes.some(g=>collator.compare(g.nom,nom)===0)){toast('Cette classe existe déjà.','bad');return;}
@@ -328,6 +331,7 @@ document.addEventListener('input',e=>{
   }
   if(t.id==='s-q'){S.pg.q=t.value;render();return;}
   if(t.id==='jr-q'){S.pg.jq=t.value;S.pg.jl='';render();return;}
+  if(t.id==='stk-q'){S.pg.sq=t.value;render();return;}
   /* note en % d’un élève : elle inscrit le résultat selon le seuil de réussite */
   if(t.dataset&&t.dataset.xn&&S.dr&&S.dr.kind==='exam'){
     const dx=S.dr, el=t.dataset.xn, r=dx.draft.resultats||(dx.draft.resultats={}), p=dx.draft.pct||(dx.draft.pct={}), v=t.value.trim();
@@ -349,6 +353,7 @@ document.addEventListener('input',e=>{
     else if(f==='date'){if(d.draft.cours)fillExamFromCourse(d.draft,false);d.err='';d.warn=null;renderDrawer();}
     else if(d.err||d.warn){d.err='';d.warn=null;renderDrawer();}
   }else if(d.kind==='student'||d.kind==='staff'){d.draft[f]=t.value;if(d.err){d.err='';renderDrawer();}}
+  else if(d.kind==='stock') stockInput(t,f);
 });
 document.addEventListener('change',async e=>{
   const t=e.target;

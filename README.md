@@ -61,6 +61,19 @@ Chaque classe a un document `cours/<id>` par module (sigle `M7`). Ses séances s
 
 Données : `config/ecole.ressources` (`{ id, nom, type }`, type `local` ou `equip`), `cours[].ress` dans un module et `ress` sur une séance (listes d’identifiants), `journal/<AAAA-MM>` (un document par mois, une entrée par action dans `ev` : `{ le, par, role, cat, txt, obj, seance, date, groupe }`) et `cours/<id>.annule` (`{ "date@séance": { le, par } }` pour chaque séance annulée).
 
+## Stock
+
+Le menu **Stock** (administration, section Ressources) a quatre onglets :
+
+- **Équipement prêté** : chaque pièce (habit de combat, casque, gants…) a un numéro, une taille et un état (bon, à réparer, hors service). *Prêter* la relie à un élève ; *Retour* la libère et note son état.
+- **Matériel** : APRIA, boyaux, lances, échelles, outils, avec une quantité et une fréquence d’inspection en jours. *Inspecter* inscrit la date ; une inspection non conforme met le matériel hors service. Les inspections à faire d’ici 14 jours et en retard sont signalées.
+- **Consommables** : quantité, unité et seuil. *Entrée* et *Sortie* changent la quantité (jamais sous zéro) ; au seuil, l’article est « À commander ».
+- **Uniformes et ventes** : prix et quantité par taille (`U` = taille unique). *Vendre* enregistre l’élève, la taille, la quantité et le montant ; l’onglet *Ventes* donne le total du mois.
+
+La cloche de l’administration signale les consommables à commander, les inspections en retard et l’équipement à réparer. La fiche d’un élève montre l’équipement qui lui est prêté et ses achats ; l’élève voit son équipement dans *Mon profil*.
+
+Données : `stock/<id>` (un article : `cat` = `epi`, `mat`, `conso` ou `vente` ; `nom`, `empl`, `notes` ; selon la catégorie `num`, `taille`, `etat`, `pret` `{ eleve, le }`, `qte`, `freq`, `insp`, `unite`, `seuil`, `prix`, `qtes` `{ taille: quantité }`) et `stock-mvt/<id>` (un mouvement, jamais modifié : `{ le, par, art, nom, cat, type, qte, taille, eleve, prix, total, etat, note }`, type `ajout`, `modif`, `suppr`, `entree`, `sortie`, `pret`, `retour`, `insp` ou `vente`). Chaque action s’inscrit aussi dans `journal` (catégorie `stock`).
+
 ## Essayer le site sur cet ordinateur
 
 Double-cliquez **`Lancer le site local.cmd`** (il faut Node.js) : le site s’ouvre à http://localhost:8080/demo.html. Fermez la fenêtre noire pour l’arrêter.
@@ -93,8 +106,8 @@ site/firebase.js            branchement sur Firebase (connexion + base de donné
 demo/connexion-demo.js      connexion et base de données simulées de la démo (localStorage)
 demo/donnees.js             données d’exemple (générées)
 src/page.html               la coquille de la page (titre, structure, emplacement des styles et du code)
-src/styles/NN-nom.css       les styles, un fichier par sujet (15 fichiers ; 15-telephone.css : les écrans étroits)
-src/js/NN-nom.js            le code, un fichier par sujet (28 fichiers)
+src/styles/NN-nom.css       les styles, un fichier par sujet (16 fichiers ; 15-telephone.css : les écrans étroits)
+src/js/NN-nom.js            le code, un fichier par sujet (29 fichiers)
 tests/                      tests automatiques (Chrome sans fenêtre)
 outils/assembler.js         réunit les fichiers de src/ en une seule page
 outils/construire.js        régénère index.html, demo.html et demo/donnees.js
@@ -112,7 +125,7 @@ La page est découpée par sujet. Les fichiers sont réunis dans l’ordre de le
 | `05-horaire-rendu`, `06-horaire-pages` | le tableau de la semaine et les pages de l’horaire |
 | `07-classes`, `08-eleves-fiches`, `09-personnel-heures` | pages Classes, Élèves (et fiches), Personnel et heures enseignées |
 | `10-presences`, `11-examens`, `12-affectations` | présences, examens et résultats, affectation des enseignants |
-| `13-modules`, `14-reprises`, `15-locaux-equipements` | modules du programme, journées de reprise, locaux et équipements |
+| `13-modules`, `14-reprises`, `15-locaux-equipements`, `15-stock` | modules du programme, journées de reprise, locaux et équipements, stock |
 | `16-import`, `17-historique`, `18-notifications`, `19-impression` | import d’élèves et copie d’horaire, historique, cloche, impression |
 | `20-nouveautes`, `21-annee-parametres`, `22-comptes` | Nouveautés, calendrier scolaire et paramètres, comptes et profils |
 | `23-cadre`, `24-tiroir` | menu, en-tête et rendu général ; panneau latéral |

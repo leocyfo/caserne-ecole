@@ -336,6 +336,8 @@ async function clearExamples(){
   for(const [id,z] of Object.entries(S.data.dispos)) if(z&&z.exemple) fns.push(()=>col('disponibilites').doc(id).delete());
   for(const [id,z] of Object.entries(S.data.resultats)) if(z&&z.exemple) fns.push(()=>col('resultats').doc(id).delete());
   try{const q=await col('resultats-eleves').where('exemple','==',true).get();for(const d of q.docs)fns.push(()=>col('resultats-eleves').doc(d.id).delete());}catch(e){}
+  for(const a of stk()) if(a.exemple) fns.push(()=>col('stock').doc(a.id).delete());
+  try{const q=await col('stock-mvt').where('exemple','==',true).get();for(const d of q.docs)fns.push(()=>col('stock-mvt').doc(d.id).delete());}catch(e){}
   for(const [id,z] of Object.entries(S.data.staffPres)) if(z&&z.exemple) fns.push(()=>col('presences-personnel').doc(id).delete());
   try{const q=await col('presences').where('exemple','==',true).get();for(const d of q.docs)fns.push(()=>col('presences').doc(d.id).delete());}catch(e){}
   if(S.data.config&&S.data.config.exemple){const c=configDoc();c.nom='';c.exemple=false;fns.push(()=>DB.doc('config/ecole').set(c));}

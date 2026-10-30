@@ -179,6 +179,7 @@ function profilePage(){
       <p class="help">${nx?`${W('Prochaine séance','Prochain cours')} : ${esc(nx.s.c.titre)}, ${esc(sess(nx.s).toLowerCase())}.`:W('Aucune séance prévue prochainement.','Aucun cours prévu prochainement.')}</p>
       ${chores.length?`<h2 style="margin-top:14px">Corvées de ménage</h2><ul class="acc-list">${[...new Set(chores.map(s=>s.date))].sort().map(ds=>`<li><span>${esc(dayLabel(parse(ds)))}</span><span class="muted sm">toute la journée</span></li>`).join('')}</ul>`:'<p class="help">Aucune corvée de ménage cette semaine.</p>'}</section>`;
     panels+=`<section class="panel"><h2>Prochains examens</h2>${ex.length?`<div class="list">${examRows(ex,'student')}</div>`:'<p class="help">Aucun examen prévu.</p>'}</section>`;
+    if(P.id) panels+=stockOfStudent(P.id,false);
   }else if(r==='teacher'){
     const id=P.id, z=S.data.dossiers[id]||{}, cs=S.data.cours.filter(c=>c.enseignant===id);
     const byG={};for(const c of cs)byG[c.groupe]=(byG[c.groupe]||0)+1;

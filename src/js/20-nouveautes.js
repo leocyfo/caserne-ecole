@@ -5,7 +5,17 @@
    items : [type, titre, explication, page à ouvrir]. Types : new (nouvelle fonction), up (amélioration), fix (correction). */
 const NV_REPO='https://github.com/leocyfo/caserne-ecole';
 const NOUVEAUTES=[
-  {date:'2026-10-30',id:'',push:'PompierNote v2 : nouveau nom et nouveau style',items:[
+  {date:'2026-10-30',id:'',push:'Stock : équipement prêté, matériel et inspections, consommables, ventes',items:[
+    ['new','Stock','Un nouveau menu pour l’administration, dans la section Ressources. Quatre tuiles : l’équipement prêté, le matériel, les consommables, les uniformes et ventes.','stock'],
+    ['new','Équipement prêté aux élèves','Chaque pièce (habit de combat, casque, gants…) a son numéro, sa taille et son état. On la prête à un élève, puis on note son état au retour.','stock'],
+    ['new','Matériel et inspections','Pour chaque APRIA, boyau, lance ou échelle : tous les combien de jours l’inspecter. Les inspections à faire et en retard sont signalées ; une inspection non conforme met le matériel hors service.','stock'],
+    ['new','Consommables','Entrées et sorties, et un seuil : sous le seuil, l’article passe « À commander ». On ne peut pas sortir plus que ce qui reste.','stock'],
+    ['new','Uniformes et ventes','Le prix et la quantité de chaque taille. « Vendre » enregistre l’élève, la taille et le montant ; l’onglet Ventes donne le total du mois.','stock'],
+    ['new','Historique de chaque article','La fenêtre d’un article montre tous ses mouvements : prêts, retours, inspections, entrées, sorties, ventes. Ils s’inscrivent aussi dans l’Historique, sous « Stock ».','historique'],
+    ['up','Cloche','L’administration y voit les consommables à commander, les inspections en retard et l’équipement à réparer ou hors service.',''],
+    ['up','Fiche de l’élève','L’équipement qui lui est prêté et ses achats. L’élève voit son équipement dans « Mon profil ».','eleves']
+  ]},
+  {date:'2026-10-30',id:'0b1d168',push:'PompierNote v2 : nouveau nom et nouveau style',items:[
     ['new','PompierNote','Le site s’appelle maintenant PompierNote : c’est la version 2 de Caserne-École. Les données et les pages restent les mêmes.',''],
     ['up','Nouveau style','Menu marine plus net, barre de titre blanche en haut de chaque page, cartes blanches à coins arrondis avec une ombre légère, un seul rouge pour les actions et une police plus lisible (Inter).',''],
     ['up','Menu en sections','Le menu de l’administration est regroupé en trois sections : Horaire, École et Administration.',''],

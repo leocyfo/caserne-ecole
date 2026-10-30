@@ -117,7 +117,7 @@ function studentFiche(){
       <div><dt>Contact d’urgence</dt><dd>${e.parent?esc(e.parent):'<span class="muted">—</span>'}</dd></div>
       <div><dt>Téléphone</dt><dd>${e.telephone?`<a href="tel:${esc(String(e.telephone).replace(/\s+/g,''))}">${esc(e.telephone)}</a>`:'<span class="muted">—</span>'}</dd></div>
       <div><dt>Courriel</dt><dd>${e.courriel?`<a href="mailto:${esc(e.courriel)}">${esc(e.courriel)}</a>`:'<span class="muted">—</span>'}</dd></div>
-      <div class="wide"><dt>Suivi</dt><dd>${e.notes?`<span class="pre">${esc(e.notes)}</span>`:'<span class="muted">Aucune note.</span>'}</dd></div></dl></section>`;
+      <div class="wide"><dt>Suivi</dt><dd>${e.notes?`<span class="pre">${esc(e.notes)}</span>`:'<span class="muted">Aucune note.</span>'}</dd></div></dl></section>${S.role==='admin'?(ensureStockMvt(),stockOfStudent(e.id,true)):''}`;
   };
   return ficheShell('eleves',list,e,item,head,[['dossier','Dossier'],['presences','Présences'],['examens','Examens']],content);
 }

@@ -51,6 +51,7 @@ function subscribe(){
   for(const k of ['candidatures','remplacements']) col(k).onSnapshot(q=>{S.data[k]=q.docs.map(d=>Object.assign({},d.data(),{id:d.id}));schedule();},()=>{});
   col('disponibilites').onSnapshot(q=>{const m={};for(const d of q.docs)m[d.id]=d.data();S.data.dispos=m;schedule();},()=>{});
   col('profs-absents').onSnapshot(q=>{const m={};for(const d of q.docs)m[d.id]=(d.data().ids||[]);S.data.absProfs=m;schedule();},()=>{});
+  col('stock').onSnapshot(q=>{S.data.stock=q.docs.map(d=>Object.assign({},d.data(),{id:d.id}));schedule();},()=>{});
   col('presences-personnel').onSnapshot(q=>{const m={};for(const d of q.docs)m[d.id]=d.data();S.data.staffPres=m;schedule();},()=>{});
   if(S.me.id) DB.doc('comptes/'+S.me.id).onSnapshot(x=>{S.myAcct=x.exists?Object.assign({},x.data(),{id:x.id}):null;schedule();},()=>{});
   if(S.canAdmin!==false) col('demandes').onSnapshot(q=>{S.data.demandes=q.docs.map(d=>Object.assign({},d.data(),{id:d.id}));schedule();},()=>{S.data.demandes=[];});

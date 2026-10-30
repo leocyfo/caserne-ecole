@@ -173,7 +173,7 @@ click($('#fi-back'));await wait(80);
 window.scrollTo(0,300);await wait(30);const listY=window.scrollY;
 click($$('#main tbody .link').find(x=>/Camille/.test(x.textContent)));await wait(80);
 ok('student fiche',/Camille Bergeron/.test($('#fi-name').textContent)&&/Lieutenant 1/.test($('.fiche-head').textContent)&&/Cravate oubliée/.test($('#main').textContent)&&$$('.fiche-list .fl-item').length===52);
-ok('fiche simple',$$('.fiche-tabs button').length===3&&$('#fi-tab-dossier').getAttribute('aria-pressed')==='true'&&$$('.fh-stats>div').length===4&&$$('.fiche-body .panel').length===1&&!/Semaine de la classe/.test($('#main').textContent));
+ok('fiche simple',$$('.fiche-tabs button').length===3&&$('#fi-tab-dossier').getAttribute('aria-pressed')==='true'&&$$('.fh-stats>div').length===4&&$$('.fiche-body .panel').length===2&&!!$('#stk-eleve')&&!/Semaine de la classe/.test($('#main').textContent));
 click($('#fi-tab-presences'));await wait(80);
 ok('tab presences',/Absences et retards/.test($('.fiche-body').textContent)&&/Par module/.test($('.fiche-body').textContent)&&!/Parent ou tuteur/.test($('.fiche-body').textContent));
 click($('#fi-tab-examens'));await wait(80);
@@ -550,7 +550,7 @@ click($('#nav-calendar'));await wait(100);
 click($('#nav-historique'));await wait(250);
 {const rows=()=>$$('#main .xm-jr.xm-row').map(r=>r.textContent.replace(/\s+/g,' '));
  const J=()=>{const out=[];for(const k of SK('journal'))for(const e of Object.values(window.__store.get(k).ev||{}))out.push(e);return out;};
- ok('history page',/Historique/.test($('#heading').textContent)&&rows().length>=10&&$$('#main .toolbar .seg button').length===4&&!!$('#jr-q'),rows().length);
+ ok('history page',/Historique/.test($('#heading').textContent)&&rows().length>=10&&$$('#main .toolbar .seg button').length===5&&!!$('#jr-f-stock')&&!!$('#jr-q'),rows().length);
  ok('history: cancel and restore',rows().some(t=>/a annulé la séance/.test(t)&&/M9/.test(t)&&/Classe 120/.test(t))&&rows().some(t=>/a rétabli la séance/.test(t))&&rows().every(t=>/\d\d h \d\d/.test(t)),rows()[0]);
  ok('history: affectations',J().some(e=>e.cat==='aff'&&/a postulé/.test(e.txt))&&J().some(e=>/a approuvé la candidature de Vincent Tremblay/.test(e.txt))&&J().some(e=>/a demandé un remplacement/.test(e.txt)&&/Garde en caserne/.test(e.obj))&&J().some(e=>/a retiré Vincent Tremblay/.test(e.txt)),J().filter(e=>e.cat==='aff').map(e=>e.txt).join(' | '));
  ok('history: modules',J().some(e=>e.cat==='module'&&/a créé le module M26/.test(e.txt))&&J().some(e=>/a ajouté le cours 26\.1 au module M26/.test(e.txt))&&J().some(e=>/a retiré le cours 26\.1 du module M26/.test(e.txt))&&J().some(e=>/a supprimé le module M26/.test(e.txt))&&J().some(e=>/a ajouté la séance/.test(e.txt)&&/Classe 999/.test(e.obj))&&J().some(e=>/a supprimé la séance/.test(e.txt)),J().filter(e=>e.cat==='module').map(e=>e.txt).join(' | '));
@@ -783,6 +783,80 @@ click($('#nav-comptes'));await wait(150);
 click($('#ac-edit-u2'));await wait(120);
 click($('#ac-del'));await wait(60);click($('#ac-del-yes'));await wait(250);
 ok('account deleted',!window.__store.get('comptes/u2')&&$$('#main .tbl tbody tr').length===9);
+// fin du stock
+// stock : équipement prêté, matériel et inspections, consommables, ventes
+{const W=window.__store, rows=()=>$$('#main .xm-row'), sel=(id,v)=>{const x=$(id);x.value=v;x.dispatchEvent(new Event('input',{bubbles:true}));}, submit=async()=>{click($('#drawer button.primary[type=submit]'));await wait(250);}, tile=k=>$('#sk-'+k+' b').textContent.replace(/\s+/g,' ').trim(), mv=t=>[...W.entries()].filter(([k,v])=>k.startsWith('stock-mvt/')&&v.type===t);
+click($('#nav-stock'));await wait(250);
+ok('stock page',/Stock/.test($('#heading h1').textContent)&&$$('#main .xm-tile').length===4&&$('#sk-epi').getAttribute('aria-pressed')==='true'&&$('#nav .nav-sec:nth-of-type(1)')!==null&&/Ressources/.test($('#nav').textContent),$$('#main .xm-tile').length);
+ok('stock tiles',tile('epi')==='28 / 34'&&tile('mat')==='4'&&tile('conso')==='2'&&/^126,00/.test(tile('vente')),['epi','mat','conso','vente'].map(tile).join(' | '));
+ok('lent pieces list',rows().length===34&&rows().some(r=>/HC-01/.test(r.textContent)&&/Alexandre Beaulieu/.test(r.textContent)),rows().length);
+click($('#sk-f-reparer'));await wait(80);
+ok('pieces to repair',rows().length===2&&/HC-14/.test($('#main').textContent)&&/CA-14/.test($('#main').textContent),rows().length);
+click($('#sk-f-all'));await wait(60);typeIn('#stk-q','HC-13');await wait(80);
+ok('stock search',rows().length===1&&/HC-13/.test(rows()[0].textContent)&&/En stock/.test(rows()[0].textContent),rows().length);
+click($('#stk-pret-st-hc-13'));await wait(120);
+ok('lend drawer',/Prêter la pièce/.test($('#drawer').textContent)&&!!$('#sk-eleve'));
+await submit();
+ok('lend needs a student',/Choisissez l’élève/.test($('#drawer').textContent));
+sel('#sk-eleve','el-120-01');await wait(40);await submit();
+{const a=W.get('stock/st-hc-13');ok('piece lent',a.pret&&a.pret.eleve==='el-120-01'&&a.pret.le==='2026-10-09'&&mv('pret').some(([k,v])=>v.art==='st-hc-13'&&v.eleve==='el-120-01')&&!$('#drawer:not([hidden])'),JSON.stringify(a.pret));}
+ok('lent row shows the student',/Prêtée|Retour/.test(rows()[0].textContent)&&!!$('#stk-retour-st-hc-13'),rows()[0].textContent);
+click($('#stk-retour-st-hc-13'));await wait(120);sel('#sk-etat','reparer');await wait(40);await submit();
+{const a=W.get('stock/st-hc-13');ok('piece returned',!(a.pret&&a.pret.eleve)&&a.etat==='reparer'&&mv('retour').some(([k,v])=>v.art==='st-hc-13'&&v.etat==='reparer'),JSON.stringify(a));}
+typeIn('#stk-q','');await wait(60);
+// matériel : inspections
+click($('#sk-mat'));await wait(120);
+ok('equipment list',rows().length===10&&/En retard/.test($('#main').textContent),rows().length);
+click($('#sk-f-due'));await wait(80);
+ok('equipment to inspect',rows().length===4,rows().length);
+click($('#stk-insp-st-apr-02'));await wait(120);await submit();
+{const a=W.get('stock/st-apr-02');ok('inspection saved',a.insp==='2026-10-09'&&a.etat==='service'&&tile('mat')==='3'&&rows().length===3,a.insp+' '+tile('mat'));}
+click($('#stk-insp-st-gaz'));await wait(120);sel('#sk-res','hs');await wait(40);await submit();
+ok('failed inspection puts out of service',W.get('stock/st-gaz').etat==='hs'&&tile('mat')==='2',W.get('stock/st-gaz').etat+' '+tile('mat'));
+// consommables : entrées et sorties
+click($('#sk-conso'));await wait(120);
+ok('consumables',rows().length===6&&$$('#main .chip.warn').filter(c=>/À commander/.test(c.textContent)).length===2,rows().length);
+click($('#stk-out-st-nitrile'));await wait(120);sel('#sk-qte','5');await wait(40);await submit();
+ok('cannot take out more than in stock',/Il n’en reste que 3 boîtes/.test($('#drawer').textContent)&&W.get('stock/st-nitrile').qte===3,($('#drawer .form-err')||{}).textContent);
+click($('#dr-close'));await wait(80);
+click($('#stk-in-st-nitrile'));await wait(120);sel('#sk-qte','10');await wait(40);await submit();
+ok('stock received',W.get('stock/st-nitrile').qte===13&&tile('conso')==='1'&&mv('entree').some(([k,v])=>v.art==='st-nitrile'&&v.qte===10),W.get('stock/st-nitrile').qte+' '+tile('conso'));
+click($('#stk-new'));await wait(120);
+ok('new article in the open category',$('#sk-cat').value==='conso'&&!!$('#sk-seuil'));
+sel('#sk-nom','Bouchons d’oreilles');sel('#sk-qte','50');sel('#sk-unite','paires');sel('#sk-seuil','20');await wait(40);await submit();
+{const e=[...W.entries()].find(([k,v])=>k.startsWith('stock/')&&v.nom==='Bouchons d’oreilles');ok('article added',!!e&&e[1].cat==='conso'&&e[1].qte===50&&e[1].seuil===20&&rows().length===7,e&&JSON.stringify(e[1]));
+ click($$('#main .xm-row').find(r=>/Bouchons/.test(r.textContent)));await wait(120);
+ ok('article window',/Historique/.test($('#drawer').textContent)&&/Ajout/.test($('#sk-hist').textContent)&&$('#sk-nom').value==='Bouchons d’oreilles');
+ click($('#sk-del'));await wait(60);click($('#sk-del-yes'));await wait(250);
+ ok('article removed',!W.get(e[0])&&rows().length===6&&mv('suppr').length===1);}
+// ventes
+click($('#sk-vente'));await wait(120);
+ok('items for sale',rows().length===4&&/35,00/.test($('#main').textContent),rows().length);
+click($('#stk-sell-st-chandail'));await wait(120);
+sel('#sk-eleve','el-119-02');sel('#sk-taille','M');sel('#sk-qte','2');await wait(60);
+ok('sale total',/70,00/.test($('#sk-total').textContent),$('#sk-total').textContent);
+await submit();
+{const a=W.get('stock/st-chandail');ok('sale saved',a.qtes.M===8&&a.qtes.L===8&&mv('vente').some(([k,v])=>v.art==='st-chandail'&&v.eleve==='el-119-02'&&v.total===70)&&/^196,00/.test(tile('vente')),JSON.stringify(a.qtes)+' '+tile('vente'));}
+click($('#stk-sell-st-casquette'));await wait(120);sel('#sk-eleve','el-119-02');sel('#sk-qte','20');await wait(40);await submit();
+ok('cannot sell more than in stock',/Il n’en reste que 15 en stock/.test($('#drawer').textContent)&&W.get('stock/st-casquette').qtes.U===15,($('#drawer .form-err')||{}).textContent);
+click($('#dr-close'));await wait(80);
+click($('#sk-f-ventes'));await wait(120);
+ok('sales list',rows().length===5&&/Ce mois/.test($('#stk-month').textContent)&&/196,00/.test($('#stk-month').textContent),rows().length);
+// alertes dans la cloche, historique, fiche et profil de l’élève
+click($('#nf-bell'));await wait(120);
+{const t=$$('#drawer .nf-row').map(r=>r.textContent);ok('stock alerts in the bell',t.some(x=>/À commander/.test(x)&&/Cartouches filtrantes/.test(x))&&t.some(x=>/Inspection en retard/.test(x)&&/Boyau 65 mm/.test(x))&&t.some(x=>/Équipement hors service/.test(x)&&/CA-14/.test(x)),t.length);
+ click($$('#drawer .nf-row').find(r=>/À commander/.test(r.textContent)));await wait(150);
+ ok('alert opens the stock tab',$('#sk-conso').getAttribute('aria-pressed')==='true'&&!$('#drawer:not([hidden])'));}
+click($('#nav-historique'));await wait(200);
+ok('stock in the history',/Stock · [1-9]/.test($('#jr-f-stock').textContent),$('#jr-f-stock').textContent);
+click($('#jr-f-stock'));await wait(80);
+ok('stock history rows',$$('#main .xm-jr.xm-row').some(r=>/a prêté à/.test(r.textContent))&&$$('#main .xm-jr.xm-row').some(r=>/a vendu à/.test(r.textContent)));
+click($('#nav-eleves'));await wait(150);click($('[data-act=student][data-id="el-119-01"]'));await wait(150);
+ok('student fiche shows equipment and purchases',/Habit de combat/.test($('#stk-eleve').textContent)&&/Casque/.test($('#stk-eleve').textContent)&&/Manuel de l’élève/.test($('#stk-eleve').textContent)&&/130,00/.test($('#stk-eleve').textContent),$('#stk-eleve').textContent.replace(/\s+/g,' ').slice(0,200));
+click($('#fi-back'));await wait(100);
+click($('[data-role=student]'));await wait(150);click($('#nav-profil'));await wait(150);
+ok('student profile shows own equipment',!!$('#stk-eleve')&&/Mon équipement/.test($('#stk-eleve').textContent)&&!/Achats/.test($('#stk-eleve').textContent)&&!$('#nav-stock'));
+click($('[data-role=admin]'));await wait(150);}
 click($('#nav-calendar'));await wait(120);
 }catch(e){R.push('ERROR '+e.message+' '+e.stack);}
 R.push('ERRS '+JSON.stringify(window.__errs));

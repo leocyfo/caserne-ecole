@@ -13,7 +13,7 @@ function setHTML(el,html,key){
 }
 /* Menu : [page, libellé, icône, section qui commence à cette entrée] — l’administration a ses entrées en sections */
 const NAV={
-  admin:[['calendar','Calendrier','cal','Horaire'],['affectations','Affectations','clip'],['annee','Calendrier scolaire','year'],['classes','Classes','teach','École'],['eleves','Élèves','users'],['personnel','Personnel','card'],['modules','Modules','layers'],['examens','Examens','exam'],['comptes','Comptes','key','Administration'],['historique','Historique','clock'],['params','Paramètres','gear'],['nouveautes','Nouveautés','spark']],
+  admin:[['calendar','Calendrier','cal','Horaire'],['affectations','Affectations','clip'],['annee','Calendrier scolaire','year'],['classes','Classes','teach','École'],['eleves','Élèves','users'],['personnel','Personnel','card'],['modules','Modules','layers'],['examens','Examens','exam'],['stock','Stock','box','Ressources'],['comptes','Comptes','key','Administration'],['historique','Historique','clock'],['params','Paramètres','gear'],['nouveautes','Nouveautés','spark']],
   teacher:[['calendar','Mon horaire','cal'],['mescours','Mes cours','clip'],['dispos','Disponibilités','calok'],['examens','Examens','exam'],['annee','Calendrier scolaire','year'],['profil','Mon profil','user']],
   student:[['calendar','Mon horaire','cal'],['examens','Examens','exam'],['annee','Calendrier scolaire','year'],['profil','Mon profil','user']]
 };
@@ -46,7 +46,7 @@ function ensureMyRes(){
   const who=S.student;
   unsubMR=col('resultats-eleves').where('eleve','==',who).onSnapshot(q=>{if(S._mrFor!==who)return;const m={},mp={};for(const d of q.docs){const v=d.data();if(v&&v.examen){m[v.examen]=v.v;if(v.pct!=null)mp[v.examen]=v.pct;}}S.data.mesRes=m;S.data.mesPct=mp;schedule();},()=>{});
 }
-function exampleCount(){let n=0;for(const k of ['cours','enseignants','groupes','eleves','examens','comptes','candidatures','remplacements']) n+=S.data[k].filter(d=>d.exemple).length;n+=Object.values(S.data.dispos).filter(d=>d&&d.exemple).length+Object.values(S.data.resultats).filter(d=>d&&d.exemple).length;return n;}
+function exampleCount(){let n=0;for(const k of ['cours','enseignants','groupes','eleves','examens','comptes','candidatures','remplacements']) n+=S.data[k].filter(d=>d.exemple).length;n+=stk().filter(d=>d.exemple).length+Object.values(S.data.dispos).filter(d=>d&&d.exemple).length+Object.values(S.data.resultats).filter(d=>d&&d.exemple).length;return n;}
 function renderSide(){
   const nom=(cfg().nom||'').trim();
   setHTML($('#brand-text'),`<span class="bn">Pompier<i>Note</i></span><small>${nom?esc(nom):'v2'}</small>`);
@@ -98,6 +98,7 @@ const HEAD={
   mescours:['Mes cours','Les cours à pourvoir, vos candidatures et vos cours attribués.'],
   dispos:['Mes disponibilités','Les jours où vous pouvez donner des cours.'],
   historique:['Historique','Qui a annulé, déplacé, attribué ou approuvé quoi, et quand.'],
+  stock:['Stock','L’équipement prêté aux élèves, le matériel et ses inspections, les consommables et les articles vendus.'],
   params:['Paramètres','L’établissement, l’année scolaire et les accès.'],
   nouveautes:['Nouveautés','Ce qui a changé sur le site : nouvelles fonctions, améliorations et corrections.']
 };
@@ -128,7 +129,7 @@ function renderMain(){
   let html;
   const p=S.page;
   if(p==='calendar'){S._stats=null;const body=wait||(S.role==='admin'?adminMain():S.role==='teacher'?teacherMain():studentMain());html=toolbarHTML()+body;}
-  else html=wait||(p==='classes'?classesPage():p==='eleves'?studentsPage():p==='personnel'?staffPage():p==='modules'?modulesPage():p==='affectations'?affPage():p==='mescours'?myCoursesPage():p==='dispos'?disposPage():p==='examens'?examsPage():p==='annee'?yearPage():p==='nouveautes'?newsPage():p==='historique'?historyPage():p==='comptes'?accountsPage():p==='profil'?profilePage():paramsPage());
+  else html=wait||(p==='classes'?classesPage():p==='eleves'?studentsPage():p==='personnel'?staffPage():p==='modules'?modulesPage():p==='affectations'?affPage():p==='mescours'?myCoursesPage():p==='dispos'?disposPage():p==='examens'?examsPage():p==='annee'?yearPage():p==='nouveautes'?newsPage():p==='historique'?historyPage():p==='stock'?stockPage():p==='comptes'?accountsPage():p==='profil'?profilePage():paramsPage());
   const el=$('#main'), key=S.role+'/'+p;
   const before=el._k===key&&el._h!==html&&!reduceMotion()?measureCards(el):null;
   setHTML(el,html,key);
