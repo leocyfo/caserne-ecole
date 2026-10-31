@@ -44,7 +44,7 @@ ok('text at 12 px or more',!tiny.length,tiny.join(' ; '));
   if(tooWide())bad.push(k+' '+document.documentElement.scrollWidth+' px');const f=smallFields(),t=smallText();if(f.length||t.length)bad.push(k+' : '+f.concat(t).slice(0,3).join(', '));}
  ok('settings sections fit the phone',!bad.length,bad.join(' ; '));}
 /* les sections du Stock et de la Compta */
-for(const [pg,k,n] of [['stock','sk',10],['compta','cp',9]]){click($('#nav .nav-back'));await wait(150);click(navBtn(pg));await wait(250);const bad=[];
+for(const [pg,k,n] of [['stock','sk',19],['compta','cp',9]]){click($('#nav .nav-back'));await wait(150);click(navBtn(pg));await wait(250);const bad=[];
  const ks=$$('#nav [data-k='+k+']').map(b=>b.id);if(ks.length!==n)bad.push('sections : '+ks.length);
  for(const id of ks){click($('#'+id));await wait(180);window.scrollTo(0,0);
   if(tooWide())bad.push(id+' '+document.documentElement.scrollWidth+' px');const f=smallFields(),t=smallText();if(f.length||t.length)bad.push(id+' : '+f.concat(t).slice(0,3).join(', '));}

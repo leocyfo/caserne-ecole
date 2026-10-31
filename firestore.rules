@@ -49,6 +49,15 @@ service cloud.firestore {
       allow read, create: if isStaff();
       allow update, delete: if isAdmin();
     }
+    // Catalogue du stock : le personnel lit ; fournisseurs, commandes, réparations et comptages : l’administration
+    match /stock-modeles/{id} {
+      allow read: if isStaff();
+      allow write: if isAdmin();
+    }
+    match /stock-fourn/{id} { allow read, write: if isAdmin(); }
+    match /stock-cmd/{id} { allow read, write: if isAdmin(); }
+    match /stock-rep/{id} { allow read, write: if isAdmin(); }
+    match /stock-cpt/{id} { allow read, write: if isAdmin(); }
     // Compta : l’administration seulement
     match /compta/{id} {
       allow read: if isAdmin() || (hasAcct() && resource.data.eleve == myRef());

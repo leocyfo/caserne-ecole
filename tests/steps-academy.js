@@ -806,10 +806,10 @@ ok('account deleted',!window.__store.get('comptes/u2')&&$$('#main .tbl tbody tr'
  /* ---------- Stock : menu à sections, tableau de bord, inventaire, article, mouvements, dotation, inspections, réglages ---------- */
  {const ST=id=>window.__store.get('stock/'+id), MV=()=>[...window.__store.entries()].filter(([k])=>k.startsWith('stock-mvt/')).map(([,v])=>v), setv=(id,v)=>{$(id).value=v;}, find=async q=>{const x=$('#stk-q');x.value=q;x.dispatchEvent(new Event('input',{bubbles:true}));await wait(150);}, sub=async()=>{$('#drawer form').requestSubmit();await wait(350);};
  click(navBtn('stock'));await wait(200);
- ok('stock side menu',$('#nav-stock').classList.contains('nav-back')&&$$('#nav [data-k=sk]').length===10&&$('#sk-dash').getAttribute('aria-current')==='page'&&!!$('#sk-insp .nav-todo.bad')&&!!$('#sk-conso .nav-todo.bad')&&/Inventaire/.test($('#nav').textContent),$$('#nav [data-k=sk]').length);
- ok('stock dashboard',$$('#main .xm-tile').length===4&&/59/.test($('#skd-tout').textContent)&&$$('#skd-todo li').length>3&&/Tuyau/.test($('#skd-out').textContent)&&/Derniers mouvements/.test($('#main').textContent));
+ ok('stock side menu',$('#nav-stock').classList.contains('nav-back')&&$$('#nav [data-k=sk]').length===19&&$('#sk-dash').getAttribute('aria-current')==='page'&&!!$('#sk-insp .nav-todo.bad')&&!!$('#sk-conso .nav-todo.bad')&&/Inventaire/.test($('#nav').textContent),$$('#nav [data-k=sk]').length);
+ ok('stock dashboard',$$('#main .xm-tile').length===4&&/75/.test($('#skd-tout').textContent)&&$$('#skd-todo li').length>3&&/Tuyau/.test($('#skd-out').textContent)&&/Derniers mouvements/.test($('#main').textContent));
  click($('#sk-epi'));await wait(150);
- ok('stock category',$$('#main .xm-row').length===28&&!!$('#heading #stk-q')&&!!$('#heading #stk-add')&&!!$('#vm-cards'),$$('#main .xm-row').length);
+ ok('stock category',$$('#main .xm-row').length===44&&!!$('#heading #stk-q')&&!!$('#heading #stk-add')&&!!$('#vm-cards'),$$('#main .xm-row').length);
  click($('#sk-tout'));await wait(150);await find('BAR-007');
  ok('stock search and state',$$('#main .xm-row').length===1&&/Épreuve hydraulique en retard/.test($('#main .xm-row').textContent),$$('#main .xm-row').map(r=>r.textContent).join('|'));
  click($('#main .xm-row'));await wait(150);
@@ -834,7 +834,7 @@ ok('account deleted',!window.__store.get('comptes/u2')&&$$('#main .tbl tbody tr'
  ok('restock and expense',ST('sk-emu').qte===12&&[...window.__store.entries()].some(([k,v])=>k.startsWith('compta/')&&v.type==='dep'&&v.poste==='conso'&&v.ttc===185000&&v.tiers==='Aréo-Feu'));
  click($('#dr-close'));await wait(80);await find('');
  // ajouter trois casques d’un coup
- click($('#stk-add'));await wait(120);setv('#sa-nom','Casque neuf');setv('#sa-code','CAS-N');setv('#sa-nb','3');await sub();await wait(200);
+ click($('#stk-add'));await wait(120);click($('#stk-pick-free'));await wait(120);setv('#sa-nom','Casque neuf');setv('#sa-code','CAS-N');setv('#sa-nb','3');await sub();await wait(200);
  {const ns=[...window.__store.values()].filter(v=>v.nom==='Casque neuf');ok('add several items',ns.length===3&&ns.map(v=>v.code).sort().join(',')==='CAS-N-01,CAS-N-02,CAS-N-03');}
  // fiche élève : l’onglet Équipement
  click($('#nav-stock'));await wait(150);click(navBtn('eleves'));await wait(150);
@@ -863,6 +863,160 @@ ok('account deleted',!window.__store.get('comptes/u2')&&$$('#main .tbl tbody tr'
  await find('LAN-001');click($('#main .xm-row'));await wait(150);
  ok('teacher stock actions',!!$('#drawer [data-v=sortie]')&&!!$('#drawer [data-v=bris]')&&!$('#drawer [data-v=insp]')&&!$('#stk-edit'));
  click($('#dr-close'));await wait(80);await find('');click($('#nav-stock'));await wait(120);click($('[data-role=admin]'));await wait(150);}
+ /* ---------- Stock à fond : catalogue, import, lot, étiquettes, QR, scanner, emplacements, inspections, kit, préparation, achats, réparations, comptage, rapports ---------- */
+ {const ST=id=>window.__store.get('stock/'+id), ALL=pre=>[...window.__store.entries()].filter(([k])=>k.startsWith(pre+'/')).map(([k,v])=>Object.assign({_id:k.split('/')[1]},v)), setv=(id,v)=>{$(id).value=v;}, sub=async()=>{$('#drawer form').requestSubmit();await wait(350);}, chg=(id,v)=>{const x=$(id);x.value=v;x.dispatchEvent(new Event('change',{bubbles:true}));}, find=async q=>{const x=$('#stk-q');x.value=q;x.dispatchEvent(new Event('input',{bubbles:true}));await wait(150);}, printed=async fn=>{const p0=window.print;let got='';window.print=()=>{got=$('#print-root').innerHTML;window.dispatchEvent(new Event('beforeprint'));window.dispatchEvent(new Event('afterprint'));};await fn();await wait(500);window.print=p0;return got;};
+ click(navBtn('stock'));await wait(200);
+ // fiches d’objets : une fiche par objet ; « Ajouter » crée les exemplaires numérotés
+ click($('#sk-cat'));await wait(150);
+ ok('object sheets',$$('#main .stk-fiche').length===17&&/Casque de pompier/.test($('#main').textContent)&&/3 articles n’ont pas de fiche/.test(($('#stk-loose')||{}).textContent||''),$$('#main .stk-fiche').length);
+ click($('#stk-f-mo-cas [data-act=stk-add-to]'));await wait(150);
+ ok('quick add form',!!$('#sq-nb')&&/CAS-013/.test($('#sq-codes').textContent));
+ {const x=$('#sq-nb');x.value='2';x.dispatchEvent(new Event('input',{bubbles:true}));}
+ ok('codes follow the number',/CAS-013 à CAS-014/.test($('#sq-codes').textContent));
+ setv('#sq-empl','Étagère A');await sub();await wait(250);
+ ok('items added to the sheet',['CAS-013','CAS-014'].every(c=>ALL('stock').some(v=>v.code===c&&v.modele==='mo-cas'&&v.nom==='Casque de pompier'&&v.empl==='Étagère A')));
+ // une fiche : chiffres, tailles, exemplaires
+ click($('#stk-f-mo-hab [data-act=stk-fiche]'));await wait(200);
+ ok('object sheet page',/Habit de combat/.test($('.stk-fhead').textContent)&&$$('#main .kpi').length===4&&/M : \d+ libres? sur \d+/.test($('#main').textContent)&&$$('#main .stk-elist .xm-row').length===10,$$('#main .stk-elist .xm-row').length);
+ click($('#stk-fadd'));await wait(150);setv('#sq-taille','L');{const x=$('#sq-nb');x.value='3';x.dispatchEvent(new Event('input',{bubbles:true}));}await sub();await wait(250);
+ ok('add by size',ALL('stock').filter(v=>v.modele==='mo-hab'&&v.taille==='L').length===7&&ALL('stock').some(v=>v.code==='HAB-013'));
+ click($('#stk-fback'));await wait(150);
+ // une nouvelle fiche, puis ses premiers exemplaires
+ click($('#stk-mod-new'));await wait(150);setv('#sm-nom','Lampe de casque');setv('#sm-pre','lmp');setv('#sm-tailles','');await sub();await wait(200);
+ {const m=ALL('stock-modeles').find(v=>v.nom==='Lampe de casque');
+  ok('new object sheet',!!m&&m.prefixe==='LMP'&&!!$('#sq-nb')&&/LMP-001/.test($('#sq-codes').textContent));
+  {const x=$('#sq-nb');x.value='3';x.dispatchEvent(new Event('input',{bubbles:true}));}await sub();await wait(250);
+  ok('first items of a new sheet',['LMP-001','LMP-002','LMP-003'].every(c=>ALL('stock').some(v=>v.code===c&&v.modele===m._id))&&/Lampe de casque/.test($('.stk-fhead').textContent));}
+ // un consommable : on ajoute une quantité
+ click($('#stk-fback'));await wait(150);
+ {const q0=ST('sk-bal').qte;click($('#stk-f-mo-bal [data-act=stk-add-to]'));await wait(150);setv('#sq-qte','15');await sub();await wait(200);
+  ok('add a quantity',ST('sk-bal').qte===q0+15&&ALL('stock-mvt').some(m=>m.art==='sk-bal'&&m.type==='reappro'&&m.qte===15));}
+ // « Ajouter un article » de l’inventaire : choisir la fiche
+ click($('#sk-tout'));await wait(150);click($('#stk-add'));await wait(150);
+ {const x=$('#stk-pk-q');x.value='botte';x.dispatchEvent(new Event('input',{bubbles:true}));await wait(120);}
+ ok('pick a sheet',$$('#drawer .stk-pk').length===1&&/Bottes de combat/.test($('#drawer .stk-pk').textContent));
+ click($('#drawer .stk-pk'));await wait(150);
+ ok('pick opens the quick add',!!$('#sq-nb')&&/BOT-007/.test($('#sq-codes').textContent));
+ click($('#dr-close'));await wait(80);
+ // import d’une liste d’Excel
+ click($('#sk-tout'));await wait(150);click($('#stk-imp-open'));await wait(150);
+ setv('#si-txt','Nom;Catégorie;Code;Emplacement;Quantité\nLance-canon portative;Matériel;LC-001;Entrepôt;1\nBalises orange;Consommables;BAL-O;Réserve atelier;25');
+ click($('#si-read'));await wait(120);
+ ok('import preview',/2 articles à importer/.test($('#drawer').textContent));
+ click($('#si-go'));await wait(500);
+ ok('import',ALL('stock').some(v=>v.code==='LC-001'&&v.cat==='mat'&&v.empl==='Entrepôt')&&ALL('stock').some(v=>v.code==='BAL-O'&&v.suivi==='qte'&&v.qte===25));
+ click($('#sk-cat'));await wait(150);
+ ok('items without a sheet',!!$('#stk-loose')&&/5 articles n’ont pas de fiche/.test($('#stk-loose').textContent));
+ click($('#stk-fiches-auto'));await wait(500);
+ ok('sheets created from the inventory',!$('#stk-loose')&&ALL('stock-modeles').some(m=>m.nom==='Lance-canon portative'&&m.prefixe==='LC')&&ALL('stock').filter(v=>v.code==='LC-001'||v.code==='BAL-O').every(v=>!!v.modele));
+ click($('#sk-tout'));await wait(150);
+ // actions en lot : cocher, déplacer ; étiquettes QR
+ await find('LAN-00');
+ click($$('#main .stk-ck')[0]);await wait(80);click($$('#main .stk-ck')[1]);await wait(80);
+ ok('selection bar',!!$('#stk-bulk')&&/2 articles cochés/.test($('#stk-bulk').textContent));
+ chg('#stk-bk-empl','Salle ARI');await wait(500);
+ ok('bulk move',ST('sk-lan01').empl==='Salle ARI'&&ST('sk-lan02').empl==='Salle ARI'&&ALL('stock-mvt').some(m=>m.type==='transfert'&&m.art==='sk-lan01')&&!$('#stk-bulk'));
+ window.qrcode=()=>({addData(){},make(){},createSvgTag(){return '<svg class="fakeqr"></svg>';}});
+ click($('#stk-all'));await wait(100);
+ {const got=await printed(async()=>click($('#stk-bulk [data-act=stk-labels]')));ok('QR labels',(got.match(/class="lab"/g)||[]).length===3&&/LAN-001/.test(got)&&/fakeqr/.test(got),(got.match(/class="lab"/g)||[]).length);}
+ click($('#stk-bulk [data-act=stk-bk][data-v=none]'));await wait(80);await find('');
+ // une étiquette scannée avec l’appareil photo ouvre l’article
+ location.hash='#stk=sk-cas08';await wait(300);
+ ok('QR link opens the item',!$('#drawer').hidden&&/CAS-008/.test($('#drawer').textContent)&&!/stk=/.test(location.hash));
+ click($('#dr-close'));await wait(80);
+ // scanner : par code ou n° de série, sortie et retour groupés
+ click($('#stk-scan-open'));await wait(150);
+ {const code=async c=>{$('#stk-code').value=c;$('[data-form=stk-code]').requestSubmit();await wait(150);};
+  await code('CAS-009');await code('MSA-240010');await code('inconnu');
+  ok('scan by code',$$('#stk-scan-list li').length===2&&/Aucun article pour/.test($('#drawer').textContent));
+  click($('#stk-grp-out'));await wait(500);
+  ok('group checkout',!!ST('sk-cas09').sortie&&!!ST('sk-cas10').sortie&&!!$('#stk-grp-in'));
+  click($('#stk-grp-in'));await wait(500);
+  ok('group return',!ST('sk-cas09').sortie&&!ST('sk-cas10').sortie);}
+ click($('#dr-close'));await wait(80);
+ // emplacements : l’arbre, le contenu avec les sous-emplacements, un transfert
+ click($('#sk-empl'));await wait(150);
+ ok('locations tree',$$('#main .stk-node').length>=6&&/Autopompe 119/.test($('#main .stk-tree').textContent));
+ click($$('#main .stk-node').find(b=>/Réserve atelier/.test(b.textContent)));await wait(150);
+ ok('location with its shelves',$$('#main .stk-elist .xm-row').length>40&&!!$('#stk-cpt-here'),$$('#main .stk-elist .xm-row').length);
+ click($('#main .stk-elist .xm-row'));await wait(150);
+ {const id=ST? null:null;const t=$('#drawer h2').textContent;click($('#drawer [data-v=transfert]'));await wait(120);setv('#sx-empl','Autopompe 119');const aid=ALL('stock').find(v=>v.nom===t&&v.empl!=='Autopompe 119')._id;await sub();
+  ok('transfer',ALL('stock-mvt').some(m=>m.type==='transfert'&&/→ Autopompe 119/.test(m.note||''))&&ALL('stock').filter(v=>v.empl==='Autopompe 119').length>=7);}
+ click($('#dr-close'));await wait(80);
+ // inspections : tournée, liste de contrôle, rapport
+ click($('#sk-insp'));await wait(150);
+ ok('inspection round',!!$('#stk-tour')&&$$('#stk-tour li').length>0);
+ {const b=$('#stk-tour [data-act=stk-tour-ok]'), id=b.dataset.id;click(b);await wait(400);ok('round: compliant',ST(id).inspDer==='2026-10-09'&&ALL('stock-mvt').some(m=>m.art===id&&m.type==='insp'&&m.points));}
+ {const b=$('#stk-tour li [data-act=stk-go][data-v=insp]'), id=b.dataset.id;click(b);await wait(150);
+  ok('inspection checklist',$$('#drawer [data-pt]').length>=3);
+  $$('#drawer [data-pt]')[0].checked=false;await sub();
+  ok('a failed point sends it to repair',ST(id).statut==='maint'&&ALL('stock-mvt').some(m=>m.art===id&&m.type==='insp'&&/non conforme/.test(m.note||'')));
+  click($('#dr-close'));await wait(80);}
+ {const got=await printed(async()=>click($('#stk-insp-pr')));ok('inspection report',/Rapport d’inspections/.test(got)&&/Non conforme/.test(got));}
+ // kit d’aspirant et tailles
+ click($('#sk-dot'));await wait(150);chg('#stk-g','c120');await wait(150);
+ click($('#stk-e-el-120-02 [data-act=stk-sizes]'));await wait(120);
+ ok('sizes form',$('#sz-manteau').value==='XL');
+ setv('#sz-casque','7 ¼');await sub();
+ ok('sizes saved',window.__store.get('eleves/el-120-02').tailles.casque==='7 ¼'&&window.__store.get('eleves/el-120-02').tailles.manteau==='XL');
+ click($('#stk-kit-open'));await wait(200);
+ const nOk=$$('#drawer .stk-kit .chip.ok').length;
+ ok('kit plan',$$('#drawer .stk-kit tbody tr').length>=5&&nOk>10,nOk);
+ click($('#stk-kit-go'));await wait(1500);
+ {const mine=id=>ALL('stock').filter(v=>v.attrib&&v.attrib.t==='eleve'&&v.attrib.id===id);
+  ok('class equipped with the kit',ALL('stock').filter(v=>v.attrib&&v.attrib.t==='eleve'&&/^el-120-/.test(v.attrib.id)).length===nOk&&ALL('stock-mvt').some(m=>/kit/.test(m.note||'')));
+  ok('kit follows sizes',mine('el-120-02').some(v=>/Habit/.test(v.nom)&&v.taille==='XL')&&mine('el-120-02').some(v=>/Gants/.test(v.nom)&&v.taille==='XL'));}
+ click($('#stk-e-el-120-02 [data-act=stk-sign]'));await wait(400);
+ ok('signed sheet',ALL('stock').filter(v=>v.attrib&&v.attrib.id==='el-120-02').every(v=>v.attrib.signe===true)&&/Signée/.test($('#stk-e-el-120-02').textContent));
+ // une pièce perdue, facturée à l’élève
+ {const h=ALL('stock').find(v=>v.attrib&&v.attrib.id==='el-120-02'&&/Casque/.test(v.nom));location.hash='#stk='+h._id;await wait(300);
+  click($('#drawer [data-v=retourDot]'));await wait(120);setv('#sx-etat','perdu');$('#sx-fact').checked=true;setv('#sx-mt','420,00');await sub();await wait(300);
+  ok('lost item billed to the student',ST(h._id).statut==='manquant'&&!ST(h._id).attrib&&ALL('compta').some(x=>x.type==='chg'&&x.eleve==='el-120-02'&&x.ttc===42000)&&ALL('stock-mvt').some(m=>m.type==='perte'&&m.art===h._id));
+  click($('#dr-close'));await wait(80);}
+ // préparation d’une journée : besoins par module, consommables inscrits
+ click($('#sk-prep'));await wait(150);chg('#stk-pd','2026-10-13');await wait(200);
+ ok('preparation day',$$('#stk-prep li').length>0&&!!$('#stk-out'));
+ {const m=(/^M\d+/.exec($('#stk-prep li b').textContent)||[''])[0];setv('#sb-mod',m);setv('#sb-art','sk-emu');setv('#sb-qte','1');$('[data-form=stk-bes]').requestSubmit();await wait(400);
+  ok('needs per module',(window.__store.get('config/ecole').stock.besoins[m]||[]).some(x=>x.art==='sk-emu'),m);
+  const q0=ST('sk-emu').qte;click($('#stk-prep [data-act=stk-prep-conso]'));await wait(500);
+  ok('planned consumables',ST('sk-emu').qte===q0-1,q0+' -> '+ST('sk-emu').qte);}
+ ok('late returns',/en retard/i.test($('#stk-out').textContent)&&/LAN-003/.test($('#stk-out').textContent));
+ // achats : à commander, commandes préparées, réception partielle, fournisseurs
+ click($('#sk-buy'));await wait(150);
+ ok('to buy',$$('#main .xm-row').length>0&&/à commander/.test($('#main').textContent));
+ {const n0=ALL('stock-cmd').length;click($('#stk-buy'));await wait(700);ok('purchase orders drafted',ALL('stock-cmd').length>n0&&$('#sk-cmd').getAttribute('aria-current')==='page');}
+ click($('#main [data-act=stk-cmd][data-id=bc-001]'));await wait(150);
+ ok('purchase order',/BC-2026-001/.test($('#drawer').textContent)&&!!$('#drawer [data-rl="0"]'));
+ {const q1=ST('sk-emu').qte;$('#drawer [data-rl="0"]').value='4';$('[data-form=stk-rcv]').requestSubmit();await wait(700);
+  ok('partial receipt',ST('sk-emu').qte===q1+4&&window.__store.get('stock-cmd/bc-001').statut==='partielle'&&ALL('compta').some(x=>/BC-2026-001/.test(x.libelle||'')&&x.ttc===74000),ST('sk-emu').qte);}
+ click($('#dr-close'));await wait(80);
+ click($('#sk-fourn'));await wait(150);
+ ok('suppliers',$$('#main tbody tr').length===3);
+ click($('#stk-fo-new'));await wait(120);setv('#sf2-nom','Hydro-Pro');setv('#sf2-delai','10');await sub();
+ ok('new supplier',ALL('stock-fourn').some(v=>v.nom==='Hydro-Pro'&&v.delai===10));
+ // réparations : envoyer une lance, la recevoir avec la facture
+ click($('#sk-rep'));await wait(150);
+ ok('repairs',$$('#main tbody tr').length===1&&/Cisaille/.test($('#main').textContent)&&/En retard/.test($('#main').textContent));
+ location.hash='#stk=sk-lan02';await wait(300);
+ click($('#drawer [data-act=stk-rep-new]'));await wait(120);setv('#sr2-pb','Robinet qui fuit');setv('#sr2-rep','Hydro-Pro');await sub();
+ {const r=ALL('stock-rep').find(x=>x.art==='sk-lan02');ok('sent to repair',ST('sk-lan02').statut==='maint'&&!!r&&!!$('#stk-rep-done'));
+  setv('#sr2-cout','85,50');click($('#stk-rep-done'));await wait(700);
+  ok('repair done',ST('sk-lan02').statut==='service'&&window.__store.get('stock-rep/'+r._id).statut==='terminee'&&ALL('compta').some(x=>x.poste==='entretien'&&x.ttc===8550));}
+ click($('#dr-close'));await wait(80);
+ // comptage d’un emplacement : un absent, un abîmé
+ click($('#sk-cpt'));await wait(150);chg('#stk-ce','Entrepôt');await wait(100);click($('#stk-cpt-go'));await wait(400);
+ {const L=$$('#main .stk-cl');ok('count started',L.length>=2,L.length);
+  const a1=L[0].id.slice(7), a2=L[1].id.slice(7);
+  click(L[0].querySelector('[data-v=absent]'));await wait(300);click($('#stk-cl-'+a2+' [data-v=abime]'));await wait(300);
+  click($('#stk-cpt-end'));await wait(700);
+  ok('count adjustments',ST(a1).statut==='manquant'&&ST(a2).statut==='maint'&&ALL('stock-cpt').some(c=>c.statut==='termine'&&c.ecarts===2),[ST(a1).statut,ST(a2).statut].join(','));}
+ // rapports et export
+ click($('#sk-rap'));await wait(150);
+ ok('stock reports',$$('#main .kpi').length===4&&/Valeur par catégorie/.test($('#main').textContent)&&/Les plus sortis/.test($('#main').textContent));
+ {const u0=window.claude.use;window.__saved=null;window.claude.use=async n=>n==='downloads'?{save:async o=>{window.__saved=o;}}:u0(n);
+  click($('#skr-exp'));await wait(250);const sv=window.__saved, txt=sv&&sv.data&&sv.data.text?await sv.data.text():'';window.claude.use=u0;
+  ok('inventory export',!!sv&&/pompiernote-inventaire-/.test(sv.filename)&&/Valeur actuelle/.test(txt)&&/CAS-013/.test(txt));}
+ delete window.qrcode;click($('#nav-stock'));await wait(150);}
  /* ---------- Compta : menu à sections, frais des élèves, factures, dépenses, paie, budget, rapports, réglages ---------- */
  {const CE=()=>[...window.__store.entries()].filter(([k])=>k.startsWith('compta/')).map(([k,v])=>Object.assign({id:k.slice(7)},v)), setv=(id,v)=>{$(id).value=v;}, pk=(id,v)=>{const x=$(id);x.value=v;x.dispatchEvent(new Event('change',{bubbles:true}));}, sub=async()=>{$('#drawer form').requestSubmit();await wait(350);};
  click(navBtn('compta'));await wait(250);

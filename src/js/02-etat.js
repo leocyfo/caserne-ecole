@@ -12,7 +12,7 @@ const S={
   conn:'loading', canAdmin:null, canWrite:null,
   me:{id:null,name:'',avatarUrl:''}, isOwner:false, myAcct:null, peers:[],
   loaded:{}, busy:false, confirmClear:false, termKey:'', termLoaded:false,
-  data:{comptes:[],demandes:[],config:null,cours:[],enseignants:[],dossiers:{},groupes:[],eleves:[],examens:[],presences:{},presTerm:{},presOne:{},staffPres:{},absProfs:{},candidatures:[],remplacements:[],dispos:{},resultats:{},mesRes:{},mesPct:{},journal:[],archives:[],stock:[],stockMvt:[],compta:[],factures:[],paie:[],cptCfg:null},
+  data:{comptes:[],demandes:[],config:null,cours:[],enseignants:[],dossiers:{},groupes:[],eleves:[],examens:[],presences:{},presTerm:{},presOne:{},staffPres:{},absProfs:{},candidatures:[],remplacements:[],dispos:{},resultats:{},mesRes:{},mesPct:{},journal:[],archives:[],stock:[],stockMvt:[],stockModeles:[],stockFourn:[],stockCmd:[],stockRep:[],stockCpt:[],compta:[],factures:[],paie:[],cptCfg:null},
   dr:null
 };
 let DB=null, unsubPres=null, unsubTerm=null, unsubMR=null, uidSeq=0;

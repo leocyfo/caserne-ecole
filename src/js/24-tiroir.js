@@ -11,6 +11,7 @@ function openDrawer(dr){
 }
 function closeDrawer(force){
   const d=S.dr;if(!d)return;
+  skStopCam();
   if(d.kind==='att'&&d.dirty&&!force){d.confirmClose=true;renderDrawer();return;}
   S.dr=null;renderDrawer();
 }
@@ -25,6 +26,7 @@ function renderDrawer(){
   const html=d.kind==='att'?attDrawer():d.kind==='addc'?addCourseDrawer():d.kind==='course'?courseDrawer():d.kind==='exam'?examDrawer():d.kind==='student'?studentDrawer():d.kind==='staff'?staffDrawer():d.kind==='move'?moveDrawer():d.kind==='acct'?accountDrawer():d.kind==='print'?printDrawer():d.kind==='notifs'?notifDrawer():d.kind==='stk'?stockDrawer():d.kind==='cpt'?comptaDrawer():infoDrawer();
   const fresh=el._k!==d.uid;
   el.classList.toggle('dialog',d.kind==='move');
+  el.classList.toggle('wide',d.kind==='stk'&&(d.mode==='kit'||d.mode==='cmd'));
   setHTML(el,html,d.uid);
   if(fresh) el.scrollTop=0;
   if(el.hidden){el.hidden=false;sc.hidden=false;document.body.classList.add('lock');const c=$('#dr-close');if(c)c.focus({preventScroll:true});}

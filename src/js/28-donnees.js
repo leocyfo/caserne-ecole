@@ -60,6 +60,7 @@ function subscribe(){
     col('stock').onSnapshot(q=>{LIVE().stock=q.docs.map(d=>Object.assign({},d.data(),{id:d.id}));S.loaded.stock=true;schedule();},()=>{S.loaded.stock=true;schedule();});
     col('stock-mvt').onSnapshot(q=>{LIVE().stockMvt=q.docs.map(d=>Object.assign({},d.data(),{id:d.id})).sort((x,y)=>String(y.le||'').localeCompare(String(x.le||'')));schedule();},()=>{});
   }else S.loaded.stock=true;
+  if(S.canAdmin!==false) for(const [c,k] of [['stock-modeles','stockModeles'],['stock-fourn','stockFourn'],['stock-cmd','stockCmd'],['stock-rep','stockRep'],['stock-cpt','stockCpt']]) col(c).onSnapshot(q=>{LIVE()[k]=q.docs.map(d=>Object.assign({},d.data(),{id:d.id}));schedule();},()=>{});
   if(S.canAdmin!==false){
     let n=0;const done=()=>{if(++n>=4){S.loaded.compta=true;}schedule();};
     for(const [c,k] of [['compta','compta'],['compta-factures','factures'],['compta-paie','paie']]) col(c).onSnapshot(q=>{LIVE()[k]=q.docs.map(d=>Object.assign({},d.data(),{id:d.id}));if(!S['_cp'+k]){S['_cp'+k]=1;done();}else schedule();},()=>{if(!S['_cp'+k]){S['_cp'+k]=1;done();}});

@@ -5,7 +5,20 @@
    items : [type, titre, explication, page à ouvrir]. Types : new (nouvelle fonction), up (amélioration), fix (correction). */
 const NV_REPO='https://github.com/leocyfo/caserne-ecole';
 const NOUVEAUTES=[
-  {date:'2026-10-31',id:'',push:'PompierNote v2 : stock, compta, annonces, paramètres et clôture de l’année',items:[
+  {date:'2026-10-31',id:'',push:'Stock : fiches d’objets, codes QR, emplacements, inspections, kits, achats, réparations et comptage',items:[
+    ['new','Fiches d’objets','Une fiche par objet (Casque, Habit de combat, Émulseur…) : catégorie, préfixe des codes, tailles, inspection, prix, fournisseur. « Ajouter » ne demande que le nombre, la taille et l’emplacement : les codes se numérotent tout seuls. « Créer les fiches » regroupe les articles qui n’en ont pas.','stock'],
+    ['new','Codes QR','Des étiquettes à imprimer ; scannée avec l’appareil photo du téléphone, une étiquette ouvre l’article. Le scanner du site (caméra ou code tapé) fait les sorties et les retours groupés.','stock'],
+    ['new','Emplacements','Un arbre (bâtiment, local, étagère, camion), la vue « Par emplacement » avec tout ce qu’il contient, et les transferts.','stock'],
+    ['new','Import et actions en lot','Une liste d’Excel s’importe ; des cases à cocher pour déplacer, changer l’état, inspecter ou étiqueter plusieurs articles d’un coup.','stock'],
+    ['new','Inspections avec listes de contrôle','Chaque point se coche ; un point non conforme envoie l’article à réparer. Tournée d’inspection par emplacement et rapport imprimable ; remplissages des bouteilles, nettoyages et expositions au feu des EPI.','stock'],
+    ['new','Kit d’aspirant et tailles','Les tailles de chaque élève, puis « Équiper la classe » : une pièce de chaque, à la bonne taille, et ce qui manque. Feuille signée ; une pièce perdue ou brisée peut être facturée à l’élève.','stock'],
+    ['new','Préparation des séances','Les consommables prévus par module, la liste de préparation d’une journée, « Tout sortir », et les retours en retard (dans la cloche de l’instructeur responsable).','stock'],
+    ['new','Achats','« À commander » selon le seuil, les séances à venir et les péremptions ; bons de commande par fournisseur, réception partielle (stock et dépense dans la Compta) ; carnet des fournisseurs.','stock'],
+    ['new','Réparations et comptage','Bons de travail (réparateur, retour prévu, coût vers la Compta) ; comptage d’inventaire par emplacement, avec les écarts ajustés à la fin.','stock'],
+    ['new','Rapports du stock','Valeur à neuf et après usure, articles les plus sortis, bris, coûts de réparation, exports et inventaire imprimable par emplacement.','stock'],
+    ['fix','Tests sur GitHub','La grande page de tests a plus de temps pour finir sur les machines de GitHub.','']
+  ]},
+  {date:'2026-10-31',id:'40868df',push:'PompierNote v2 : stock, compta, annonces, paramètres et clôture de l’année',items:[
     ['new','Stock','Un menu à sections remplace le menu de gauche : tableau de bord, inventaire par catégorie (EPI, ARI et air comprimé, matériel, consommables), dotations, mouvements, inspections et réglages. Chaque article a son état (pastille verte, orange ou rouge), son emplacement et son historique.','stock'],
     ['new','Sorties, retours et bris','On sort du matériel pour une manœuvre (séance, instructeur), on le rentre avec un contrôle (nettoyé, intact) ; endommagé, il part en maintenance. On déclare un bris, on remet en service, on retire du service.','stock'],
     ['new','Inspections et épreuves','Les inspections, l’épreuve hydraulique des bouteilles d’ARI et la fin de vie se calculent selon la catégorie (réglable). Ce qui est en retard ou proche est signalé, dans le menu et dans la cloche.','stock'],

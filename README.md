@@ -65,13 +65,13 @@ Données : `config/ecole.ressources` (`{ id, nom, type }`, type `local` ou `equi
 
 Paramètres, Stock et Compta ont un **menu à sections** : en les ouvrant, le menu de gauche montre leurs sections ; l’entrée en tête ramène au menu, sur la page d’avant.
 
-- **Stock** (administration ; « Matériel » pour les enseignants) : inventaire par catégorie (EPI, ARI et air comprimé, matériel, consommables), articles suivis à l’unité (numéro de série, état, inspections, épreuve hydraulique des bouteilles, fin de vie) ou en quantité (seuil d’alerte). Sorties pour une manœuvre et retours avec contrôle, bris, maintenance, dotations aux élèves ou à la classe (feuille à signer, reprise en fin de cohorte), journal des mouvements, échéances d’inspection. Le matériel « réservable » s’ajoute aux locaux et équipements des séances.
+- **Stock** (administration ; « Matériel » pour les enseignants) : inventaire par catégorie (EPI, ARI et air comprimé, matériel, consommables), articles suivis à l’unité (numéro de série, état, inspections, épreuve hydraulique des bouteilles, fin de vie) ou en quantité (seuil d’alerte). Sorties pour une manœuvre et retours avec contrôle, bris, maintenance, dotations aux élèves ou à la classe (feuille à signer, reprise en fin de cohorte), journal des mouvements, échéances d’inspection. Le matériel « réservable » s’ajoute aux locaux et équipements des séances. **Fiches d’objets** : une fiche par objet (préfixe des codes, tailles, inspection, prix) ; « Ajouter » crée les exemplaires numérotés. Aussi : étiquettes QR (l’adresse du site suivie de `#stk=<id>` ouvre l’article), scanner et sorties groupées, arbre des emplacements, import CSV, actions en lot, listes de contrôle d’inspection, kit d’aspirant aux tailles des élèves, préparation des séances, bons de commande et fournisseurs, réparations, comptage d’inventaire et rapports.
 - **Compta** (administration) : frais des élèves (tarifs par classe, échéances, paiements, réductions, reçus), factures (numérotées, taxes au besoin), paiements reçus, paie des instructeurs (heures réellement données × taux, relevés approuvés puis payés), achats et dépenses, budget par poste, rapports (par mois, coût par élève, coût par module) et exports CSV. Montants en cents dans la base.
 - **Annonces** (Paramètres → Annonces) : un bandeau en haut des pages, pour tout le monde, un rôle ou des classes ; importance, dates, épinglage, bouton avec lien ; aussi dans la cloche.
 - **Clôture de l’année** (Paramètres → Année scolaire) : l’année est copiée dans `archives` (le résumé) et `archives-parts` (le contenu en morceaux), puis l’horaire, les présences, les examens, la compta et les mouvements du stock de l’année sont retirés. Une archive se consulte avec tout le site, en lecture seule.
 - **Profil** : l’élève voit son équipement et son compte, l’enseignant ses relevés de paie (réglable dans Droits et accès). Ils ne lisent que leurs propres documents.
 
-Données : `stock` (`aId` : l’élève ou la classe à qui l’article est attribué), `stock-mvt`, `compta` (écritures `rev`, `dep`, `red`), `compta-factures`, `compta-paie` (`<mois>_<enseignant>`), `compta-reglages/ecole` (taxes, taux, budget ; administration seulement), `config/ecole.tarifs`, `config/ecole.stock`, `config/ecole.annonces`, `archives`, `archives-parts`.
+Données : `stock` (`aId` : l’élève ou la classe à qui l’article est attribué ; `modele` : sa fiche), `stock-mvt`, `stock-modeles` (fiches d’objets), `stock-fourn`, `stock-cmd`, `stock-rep`, `stock-cpt`, `compta` (écritures `rev`, `dep`, `red`), `compta-factures`, `compta-paie` (`<mois>_<enseignant>`), `compta-reglages/ecole` (taxes, taux, budget ; administration seulement), `config/ecole.tarifs`, `config/ecole.stock`, `config/ecole.annonces`, `archives`, `archives-parts`.
 
 ## Essayer le site sur cet ordinateur
 
@@ -106,7 +106,7 @@ demo/connexion-demo.js      connexion et base de données simulées de la démo 
 demo/donnees.js             données d’exemple (générées)
 src/page.html               la coquille de la page (titre, structure, emplacement des styles et du code)
 src/styles/NN-nom.css       les styles, un fichier par sujet (18 fichiers, dont 17-affichages.css : Liste, Cartes, Compact ; 15-telephone.css : les écrans étroits)
-src/js/NN-nom.js            le code, un fichier par sujet (32 fichiers)
+src/js/NN-nom.js            le code, un fichier par sujet (34 fichiers)
 tests/                      tests automatiques (Chrome sans fenêtre)
 outils/assembler.js         réunit les fichiers de src/ en une seule page
 outils/construire.js        régénère index.html, demo.html et demo/donnees.js
@@ -124,7 +124,8 @@ La page est découpée par sujet. Les fichiers sont réunis dans l’ordre de le
 | `05-horaire-rendu`, `06-horaire-pages` | le tableau de la semaine et les pages de l’horaire |
 | `07-classes`, `08-eleves-fiches`, `09-personnel-heures` | pages Classes, Élèves (et fiches), Personnel et heures enseignées |
 | `10-presences`, `11-examens`, `12-affectations` | présences, examens et résultats, affectation des enseignants |
-| `13-modules`, `14-reprises`, `15-locaux-equipements`, `15-stock` | modules du programme, journées de reprise, locaux et équipements, stock du matériel |
+| `13-modules`, `14-reprises`, `15-locaux-equipements` | modules du programme, journées de reprise, locaux et équipements |
+| `15-stock-outils`, `15-stock-suivi`, `15-stock` | stock : fiches d’objets, import, QR et scanner, emplacements, kits ; préparation, achats, réparations, comptage, rapports ; inventaire, fiche d’un article, mouvements, inspections, réglages |
 | `16-compta`, `16-import`, `17-historique`, `18-notifications`, `19-impression` | compta, import d’élèves et copie d’horaire, historique, cloche, impression |
 | `20-nouveautes`, `21-annee-parametres`, `21-annonces`, `21-archives`, `22-comptes` | Nouveautés, calendrier scolaire et paramètres, annonces, clôture de l’année et archives, comptes et profils |
 | `23-cadre`, `24-tiroir` | menu, en-tête et rendu général ; panneau latéral |

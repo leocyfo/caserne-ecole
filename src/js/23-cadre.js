@@ -59,7 +59,7 @@ function ensureMyRes(){
   const who=S.student;
   unsubMR=col('resultats-eleves').where('eleve','==',who).onSnapshot(q=>{if(S._mrFor!==who)return;const m={},mp={};for(const d of q.docs){const v=d.data();if(v&&v.examen){m[v.examen]=v.v;if(v.pct!=null)mp[v.examen]=v.pct;}}S.data.mesRes=m;S.data.mesPct=mp;schedule();},()=>{});
 }
-function exampleCount(){let n=0;for(const k of ['cours','enseignants','groupes','eleves','examens','comptes','candidatures','remplacements','stock','stockMvt','compta','factures','paie']) n+=S.data[k].filter(d=>d.exemple).length;n+=Object.values(S.data.dispos).filter(d=>d&&d.exemple).length+Object.values(S.data.resultats).filter(d=>d&&d.exemple).length;return n;}
+function exampleCount(){let n=0;for(const k of ['cours','enseignants','groupes','eleves','examens','comptes','candidatures','remplacements','stock','stockMvt','compta','factures','paie','stockModeles','stockFourn','stockCmd','stockRep','stockCpt']) n+=S.data[k].filter(d=>d.exemple).length;n+=Object.values(S.data.dispos).filter(d=>d&&d.exemple).length+Object.values(S.data.resultats).filter(d=>d&&d.exemple).length;return n;}
 function renderSide(){
   const nom=(cfg().nomCourt||cfg().nom||'').trim();
   setHTML($('#brand-text'),`<span class="bn">Pompier<i>Note</i></span><small>${nom?esc(nom):'v2'}</small>`);
@@ -304,7 +304,9 @@ function glide(el,b,keepH){
     n.addEventListener('transitionend',clear,{once:true});setTimeout(clear,340);
   });
 }
-function render(){choreMemo=new Map();applyConfig();ensureSel();renderSide();renderTop();renderNotices();renderHeading();renderMain();renderDrawer();}
+function render(){choreMemo=new Map();applyConfig();ensureSel();
+  /* une étiquette QR scannée avec l’appareil photo : l’article s’ouvre dès que le stock est chargé */
+  if(!S._skHash&&S.loaded.stock&&S.conn==='shared'&&/#stk=/.test(location.hash)){S._skHash=true;setTimeout(skHash,0);}renderSide();renderTop();renderNotices();renderHeading();renderMain();renderDrawer();}
 let rq=false;
 function schedule(){if(rq)return;rq=true;setTimeout(()=>{rq=false;render();},16);}
 

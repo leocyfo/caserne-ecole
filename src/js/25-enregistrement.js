@@ -335,7 +335,7 @@ async function clearExamples(){
   for(const k of ['comptes','cours','eleves','enseignants','groupes','examens']) for(const d of S.data[k]) if(d.exemple) fns.push(()=>col(k).doc(d.id).delete());
   for(const [id,z] of Object.entries(S.data.dossiers)) if(z&&z.exemple) fns.push(()=>col('dossiers-personnel').doc(id).delete());
   for(const k of ['candidatures','remplacements']) for(const d of S.data[k]) if(d.exemple) fns.push(()=>col(k).doc(d.id).delete());
-  for(const [k,c] of [['stock','stock'],['stockMvt','stock-mvt'],['compta','compta'],['factures','compta-factures'],['paie','compta-paie']]) for(const d of S.data[k]||[]) if(d.exemple) fns.push(()=>col(c).doc(d.id).delete());
+  for(const [k,c] of [['stock','stock'],['stockMvt','stock-mvt'],['compta','compta'],['factures','compta-factures'],['paie','compta-paie'],['stockModeles','stock-modeles'],['stockFourn','stock-fourn'],['stockCmd','stock-cmd'],['stockRep','stock-rep'],['stockCpt','stock-cpt']]) for(const d of S.data[k]||[]) if(d.exemple) fns.push(()=>col(c).doc(d.id).delete());
   for(const [id,z] of Object.entries(S.data.dispos)) if(z&&z.exemple) fns.push(()=>col('disponibilites').doc(id).delete());
   for(const [id,z] of Object.entries(S.data.resultats)) if(z&&z.exemple) fns.push(()=>col('resultats').doc(id).delete());
   try{const q=await col('resultats-eleves').where('exemple','==',true).get();for(const d of q.docs)fns.push(()=>col('resultats-eleves').doc(d.id).delete());}catch(e){}

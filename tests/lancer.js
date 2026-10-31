@@ -30,10 +30,12 @@ const texte=h=>h.replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"'
 
 // Sur GitHub, chaque problème devient aussi une annotation visible dans le résumé de l’exécution
 const CI=!!process.env.GITHUB_ACTIONS, note=(p,l)=>{if(CI) console.log('::error title='+p+'::'+l.slice(0,400).replace(/%/g,'%25').replace(/\r/g,'%0D').replace(/\n/g,'%0A'));};
+/* Le temps simulé accordé à chaque page : les attentes des tests, plus le calcul de la page, qui compte aussi et
+   prend plus de temps sur les machines de GitHub. Une page qui finit plus tôt ne coûte rien de plus. */
 let total=0, rates=0;
 for(const p of pages){
   const profil=fs.mkdtempSync(path.join(os.tmpdir(),'caserne-ecole-tests-'));
-  const args=['--headless=new','--disable-gpu','--no-first-run','--user-data-dir='+profil,'--window-size=1440,1000','--virtual-time-budget='+(process.env.VT||240000),'--dump-dom',pathToFileURL(path.join(__dirname,p)).href];
+  const args=['--headless=new','--disable-gpu','--no-first-run','--user-data-dir='+profil,'--window-size=1440,1000','--virtual-time-budget='+(process.env.VT||900000),'--dump-dom',pathToFileURL(path.join(__dirname,p)).href];
   if(process.platform==='linux') args.unshift('--no-sandbox');
   const r=spawnSync(chrome,args,{encoding:'utf8',maxBuffer:512*1024*1024,timeout:600000});
   try{fs.rmSync(profil,{recursive:true,force:true,maxRetries:5,retryDelay:200});}catch(e){}
