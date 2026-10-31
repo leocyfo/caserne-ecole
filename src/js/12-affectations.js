@@ -19,7 +19,7 @@ const modKey=c=>{const m=/^M?(\d+)$/i.exec(String(c&&c.code||'').trim());return 
 const modOf=c=>{const k=modKey(c);return k==null?null:comps().find(x=>+x.code===k)||null;};
 /* Enseignants requis : ceux du cours du module que la séance donne (le plus grand s’il y en a plusieurs).
    Pour un examen, une reprise ou une activité : la valeur réglée sur la séance, sinon 1 (0 pour une activité). */
-const reqOf=s=>{const x=s.extra||s.sl||{}, m=modOf(s.c), ks=m?xCours(m,x):[];if(ks.length)return Math.max(...ks.map(cReq));if(x.requis!=null&&x.requis!=='')return Math.max(0,+x.requis||0);if(isActivity(s.c))return 0;return m&&+m.requis>0?+m.requis:1;};
+const reqOf=s=>{const x=s.extra||s.sl||{}, m=modOf(s.c), ks=m?xCours(m,x):[];if(ks.length)return Math.max(...ks.map(cReq));if(x.requis!=null&&x.requis!=='')return Math.max(0,+x.requis||0);if(isActivity(s.c))return 0;return m&&+m.requis>0?+m.requis:reqDef();};
 const linkedX=s=>!!(s&&s.extra&&acad()&&xCours(modOf(s.c),s.extra).length);
 function tchOf(c,key){
   const cs=affIdx().by[key];if(!cs) return [c.enseignant];
@@ -59,7 +59,7 @@ const affTile=(k,key,tab,lbl,val,cls,sub)=>`<button type="button" class="xm-tile
 /* ---------- Enseignant : mes cours (à pourvoir, en attente, attribués, donnés) ---------- */
 function teacherBoard(tid){
   const t=byId(S.data.enseignants,tid)||{}, I=affIdx(), open=[], wait=[], mine=[];let noDispo=0;
-  for(const s of upcomingSessions(150)){
+  for(const s of upcomingSessions(horizonJ())){
     const st=staffing(s), my=st.st[tid];
     if(st.assigned.includes(tid)){mine.push({s,st,remp:I.rp[s.key+'|'+tid]||null});continue;}
     if(my==='attente'||my==='refuse'){wait.push({s,st,v:my});continue;}
@@ -77,7 +77,7 @@ function myCoursesPage(){
   const nWait=B.wait.filter(x=>x.v==='attente').length, nRef=B.wait.length-nWait, nx=B.mine[0], hrs=Math.round(B.past.reduce((n,s)=>n+sHours(s),0));
   const myMods=((B.t.competences||[]).map(Number).filter(n=>!isNaN(n)).sort((a,b)=>a-b));
   const hasDispo=Object.keys((S.data.dispos[tid]||{}).jours||{}).some(d=>d>=todayISO());
-  const tb=`<div class="toolbar">${identitySelect()}<p class="summary" style="margin:0"><span>${myMods.length?`Vos modules : <b style="font-size:14px">${esc(myMods.map(n=>'M'+n).join(', '))}</b>`:'Aucun module inscrit à vos compétences'}</span></p><span class="grow"></span><button class="btn" type="button" id="go-dispos" data-act="nav" data-page="dispos">${icon('calok')}Mes disponibilités</button></div>`;
+  const tb=`<div class="toolbar">${identitySelect()}<p class="summary" style="margin:0"><span>${myMods.length?`Vos modules : <b style="font-size:14px" title="${esc(myMods.map(n=>'M'+n).join(', '))}">${myMods.length>6?pl(myMods.length,'module','modules'):esc(myMods.map(n=>'M'+n).join(', '))}</b>`:'Aucun module inscrit à vos compétences'}</span></p><span class="grow"></span><button class="btn" type="button" id="go-dispos" data-act="nav" data-page="dispos">${icon('calok')}Mes disponibilités</button></div>`;
   const tiles=`<div class="xm-tiles" role="group" aria-label="${W('Mes séances','Mes cours')}">
     ${affTile('mt','open',tab,'À pourvoir',B.open.length,'','selon vos disponibilités')}
     ${affTile('mt','wait',tab,'En attente de réponse',nWait,nWait?'warn':'',nRef?pl(nRef,'candidature refusée','candidatures refusées'):nWait?(nWait>1?'candidatures envoyées':'candidature envoyée'):'Aucune candidature')}
@@ -88,7 +88,7 @@ function myCoursesPage(){
   const cells=(s,end)=>`${xDate(s,sHot(s))}<div class="xm-t"><b>${sTitle(s)}</b>${sSub(s)?`<small>${sSub(s)}</small>`:''}</div>${xCls(s)}<span class="xm-m">${esc(momentOf(s))}</span><div class="xm-end">${end}</div>`;
   let body='';
   if(tab==='open'){
-    body=B.open.length?xList('xm-a5',head,B.open.map(({s,st})=>xRow('xm-a5','',cells(s,`${st.requis>1?`<span class="chip off">${st.firm} sur ${st.requis}</span>`:''}${can?`<button class="btn sm" type="button" data-act="af-apply" ${sAt(s)}${dis()}>${icon('plus')}Postuler</button>`:''}`),'')).join(''))
+    body=B.open.length?xList('xm-a5',head,B.open.map(({s,st})=>xRow('xm-a5','',cells(s,`${st.requis>1?`<span class="chip off">${st.firm} sur ${st.requis}</span>`:''}${!permOn('cand')?'<span class="chip off">Attribuée par l’administration</span>':can?`<button class="btn sm" type="button" data-act="af-apply" ${sAt(s)}${dis()}>${icon('plus')}Postuler</button>`:''}`),'')).join(''))
       :onLeave(B.t)?emptyBox('Vous êtes en congé',W('Les séances à pourvoir vous seront proposées à votre retour.','Les cours à pourvoir vous seront proposés à votre retour.'))
       :!myMods.length?emptyBox('Vos compétences ne sont pas encore inscrites','L’administration indique dans votre dossier les modules que vous pouvez donner. '+W('Les séances','Les cours')+' à pourvoir apparaîtront ici ensuite.')
       :!hasDispo?emptyBox('Indiquez vos disponibilités',W('Les séances à pourvoir sont proposées selon les jours où vous êtes disponible.','Les cours à pourvoir sont proposés selon les jours où vous êtes disponible.'),`<button class="btn primary" type="button" data-act="nav" data-page="dispos">${icon('calok')}Indiquer mes disponibilités</button>`)
@@ -100,7 +100,7 @@ function myCoursesPage(){
     const lim=+st.lim||25;
     body=B.mine.length?xList('xm-a5',head,B.mine.slice(0,lim).map(({s,remp})=>{
         const ask=st.rp===s.key&&!remp;
-        return xRow('xm-a5','',cells(s,remp?`<span class="chip warn">Remplacement demandé</span>${can?`<button class="btn sm ghost" type="button" data-act="af-remp-cancel" ${sAt(s)}${dis()}>Annuler</button>`:''}`:can&&!ask?`<button class="btn sm" type="button" data-act="pg-set" data-k="rp" data-v="${esc(s.key)}">Demander un remplacement</button>`:''),'')
+        return xRow('xm-a5','',cells(s,remp?`<span class="chip warn">Remplacement demandé</span>${can?`<button class="btn sm ghost" type="button" data-act="af-remp-cancel" ${sAt(s)}${dis()}>Annuler</button>`:''}`:can&&!ask&&permOn('remp')?`<button class="btn sm" type="button" data-act="pg-set" data-k="rp" data-v="${esc(s.key)}">Demander un remplacement</button>`:''),'')
           +(ask?`<form class="xm-row af-ask" data-form="af-remp" ${sAt(s)}><label class="field"><span>Raison du remplacement (facultatif)</span><input id="rp-motif" maxlength="140" autocomplete="off" placeholder="Ex. garde en caserne ce jour-là"></label><button class="btn sm primary" type="submit"${dis()}>Envoyer la demande</button><button class="btn sm ghost" type="button" data-act="pg-set" data-k="rp" data-v="">Annuler</button></form>`:'');}).join(''))
         +(B.mine.length>lim?`<div class="row" style="margin-top:12px"><button class="btn" type="button" data-act="pg-set" data-k="lim" data-v="${lim+25}">Afficher plus (${B.mine.length-lim})</button></div>`:'')
       :`<section class="panel"><p class="help">${W('Aucune séance attribuée','Aucun cours attribué')} à venir.</p></section>`;

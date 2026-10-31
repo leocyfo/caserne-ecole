@@ -6,6 +6,7 @@ const resOk=v=>v==='reussi'||v==='reprise', resKo=v=>v==='echec'||v==='absent';
 const seuil=()=>{const n=+cfg().seuil;return n>=1&&n<=100?Math.round(n):60;};
 const noteTxt=n=>n==null?'':`${String(Math.round(n*10)/10).replace('.',',')} %`;
 function examPctOf(x){
+  if(S.role==='student'&&cfg().notesEleves===false) return {};
   const d=S.data.resultats[resKeyOf(x)], p=Object.assign({},d&&d.pct), mine=(S.data.mesPct||{})[resKeyOf(x)];
   if(mine!=null&&S.student&&p[S.student]==null) p[S.student]=mine;
   return p;
@@ -47,10 +48,10 @@ const elNum=e=>e&&e.numero!=null&&e.numero!==''&&!isNaN(+e.numero)?+e.numero:1e9
 const byElNum=(a,b)=>elNum(a)-elNum(b)||collator.compare(a.nom||'',b.nom||'');
 function canEditExam(e){
   if(S.role==='admin') return S.canAdmin!==false;
-  if(S.role==='teacher'){if(!e)return true;const c=byId(S.data.cours,e.cours);return (c&&c.enseignant===S.teacher)||e.surveillant===S.teacher;}
+  if(S.role==='teacher'){if(!permOn('notes'))return false;if(!e)return true;const c=byId(S.data.cours,e.cours);return (c&&c.enseignant===S.teacher)||e.surveillant===S.teacher;}
   return false;
 }
-const canEditItem=x=>x.fromSess?(S.role==='admin'?S.canAdmin!==false:S.role==='teacher'&&(x.tch||[]).includes(S.teacher)):canEditExam(x.e);
+const canEditItem=x=>x.fromSess?(S.role==='admin'?S.canAdmin!==false:S.role==='teacher'&&permOn('notes')&&(x.tch||[]).includes(S.teacher)):canEditExam(x.e);
 /* Tous les examens de l’année avec leurs résultats : fiche d’examen, ou résultats rattachés à une séance « Examen » de l’horaire */
 function examBoard(filter){
   const items=allExamItems().filter(filter).map(x=>{

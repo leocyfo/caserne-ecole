@@ -40,9 +40,41 @@ service cloud.firestore {
 
     // Affectation des enseignants : chaque enseignant postule (statut « attente ») et retire sa propre candidature ;
     // l’administration approuve, refuse ou retire.
+    // Stock : le personnel lit et inscrit les mouvements ; l’administration gère le reste
+    match /stock/{id} {
+      allow read: if isStaff() || (hasAcct() && resource.data.aId == myRef());
+      allow write: if isStaff();
+    }
+    match /stock-mvt/{id} {
+      allow read, create: if isStaff();
+      allow update, delete: if isAdmin();
+    }
+    // Compta : l’administration seulement
+    match /compta/{id} {
+      allow read: if isAdmin() || (hasAcct() && resource.data.eleve == myRef());
+      allow write: if isAdmin();
+    }
+    match /compta-factures/{id} {
+      allow read, write: if isAdmin();
+    }
+    match /compta-paie/{id} {
+      allow read: if isAdmin() || (isTeacher() && resource.data.ens == myRef());
+      allow write: if isAdmin();
+    }
+    match /compta-reglages/{id} {
+      allow read, write: if isAdmin();
+    }
+    // Années clôturées : le résumé et le contenu en morceaux, pour l’administration seulement
+    match /archives/{id} {
+      allow read, write: if isAdmin();
+    }
+    match /archives-parts/{id} {
+      allow read, write: if isAdmin();
+    }
     match /candidatures/{id} {
       allow read: if isStaff();
-      allow create, update: if isAdmin() || (isTeacher() && request.resource.data.enseignant == myRef() && request.resource.data.statut == 'attente');
+      allow create, update: if isAdmin() || (isTeacher() && request.resource.data.enseignant == myRef() && (request.resource.data.statut == 'attente'
+        || (request.resource.data.statut == 'approuve' && get(/databases/$(database)/documents/config/ecole).data.get('perms', {}).get('auto', false) == true)));
       allow delete: if isAdmin() || (isTeacher() && resource.data.enseignant == myRef() && resource.data.statut == 'attente');
     }
     // Demandes de remplacement : l’enseignant attribué envoie ou annule la sienne
@@ -62,15 +94,6 @@ service cloud.firestore {
     match /journal/{id} {
       allow read: if isAdmin();
       allow create, update: if isStaff();
-    }
-
-    // Stock : tout compte lit les articles (un élève y voit l’équipement qui lui est prêté) ; seule l’administration les modifie.
-    // Les mouvements (prêts, retours, inspections, entrées, sorties, ventes) ne se modifient ni ne s’effacent.
-    match /stock/{id} { allow read: if member(); allow write: if isAdmin(); }
-    match /stock-mvt/{id} {
-      allow read: if isStaff();
-      allow create: if isAdmin();
-      allow update, delete: if isAdmin() && resource.data.exemple == true;
     }
 
     // Résultats d’examens : le personnel voit tout ; chaque élève ne lit que les siens

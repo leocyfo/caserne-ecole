@@ -1,5 +1,5 @@
 /* ---------- Présences : aides des classes et du personnel ---------- */
-const periodSeg=per=>`<div class="seg" role="group" aria-label="Période">${[['semaine','Cette semaine'],['mois','Ce mois'],['annee','Depuis la rentrée']].map(([k,l])=>`<button type="button" id="pp-${k}" data-act="pg-set" data-k="period" data-v="${k}" aria-pressed="${per===k}">${l}</button>`).join('')}</div>`;
+const periodSeg=per=>`<div class="seg" role="group" aria-label="Période">${[['semaine','Cette semaine','Semaine'],['mois','Ce mois','Mois'],['annee','Depuis la rentrée','Année']].map(([k,l,c])=>`<button type="button" id="pp-${k}" data-act="pg-set" data-k="period" data-v="${k}" aria-pressed="${per===k}" title="${l}"><span class="t-long">${l}</span><span class="t-short">${c}</span></button>`).join('')}</div>`;
 /* Présences d’une classe sur une période : cours passés, complétés, à rattraper, et totaux des élèves */
 function classAtt(gid,from,to,stats,sess){
   const els=studentsOf(gid), mine=sess.filter(s=>s.grp===gid);

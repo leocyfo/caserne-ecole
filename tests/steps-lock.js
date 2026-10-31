@@ -12,6 +12,7 @@ if(U.id==='u9'){
   click($('#nav-profil'));await wait(150);
   ok('student own profile',/Alexandre Beaulieu/.test($('#pf-name').textContent)&&/Capitaine/.test($('#main').textContent)&&!$('#pf-who')&&/Compte relié/.test($('#main').textContent)&&/Classe 119/.test($('#main').textContent));
   ok('student avatar photo',!!$('#main .prof-head .av img')&&!!$('#person .av img'));
+  ok('student sees only own equipment and account',!!$('#pf-equip')&&/Casque de pompier/.test($('#pf-equip').textContent)&&/Habit de combat/.test($('#pf-equip').textContent)&&!!$('#pf-compte')&&/Solde/.test($('#pf-compte').textContent)&&/\$/.test($('#pf-compte').textContent),($('#pf-equip')||{}).textContent);
   click($('#nav-examens'));await wait(300);
   ok('student sees own results without the class list',/Mes résultats/.test($('#main').textContent)&&$$('#main .xm-me .chip.ok').length>=5&&/Journée de reprise/.test($('#main').textContent),$$('#main .xm-me .chip').length);
   ok('student has no class data',!$('[data-act=x-rep]')&&!$('.xm-tile')&&!$('#nav-eleves'));
@@ -20,6 +21,7 @@ if(U.id==='u9'){
   ok('teacher name in menu',/Philippe Roy/.test($('#person').textContent));
   click($('#nav-profil'));await wait(150);
   ok('teacher own profile',/Philippe Roy/.test($('#pf-name').textContent)&&/Classe 120/.test($('#main').textContent)&&!$('#pf-who'),$('#main').textContent.replace(/\s+/g,' ').slice(0,200));
+  ok('teacher pay panel',!!$('#pf-paie')&&/Ce mois-ci/.test($('#pf-paie').textContent)&&/Aucun relevé/.test($('#pf-paie').textContent));
 }
 }catch(e){R.push('ERROR '+e.message+' '+e.stack);}
 R.push('ERRS '+JSON.stringify(window.__errs));

@@ -3,27 +3,27 @@ function onErr(e){
   if(e&&(e.code==='revoked'||e.code==='unavailable'||e.code==='not_granted'||e.code==='capability_disabled')){S.conn='off';schedule();}
 }
 function subWeek(){
-  if(!DB)return;
+  if(!DB||S.archive)return;
   if(unsubPres){unsubPres();unsubPres=null;}
   S.data.presences={};
   const from=iso(S.week), to=iso(addDays(S.week,6));
   try{
     unsubPres=col('presences').where('date','>=',from).where('date','<=',to).onSnapshot(q=>{
-      const m={};for(const d of q.docs)m[d.id]=d.data();S.data.presences=m;schedule();
+      const m={};for(const d of q.docs)m[d.id]=d.data();LIVE().presences=m;schedule();
     },onErr);
   }catch(e){onErr(e);}
 }
 /* Présences passées : on ne charge que la période que la page affiche (le mois en cours par défaut), et on l’élargit
    quand une page en demande plus (« Depuis la rentrée », la fiche d’un élève). Une fois élargie, elle le reste. */
 function ensureTerm(from){
-  if(!DB)return;
+  if(!DB||S.archive)return;
   const t=todayISO(), now=new Date(), want=from||iso(new Date(now.getFullYear(),now.getMonth(),1)), f=S.termFrom&&S.termFrom<=want?S.termFrom:want, k=f+'|'+t;
   if(S.termKey===k)return;
   if(unsubTerm){unsubTerm();unsubTerm=null;}
   S.termKey=k;S.termFrom=f;S.termLoaded=false;
   try{
     unsubTerm=col('presences').where('date','>=',f).where('date','<=',t).onSnapshot(q=>{
-      const m={};for(const d of q.docs)m[d.id]=d.data();S.data.presTerm=Object.assign({},S.data.presOne,m);S.termLoaded=true;schedule();
+      const m={};for(const d of q.docs)m[d.id]=d.data();const D=LIVE();D.presTerm=Object.assign({},D.presOne,m);if(!S.archive)S.termLoaded=true;schedule();
     },e=>{S.termLoaded=true;onErr(e);});
   }catch(e){onErr(e);}
 }
@@ -31,31 +31,42 @@ function ensureTerm(from){
    pour ne jamais ouvrir une feuille vide par-dessus des présences déjà prises. */
 const _pw=new Set();
 function loadPres(key,date){
-  if(!DB||!key||!date||S.role==='student'||presDoc(key)||_pw.has(key)) return;
+  if(!DB||S.archive||!key||!date||S.role==='student'||presDoc(key)||_pw.has(key)) return;
   if(date>todayISO()||(date>=iso(S.week)&&date<=iso(addDays(S.week,6)))||(S.termLoaded&&S.termFrom&&date>=S.termFrom)) return;
   _pw.add(key);
   col('presences').doc(key).get().then(s=>{
     if(!s.exists) return;
-    S.data.presOne[key]=s.data();
-    if(!S.data.presTerm[key]) S.data.presTerm=Object.assign({},S.data.presTerm,{[key]:s.data()});
+    const D=LIVE();D.presOne[key]=s.data();
+    if(!D.presTerm[key]) D.presTerm=Object.assign({},D.presTerm,{[key]:s.data()});
     schedule();
   }).catch(()=>{_pw.delete(key);});
 }
 function subscribe(){
-  DB.doc('config/ecole').onSnapshot(s=>{S.data.config=s.exists?s.data():null;S.loaded.config=true;S.data.cours=normCours(RAWC);schedule();},onErr);
+  DB.doc('config/ecole').onSnapshot(s=>{LIVE().config=s.exists?s.data():null;S.loaded.config=true;if(!S.archive)S.data.cours=normCours(RAWC);schedule();},onErr);
   for(const k of ['cours','enseignants','groupes','eleves','examens']){
-    col(k).onSnapshot(q=>{const a=q.docs.map(d=>Object.assign({},d.data(),{id:d.id}));if(k==='cours'){RAWC=a;S.data.cours=normCours(a);}else S.data[k]=a;S.loaded[k]=true;schedule();},e=>{S.loaded[k]=true;onErr(e);});
+    col(k).onSnapshot(q=>{const a=q.docs.map(d=>Object.assign({},d.data(),{id:d.id}));if(k==='cours'){if(S.archive)S.liveRawc=a;else{RAWC=a;S.data.cours=normCours(a);}}else LIVE()[k]=a;S.loaded[k]=true;schedule();},e=>{S.loaded[k]=true;onErr(e);});
   }
-  col('dossiers-personnel').onSnapshot(q=>{const m={};for(const d of q.docs)m[d.id]=d.data();S.data.dossiers=m;schedule();},()=>{});
-  col('resultats').onSnapshot(q=>{const m={};for(const d of q.docs)m[d.id]=d.data();S.data.resultats=m;schedule();},()=>{});
-  for(const k of ['candidatures','remplacements']) col(k).onSnapshot(q=>{S.data[k]=q.docs.map(d=>Object.assign({},d.data(),{id:d.id}));schedule();},()=>{});
-  col('disponibilites').onSnapshot(q=>{const m={};for(const d of q.docs)m[d.id]=d.data();S.data.dispos=m;schedule();},()=>{});
-  col('profs-absents').onSnapshot(q=>{const m={};for(const d of q.docs)m[d.id]=(d.data().ids||[]);S.data.absProfs=m;schedule();},()=>{});
-  col('stock').onSnapshot(q=>{S.data.stock=q.docs.map(d=>Object.assign({},d.data(),{id:d.id}));schedule();},()=>{});
-  col('presences-personnel').onSnapshot(q=>{const m={};for(const d of q.docs)m[d.id]=d.data();S.data.staffPres=m;schedule();},()=>{});
+  col('dossiers-personnel').onSnapshot(q=>{const m={};for(const d of q.docs)m[d.id]=d.data();LIVE().dossiers=m;schedule();},()=>{});
+  col('resultats').onSnapshot(q=>{const m={};for(const d of q.docs)m[d.id]=d.data();LIVE().resultats=m;schedule();},()=>{});
+  for(const k of ['candidatures','remplacements']) col(k).onSnapshot(q=>{LIVE()[k]=q.docs.map(d=>Object.assign({},d.data(),{id:d.id}));schedule();},()=>{});
+  col('disponibilites').onSnapshot(q=>{const m={};for(const d of q.docs)m[d.id]=d.data();LIVE().dispos=m;schedule();},()=>{});
+  col('profs-absents').onSnapshot(q=>{const m={};for(const d of q.docs)m[d.id]=(d.data().ids||[]);LIVE().absProfs=m;schedule();},()=>{});
+  col('presences-personnel').onSnapshot(q=>{const m={};for(const d of q.docs)m[d.id]=d.data();LIVE().staffPres=m;schedule();},()=>{});
   if(S.me.id) DB.doc('comptes/'+S.me.id).onSnapshot(x=>{S.myAcct=x.exists?Object.assign({},x.data(),{id:x.id}):null;schedule();},()=>{});
-  if(S.canAdmin!==false) col('demandes').onSnapshot(q=>{S.data.demandes=q.docs.map(d=>Object.assign({},d.data(),{id:d.id}));schedule();},()=>{S.data.demandes=[];});
-  if(S.canAdmin!==false) col('comptes').onSnapshot(q=>{S.data.comptes=q.docs.map(d=>Object.assign({},d.data(),{id:d.id}));schedule();},()=>{S.data.comptes=[];});
+  if(S.canAdmin!==false) col('demandes').onSnapshot(q=>{LIVE().demandes=q.docs.map(d=>Object.assign({},d.data(),{id:d.id}));schedule();},()=>{LIVE().demandes=[];});
+  if(S.canAdmin!==false) col('comptes').onSnapshot(q=>{LIVE().comptes=q.docs.map(d=>Object.assign({},d.data(),{id:d.id}));schedule();},()=>{LIVE().comptes=[];});
+  /* stock : le personnel ; compta : l’administration */
+  if(S.canAdmin!==false||S.role!=='student'){
+    col('stock').onSnapshot(q=>{LIVE().stock=q.docs.map(d=>Object.assign({},d.data(),{id:d.id}));S.loaded.stock=true;schedule();},()=>{S.loaded.stock=true;schedule();});
+    col('stock-mvt').onSnapshot(q=>{LIVE().stockMvt=q.docs.map(d=>Object.assign({},d.data(),{id:d.id})).sort((x,y)=>String(y.le||'').localeCompare(String(x.le||'')));schedule();},()=>{});
+  }else S.loaded.stock=true;
+  if(S.canAdmin!==false){
+    let n=0;const done=()=>{if(++n>=4){S.loaded.compta=true;}schedule();};
+    for(const [c,k] of [['compta','compta'],['compta-factures','factures'],['compta-paie','paie']]) col(c).onSnapshot(q=>{LIVE()[k]=q.docs.map(d=>Object.assign({},d.data(),{id:d.id}));if(!S['_cp'+k]){S['_cp'+k]=1;done();}else schedule();},()=>{if(!S['_cp'+k]){S['_cp'+k]=1;done();}});
+    DB.doc('compta-reglages/ecole').onSnapshot(x=>{LIVE().cptCfg=x.exists?x.data():null;if(!S._cpcfg){S._cpcfg=1;done();}else schedule();},()=>{if(!S._cpcfg){S._cpcfg=1;done();}});
+  }
+  /* années clôturées (administration seulement) */
+  if(S.canAdmin!==false) col('archives').onSnapshot(q=>{LIVE().archives=q.docs.map(d=>Object.assign({},d.data(),{id:d.id})).sort((x,y)=>String(y.cloture||'').localeCompare(String(x.cloture||'')));schedule();},()=>{LIVE().archives=[];});
   subWeek();
 }
 async function init(){

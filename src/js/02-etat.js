@@ -5,16 +5,18 @@ try{prefs=JSON.parse(localStorage.getItem(PREF)||'{}')||{};}catch(e){prefs={};}
 const S={
   role:['admin','teacher','student'].includes(prefs.role)?prefs.role:'admin',
   teacher:prefs.teacher||'', group:prefs.group||'', student:prefs.student||'', filtre:prefs.filtre||'', fmode:prefs.fmode==='e'?'e':'g', compact:prefs.compact===true, view:prefs.view==='jour'?'jour':'semaine', dayDate:'', sideMini:prefs.sideMini===true||(prefs.sideMini===undefined&&typeof window!=='undefined'&&window.innerWidth<=900), demoHidden:prefs.demoHidden===true, nvSeen:typeof prefs.nvSeen==='string'?prefs.nvSeen:'', nfSeen:Array.isArray(prefs.nfSeen)?prefs.nfSeen.slice(-400):[],
+  views:prefs.views&&typeof prefs.views==='object'?prefs.views:{},
+  annVu:Array.isArray(prefs.annVu)?prefs.annVu.slice(-150):[], annAll:false,
   page:'calendar', pg:{},
   week:(()=>{const d=new Date(),j=d.getDay();return monday(j===6?addDays(d,2):j===0?addDays(d,1):d);})(), day:0,
   conn:'loading', canAdmin:null, canWrite:null,
   me:{id:null,name:'',avatarUrl:''}, isOwner:false, myAcct:null, peers:[],
   loaded:{}, busy:false, confirmClear:false, termKey:'', termLoaded:false,
-  data:{comptes:[],demandes:[],config:null,cours:[],enseignants:[],dossiers:{},groupes:[],eleves:[],examens:[],presences:{},presTerm:{},presOne:{},staffPres:{},absProfs:{},candidatures:[],remplacements:[],dispos:{},resultats:{},mesRes:{},mesPct:{},journal:[],stock:[],stockMvt:[]},
+  data:{comptes:[],demandes:[],config:null,cours:[],enseignants:[],dossiers:{},groupes:[],eleves:[],examens:[],presences:{},presTerm:{},presOne:{},staffPres:{},absProfs:{},candidatures:[],remplacements:[],dispos:{},resultats:{},mesRes:{},mesPct:{},journal:[],archives:[],stock:[],stockMvt:[],compta:[],factures:[],paie:[],cptCfg:null},
   dr:null
 };
 let DB=null, unsubPres=null, unsubTerm=null, unsubMR=null, uidSeq=0;
-function savePrefs(){try{localStorage.setItem(PREF,JSON.stringify({role:S.role,teacher:S.teacher,group:S.group,student:S.student,filtre:S.filtre,fmode:S.fmode,compact:S.compact,view:S.view,sideMini:S.sideMini,demoHidden:S.demoHidden,nvSeen:S.nvSeen,nfSeen:S.nfSeen}));}catch(e){}}
+function savePrefs(){try{localStorage.setItem(PREF,JSON.stringify({role:S.role,teacher:S.teacher,group:S.group,student:S.student,filtre:S.filtre,fmode:S.fmode,compact:S.compact,view:S.view,sideMini:S.sideMini,demoHidden:S.demoHidden,nvSeen:S.nvSeen,nfSeen:S.nfSeen,views:S.views,annVu:S.annVu}));}catch(e){}}
 
 const byId=(arr,id)=>arr.find(x=>x.id===id);
 const cfg=()=>Object.assign({nom:'',annee:'',debut:'',fin:'',conges:[],etapes:[],competences:[]},S.data.config||{});

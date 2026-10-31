@@ -19,7 +19,7 @@ const mCours=k=>(k&&Array.isArray(k.cours)?k.cours:[]).slice().sort((a,b)=>colla
 const mExams=k=>(k&&Array.isArray(k.examens)?k.examens:[]);
 const xCours=(k,x)=>k&&x&&Array.isArray(x.cours)?x.cours.map(id=>(k.cours||[]).find(c=>c.id===id)).filter(Boolean):[];
 const xExams=(k,x)=>k&&x&&Array.isArray(x.examens)?x.examens.map(id=>(k.examens||[]).find(e=>e.id===id)).filter(Boolean):[];
-const cReq=c=>c.requis==null||c.requis===''?1:Math.max(0,Math.min(9,+c.requis||0));
+const cReq=c=>c.requis==null||c.requis===''?reqDef():Math.max(0,Math.min(9,+c.requis||0));
 const autoLabel=a=>a.length===2?a.join('–'):a.join(', ');
 const chargeName=k=>k&&k.charge&&byId(S.data.enseignants,k.charge)?tName(k.charge):'';
 /* Dans quelles classes chaque cours et chaque examen du module est à l’horaire */
@@ -232,7 +232,7 @@ async function addCourseDay(o){
   if(off) return `Le ${dn(dd)} ${fMonth.format(dd)} n’est pas un jour de classe (${off}).`;
   const a0=toMin(per.debut), b0=toMin(per.fin), clash=sessionsOn(date).find(x=>x.grp===gid&&!x.cancelled&&x.start<b0&&a0<x.end);
   if(clash) return `${gName(gid)} a déjà ${clash.c.titre} ${momentIn(clash.start,clash.end)} ce jour-là.`;
-  const x={id:'a'+date.replace(/-/g,'')+per.k+Math.random().toString(36).slice(2,5),date,debut:per.debut,fin:per.fin,tags:[],label:titre,minutes:per.k==='jour'?360:180};
+  const x={id:'a'+date.replace(/-/g,'')+per.k+Math.random().toString(36).slice(2,5),date,debut:per.debut,fin:per.fin,tags:[],label:titre,minutes:perMin(per)};
   if(!mk) x.tags=withAct([],o.type||'activite');
   else if(es.length||ks.length){
     x.tags=withAct([],es.length?examActOf(es[0]):ks[0].type);

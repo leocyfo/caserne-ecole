@@ -208,7 +208,7 @@ function studentDrawer(){
     <div class="grid2"><label class="field"><span>Nom de l’élève</span><input id="st-nom" data-f="nom" value="${esc(f.nom)}" maxlength="80" autocomplete="off"></label><label class="field"><span>Classe</span><select id="st-groupe" data-f="groupe">${gOpts}</select></label></div>
     <div class="grid2"><label class="field"><span>Date de naissance</span><input type="date" id="st-naiss" data-f="naissance" value="${esc(f.naissance)}"></label><label class="field"><span>Personne à joindre en cas d’urgence</span><input id="st-parent" data-f="parent" value="${esc(f.parent)}" maxlength="80" autocomplete="off"></label></div>
     <div class="grid2"><label class="field"><span>Courriel</span><input type="email" id="st-mail" data-f="courriel" value="${esc(f.courriel)}" maxlength="80" autocomplete="off"></label><label class="field"><span>Téléphone</span><input id="st-tel" data-f="telephone" value="${esc(f.telephone)}" maxlength="30" autocomplete="off"></label></div>
-    <div class="grid2"><label class="field"><span>Fonction dans la classe</span><select id="st-fonc" data-f="fonction">${['','Capitaine','Lieutenant 1','Lieutenant 2'].map(x=>`<option value="${x}"${f.fonction===x?' selected':''}>${x||'Aucune'}</option>`).join('')}</select></label><label class="field"><span>Numéro dans la classe</span><input type="number" id="st-num" data-f="numero" value="${esc(f.numero)}" min="1" step="1" inputmode="numeric"></label></div>
+    <div class="grid2"><label class="field"><span>Fonction dans la classe</span><select id="st-fonc" data-f="fonction">${['',...gradesL().map(g=>g.nom),...(f.fonction&&!gradesL().some(g=>g.nom===f.fonction)?[f.fonction]:[])].map(x=>`<option value="${esc(x)}"${f.fonction===x?' selected':''}>${esc(x)||'Aucune'}</option>`).join('')}</select></label><label class="field"><span>Numéro dans la classe</span><input type="number" id="st-num" data-f="numero" value="${esc(f.numero)}" min="1" step="1" inputmode="numeric"></label></div>
     <label class="field"><span>Suivi</span><textarea id="st-notes" data-f="notes" rows="3" placeholder="Rencontres, mesures d’aide, remarques…">${esc(f.notes)}</textarea></label>
     ${d.err?`<p class="form-err" role="alert">${esc(d.err)}</p>`:''}</form>`;
   const foot=d.confirmDel
@@ -240,7 +240,7 @@ function staffDrawer(){
   const cs=d.id?S.data.cours.filter(c=>c.enseignant===d.id):[];
   const body=`<form id="sf-form" data-form="staff" novalidate>
     <label class="field"><span>Nom</span><input id="sf-nom" data-f="nom" value="${esc(f.nom)}" maxlength="80" autocomplete="off"></label>
-    <div class="grid2"><label class="field"><span>Fonction</span><select id="sf-fonc" data-f="fonction">${FONCTIONS.map(x=>`<option${f.fonction===x?' selected':''}>${x}</option>`).join('')}</select></label><label class="field"><span>Statut d’emploi</span><select id="sf-stat" data-f="statut">${Object.keys(STATUTS).map(x=>`<option${f.statut===x?' selected':''}>${x}</option>`).join('')}</select></label></div>
+    <div class="grid2"><label class="field"><span>Fonction</span><select id="sf-fonc" data-f="fonction">${FONCTIONS.concat(f.fonction&&!FONCTIONS.includes(f.fonction)?[f.fonction]:[]).map(x=>`<option${f.fonction===x?' selected':''}>${esc(x)}</option>`).join('')}</select></label><label class="field"><span>Statut d’emploi</span><select id="sf-stat" data-f="statut">${Object.keys(STATUTS).map(x=>`<option${f.statut===x?' selected':''}>${x}</option>`).join('')}</select></label></div>
     <div class="grid2"><label class="field"><span>Courriel</span><input type="email" id="sf-mail" data-f="courriel" value="${esc(f.courriel)}" maxlength="80" autocomplete="off"></label><label class="field"><span>Téléphone</span><input id="sf-tel" data-f="telephone" value="${esc(f.telephone)}" maxlength="30" autocomplete="off"></label></div>
     <label class="field"><span>Date d’embauche</span><input type="date" id="sf-emb" data-f="embauche" value="${esc(f.embauche)}"></label>
     <label class="field"><span>Remarques</span><textarea id="sf-notes" data-f="notes" rows="3">${esc(f.notes)}</textarea></label>
@@ -295,6 +295,7 @@ function errMsg(e){
   return 'Enregistrement impossible pour le moment. Réessayez.';
 }
 async function write(fn,okMsg){
+  if(S.archive){toast('Archive en lecture seule : revenez à l’année en cours pour modifier.','bad');return false;}
   if(!DB){toast('Ouvrez la page dans claude.ai, connecté, pour enregistrer.','bad');return false;}
   for(let i=0;i<2;i++){
     try{await fn();if(okMsg)toast(okMsg);return true;}
@@ -306,6 +307,7 @@ async function write(fn,okMsg){
   return false;
 }
 async function runAll(fns,okMsg){
+  if(S.archive){toast('Archive en lecture seule : revenez à l’année en cours pour modifier.','bad');return false;}
   if(!DB){toast('Ouvrez la page dans claude.ai, connecté, pour enregistrer.','bad');return false;}
   S.busy=true;render();
   const q=[...fns];let fail=0,first=null;
@@ -333,11 +335,10 @@ async function clearExamples(){
   for(const k of ['comptes','cours','eleves','enseignants','groupes','examens']) for(const d of S.data[k]) if(d.exemple) fns.push(()=>col(k).doc(d.id).delete());
   for(const [id,z] of Object.entries(S.data.dossiers)) if(z&&z.exemple) fns.push(()=>col('dossiers-personnel').doc(id).delete());
   for(const k of ['candidatures','remplacements']) for(const d of S.data[k]) if(d.exemple) fns.push(()=>col(k).doc(d.id).delete());
+  for(const [k,c] of [['stock','stock'],['stockMvt','stock-mvt'],['compta','compta'],['factures','compta-factures'],['paie','compta-paie']]) for(const d of S.data[k]||[]) if(d.exemple) fns.push(()=>col(c).doc(d.id).delete());
   for(const [id,z] of Object.entries(S.data.dispos)) if(z&&z.exemple) fns.push(()=>col('disponibilites').doc(id).delete());
   for(const [id,z] of Object.entries(S.data.resultats)) if(z&&z.exemple) fns.push(()=>col('resultats').doc(id).delete());
   try{const q=await col('resultats-eleves').where('exemple','==',true).get();for(const d of q.docs)fns.push(()=>col('resultats-eleves').doc(d.id).delete());}catch(e){}
-  for(const a of stk()) if(a.exemple) fns.push(()=>col('stock').doc(a.id).delete());
-  try{const q=await col('stock-mvt').where('exemple','==',true).get();for(const d of q.docs)fns.push(()=>col('stock-mvt').doc(d.id).delete());}catch(e){}
   for(const [id,z] of Object.entries(S.data.staffPres)) if(z&&z.exemple) fns.push(()=>col('presences-personnel').doc(id).delete());
   try{const q=await col('presences').where('exemple','==',true).get();for(const d of q.docs)fns.push(()=>col('presences').doc(d.id).delete());}catch(e){}
   if(S.data.config&&S.data.config.exemple){const c=configDoc();c.nom='';c.exemple=false;fns.push(()=>DB.doc('config/ecole').set(c));}

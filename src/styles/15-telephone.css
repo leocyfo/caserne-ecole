@@ -66,7 +66,7 @@ body{padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inse
   .tbl.stack .tb-rate{min-width:0}
   /* Petits textes : 12 px au moins */
   .chip,.chore-chip,.role-chip,.wk-corner,.wk-class small,.day-pick small,.cc-kind,.cc-flag,.kpi span,.tbl th,.eyebrow,.facts dt,
-  .cl-hd,.cl-row [data-l]::before,.xm-tile .lbl,.xm-hd,.xm-d small,.nav-n,.dp-wd,.dp-c span,.md-m>span,.xg thead th,.xg tfoot .xg-n,
+  .cl-hd,.cl-row [data-l]::before,.xm-tile .lbl,.xm-hd,.xm-d small,.nav-n,.nav-todo,.dp-wd,.dp-c span,.md-m>span,.xg thead th,.xg tfoot .xg-n,
   .xg thead .xg-r,.xg-r small,.xg-h small,.st-hd,.st-row [data-l]::before,.miss-d small,.col-prin,.fh-stats dt,.fiche-h3,
   .cell-chore small,.fchip small,.mv-box small,.pick-hint{font-size:12px}
 }

@@ -46,9 +46,15 @@ function viewSelHTML(){
     const sel=f.startsWith('g:')?gName(f.slice(2)):'';
     return `<div class="viewsel">${seg}${sel?`<span class="token" id="class-token">${esc(sel)}<button type="button" id="tok-clear" data-act="filt" data-v="" aria-label="Revoir toutes les classes" title="Revoir toutes les classes">×</button></span>`:''}</div>`;
   }
+  return `<div class="viewsel">${seg}</div>`;
+}
+/* Mode Enseignants : la liste des enseignants, dans une rangée au-dessus de l’horaire (la barre du titre reste sur une ligne) */
+function teacherChipsHTML(){
+  if(S.role!=='admin'||S.fmode!=='e'||!S.data.cours.length||!(S.conn==='shared'&&allLoaded())) return '';
+  const f=S.filtre;
   const chips=[`<button type="button" class="fchip" id="fc-all" data-act="filt" data-v="" aria-pressed="${!f}">Tous</button>`]
     .concat(teachers().map(t=>`<button type="button" class="fchip" id="fc-${esc(t.id)}" data-act="filt" data-v="e:${esc(t.id)}" aria-pressed="${f==='e:'+t.id}">${esc(t.nom)}<small title="${W('Séances','Cours')} cette semaine">${weekCount(t.id,S.week)}</small></button>`));
-  return `<div class="viewsel">${seg}<div class="chips" role="group" aria-label="Enseignants">${chips.join('')}</div></div>`;
+  return `<div class="chips tch-row" role="group" aria-label="Enseignants">${chips.join('')}</div>`;
 }
 function adminMain(){
   if(!S.data.cours.length){

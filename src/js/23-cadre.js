@@ -1,4 +1,6 @@
 /* ---------- Rendu : cadre ---------- */
+let cfgSeen=null, cfgN=0;
+const cfgVer=()=>{if(S.data.config!==cfgSeen){cfgSeen=S.data.config;cfgN++;}return cfgN;};
 function setHTML(el,html,key){
   if(el._h===html&&el._k===key) return;
   const same=key!==undefined&&el._k===key, vals={};
@@ -11,12 +13,21 @@ function setHTML(el,html,key){
   if(same) el.scrollTop=st;
   if(fid){const f=document.getElementById(fid);if(f&&el.contains(f)){f.focus({preventScroll:true});if(sel&&sel[0]!=null){try{f.setSelectionRange(sel[0],sel[1]);}catch(e){}}}}
 }
-/* Menu : [page, libellé, icône, section qui commence à cette entrée] — l’administration a ses entrées en sections */
+/* Menu : [page, libellé, icône, section qui commence à cette entrée, pages réunies sous cette entrée (onglets), étiquette]
+   Une entrée qui réunit plusieurs pages les montre en onglets à côté du titre ; elle s’ouvre sur sa première page. */
 const NAV={
-  admin:[['calendar','Calendrier','cal','Horaire'],['affectations','Affectations','clip'],['annee','Calendrier scolaire','year'],['classes','Classes','teach','École'],['eleves','Élèves','users'],['personnel','Personnel','card'],['modules','Modules','layers'],['examens','Examens','exam'],['stock','Stock','box','Ressources'],['comptes','Comptes','key','Administration'],['historique','Historique','clock'],['params','Paramètres','gear'],['nouveautes','Nouveautés','spark']],
-  teacher:[['calendar','Mon horaire','cal'],['mescours','Mes cours','clip'],['dispos','Disponibilités','calok'],['examens','Examens','exam'],['annee','Calendrier scolaire','year'],['profil','Mon profil','user']],
-  student:[['calendar','Mon horaire','cal'],['examens','Examens','exam'],['annee','Calendrier scolaire','year'],['profil','Mon profil','user']]
+  admin:[['calendar','Calendrier','cal','Horaire',['calendar','annee']],['affectations','Affectations','clip'],['classes','Classes','teach','École'],['eleves','Élèves et personnel','users',null,['eleves','personnel']],['modules','Modules et examens','layers','Ressources',['modules','examens']],['stock','Stock','box'],['compta','Compta','coin'],['comptes','Comptes','key','Administration'],['historique','Historique','clock'],['params','Paramètres','gear'],['nouveautes','Nouveautés','spark']],
+  teacher:[['calendar','Mon horaire','cal',null,['calendar','annee']],['mescours','Mes cours','clip'],['dispos','Disponibilités','calok'],['examens','Examens','exam'],['stock','Matériel','box'],['profil','Mon profil','user']],
+  student:[['calendar','Mon horaire','cal',null,['calendar','annee']],['examens','Examens','exam'],['profil','Mon profil','user']]
 };
+const TAB_LBL={calendar:'Horaire',annee:'Année scolaire',eleves:'Élèves',personnel:'Personnel',modules:'Modules',examens:'Examens'};
+/* L’entrée du menu qui contient une page (elle-même, ou celle qui la réunit avec d’autres) */
+/* Entrées masquées dans Paramètres (administration seulement ; jamais le calendrier, les paramètres ni les nouveautés) */
+const navHidden=r=>r==='admin'?(cfg().menuMasque||[]).filter(k=>!['calendar','params','nouveautes'].includes(k)):r==='teacher'&&!(skCfg().perms.sortie||skCfg().perms.bris)?['stock']:[];
+const navList=r=>NAV[r].filter(n=>!navHidden(r).includes(n[0]));
+/* Le menu affiché : une section masquée en entier disparaît ; sinon son titre passe à sa première entrée visible */
+function navShown(){const hid=navHidden(S.role), out=[];let pend='';for(const n of NAV[S.role]){if(n[3])pend=n[3];if(hid.includes(n[0]))continue;const x=[...n];x[3]=pend;out.push(x);pend='';}return out;}
+const navGroup=p=>navList(S.role).find(n=>n[0]===p||(n[4]&&n[4].includes(p)));
 function ensureSel(){
   if(S.view==='jour'&&(!S.dayDate||iso(monday(parse(S.dayDate)))!==iso(S.week))) S.dayDate=initDay();
   const vis=visibleRoles();
@@ -24,7 +35,7 @@ function ensureSel(){
   if(siteMode()&&!S._role0){S._role0=true;S.role=vis[0];}
   if(!vis.includes(S.role)) S.role=vis[0];
   if(S.page==='presences') S.page='classes';
-  if(!NAV[S.role].some(n=>n[0]===S.page)&&S.page!=='profil') S.page='calendar';
+  if(!navGroup(S.page)&&S.page!=='profil') S.page='calendar';
   if(!allLoaded()) return;
   // Un compte enseignant ou élève choisit lui-même l’enseignant ou la classe affichés.
   const a=locked()?myAcct():null;
@@ -36,35 +47,78 @@ function ensureSel(){
   if(!a){const els=studentsOf(S.group);if(els.length&&!els.some(e=>e.id===S.student))S.student=els[0].id;}
   if(S.filtre){const k=S.filtre[0],id=S.filtre.slice(2);if((k==='g'&&!gs.some(g=>g.id===id))||(k==='e'&&!ts.some(t=>t.id===id)))S.filtre='';else S.fmode=k;}
   if(S.role==='student') ensureMyRes();
+  if(S.role!=='admin') ensureMine();
 }
 /* Résultats de l’élève affiché : il ne peut lire que les siens */
 function ensureMyRes(){
   if(!DB||S._mrFor===S.student) return;
   if(unsubMR){try{unsubMR();}catch(e){}unsubMR=null;}
   S._mrFor=S.student;S.data.mesRes={};
+  if(S.archive){const m={},mp={};for(const v of S.archive.resEl) if(v&&v.eleve===S.student&&v.examen){m[v.examen]=v.v;if(v.pct!=null)mp[v.examen]=v.pct;}S.data.mesRes=m;S.data.mesPct=mp;return;}
   if(!S.student) return;
   const who=S.student;
   unsubMR=col('resultats-eleves').where('eleve','==',who).onSnapshot(q=>{if(S._mrFor!==who)return;const m={},mp={};for(const d of q.docs){const v=d.data();if(v&&v.examen){m[v.examen]=v.v;if(v.pct!=null)mp[v.examen]=v.pct;}}S.data.mesRes=m;S.data.mesPct=mp;schedule();},()=>{});
 }
-function exampleCount(){let n=0;for(const k of ['cours','enseignants','groupes','eleves','examens','comptes','candidatures','remplacements']) n+=S.data[k].filter(d=>d.exemple).length;n+=stk().filter(d=>d.exemple).length+Object.values(S.data.dispos).filter(d=>d&&d.exemple).length+Object.values(S.data.resultats).filter(d=>d&&d.exemple).length;return n;}
+function exampleCount(){let n=0;for(const k of ['cours','enseignants','groupes','eleves','examens','comptes','candidatures','remplacements','stock','stockMvt','compta','factures','paie']) n+=S.data[k].filter(d=>d.exemple).length;n+=Object.values(S.data.dispos).filter(d=>d&&d.exemple).length+Object.values(S.data.resultats).filter(d=>d&&d.exemple).length;return n;}
 function renderSide(){
-  const nom=(cfg().nom||'').trim();
+  const nom=(cfg().nomCourt||cfg().nom||'').trim();
   setHTML($('#brand-text'),`<span class="bn">Pompier<i>Note</i></span><small>${nom?esc(nom):'v2'}</small>`);
   $('#ws-label').textContent='Espace '+(S.role==='admin'?'administrateur':S.role==='teacher'?'enseignant':'élève');
   $('.app').classList.toggle('side-mini',S.sideMini);
   $('#logout-btn').hidden=!siteMode();
   const tg=$('#side-toggle'), tl=S.sideMini?'Afficher le menu':'Réduire le menu';
   tg.setAttribute('aria-expanded',String(!S.sideMini));tg.title=tl;tg.querySelector('span').textContent=tl;
-  setHTML($('#nav'),NAV[S.role].map(([k,l,i,sec])=>`${sec?`<li class="nav-sec">${sec}</li>`:''}<li><button type="button" id="nav-${k}" title="${navLbl(k,l)}" data-act="nav" data-page="${k}"${S.page===k?' aria-current="page"':''}>${icon(i)}<span>${navLbl(k,l)}</span>${k==='nouveautes'&&nvUnseen()?`<i class="nav-n" id="nav-n" title="Changements depuis votre dernière visite">${nvUnseen()>9?'9+':nvUnseen()}</i>`:''}</button></li>`).join(''));
+  const cur=(navGroup(S.page)||[])[0], mode=SUBNAV[S.page]?S.page:'main';
+  setHTML($('#nav'),mode!=='main'?subNavHTML(mode):navShown().map(([k,l,i,sec,,todo])=>`${sec?`<li class="nav-sec">${sec}</li>`:''}<li><button type="button" id="nav-${k}" title="${navLbl(k,l)}${todo?' · '+todo:''}" data-act="nav" data-page="${k}"${cur===k?' aria-current="page"':''}>${icon(i)}<span>${navLbl(k,l)}</span>${todo?`<i class="nav-todo">${todo}</i>`:''}${k==='nouveautes'&&nvUnseen()?`<i class="nav-n" id="nav-n" title="Changements depuis votre dernière visite">${nvUnseen()>9?'9+':nvUnseen()}</i>`:''}</button></li>`).join(''));
+  /* passage d’un menu à l’autre : le contenu des entrées glisse (la bulle rouge, elle, glisse jusqu’à la nouvelle entrée) */
+  if(navMode&&navMode!==mode){const n=$('#nav');n.classList.remove('nav-in','nav-back-in');void n.offsetWidth;n.classList.add(mode!=='main'?'nav-in':'nav-back-in');}
+  navMode=mode;
   const P=subject(), own=!!P.a||S.role==='admin', sub=(S.role==='student'?'Élève · '+gName(S.group):ROLE_LBL[S.role])+(own?'':' · aperçu');
+  placeNavBulle();
   setHTML($('#person'),`<button type="button" class="person-btn" id="person-btn" data-act="nav" data-page="profil" title="Mon profil"${S.page==='profil'?' aria-current="page"':''}>${avHTML(P.name,own?S.me.avatarUrl:'','')}<span class="pinfo"><b>${esc(P.name)}</b><small>${esc(sub)}</small></span></button>`);
 }
+/* Pages à sous-menu (Paramètres, Stock, Compta) : le menu de gauche cède la place aux sections de la page ;
+   l’entrée en tête ramène au menu, sur la page d’avant. Une section : { k, l, i, sec (titre avant elle), n (pastille), bad, nt } */
+let navMode='';
+const SUBNAV={
+  params:{lbl:'Paramètres',key:'ps',id:'ps',tabs:()=>PS_TABS.map(([k,l,i])=>{const n=k==='annonces'?annList().filter(a=>annState(a)==='cours').length:0;return {k,l,i,n,nt:n?pl(n,'annonce en cours','annonces en cours'):''};})},
+  stock:{lbl:'Stock',key:'sk',id:'sk',tabs:stockTabs},
+  compta:{lbl:'Compta',key:'cp',id:'cpt',tabs:comptaTabs}
+};
+function subNavHTML(p){
+  const d=SUBNAV[p], ts=d.tabs(), cur=ts.some(t=>t.k===S.pg[d.key])?S.pg[d.key]:ts[0].k, lbl=S.role==='teacher'&&p==='stock'?'Matériel':(S.role==='admin'&&menuNom(p))||d.lbl;
+  return `<li><button type="button" class="nav-back" id="nav-${p}" title="Revenir au menu" data-act="nav" data-page="${esc(S.navFrom&&S.navFrom!==p?S.navFrom:'calendar')}">${icon('left')}<span>${esc(lbl)}</span></button></li>`
+    +ts.map(t=>`${t.sec?`<li class="nav-sec">${t.sec}</li>`:''}<li><button type="button" id="${d.id}-${t.k}" title="${t.l}${t.nt?' · '+t.nt:''}" data-act="pg-set" data-k="${d.key}" data-v="${t.k}"${cur===t.k?' aria-current="page"':''}>${icon(t.i)}<span>${t.l}</span>${t.n?`<i class="nav-todo${t.bad?' bad':''}"${t.nt?` title="${esc(t.nt)}"`:''}>${t.n}</i>`:''}</button></li>`).join('');
+}
+/* Page ouverte : la bulle rouge (comme le logo) glisse jusqu’à l’entrée choisie ; pas d’animation au premier placement.
+   Menu réduit : un carré de la taille du logo, centré sur l’icône. */
+let bulleAt='', bulleMini=null;
+function placeNavBulle(){
+  const sb=$('.sidebar'), bu=$('#nav-bulle');if(!sb||!bu) return;
+  /* le menu change de largeur (animé) : on recale la bulle une fois la largeur finale atteinte */
+  if(bulleMini!==null&&bulleMini!==S.sideMini) setTimeout(placeNavBulle,280);
+  bulleMini=S.sideMini;
+  const b=$('#nav button[aria-current="page"]');
+  if(!b||!b.offsetParent){bu.classList.remove('on');return;}
+  const rs=sb.getBoundingClientRect(), r=b.getBoundingClientRect(), mini=S.sideMini&&getComputedStyle($('.nav')).flexDirection==='column';
+  const w=mini?36:r.width, h=mini?36:r.height, x=r.left-rs.left+sb.scrollLeft+(r.width-w)/2, y=r.top-rs.top+sb.scrollTop+(r.height-h)/2;
+  const k=[x,y,w,h].map(Math.round).join(',');
+  if(k===bulleAt&&bu.classList.contains('on')) return;
+  const first=!bulleAt;bulleAt=k;
+  if(first) bu.classList.add('still');
+  bu.style.cssText=`width:${w}px;height:${h}px;transform:translate(${x}px,${y}px)`;
+  bu.classList.add('on');
+  if(first){bu.getBoundingClientRect();bu.classList.remove('still');}
+}
+window.addEventListener('resize',()=>placeNavBulle());
+$('.app').addEventListener('transitionend',e=>{if(e.target===$('.app'))placeNavBulle();});
+if(document.fonts&&document.fonts.ready) document.fonts.ready.then(()=>placeNavBulle());
 function renderTop(){
   const vis=visibleRoles();
   document.querySelectorAll('.roles [data-role]').forEach(b=>{b.hidden=!vis.includes(b.dataset.role);b.setAttribute('aria-pressed',String(b.dataset.role===S.role));});
   $('.roles').hidden=vis.length<2;
   const demo=!!window.__DEMO_LOCAL&&S.conn==='shared';
-  const t=demo?['Démo','Vos modifications restent dans ce navigateur. Sur le vrai site, tout le monde partage le même horaire.']:S.conn==='shared'?['Horaire partagé','Les modifications sont enregistrées en temps réel pour tous les utilisateurs de cette page.']
+  const t=S.archive?['Archive · '+S.archive.nom,'Vous consultez une année clôturée, en lecture seule.']:demo?['Démo','Vos modifications restent dans ce navigateur. Sur le vrai site, tout le monde partage le même horaire.']:S.conn==='shared'?['Horaire partagé','Les modifications sont enregistrées en temps réel pour tous les utilisateurs de cette page.']
     :S.conn==='off'?['Hors connexion','Ouvrez la page dans claude.ai, en étant connecté, pour voir les cours et prendre les présences.']
     :['Connexion…','Chargement de l’horaire.'];
   setHTML($('#banner-text'),`<strong>${t[0]}</strong><p>${t[1]}${demo?' <button type="button" class="link" id="demo-reset" data-act="demo-reset">Réinitialiser la démo</button>':''}</p>`);
@@ -74,6 +128,11 @@ function renderTop(){
 const demoHidden=()=>S.demoHidden&&S.conn!=='off';
 function renderNotices(){
   let h='';
+  /* les annonces (Paramètres > Annonces), ou la barre d’une archive consultée ; hors du bandeau de démo,
+     pour rester visibles quand on le masque */
+  let ah='';
+  if(S.archive) ah=`<div class="notice arch" id="arch-bar" role="status"><p><b>Archive · ${esc(S.archive.nom)}</b> — vous consultez une année clôturée${S.archive.debut&&S.archive.fin?` (du ${esc(shortDate(parse(S.archive.debut)))} au ${esc(shortDate(parse(S.archive.fin)))})`:''}, en lecture seule.</p><button class="btn sm primary" type="button" id="arch-exit" data-act="arch-exit">Revenir à l’année en cours</button></div>`;
+  else ah=annoncesHTML();
   const n=S.conn==='shared'&&allLoaded()?exampleCount():0;
   if(n&&S.role==='admin'&&S.canAdmin!==false){
     h+=S.confirmClear
@@ -81,6 +140,7 @@ function renderNotices(){
       :`<div class="notice"><p><b>Données d’exemple.</b> Les classes, élèves, membres du personnel, cours et examens affichés montrent le fonctionnement du site. Modifiez-les ou effacez-les pour partir de zéro.</p><div class="row"><button class="btn sm" type="button" data-act="clear-ex">Effacer les exemples</button></div></div>`;
   }
   setHTML($('#notices'),h);
+  setHTML($('#annonces'),ah);
 }
 const HEAD={
   comptes:['Comptes','Qui ouvre la page, avec quel rôle et quelle fiche.'],
@@ -98,9 +158,10 @@ const HEAD={
   mescours:['Mes cours','Les cours à pourvoir, vos candidatures et vos cours attribués.'],
   dispos:['Mes disponibilités','Les jours où vous pouvez donner des cours.'],
   historique:['Historique','Qui a annulé, déplacé, attribué ou approuvé quoi, et quand.'],
-  stock:['Stock','L’équipement prêté aux élèves, le matériel et ses inspections, les consommables et les articles vendus.'],
+  stock:['Stock','Le matériel et les équipements de l’école : inventaire, dotations, mouvements et inspections.'],
   params:['Paramètres','L’établissement, l’année scolaire et les accès.'],
-  nouveautes:['Nouveautés','Ce qui a changé sur le site : nouvelles fonctions, améliorations et corrections.']
+  nouveautes:['Nouveautés','Ce qui a changé sur le site : nouvelles fonctions, améliorations et corrections.'],
+  compta:['Compta','L’argent de l’école : frais des élèves, factures, paie des instructeurs, dépenses et budget.']
 };
 /* Les mêmes titres, avec le mot « séance », quand l’école a des modules */
 const HEAD_AC={
@@ -112,21 +173,73 @@ const HEAD_AC={
   affectations:['Affectations','Les enseignants requis à chaque séance, les candidatures et les remplacements.'],
   mescours:['Mes séances','Les séances à pourvoir, vos candidatures et vos séances attribuées.']
 };
-const navLbl=(k,l)=>k==='mescours'&&acad()?'Mes séances':l;
-let hdTools='';
+const navLbl=(k,l)=>(S.role==='admin'&&menuNom(k))||(k==='mescours'&&acad()?'Mes séances':l);
+/* Barre de la page affichée dans la barre du titre (pour la redessiner seule, par exemple quand on ouvre la cloche) */
+let hdTools={k:'',html:''};
 function renderHeading(){
   const h0=S.page==='calendar'?HEAD[S.role]:S.page==='examens'&&S.role==='student'?['Mes examens','Vos prochains examens, vos résultats et vos reprises.']:S.page==='profil'&&S.role==='admin'?['Mon profil','Vos informations et les comptes du site.']:HEAD[S.page];
-  const hk=S.page==='calendar'?S.role:S.page, h=acad()&&HEAD_AC[hk]&&h0===HEAD[hk]?HEAD_AC[hk]:h0;
+  const hk=S.page==='calendar'?S.role:S.page, h1=acad()&&HEAD_AC[hk]&&h0===HEAD[hk]?HEAD_AC[hk]:h0, nm=S.role==='admin'?menuNom(S.page):'', h=nm?[nm,h1[1]]:h1;
   const show=demoHidden()?`<button type="button" class="demo-show" id="demo-show" data-act="demo" title="Réafficher le bandeau des profils et des données d’exemple" aria-label="Afficher le bandeau">${icon('eye')}<span class="ds-t">Afficher le bandeau</span></button>`:'';
-  const sub=S.page==='calendar'?'':`<p>${h[1]}</p>`;
   const prBtn=S.page==='calendar'&&S.conn==='shared'&&allLoaded()?`<button type="button" class="bell" id="pr-open" data-act="pr-open" aria-label="Imprimer" title="Imprimer l’horaire de la semaine ou la feuille de présences">${icon('print')}</button>`:'';
-  const side=show+prBtn+bellHTML();
+  /* affichage des listes (Liste, Cartes, Compact) : à côté de la cloche */
+  const vmode=viewMode();
+  const side=(vmode?viewSwitchHTML(vmode):'')+show+prBtn+bellHTML();
   /* Calendrier : la barre de l’horaire (remplie par renderMain) se place dans la barre du titre, sur la même ligne */
-  const cal=S.page==='calendar';
-  $('#heading').classList.toggle('with-tools',cal);
-  setHTML($('#heading'),`<div class="ph-t"><h1>${h[0]}</h1>${sub}</div>${cal?'<div class="ph-tools" id="hd-tools"></div>':''}${side?`<div class="head-side">${side}</div>`:''}`);
-  /* la barre du titre peut se redessiner seule (cloche) : elle reprend la dernière barre de l’horaire */
-  const ht=$('#hd-tools');if(ht&&ht._h===undefined&&hdTools) setHTML(ht,hdTools);
+  const cal=S.page==='calendar', g=navGroup(S.page), tabs=g&&g[4]&&g[4].length>1?g[4]:null;
+  /* entrée qui réunit plusieurs pages : le titre est celui de l’entrée, et ses pages sont des onglets à côté */
+  const title=tabs?navLbl(g[0],g[1]):h[0];
+  const tabsHTML=tabs?`<div class="seg pg-tabs" role="group" aria-label="${esc(title)}">${tabs.map(p=>`<button type="button" id="tab-${p}" data-act="nav" data-page="${p}" aria-pressed="${S.page===p}">${TAB_LBL[p]}</button>`).join('')}</div>`:'';
+  const hd=$('#heading');
+  hd.classList.toggle('has-tabs',!!tabs);
+  setHTML(hd,`<div class="ph-t"><div class="ph-row"><h1 title="${esc(h[1]||'')}">${title}</h1>${tabsHTML}</div></div><div class="ph-tools" id="hd-tools"></div>${side?`<div class="head-side">${side}</div>`:''}`);
+  const ht=$('#hd-tools');if(ht&&ht._h===undefined&&hdTools.k===S.role+'/'+S.page) setHTML(ht,hdTools.html);
+  fitHeading();
+}
+/* La barre du titre tient sur une ligne si tout y entre ; sinon les libellés raccourcissent ; sinon la barre de la page passe sur une deuxième ligne */
+function fitHeading(){
+  const h=$('#heading'), t=$('#hd-tools');if(!h) return;
+  h.classList.remove('hd-short','hd-two');
+  if(!t||!t.firstElementChild||!h.offsetParent) return;
+  const over=()=>t.scrollWidth>t.clientWidth+1||h.scrollWidth>h.clientWidth+1;
+  if(over()) h.classList.add('hd-short');
+  if(over()) h.classList.add('hd-two');
+}
+window.addEventListener('resize',()=>fitHeading());
+if(document.fonts&&document.fonts.ready) document.fonts.ready.then(()=>fitHeading());
+/* La première barre d’outils d’une page (au premier niveau) monte dans la barre du titre */
+const _tpl=document.createElement('template');
+function splitTools(html){
+  _tpl.innerHTML=html;
+  const t=[..._tpl.content.children].find(e=>e.classList.contains('toolbar'));
+  if(!t) return {tools:'',body:html};
+  t.remove();
+  const box=document.createElement('div');box.appendChild(_tpl.content.cloneNode(true));
+  return {tools:t.outerHTML,body:box.innerHTML};
+}
+/* Affichage des listes : Liste, Cartes ou Compact, retenu pour chaque page */
+const VIEW_PAGES=['affectations','classes','eleves','personnel','modules','examens','stock'];
+const VIEW_M=[['list','Liste','vlist'],['cards','Cartes','vgrid'],['dense','Compact','vdense']];
+function viewMode(){
+  if(S.role!=='admin'||!VIEW_PAGES.includes(S.page)||S.pg.fiche||(S.page==='personnel'&&(S.pg.who||'liste')!=='liste')) return '';
+  const v=(S.views||{})[S.page]||cfg().vueDefaut;return VIEW_M.some(m=>m[0]===v)?v:'list';
+}
+/* Cartes : chaque valeur d’une ligne reçoit le libellé de sa colonne (sauf la vignette, le titre et les boutons) */
+function labelCards(el){
+  for(const l of el.querySelectorAll('.xm-list')){
+    const hd=l.querySelector(':scope>.xm-hd');if(!hd) continue;
+    const labels=[...hd.children].map(x=>x.textContent.trim());
+    for(const r of l.querySelectorAll(':scope>.xm-row')){
+      let title=false;
+      [...r.children].forEach((c,i)=>{
+        if(c.matches('.xm-d,.cl-num,.xm-end')) return;
+        if(c.matches('.xm-t,.xm-who')&&!title){title=true;return;}
+        if(labels[i]&&!c.dataset.l) c.dataset.l=labels[i];
+      });
+    }
+  }
+}
+function viewSwitchHTML(v){
+  return `<div class="seg vm-seg" role="group" aria-label="Affichage de la liste">${VIEW_M.map(([k,l,i])=>`<button type="button" id="vm-${k}" data-act="view-mode" data-v="${k}" aria-pressed="${v===k}" title="${l}" aria-label="${l}">${icon(i)}</button>`).join('')}</div>`;
 }
 function renderMain(){
   if(typeof DRAG!=='undefined'&&DRAG&&DRAG.active){pendingMain=true;return;}
@@ -135,13 +248,22 @@ function renderMain(){
   let html;
   const p=S.page;
   let tools='';
-  if(p==='calendar'){S._stats=null;html=wait||(S.role==='admin'?adminMain():S.role==='teacher'?teacherMain():studentMain());tools=toolbarHTML();}
-  else html=wait||(p==='classes'?classesPage():p==='eleves'?studentsPage():p==='personnel'?staffPage():p==='modules'?modulesPage():p==='affectations'?affPage():p==='mescours'?myCoursesPage():p==='dispos'?disposPage():p==='examens'?examsPage():p==='annee'?yearPage():p==='nouveautes'?newsPage():p==='historique'?historyPage():p==='stock'?stockPage():p==='comptes'?accountsPage():p==='profil'?profilePage():paramsPage());
-  const el=$('#main'), key=S.role+'/'+p;
+  if(p==='calendar'){S._stats=null;html=wait||(S.role==='admin'?teacherChipsHTML()+adminMain():S.role==='teacher'?teacherMain():studentMain());tools=toolbarHTML();}
+  else{
+    html=wait||(p==='classes'?classesPage():p==='eleves'?studentsPage():p==='personnel'?staffPage():p==='modules'?modulesPage():p==='affectations'?affPage():p==='mescours'?myCoursesPage():p==='dispos'?disposPage():p==='examens'?examsPage():p==='annee'?yearPage():p==='nouveautes'?newsPage():p==='historique'?historyPage():p==='stock'?stockPage():p==='compta'?comptaPage():p==='comptes'?accountsPage():p==='profil'?profilePage():paramsPage());
+    if(!wait){const x=splitTools(html);html=x.body;tools=x.tools;}
+  }
+  const vm=wait?'':viewMode();
+  /* Paramètres : chaque enregistrement (nouvelle version des réglages) redonne aux champs les valeurs enregistrées */
+  const el=$('#main'), key=S.role+'/'+p+(p==='params'?'/'+cfgVer():'');
   const before=el._k===key&&el._h!==html&&!reduceMotion()?measureCards(el):null;
   setHTML(el,html,key);
-  if(p==='calendar') hdTools=tools;
+  el.classList.toggle('view-cards',vm==='cards');el.classList.toggle('view-dense',vm==='dense');
+  if(vm==='cards') labelCards(el);
+  hdTools={k:S.role+'/'+p,html:tools};
+  $('#heading').classList.toggle('with-tools',!!tools);
   const ht=$('#hd-tools');if(ht) setHTML(ht,tools);
+  fitHeading();
   const pin=S._pin;S._pin=null;
   if(pin) pinRow(pin);
   if(before) glide(el,before,!!pin);
@@ -182,7 +304,7 @@ function glide(el,b,keepH){
     n.addEventListener('transitionend',clear,{once:true});setTimeout(clear,340);
   });
 }
-function render(){choreMemo=new Map();ensureSel();renderSide();renderTop();renderNotices();renderHeading();renderMain();renderDrawer();}
+function render(){choreMemo=new Map();applyConfig();ensureSel();renderSide();renderTop();renderNotices();renderHeading();renderMain();renderDrawer();}
 let rq=false;
 function schedule(){if(rq)return;rq=true;setTimeout(()=>{rq=false;render();},16);}
 

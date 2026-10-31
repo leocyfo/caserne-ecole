@@ -1,20 +1,59 @@
+/* Rôle d’un élève dans sa classe : capitaine ou lieutenant (couleur de sa carte et de son étiquette) */
+/* Le grade d’un élève : sa place dans la liste des grades (Paramètres > Élèves), -1 s’il n’en a pas ;
+   « Lieutenant » seul retrouve « Lieutenant 1 » (même premier mot). Sa couleur sert aux cartes et aux étiquettes. */
+const gradeIdx=f=>{const x=String(f||'').trim().toLowerCase();if(!x)return -1;const gs=gradesL();let i=gs.findIndex(g=>g.nom.toLowerCase()===x);
+  if(i<0){const w=x.split(/\s+/)[0];i=gs.findIndex(g=>g.nom.toLowerCase().split(/\s+/)[0]===w);}return i;};
+const fnKind=f=>{const i=gradeIdx(f);return i<0?'':gradesL()[i].c||'gris';};
 /* ---------- Pages : élèves ---------- */
+/* Notes d’un élève, d’après les résultats d’examens : moyenne des notes en %, examens réussis, examens à reprendre */
+function studentNotes(){
+  const out={};
+  for(const d of Object.values(S.data.resultats||{})){
+    const r=(d&&d.resultats)||{}, p=(d&&d.pct)||{};
+    for(const [id,v] of Object.entries(r)){
+      if(!v) continue;
+      const o=out[id]||(out[id]={sum:0,np:0,ok:0,tot:0,todo:0});
+      o.tot++;if(v==='reussi'||v==='reprise')o.ok++;if(v==='echec'||v==='absent')o.todo++;
+      const x=p[id];if(x!=null&&x!==''&&!isNaN(+x)){o.sum+=+x;o.np++;}
+    }
+  }
+  for(const o of Object.values(out)) o.avg=o.np?Math.round(o.sum/o.np):null;
+  return out;
+}
+/* Ordre des grades : celui de la liste, puis les autres fonctions, puis sans grade */
+const gradeRank=f=>{const x=String(f||'').trim();if(!x)return 999;const i=gradeIdx(x);return i<0?500:i;};
+/* Nom de famille d’abord (« Beaulieu Alexandre ») pour trier par nom */
+const famKey=n=>{const p=String(n||'').trim().split(/\s+/);return p.length>1?p.slice(1).join(' ')+' '+p[0]:String(n||'');};
+const EL_SORTS=[['num','numéro'],['nom','nom'],['classe','classe'],['grade','grade'],['note-d','note ↓'],['note-a','note ↑'],['pres','présence ↑']];
+/* Filtre « Afficher » : un grade (g0, g1… dans l’ordre de la liste), sans grade, ou un état des notes */
+const elFilters=()=>gradesL().map((g,i)=>['g'+i,g.nom]).concat([['none','Sans grade'],['sous','Moyenne sous le seuil'],['rep','Examens à reprendre']]);
 function studentsPage(){
   if(S.pg.fiche) return studentFiche();
   const st=S.pg, q=String(st.q||'').trim().toLowerCase(), g=st.g||'';
   const per=st.period||'mois', [from,to]=periodRange(per);
   ensureTerm(from);
   const stats=studentStats(from,to);
+  const ff=elFilters().some(x=>x[0]===st.ff)?st.ff:'', fg=/^(g\d+|none)$/.test(ff)?ff:'', fn=['sous','rep'].includes(ff)?ff:'', so=EL_SORTS.some(x=>x[0]===st.so)?st.so:'num', notes=studentNotes(), sl=seuil();
   let els=sortElsByClass(S.data.eleves);
   if(g) els=els.filter(e=>e.groupe===g);
   if(q) els=els.filter(e=>String(e.nom||'').toLowerCase().includes(q));
-  const tb=`<div class="toolbar"><input class="search" id="s-q" type="search" placeholder="Rechercher un élève" aria-label="Rechercher un élève" autocomplete="off"><select id="s-g" aria-label="Classe"><option value="">Toutes les classes</option>${groups().map(x=>`<option value="${esc(x.id)}"${g===x.id?' selected':''}>${esc(x.nom)}</option>`).join('')}</select>${periodSeg(per)}<span class="grow"></span><button class="btn" type="button" id="st-import" data-act="st-import">${icon('up')}Importer une liste</button><button class="btn primary" type="button" data-act="new-student">${icon('plus')}Ajouter un élève</button></div>`;
+  if(fg) els=els.filter(e=>fg==='none'?gradeIdx(e.fonction)<0:gradeIdx(e.fonction)===+fg.slice(1));
+  if(fn==='sous') els=els.filter(e=>notes[e.id]&&notes[e.id].avg!=null&&notes[e.id].avg<sl);
+  if(fn==='rep') els=els.filter(e=>notes[e.id]&&notes[e.id].todo>0);
+  /* tri : à égalité, l’ordre habituel (classe, puis numéro) départage */
+  const base=new Map(els.map((e,i)=>[e.id,i])), avg=e=>notes[e.id]&&notes[e.id].avg!=null?notes[e.id].avg:null, pr=e=>rateOf(stats[e.id]);
+  const last=(x,y,f)=>x==null&&y==null?0:x==null?1:y==null?-1:f(x,y);
+  const cmp={nom:(a,b)=>collator.compare(famKey(a.nom),famKey(b.nom)),classe:(a,b)=>collator.compare(gName(a.groupe),gName(b.groupe)),grade:(a,b)=>gradeRank(a.fonction)-gradeRank(b.fonction),
+    'note-d':(a,b)=>last(avg(a),avg(b),(x,y)=>y-x),'note-a':(a,b)=>last(avg(a),avg(b),(x,y)=>x-y),pres:(a,b)=>last(pr(a),pr(b),(x,y)=>x-y)}[so];
+  if(cmp) els=[...els].sort((a,b)=>cmp(a,b)||base.get(a.id)-base.get(b.id));
+  const tb=`<div class="toolbar"><input class="search" id="s-q" type="search" placeholder="Rechercher un élève" aria-label="Rechercher un élève" autocomplete="off" value="${esc(S.pg.q||'')}"><select id="s-g" aria-label="Classe"><option value="">Toutes les classes</option>${groups().map(x=>`<option value="${esc(x.id)}"${g===x.id?' selected':''}>${esc(x.nom)}</option>`).join('')}</select><select id="s-ff" aria-label="Afficher"><option value="">Tous les élèves</option><optgroup label="Grade">${elFilters().filter(x=>/^(g\d+|none)$/.test(x[0])).map(([k,l])=>`<option value="${k}"${ff===k?' selected':''}>${esc(l)}</option>`).join('')}</optgroup><optgroup label="Notes (seuil ${sl} %)">${elFilters().filter(x=>x[0]==='sous'||x[0]==='rep').map(([k,l])=>`<option value="${k}"${ff===k?' selected':''}>${l}</option>`).join('')}</optgroup></select><select id="s-so" aria-label="Trier par">${EL_SORTS.map(([k,l])=>`<option value="${k}"${so===k?' selected':''}>Tri : ${l}</option>`).join('')}</select>${periodSeg(per)}<span class="grow"></span><button class="btn" type="button" id="st-import" data-act="st-import" title="Importer une liste" aria-label="Importer une liste">${icon('up')}<span class="t-long">Importer une liste</span></button><button class="btn primary" type="button" data-act="new-student">${icon('plus')}<span class="t-long">Ajouter un élève</span><span class="t-short">Ajouter</span></button></div>`;
   if(!S.data.eleves.length) return tb+emptyBox('Aucun élève inscrit','Ajoutez des élèves un à la fois ici, ou collez une liste complète dans le menu Classes.');
   const body=els.map(e=>{const s=stats[e.id], r=rateOf(s);
     const a=s?s.A+s.M:0, rt=s?s.R:0, cls=rateCls(r);
-    return `<tr class="row-link" data-act="student" data-id="${esc(e.id)}"><td><span class="tb-who"><span class="st-num sm" aria-hidden="true">${e.numero!=null&&e.numero!==''?esc(e.numero):'—'}</span><span><button class="link" type="button" data-act="student" data-id="${esc(e.id)}">${esc(e.nom)}</button>${e.fonction?`<span class="role-chip">${esc(e.fonction)}</span>`:''}</span></span></td><td class="tb-cls"><span class="tb-who"><span class="cl-num sm" aria-hidden="true">${esc(String(gName(e.groupe)).replace(/^(Classe|Groupe)\s+/i,'').slice(0,4))}</span><span class="muted sm">${esc(gName(e.groupe))}</span></span></td><td class="tb-top">${r==null?'<span class="muted tb-empty">—</span>':`<div class="cl-big tb-rate ${cls}"><b>${r} %</b><div class="meter ${cls}" aria-hidden="true"><i style="width:${r}%"></i></div></div>`}</td><td class="num" data-l="Absences"><span class="tb-n ${a?'bad':'zero'}">${a}</span></td><td class="num" data-l="Retards"><span class="tb-n ${rt?'warn':'zero'}">${rt}</span></td><td>${e.telephone?esc(e.telephone):'<span class="muted tb-empty">—</span>'}</td></tr>`;}).join('');
+    const fk=fnKind(e.fonction);
+    return `<tr class="row-link" data-act="student" data-id="${esc(e.id)}"${fk?` data-fn="${fk}"`:''}><td><span class="tb-who"><span class="st-num sm" aria-hidden="true">${e.numero!=null&&e.numero!==''?esc(e.numero):'—'}</span><span><button class="link" type="button" data-act="student" data-id="${esc(e.id)}">${esc(e.nom)}</button>${e.fonction?`<span class="role-chip${fk?' rc-'+fk:''}">${esc(e.fonction)}</span>`:''}</span></span></td><td class="tb-cls"><span class="tb-who"><span class="cl-num sm" aria-hidden="true">${esc(String(gName(e.groupe)).replace(/^(Classe|Groupe)\s+/i,'').slice(0,4))}</span><span class="muted sm">${esc(gName(e.groupe))}</span></span></td><td class="tb-top">${r==null?'<span class="muted tb-empty">—</span>':`<div class="cl-big tb-rate ${cls}"><b>${r} %</b><div class="meter ${cls}" aria-hidden="true"><i style="width:${r}%"></i></div></div>`}</td><td class="num" data-l="Note">${avg(e)!=null?`<span class="tb-n${avg(e)<sl?' bad':''}">${avg(e)} %</span>`:'<span class="muted tb-empty">—</span>'}</td><td class="num" data-l="Absences"><span class="tb-n ${a?'bad':'zero'}">${a}</span></td><td class="num" data-l="Retards"><span class="tb-n ${rt?'warn':'zero'}">${rt}</span></td><td class="tb-tel">${e.telephone?esc(e.telephone):'<span class="muted tb-empty">—</span>'}</td></tr>`;}).join('');
   return tb+`<p class="summary"><span><b>${els.length}</b>${els.length>1?'élèves':'élève'}</span><span>Présences comptées depuis le ${esc(longDate(parse(from)))}</span>${S.termLoaded?'':'<span>Chargement des présences…</span>'}</p>
-    <div class="tbl-wrap"><table class="tbl stack"><thead><tr><th>Élève</th><th>Classe</th><th>Présence</th><th class="num">Absences</th><th class="num">Retards</th><th>Téléphone</th></tr></thead><tbody>${body||'<tr><td colspan="6" class="muted">Aucun élève ne correspond à la recherche.</td></tr>'}</tbody></table></div>`;
+    <div class="tbl-wrap"><table class="tbl stack st-cards"><thead><tr><th>Élève</th><th>Classe</th><th>Présence</th><th class="num" title="Moyenne des notes d’examens en %">Note</th><th class="num">Absences</th><th class="num">Retards</th><th>Téléphone</th></tr></thead><tbody>${body||'<tr><td colspan="7" class="muted">Aucun élève ne correspond à la recherche ou aux filtres.</td></tr>'}</tbody></table></div>`;
 }
 
 /* ---------- Fiches en pleine page (élèves et personnel) ----------
@@ -111,15 +150,16 @@ function studentFiche(){
         <p class="help" style="margin-top:10px">${n?`${pl(n,W('séance notée','cours noté'),W('séances notées','cours notés'))} depuis le ${esc(longDate(parse(yearStart())))}.`:''}</p></section></div>`;
     }
     if(tab==='examens') return studentExamsTab(e);
+    if(tab==='equipement') return skStudentTab(e);
     return `<section class="panel"><dl class="facts facts3">
       <div><dt>Enseignant principal</dt><dd>${principalOf(e.groupe)?esc(tName(principalOf(e.groupe))):'<span class="muted">—</span>'}</dd></div>
       <div><dt>Date de naissance</dt><dd>${e.naissance?esc(longDate(parse(e.naissance)))+(age!=null?` <span class="muted">(${age} ans)</span>`:''):'<span class="muted">—</span>'}</dd></div>
       <div><dt>Contact d’urgence</dt><dd>${e.parent?esc(e.parent):'<span class="muted">—</span>'}</dd></div>
       <div><dt>Téléphone</dt><dd>${e.telephone?`<a href="tel:${esc(String(e.telephone).replace(/\s+/g,''))}">${esc(e.telephone)}</a>`:'<span class="muted">—</span>'}</dd></div>
       <div><dt>Courriel</dt><dd>${e.courriel?`<a href="mailto:${esc(e.courriel)}">${esc(e.courriel)}</a>`:'<span class="muted">—</span>'}</dd></div>
-      <div class="wide"><dt>Suivi</dt><dd>${e.notes?`<span class="pre">${esc(e.notes)}</span>`:'<span class="muted">Aucune note.</span>'}</dd></div></dl></section>${S.role==='admin'?(ensureStockMvt(),stockOfStudent(e.id,true)):''}`;
+      <div class="wide"><dt>Suivi</dt><dd>${e.notes?`<span class="pre">${esc(e.notes)}</span>`:'<span class="muted">Aucune note.</span>'}</dd></div></dl></section>`;
   };
-  return ficheShell('eleves',list,e,item,head,[['dossier','Dossier'],['presences','Présences'],['examens','Examens']],content);
+  return ficheShell('eleves',list,e,item,head,[['dossier','Dossier'],['presences','Présences'],['examens','Examens'],['equipement','Équipement']],content);
 }
 
 function staffFiche(){

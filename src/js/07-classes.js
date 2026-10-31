@@ -11,7 +11,7 @@ function classProgress(gid){
   }
   return {total,done,pct:total?Math.round(done/total*100):null};
 }
-const rateCls=r=>r==null?'':r>=95?'ok':r>=90?'warn':'bad';
+const rateCls=r=>r==null?'':r>=presOk()?'ok':r>=presWarn()?'warn':'bad';
 function classesPage(){
   if(S.pg.fiche) return classFiche();
   const st=S.pg, gs=groups(), ts=teachers(), per=st.period||'mois', [from,to]=periodRange(per);

@@ -2,6 +2,7 @@
 const R=[];const ok=(name,cond,info)=>R.push((cond?'PASS ':'FAIL ')+name+(info!==undefined?' :: '+info:''));
 const wait=ms=>new Promise(r=>setTimeout(r,ms));const $=s=>document.querySelector(s);const $$=s=>[...document.querySelectorAll(s)];
 const click=el=>{if(!el)throw new Error('missing element');el.click();};
+const navBtn=p=>{if(p!=='params'&&!$('#nav-'+p)&&$('#nav .nav-back'))click($('#nav .nav-back'));const b=$('#nav-'+p);if(b)return b;const g={annee:'calendar',personnel:'eleves',examens:'modules'}[p];if(g&&$('#nav-'+g))click($('#nav-'+g));return $('#tab-'+p);};
 const ptr=(type,x,y,target)=>(target||window).dispatchEvent(new PointerEvent(type,{bubbles:true,cancelable:true,clientX:x,clientY:y,button:0,buttons:type==='pointerup'?0:1,pointerType:'mouse',isPrimary:true}));
 const center=el=>{const r=el.getBoundingClientRect();return [r.left+r.width/2,r.top+Math.min(r.height/2,30)];};
 const freePoint=cell=>{const r=cell.getBoundingClientRect(),x=r.left+r.width/2;for(let y=Math.min(r.bottom-4,innerHeight-70);y>r.top;y-=8){const el=document.elementFromPoint(x,y);if(el&&el.closest('.wk-cell')===cell&&!el.closest('.cc'))return [x,y];}return [x,r.top+4];};
@@ -14,7 +15,7 @@ const XS=id=>{const d=window.__store.get('cours/'+id)||{},m=new Map((d.extras||[
 try{
 await wait(400);
 ok('banner',/Horaire partagé/.test($('#banner-text').textContent));
-ok('nav admin 13',$$('#nav button').length===13&&!!$('#nav-stock')&&$$('#nav .nav-sec').length===4&&!!$('#nav-historique')&&$$('#nav button').pop().id==='nav-nouveautes'&&!!$('#nav-comptes')&&!!$('#nav-modules')&&!!$('#nav-affectations')&&!$('#nav-presences'));
+ok('nav admin 11',$$('#nav button').length===11&&!!$('#nav-compta')&&!/À faire/.test($('#nav').textContent)&&!$('#nav-annee')&&!$('#nav-personnel')&&!$('#nav-examens')&&!!$('#nav-stock')&&$$('#nav .nav-sec').length===4&&!!$('#nav-historique')&&$$('#nav button').pop().id==='nav-nouveautes'&&!!$('#nav-comptes')&&!!$('#nav-modules')&&!!$('#nav-affectations')&&!$('#nav-presences'));
 ok('board',$$('#main .week button.cc').length===41,$$('#main .week button.cc').length);
 ok('exam card on board',$$('#main .cc.exam').length===1);
 /* DND */
@@ -112,14 +113,14 @@ click($('#main .cc.exam'));await wait(40);
 ok('exam drawer',$('#x-titre')&&$('#x-titre').value==='Oral en anglais');
 click($('#dr-close'));await wait(30);
 // classes
-click($('#nav-classes'));await wait(40);
+click(navBtn('classes'));await wait(40);
 ok('classes page',$$('.cl-row').length===2&&!!$('.cl-hd'));
 click($('#cl-g-301'));await wait(80);click($('#fi-tab-cours'));await wait(60);
 ok('class courses table',$$('select[data-assign]').length===6);
 const sel=$('select[data-assign="c-mat-301"]');sel.value='e-roy';sel.dispatchEvent(new Event('change',{bubbles:true}));await wait(120);
 ok('assign teacher',window.__store.get('cours/c-mat-301').enseignant==='e-roy');
 // élèves
-click($('#nav-eleves'));await wait(80);
+click(navBtn('eleves'));await wait(80);
 ok('students table',$$('#main tbody tr').length===20,$$('#main tbody tr').length);
 typeIn('#s-q','nath');await wait(40);
 ok('search',$$('#main tbody tr').length===1&&/Nathan/.test($('#main tbody').textContent));
@@ -133,7 +134,7 @@ ok('student saved',window.__store.get('eleves/el-301-06').parent==='Line Ouellet
 click($('#fi-back'));await wait(80);
 ok('back to list',!$('.fiche')&&$$('#main tbody tr').length===1&&$('#s-q').value==='nath');
 // personnel
-click($('#nav-personnel'));await wait(40);
+click(navBtn('personnel'));await wait(40);
 ok('staff table',$$('#main tbody tr').length===8);
 ok('private phone shown',/418 555-0110/.test($('#main').textContent));
 {const tr=$('#main tr.row-link');click(tr&&tr.children[2]);}await wait(80);
@@ -144,7 +145,7 @@ typeIn('#sf-nom','Paul Gendron');typeIn('#sf-tel','418 555-0199');$('#sf-form').
 const pg=store().find(([k,v])=>k.startsWith('enseignants/')&&v.nom==='Paul Gendron');
 ok('staff added',!!pg&&window.__store.get('dossiers-personnel/'+pg[0].split('/')[1]).telephone==='418 555-0199');
 // présences (dans les classes)
-click($('#nav-classes'));await wait(120);
+click(navBtn('classes'));await wait(120);
 ok('class att cards',$$('.cl-row').length===2&&/Présence/.test($('.cl-hd').textContent)&&!!$('#cl-g-301 .cl-rate')&&!$('.att-card')&&!!$('#pp-mois'));
 click($('#pp-annee'));await wait(40);
 ok('class att rate',/%/.test($('#cl-g-301 .cl-rate').textContent),$('#cl-g-301 .cl-rate').textContent);
@@ -157,7 +158,7 @@ ok('open missing att',$$('.att-list li').length===10);
 click($('[data-act=att-all]'));await wait(20);click($('[data-act=att-save]'));await wait(150);
 click($('#dr-close'));await wait(30);
 click($('#fi-back'));await wait(60);
-click($('#nav-personnel'));await wait(60);
+click(navBtn('personnel'));await wait(60);
 click($('#pt-personnel'));await wait(40);
 ok('staff att list',$$('.att-list li').length>=8,$$('.att-list li').length);
 click($('#sd-0'));await wait(30);
@@ -166,7 +167,7 @@ click($('[data-act=sp-save]'));await wait(150);
 const sp=Object.entries(window.__store.get('presences-personnel/'+$('#sd-0').dataset.date)?.statuts||{});
 ok('staff att saved',sp.some(([k,v])=>v==='A'),JSON.stringify(sp).slice(0,90));
 // examens
-click($('#nav-examens'));await wait(40);
+click(navBtn('examens'));await wait(40);
 {const d=new Date(),td=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');const nm=d.getHours()*60+d.getMinutes(),up=Math.min(25,[...window.__store].filter(([k,v])=>k.startsWith('examens/')&&!v.seance&&(v.date>td||(v.date===td&&(+String(v.debut).slice(0,2)*60+ +String(v.debut).slice(3,5))>nm))).length);
 ok('exams upcoming',$$('#main [data-act=exam]').length===up,$$('#main [data-act=exam]').length+' / '+up);}
 click($('[data-act=new-exam]'));await wait(40);
@@ -179,15 +180,15 @@ ok('exam times filled',$('#x-debut').value==='09:45',$('#x-debut').value);
 $('#x-form').requestSubmit();await wait(150);
 ok('exam created',store().some(([k,v])=>k.startsWith('examens/')&&v.cours==='c-fra-301'&&v.date==='2026-10-13'));
 // calendrier scolaire
-click($('#nav-annee'));await wait(40);
+click(navBtn('annee'));await wait(40);
 ok('year kpis',/Étape 1/.test($('#main').textContent)&&/Action de grâce/.test($('#main').textContent));
 $('#p-enom').value='Test étape';$('#p-edu').value='2027-06-01';$('#p-eau').value='2027-06-10';$('#p-enom').closest('form').requestSubmit();await wait(150);
 ok('etape added',window.__store.get('config/ecole').etapes.length===4);
 // enseignant
 click($('[data-role=teacher]'));await wait(60);
-ok('teacher nav',$$('#nav button').length===6&&!!$('#nav-profil')&&!!$('#nav-mescours')&&!!$('#nav-dispos'));
+ok('teacher nav',$$('#nav button').length===6&&!!$('#nav-stock')&&/Matériel/.test($('#nav-stock').textContent)&&!!$('#nav-profil')&&!!$('#nav-mescours')&&!!$('#nav-dispos'));
 ok('teacher board',$$('#main .week button.cc').length>0);
-click($('#nav-examens'));await wait(40);
+click(navBtn('examens'));await wait(40);
 ok('teacher exams',$$('#main [data-act=exam]').length>=1||/Aucun examen/.test($('#main').textContent));
 // élève
 click($('[data-role=student]'));await wait(60);
@@ -195,7 +196,7 @@ ok('student exams panel',/Prochains examens/.test($('#main').textContent));
 click($('#main .cc.exam')||$('#main [data-act=exam]'));await wait(40);
 ok('student exam readonly',!$('#x-form')&&/Surveillance/.test($('#drawer').textContent));
 click($('#dr-close'));await wait(30);
-click($('#nav-annee'));await wait(30);
+click(navBtn('annee'));await wait(30);
 ok('student year no forms',!$('#p-enom'));
 // clear
 click($('[data-role=admin]'));await wait(60);

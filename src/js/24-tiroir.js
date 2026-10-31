@@ -22,7 +22,7 @@ function renderDrawer(){
   }
   const d=S.dr;
   if(d.kind==='att') syncAtt();
-  const html=d.kind==='att'?attDrawer():d.kind==='addc'?addCourseDrawer():d.kind==='course'?courseDrawer():d.kind==='exam'?examDrawer():d.kind==='student'?studentDrawer():d.kind==='staff'?staffDrawer():d.kind==='move'?moveDrawer():d.kind==='acct'?accountDrawer():d.kind==='print'?printDrawer():d.kind==='notifs'?notifDrawer():d.kind==='stock'?stockDrawer():infoDrawer();
+  const html=d.kind==='att'?attDrawer():d.kind==='addc'?addCourseDrawer():d.kind==='course'?courseDrawer():d.kind==='exam'?examDrawer():d.kind==='student'?studentDrawer():d.kind==='staff'?staffDrawer():d.kind==='move'?moveDrawer():d.kind==='acct'?accountDrawer():d.kind==='print'?printDrawer():d.kind==='notifs'?notifDrawer():d.kind==='stk'?stockDrawer():d.kind==='cpt'?comptaDrawer():infoDrawer();
   const fresh=el._k!==d.uid;
   el.classList.toggle('dialog',d.kind==='move');
   setHTML(el,html,d.uid);

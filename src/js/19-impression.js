@@ -37,7 +37,9 @@ const prCSS=land=>`@page{size:letter ${land?'landscape':'portrait'};margin:12mm}
 .pr-sign{display:flex;justify-content:space-between;gap:20px;margin-top:26px;font-size:10.5pt}
 `;
 const prSlug=v=>String(v||'').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^A-Za-z0-9]+/g,'-').replace(/^-|-$/g,'').toLowerCase()||'feuille';
-function prHead(title,sub){const c=cfg();return `<header class="pr-head"><div><h1>${esc(title)}</h1><p>${sub}</p></div><div class="pr-org"><b>${esc(c.nom||'')}</b><br>${esc(c.annee||'')}</div></header>`;}
+/* Ligne de signature au bas de chaque page (Paramètres > Impression) */
+const prFoot=()=>{const x=String(cfg().impSign||'').trim();return x?`<p class="pr-sign">${esc(x)}</p>`:'';};
+function prHead(title,sub){const c=cfg(), co=c.impCoord!==false, ad=[c.adresse,c.tel,c.courriel,c.web].filter(Boolean);return `<header class="pr-head"><div><h1>${esc(title)}</h1><p>${sub}</p></div><div class="pr-org"><b>${esc(c.nom||'')}</b><br>${esc(c.annee||'')}${co&&c.resp?'<br>'+esc(c.resp):''}${co&&ad.length?'<br>'+esc(ad.join(' · ')):''}${c.impDate===true?'<br>Imprimé le '+esc(longDate(new Date())):''}</div></header>${c.pied?`<p class="pr-pied">${esc(c.pied)}</p>`:''}`;}
 const prWeekLbl=mon=>{const a=mon, b=addDays(mon,4);return a.getMonth()===b.getMonth()?`${dn(a)} au ${dn(b)} ${fMonth.format(b)} ${b.getFullYear()}`:`${dn(a)} ${fMonth.format(a)} au ${dn(b)} ${fMonth.format(b)} ${b.getFullYear()}`;};
 /* Tout ce qui est à l’horaire d’une semaine (du lundi au vendredi) */
 function weekItemsOf(mon){
@@ -60,7 +62,7 @@ function prWeekPage(title,sub,items,mon,who,gid){
   const head=days.map(x=>`<th>${esc(WD[x.d.getDay()])} ${dn(x.d)} ${esc(fMonthS.format(x.d))}${x.chore?`<small>Corvée de ménage${x.chore==='maybe'?' ?':''}</small>`:''}</th>`).join('');
   const am=days.map(x=>x.off?`<td rowspan="2" class="pr-off">${esc(x.off)}</td>`:span(x)?`<td rowspan="2">${lines(x.full)}</td>`:`<td>${lines(x.full.concat(x.am))}</td>`).join('');
   const pm=days.map(x=>span(x)?'':`<td>${lines(x.full.concat(x.pm))}</td>`).join('');
-  return `<section class="pr-page">${prHead(title,sub)}<table class="pr-t pr-wk"><thead><tr><th class="pr-m"></th>${head}</tr></thead><tbody><tr><th class="pr-m">Avant-midi</th>${am}</tr><tr><th class="pr-m">Après-midi</th>${pm}</tr></tbody></table></section>`;
+  return `<section class="pr-page">${prHead(title,sub)}<table class="pr-t pr-wk"><thead><tr><th class="pr-m"></th>${head}</tr></thead><tbody><tr><th class="pr-m">Avant-midi</th>${am}</tr><tr><th class="pr-m">Après-midi</th>${pm}</tr></tbody></table>${prFoot()}</section>`;
 }
 /* Pour qui on imprime : la classe ou l’enseignant choisi, sinon toutes les classes ; un enseignant ou un élève imprime le sien */
 function printTargets(d){
@@ -87,7 +89,7 @@ function attSheet(d){
     const th=ss.map(s=>{const dd=parse(s.date);return `<th class="c"><b>${esc(WD[dd.getDay()].slice(0,3))} ${dn(dd)}</b>${esc(momentShort(s))}<br>${esc((s.c.code||s.c.titre)+(sessLabel(s)?' '+sessLabel(s).replace(/^Cours /,''):''))}</th>`;}).join('');
     const rows=els.map(e=>`<tr><td class="n">${e.numero!=null&&e.numero!==''?esc(e.numero):''}</td><td class="nm">${esc(e.nom)}</td>${ss.map(s=>{const p=presDoc(s.key), v=p&&p.statuts&&p.statuts[e.id];return `<td class="c">${v&&LBL[v]?v:''}</td>`;}).join('')}<td></td></tr>`).join('');
     return `<section class="pr-page">${prHead('Feuille de présences · '+gName(gid),wk+(tid?' · '+esc(tName(tid)):''))}<table class="pr-t pr-att"><thead><tr><th class="n">N°</th><th class="nm">Élève</th>${th}<th>Remarques</th></tr></thead><tbody>${rows}</tbody></table>
-      <div class="pr-foot"><span>P : présent · A : absent · R : retard · M : absence motivée</span><span>Signature de l’enseignant : ______________________________</span></div></section>`;
+      <div class="pr-foot"><span>P : présent · A : absent · R : retard · M : absence motivée</span><span>Signature de l’enseignant : ______________________________</span></div>${prFoot()}</section>`;
   }).join('');
 }
 /* Relevé de résultats d’un élève */
@@ -98,7 +100,7 @@ function transcriptHTML(e){
   return `<section class="pr-page">${prHead('Relevé de résultats',esc(e.nom)+(e.numero!=null&&e.numero!==''?' · n° '+esc(e.numero):'')+' · '+esc(gName(e.groupe)))}
     ${mine.length?`<table class="pr-t pr-res"><thead><tr><th style="width:17%">Date</th><th>Module</th><th style="width:20%">Examen</th><th style="width:11%">Note</th><th style="width:21%">Résultat</th></tr></thead><tbody>${rows}</tbody></table>`:'<p>Aucun résultat inscrit pour l’instant.</p>'}
     <p class="pr-sum">${pl(mine.length,'examen','examens')} · ${ok} ${ok>1?'réussis':'réussi'}${ko?` · ${ko} à reprendre`:''}${kf?` · ${pl(kf,'échec de module','échecs de module')}`:''}${rate!=null?` · ${rate} % de réussite`:''}</p>
-    <div class="pr-sign"><span>Remis le ${esc(longDate(new Date()))}</span><span>Signature : ______________________________</span></div></section>`;
+    <div class="pr-sign"><span>Remis le ${esc(longDate(new Date()))}</span><span>Signature : ______________________________</span></div>${prFoot()}</section>`;
 }
 async function printDoc(title,body,land,file){
   const root=$('#print-root'), css=prCSS(land), t0=document.title;

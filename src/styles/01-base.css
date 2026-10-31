@@ -30,3 +30,9 @@ button{cursor:pointer}
 .k7{--card:#F0F3F8;--chip:#E1E7F2;--chip-ink:#546C91;--bar:#9AA8BD}
 .kx{--card:#FFF0F1;--chip:#FFE0E1;--chip-ink:#B1353F;--bar:#E26A70}
 .role-chip{display:inline-flex;align-items:center;margin-left:6px;padding:1px 6px;border-radius:4px;font-size:11px;font-weight:700;background:#FFF1E0;color:#995D12;vertical-align:1px}
+/* capitaine : rouge foncé ; lieutenants : bleu marine (mêmes couleurs que leurs cartes) */
+.role-chip.rc-cap{background:#9F2D35;color:#FFFFFF}
+.role-chip.rc-lt{background:#1E3A5F;color:#FFFFFF}
+.role-chip.rc-vert{background:#1F5F45;color:#FFFFFF}
+.role-chip.rc-or{background:#8A6416;color:#FFFFFF}
+.role-chip.rc-gris{background:#4B5563;color:#FFFFFF}

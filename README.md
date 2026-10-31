@@ -1,6 +1,6 @@
 # PompierNote
 
-PompierNote est la version 2 de Caserne-École. Le site de gestion scolaire de l’Académie des pompiers : calendrier des classes, modules et cours, affectation des enseignants, élèves, personnel, présences, examens, calendrier scolaire, comptes et profils. Trois rôles : **Administrateur**, **Enseignant**, **Élève**.
+PompierNote est la version 2 de Caserne-École. Le site de gestion scolaire de l’Académie des pompiers : calendrier des classes, modules et cours, affectation des enseignants, élèves, personnel, présences, examens, calendrier scolaire, stock du matériel, compta, annonces, comptes et profils. Trois rôles : **Administrateur**, **Enseignant**, **Élève**.
 
 ## Le site
 
@@ -61,18 +61,17 @@ Chaque classe a un document `cours/<id>` par module (sigle `M7`). Ses séances s
 
 Données : `config/ecole.ressources` (`{ id, nom, type }`, type `local` ou `equip`), `cours[].ress` dans un module et `ress` sur une séance (listes d’identifiants), `journal/<AAAA-MM>` (un document par mois, une entrée par action dans `ev` : `{ le, par, role, cat, txt, obj, seance, date, groupe }`) et `cours/<id>.annule` (`{ "date@séance": { le, par } }` pour chaque séance annulée).
 
-## Stock
+## Stock, compta, annonces, clôture de l’année
 
-Le menu **Stock** (administration, section Ressources) a quatre onglets :
+Paramètres, Stock et Compta ont un **menu à sections** : en les ouvrant, le menu de gauche montre leurs sections ; l’entrée en tête ramène au menu, sur la page d’avant.
 
-- **Équipement prêté** : chaque pièce (habit de combat, casque, gants…) a un numéro, une taille et un état (bon, à réparer, hors service). *Prêter* la relie à un élève ; *Retour* la libère et note son état.
-- **Matériel** : APRIA, boyaux, lances, échelles, outils, avec une quantité et une fréquence d’inspection en jours. *Inspecter* inscrit la date ; une inspection non conforme met le matériel hors service. Les inspections à faire d’ici 14 jours et en retard sont signalées.
-- **Consommables** : quantité, unité et seuil. *Entrée* et *Sortie* changent la quantité (jamais sous zéro) ; au seuil, l’article est « À commander ».
-- **Uniformes et ventes** : prix et quantité par taille (`U` = taille unique). *Vendre* enregistre l’élève, la taille, la quantité et le montant ; l’onglet *Ventes* donne le total du mois.
+- **Stock** (administration ; « Matériel » pour les enseignants) : inventaire par catégorie (EPI, ARI et air comprimé, matériel, consommables), articles suivis à l’unité (numéro de série, état, inspections, épreuve hydraulique des bouteilles, fin de vie) ou en quantité (seuil d’alerte). Sorties pour une manœuvre et retours avec contrôle, bris, maintenance, dotations aux élèves ou à la classe (feuille à signer, reprise en fin de cohorte), journal des mouvements, échéances d’inspection. Le matériel « réservable » s’ajoute aux locaux et équipements des séances.
+- **Compta** (administration) : frais des élèves (tarifs par classe, échéances, paiements, réductions, reçus), factures (numérotées, taxes au besoin), paiements reçus, paie des instructeurs (heures réellement données × taux, relevés approuvés puis payés), achats et dépenses, budget par poste, rapports (par mois, coût par élève, coût par module) et exports CSV. Montants en cents dans la base.
+- **Annonces** (Paramètres → Annonces) : un bandeau en haut des pages, pour tout le monde, un rôle ou des classes ; importance, dates, épinglage, bouton avec lien ; aussi dans la cloche.
+- **Clôture de l’année** (Paramètres → Année scolaire) : l’année est copiée dans `archives` (le résumé) et `archives-parts` (le contenu en morceaux), puis l’horaire, les présences, les examens, la compta et les mouvements du stock de l’année sont retirés. Une archive se consulte avec tout le site, en lecture seule.
+- **Profil** : l’élève voit son équipement et son compte, l’enseignant ses relevés de paie (réglable dans Droits et accès). Ils ne lisent que leurs propres documents.
 
-La cloche de l’administration signale les consommables à commander, les inspections en retard et l’équipement à réparer. La fiche d’un élève montre l’équipement qui lui est prêté et ses achats ; l’élève voit son équipement dans *Mon profil*.
-
-Données : `stock/<id>` (un article : `cat` = `epi`, `mat`, `conso` ou `vente` ; `nom`, `empl`, `notes` ; selon la catégorie `num`, `taille`, `etat`, `pret` `{ eleve, le }`, `qte`, `freq`, `insp`, `unite`, `seuil`, `prix`, `qtes` `{ taille: quantité }`) et `stock-mvt/<id>` (un mouvement, jamais modifié : `{ le, par, art, nom, cat, type, qte, taille, eleve, prix, total, etat, note }`, type `ajout`, `modif`, `suppr`, `entree`, `sortie`, `pret`, `retour`, `insp` ou `vente`). Chaque action s’inscrit aussi dans `journal` (catégorie `stock`).
+Données : `stock` (`aId` : l’élève ou la classe à qui l’article est attribué), `stock-mvt`, `compta` (écritures `rev`, `dep`, `red`), `compta-factures`, `compta-paie` (`<mois>_<enseignant>`), `compta-reglages/ecole` (taxes, taux, budget ; administration seulement), `config/ecole.tarifs`, `config/ecole.stock`, `config/ecole.annonces`, `archives`, `archives-parts`.
 
 ## Essayer le site sur cet ordinateur
 
@@ -106,8 +105,8 @@ site/firebase.js            branchement sur Firebase (connexion + base de donné
 demo/connexion-demo.js      connexion et base de données simulées de la démo (localStorage)
 demo/donnees.js             données d’exemple (générées)
 src/page.html               la coquille de la page (titre, structure, emplacement des styles et du code)
-src/styles/NN-nom.css       les styles, un fichier par sujet (16 fichiers ; 15-telephone.css : les écrans étroits)
-src/js/NN-nom.js            le code, un fichier par sujet (29 fichiers)
+src/styles/NN-nom.css       les styles, un fichier par sujet (18 fichiers, dont 17-affichages.css : Liste, Cartes, Compact ; 15-telephone.css : les écrans étroits)
+src/js/NN-nom.js            le code, un fichier par sujet (32 fichiers)
 tests/                      tests automatiques (Chrome sans fenêtre)
 outils/assembler.js         réunit les fichiers de src/ en une seule page
 outils/construire.js        régénère index.html, demo.html et demo/donnees.js
@@ -125,9 +124,9 @@ La page est découpée par sujet. Les fichiers sont réunis dans l’ordre de le
 | `05-horaire-rendu`, `06-horaire-pages` | le tableau de la semaine et les pages de l’horaire |
 | `07-classes`, `08-eleves-fiches`, `09-personnel-heures` | pages Classes, Élèves (et fiches), Personnel et heures enseignées |
 | `10-presences`, `11-examens`, `12-affectations` | présences, examens et résultats, affectation des enseignants |
-| `13-modules`, `14-reprises`, `15-locaux-equipements`, `15-stock` | modules du programme, journées de reprise, locaux et équipements, stock |
-| `16-import`, `17-historique`, `18-notifications`, `19-impression` | import d’élèves et copie d’horaire, historique, cloche, impression |
-| `20-nouveautes`, `21-annee-parametres`, `22-comptes` | Nouveautés, calendrier scolaire et paramètres, comptes et profils |
+| `13-modules`, `14-reprises`, `15-locaux-equipements`, `15-stock` | modules du programme, journées de reprise, locaux et équipements, stock du matériel |
+| `16-compta`, `16-import`, `17-historique`, `18-notifications`, `19-impression` | compta, import d’élèves et copie d’horaire, historique, cloche, impression |
+| `20-nouveautes`, `21-annee-parametres`, `21-annonces`, `21-archives`, `22-comptes` | Nouveautés, calendrier scolaire et paramètres, annonces, clôture de l’année et archives, comptes et profils |
 | `23-cadre`, `24-tiroir` | menu, en-tête et rendu général ; panneau latéral |
 | `25-enregistrement`, `26-evenements`, `27-glisser` | écritures dans la base ; clics et formulaires ; glisser-déposer |
 | `28-donnees` | lecture de la base et démarrage |

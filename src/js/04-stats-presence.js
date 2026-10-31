@@ -17,7 +17,7 @@ function studentStats(from,to){
   }
   return m;
 }
-const rateOf=s=>s&&s.n?Math.round((s.P+s.R)/s.n*100):null;
+const rateOf=s=>s&&s.n?Math.round((s.P+(cfg().retardPresent===false?0:s.R)+(cfg().motivePresent===true?s.M:0))/s.n*100):null;
 function periodRange(p){
   const t=todayISO(), d=new Date();
   if(p==='semaine') return [iso(monday(d)),t];

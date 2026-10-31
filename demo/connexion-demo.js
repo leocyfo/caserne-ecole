@@ -2,7 +2,7 @@
    Sert à essayer la connexion, la demande de compte et l’approbation sans Firebase.
    Rien n’est envoyé ailleurs ; « Réinitialiser la démo » efface tout. */
 (function(){
-  const KEY='caserne-ecole-demo-v12';
+  const KEY='caserne-ecole-demo-v15';
   const copy=v=>JSON.parse(JSON.stringify(v));
   const DEMO=[
     {uid:'demo-admin',email:'admin@demo.ca',pw:'demo123',displayName:'Direction de l’Académie',label:'Administration'},
@@ -34,7 +34,9 @@
   save();
 
   const L=new Set(), authL=new Set();
-  const fire=()=>{save();for(const l of L)l();};
+  /* plusieurs changements d’affilée (une clôture d’année en retire des centaines) : un seul enregistrement et un seul avis */
+  let fireT=0;
+  const fire=()=>{if(fireT)return;fireT=setTimeout(()=>{fireT=0;save();for(const l of L)l();},0);};
   const tick=()=>new Promise(r=>setTimeout(r,60));
   const meta={fromCache:false,hasPendingWrites:false};
   const snapDoc=p=>{const v=store.get(p);return {id:p.split('/').pop(),exists:!!v,data:()=>v?copy(v):undefined,metadata:meta};};

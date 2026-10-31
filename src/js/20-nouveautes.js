@@ -5,7 +5,28 @@
    items : [type, titre, explication, page à ouvrir]. Types : new (nouvelle fonction), up (amélioration), fix (correction). */
 const NV_REPO='https://github.com/leocyfo/caserne-ecole';
 const NOUVEAUTES=[
-  {date:'2026-10-30',id:'',push:'Calendrier : le titre et la barre de l’horaire sur une seule ligne',items:[
+  {date:'2026-10-31',id:'',push:'PompierNote v2 : stock, compta, annonces, paramètres et clôture de l’année',items:[
+    ['new','Stock','Un menu à sections remplace le menu de gauche : tableau de bord, inventaire par catégorie (EPI, ARI et air comprimé, matériel, consommables), dotations, mouvements, inspections et réglages. Chaque article a son état (pastille verte, orange ou rouge), son emplacement et son historique.','stock'],
+    ['new','Sorties, retours et bris','On sort du matériel pour une manœuvre (séance, instructeur), on le rentre avec un contrôle (nettoyé, intact) ; endommagé, il part en maintenance. On déclare un bris, on remet en service, on retire du service.','stock'],
+    ['new','Inspections et épreuves','Les inspections, l’épreuve hydraulique des bouteilles d’ARI et la fin de vie se calculent selon la catégorie (réglable). Ce qui est en retard ou proche est signalé, dans le menu et dans la cloche.','stock'],
+    ['new','Dotations','L’équipement remis à chaque élève (ou à la classe), la feuille de dotation à signer, et « Tout reprendre » en fin de cohorte. La fiche de l’élève a un onglet Équipement.','stock'],
+    ['new','Consommables','Consommer (jamais plus que le stock), réapprovisionner, ajuster. Sous le seuil, l’alerte paraît ; un réapprovisionnement avec un coût devient une dépense dans la Compta.','stock'],
+    ['new','Matériel réservable','Un camion ou un lot d’ARI marqué « réservable » s’ajoute aux locaux et équipements des séances : deux séances qui le veulent au même moment sont en conflit.','stock'],
+    ['new','Compta','Un menu à sections : tableau de bord, frais des élèves, factures, paiements reçus, paie des instructeurs, achats et dépenses, budget, rapports et réglages. Montants en dollars, exports CSV pour le comptable.','compta'],
+    ['new','Frais des élèves','Des tarifs par classe, payables par échéances. Pour chaque élève : dû, payé, réductions, solde et retard ; paiement, reçu et relevé de compte à imprimer.','compta'],
+    ['new','Factures','Numérotées, avec TPS et TVQ au besoin ; brouillon, envoyée, en retard, payée ou annulée ; paiements et impression.','compta'],
+    ['new','Paie des instructeurs','Calculée avec les heures réellement données dans le mois, au taux de chaque instructeur (ou selon la théorie ou la pratique). On approuve chaque relevé, puis on le marque payé.','compta'],
+    ['new','Budget et rapports','Le prévu par poste comparé au réel, avec une alerte de dépassement ; revenus et dépenses par mois, coût par élève, coût d’une heure d’instruction et coût par module.','compta'],
+    ['new','Annonces','Un bandeau en haut des pages : plusieurs annonces, pour tout le monde, les enseignants, les élèves ou des classes précises ; information, importante ou urgente ; programmée, épinglée, avec un bouton et un lien ; modèles et aperçu. Elles paraissent aussi dans la cloche.','params'],
+    ['new','Clôturer l’année','Paramètres → Année scolaire : l’année est copiée dans une archive, puis on commence la suivante. Une année archivée se consulte en lecture seule avec tout le site, s’exporte ou se supprime.','params'],
+    ['new','Paramètres refaits','Douze sections dans le menu de gauche, sur toute la largeur : école, annonces, année, horaire (heures des moments), résultats et présences, grades des élèves, fonctions du personnel, droits, menu et affichage (couleur, noms des entrées), notifications, impression et données.','params'],
+    ['new','Droits et accès','Ce que les enseignants peuvent faire eux-mêmes (postuler, remplacement, présences, résultats, approbation automatique) et ce que chacun voit de lui-même.','params'],
+    ['new','Mon profil','L’élève y voit son équipement et son compte ; l’enseignant, ses relevés de paie. Chacun ne lit que ses propres données.',''],
+    ['up','Menu regroupé','Calendrier et calendrier scolaire, élèves et personnel, modules et examens sont réunis ; une bulle rouge glisse jusqu’à la page ouverte.','calendar'],
+    ['up','En-têtes et affichages','Chaque page a son titre et ses outils sur une ligne (deux au plus) ; les listes s’affichent en Liste, Cartes ou Compact.','eleves'],
+    ['up','Élèves','Cartes colorées selon le grade, filtres (grade, notes) et tris (nom de famille, classe, grade, note, présence).','eleves']
+  ]},
+  {date:'2026-10-30',id:'a0d7946',push:'Calendrier : le titre et la barre de l’horaire sur une seule ligne',items:[
     ['up','Une seule ligne','Le titre, la semaine, Semaine/Jour, Classes/Enseignants, les présences en retard, « Ajouter », l’impression et la cloche tiennent sur une seule ligne en haut du calendrier. L’horaire commence une bande plus haut.','calendar'],
     ['up','Libellés courts','Sur un écran de moins de 1 680 px de large : « 15 en retard » et « Ajouter ». Le texte complet reste dans l’info-bulle. Sous 1 180 px, la barre passe sous le titre.','calendar'],
     ['fix','Cloche','Ouvrir la cloche ne fait plus disparaître la barre de l’horaire.','']

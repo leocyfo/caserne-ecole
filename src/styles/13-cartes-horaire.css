@@ -63,6 +63,8 @@ button.cc.kx:not(.has-badge):hover{border-top-color:#6E1B22;border-right-color:#
 .token button{width:22px;height:22px;border:0;border-radius:50%;background:rgba(255,255,255,.2);color:#FFFFFF;display:grid;place-items:center;font-size:14px;line-height:1;padding:0}
 .token button:hover{background:rgba(255,255,255,.34)}
 .viewsel .fchip{min-height:32px;padding:4px 12px;font-size:12.5px}
+.tch-row{gap:6px}
+.tch-row .fchip{min-height:30px;padding:3px 11px;font-size:12.5px}
 .late{display:inline-flex;align-items:center;gap:7px;height:32px;padding:0 12px;border:0;border-radius:999px;background:var(--warn-bg);color:var(--warn);font-size:12.5px;font-weight:700;white-space:nowrap}
 .late::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
 .late:hover{text-decoration:underline}

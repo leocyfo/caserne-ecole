@@ -39,7 +39,9 @@ function sessionsOnRaw(ds){
   return out.sort((x,y)=>x.start-y.start||x.end-y.end);
 }
 /* On parle d’avant-midi, d’après-midi ou de toute la journée, jamais d’heures. */
-function moment(a,b){if(a<12*60&&b>13*60)return 'Toute la journée';return a<12*60?'Avant-midi':'Après-midi';}
+/* Le moment d’une séance : avant midi, après midi, ou les deux (au-delà de 13 h). Si l’administration a changé les heures
+   (Paramètres), la frontière est à mi-chemin entre la fin de l’avant-midi et le début de l’après-midi. */
+function moment(a,b){const cm=cfg().moments, m=cm?(toMin(PERIODES[0].fin)+toMin(PERIODES[1].debut))/2:12*60;if(a<m&&b>m+60)return 'Toute la journée';return a<m?'Avant-midi':'Après-midi';}
 const momentOf=s=>moment(s.start,s.end);
 const momentShort=s=>({'Avant-midi':'AM','Après-midi':'PM'})[momentOf(s)]||'Journée';
 const momentIn=(a,b)=>({'Avant-midi':'en avant-midi','Après-midi':'en après-midi'})[moment(a,b)]||'toute la journée';
@@ -121,7 +123,7 @@ const CHORE_TAGS=new Set(['Ménage','Ménage ?']);
    d’une séance de la classe ce jour-là comptent aussi. */
 let choreMemo=new Map();
 function choreDay(gid,date){
-  if(!gid||!date) return '';
+  if(!gid||!date||cfg().menage===false) return '';
   const k=gid+'|'+date;if(choreMemo.has(k)) return choreMemo.get(k);
   let r='';
   const g=byId(S.data.groupes,gid);
