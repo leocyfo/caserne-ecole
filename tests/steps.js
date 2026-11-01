@@ -15,7 +15,7 @@ const XS=id=>{const d=window.__store.get('cours/'+id)||{},m=new Map((d.extras||[
 try{
 await wait(400);
 ok('banner',/Horaire partagé/.test($('#banner-text').textContent));
-ok('nav admin 11',$$('#nav button').length===11&&!!$('#nav-compta')&&!/À faire/.test($('#nav').textContent)&&!$('#nav-annee')&&!$('#nav-personnel')&&!$('#nav-examens')&&!!$('#nav-stock')&&$$('#nav .nav-sec').length===4&&!!$('#nav-historique')&&$$('#nav button').pop().id==='nav-nouveautes'&&!!$('#nav-comptes')&&!!$('#nav-modules')&&!!$('#nav-affectations')&&!$('#nav-presences'));
+ok('nav admin 12',$$('#nav button').length===12&&!!$('#nav-compta')&&!/À faire/.test($('#nav').textContent)&&!$('#nav-annee')&&!$('#nav-personnel')&&!$('#nav-examens')&&!!$('#nav-stock')&&$$('#nav .nav-sec').length===4&&!!$('#nav-historique')&&$$('#nav button').pop().id==='nav-nouveautes'&&!!$('#nav-comptes')&&!!$('#nav-modules')&&!!$('#nav-affectations')&&!$('#nav-presences'));
 ok('board',$$('#main .week button.cc').length===41,$$('#main .week button.cc').length);
 ok('exam card on board',$$('#main .cc.exam').length===1);
 /* DND */
@@ -37,7 +37,7 @@ let pt=await dragTo(src,cell,true);
 ok('drop highlight',cell.classList.contains('drop-ok')&&!!$('.drag-ghost')&&src.classList.contains('dragging'));
 ptr('pointerup',pt[0],pt[1]);await wait(40);
 ok('drag cleaned',!$('.drag-ghost')&&!$('.cc.dragging')&&!document.body.classList.contains('is-dragging'));
-ok('move dialog',/Déplacer un cours/.test($('#drawer').textContent)&&$('#drawer').classList.contains('dialog'));
+ok('move dialog',/Déplacer un cours/.test($('#drawer').textContent)&&$('#drawer').classList.contains('sh-bottom'));
 ok('move warns',/Groupe 302 a déjà Français/.test($('#drawer').textContent));
 const ts=$('#mv-time');ts.value='13:45-15:00';ts.dispatchEvent(new Event('change',{bubbles:true}));await wait(30);
 ok('time change clears group warning',!/Groupe 302 a déjà/.test($('#drawer').textContent)||/Science/.test($('#drawer').textContent),$('#drawer .notice')&&$('#drawer .notice').textContent);
@@ -69,7 +69,7 @@ ok('add-at preset',$('#c-groupe')&&$('#c-groupe').value==='g-302'&&$('#c-j-0').v
 click($('#dr-close'));await wait(30);
 click($('.cc[data-key="c-fra-302_s14_2026-10-05"]'));await wait(40);
 click($('[data-act=move-open]'));await wait(40);
-ok('move from drawer',$('#drawer').classList.contains('dialog')&&!!$('#mv-day'));
+ok('move from drawer',$('#drawer').classList.contains('sh-bottom')&&!!$('#mv-day'));
 const dsel=$('#mv-day');dsel.value='2026-10-09';dsel.dispatchEvent(new Event('change',{bubbles:true}));await wait(30);
 click($('[data-act=mv-apply]'));await wait(150);
 ok('moved via drawer',XS('c-fra-302').some(x=>x.date==='2026-10-09'));
@@ -186,13 +186,19 @@ $('#p-enom').value='Test étape';$('#p-edu').value='2027-06-01';$('#p-eau').valu
 ok('etape added',window.__store.get('config/ecole').etapes.length===4);
 // enseignant
 click($('[data-role=teacher]'));await wait(60);
-ok('teacher nav',$$('#nav button').length===6&&!!$('#nav-stock')&&/Matériel/.test($('#nav-stock').textContent)&&!!$('#nav-profil')&&!!$('#nav-mescours')&&!!$('#nav-dispos'));
+ok('teacher nav',$$('#nav button').length===7&&!!$('#nav-stock')&&/Matériel/.test($('#nav-stock').textContent)&&!!$('#nav-profil')&&!!$('#nav-mescours')&&!!$('#nav-dispos'));
 ok('teacher board',$$('#main .week button.cc').length>0);
+{const c=$$('#main .week button.cc').find(b=>!b.classList.contains('exam'));click(c);await wait(60);const r=(e=>({left:e.offsetLeft,top:e.offsetTop,right:e.offsetLeft+e.offsetWidth,bottom:e.offsetTop+e.offsetHeight,width:e.offsetWidth,height:e.offsetHeight}))($('#drawer'));
+ ok('teacher card: side panel',$('#drawer').classList.contains('sh-side')&&Math.round(r.width)===600&&Math.round(r.right)===innerWidth&&Math.round(r.height)===innerHeight,Math.round(r.width));
+ click($('#dr-close'));await wait(30);}
 click(navBtn('examens'));await wait(40);
 ok('teacher exams',$$('#main [data-act=exam]').length>=1||/Aucun examen/.test($('#main').textContent));
 // élève
 click($('[data-role=student]'));await wait(60);
 ok('student exams panel',/Prochains examens/.test($('#main').textContent));
+{const c=$$('#main .week button.cc').find(b=>!b.classList.contains('exam')),cr=c.getBoundingClientRect();click(c);await wait(60);const r=(e=>({left:e.offsetLeft,top:e.offsetTop,right:e.offsetLeft+e.offsetWidth,bottom:e.offsetTop+e.offsetHeight,width:e.offsetWidth,height:e.offsetHeight}))($('#drawer'));
+ ok('student card: bubble beside the course',$('#drawer').classList.contains('sh-pop')&&Math.round(r.width)===360&&(r.left>=cr.right||r.right<=cr.left)&&r.top>=0&&r.bottom<=innerHeight,[Math.round(r.left),Math.round(cr.right)].join(' '));
+ click($('#dr-close'));await wait(30);}
 click($('#main .cc.exam')||$('#main [data-act=exam]'));await wait(40);
 ok('student exam readonly',!$('#x-form')&&/Surveillance/.test($('#drawer').textContent));
 click($('#dr-close'));await wait(30);

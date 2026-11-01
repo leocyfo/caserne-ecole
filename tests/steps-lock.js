@@ -15,6 +15,11 @@ if(U.id==='u9'){
   ok('student sees only own equipment and account',!!$('#pf-equip')&&/Casque de pompier/.test($('#pf-equip').textContent)&&/Habit de combat/.test($('#pf-equip').textContent)&&!!$('#pf-compte')&&/Solde/.test($('#pf-compte').textContent)&&/\$/.test($('#pf-compte').textContent),($('#pf-equip')||{}).textContent);
   click($('#nav-examens'));await wait(300);
   ok('student sees own results without the class list',/Mes résultats/.test($('#main').textContent)&&$$('#main .xm-me .chip.ok').length>=5&&/Journée de reprise/.test($('#main').textContent),$$('#main .xm-me .chip').length);
+  click($('#nav-formation'));await wait(400);
+  ok('student formation: own carnet',!!$('#fo-mycarnet')&&$$('#fo-mycarnet li').length===11&&/Réussie/.test($('#fo-mycarnet').textContent)&&!!$('#fo-tosign'),($('#main')||{}).textContent.slice(0,200));
+  ok('student reads only own formation documents',(window.__subs||[]).includes('evaluations?eleve==el-119-01')&&(window.__subs||[]).includes('ex-tentatives?eleve==el-119-01')&&!(window.__subs||[]).includes('evaluations'),(window.__subs||[]).filter(s=>/eval|tentat/.test(s)).join(' '));
+  click($('#fo-certs'));await wait(200);ok('student own certificates',$$('#fo-mycerts li').length===4&&/Valide/.test($('#fo-mycerts').textContent));
+  click($('#fo-enpq'));await wait(200);ok('student own ENPQ file',!!$('#fo-myenpq')&&/Examens de l’école/.test($('#fo-myenpq').textContent)&&/Frais à jour/.test($('#fo-myenpq').textContent));
   ok('student has no class data',!$('[data-act=x-rep]')&&!$('.xm-tile')&&!$('#nav-eleves'));
 }else{
   ok('locked teacher role',/enseignant/i.test($('#ws-label').textContent)&&!$('#sel-teacher')&&$('.roles').hidden,$('#ws-label').textContent);

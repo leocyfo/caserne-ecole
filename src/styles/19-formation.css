@@ -1,0 +1,164 @@
+/* ---------- Formation : grilles pratiques, évaluations, carnets, examens blancs, services ---------- */
+.ok-t{color:var(--ok)}
+.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.sec-h{margin:18px 0 8px;font-size:14px;font-weight:700;color:var(--ink)}
+.xm-fg{grid-template-columns:minmax(0,2.4fr) minmax(0,1.1fr) minmax(0,1fr) minmax(0,.9fr) minmax(120px,auto)}
+.xm-fe{grid-template-columns:62px minmax(0,2fr) minmax(0,1fr) minmax(0,1fr) minmax(150px,auto)}
+.xm-qb{grid-template-columns:minmax(0,3fr) minmax(0,1.6fr) minmax(0,.8fr) minmax(110px,auto)}
+.xm-qe{grid-template-columns:minmax(0,2fr) minmax(0,1fr) minmax(0,1.2fr) minmax(0,1fr) minmax(0,1.3fr) 90px}
+.xm-sv{grid-template-columns:minmax(0,2.4fr) minmax(0,.8fr) minmax(0,.8fr) minmax(0,1.2fr) minmax(130px,auto)}
+.xm-fg .xm-end,.xm-fe .xm-end,.xm-qb .xm-end,.xm-qe .xm-end,.xm-sv .xm-end{justify-content:flex-end;flex-wrap:wrap;gap:4px}
+/* évaluer : la liste de la classe */
+.fo-elist{list-style:none;margin:0;padding:0}
+.fo-er{display:grid;grid-template-columns:22px 30px minmax(0,1fr) auto auto auto;align-items:center;gap:10px;padding:7px 0;border-top:1px solid var(--line)}
+.fo-er:first-child{border-top:0}
+.fo-er .nm{min-width:0;font-weight:600;color:var(--ink)}
+.fo-er .nm small{font-weight:400}
+.fo-er.done .nm{color:var(--ink-2)}
+.fo-ck{display:flex;align-items:center;justify-content:center}
+.fo-ck input{width:16px;height:16px;margin:0}
+/* la grille remplie sur la tablette */
+.fo-chrono{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 12px;margin-bottom:10px;background:var(--surface-2);border:1px solid var(--line);border-radius:var(--r-sm)}
+.fo-time{font:700 26px/1 var(--font);font-variant-numeric:tabular-nums;color:var(--ink);min-width:86px}
+.fo-pts{margin:0 0 8px;padding:0;list-style:none;counter-reset:pt}
+.fo-pts>li{counter-increment:pt;border-top:1px solid var(--line)}
+.fo-pts>li:first-child{border-top:0}
+.fo-pt{display:flex;align-items:center;gap:10px;padding:10px 4px;min-height:44px;cursor:pointer}
+.fo-pt input{width:20px;height:20px;flex:none;margin:0}
+.fo-pt span:not(.chip){flex:1;min-width:0}
+.fo-pt span:not(.chip)::before{content:counter(pt) '. ';color:var(--muted)}
+.fo-pt.crit{font-weight:600}
+.fo-done>li{padding:6px 2px;font-size:13px}
+.fo-sum{margin:10px 0;font-size:13.5px}
+.fo-sig{border:1px solid var(--line);border-radius:var(--r-sm);padding:8px 12px 10px;margin:10px 0}
+.fo-sig legend{padding:0 4px;font-size:12.5px;font-weight:700;color:var(--ink-2)}
+.fo-sig .ck{display:flex;gap:8px;align-items:flex-start;padding:5px 0}
+.fo-cf{border:1px solid var(--line);border-radius:var(--r-sm);padding:6px 10px 2px;margin:0 0 10px}
+.fo-cf legend{padding:0 4px;font-weight:700;font-size:13px}
+/* carnets : élèves × grilles */
+.fo-mat th,.fo-mat td{padding:5px 6px}
+.fo-gh{text-align:center;width:34px}
+.fo-c{text-align:center}
+.fo-cb{width:30px;height:28px;border:1px solid var(--line);border-radius:6px;background:var(--surface);font:700 13px/1 var(--font);cursor:pointer;color:var(--muted)}
+.fo-c.ok .fo-cb{background:var(--ok-bg);border-color:transparent;color:var(--ok)}
+.fo-c.ko .fo-cb{background:var(--warn-bg);border-color:transparent;color:var(--warn)}
+.fo-c.out .fo-cb{background:var(--bad-bg);border-color:transparent;color:var(--bad)}
+.fo-cb:hover{border-color:var(--line-strong)}
+.fo-leg{margin:10px 0 0;padding-left:22px;columns:2;column-gap:28px;font-size:12.5px;color:var(--ink-2)}
+.fo-leg li{break-inside:avoid;padding:2px 0}
+.fo-bar{display:block;width:100%;height:6px;margin-top:6px;background:var(--line);border-radius:999px;overflow:hidden}
+.fo-bar i{display:block;height:100%;background:var(--ok)}
+.fo-req{display:block;margin-top:4px}
+.fo-req .chip{margin:2px 4px 0 0}
+.fo-miss{margin:6px 0 0;padding-left:18px;font-size:12.5px}
+.fo-enpq td{font-size:13px}
+.fo-enpq .fo-ck{width:34px}
+.fo-miss-t{color:var(--ink-2);line-height:1.45}
+.fo-rel .tbl{margin-bottom:10px}
+/* banque de questions et examens blancs */
+.qb-ch{border:0;padding:0;margin:0 0 10px}
+.qb-ch legend{font-size:12.5px;font-weight:600;color:var(--ink-2);margin-bottom:8px}
+/* Fenêtre d’une question : chaque choix est une carte, la bonne réponse en vert pâle */
+#qq-texte{font-size:15.5px;line-height:1.45}
+.qb-c{display:grid;grid-template-columns:18px 26px minmax(0,1fr) auto;align-items:center;gap:10px;margin-bottom:6px;padding:4px 10px;border:1px solid var(--line);border-radius:var(--r-sm);background:var(--surface);cursor:pointer}
+.qb-c:hover{border-color:var(--line-strong)}
+.qb-c:focus-within{border-color:var(--focus);box-shadow:0 0 0 1px var(--focus)}
+.qb-c input[type=radio]{width:18px;height:18px;margin:0;accent-color:var(--ok)}
+.qb-c b{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:var(--info-bg);color:var(--info);font-size:12.5px}
+.qb-c input:not([type]){border:0;background:none;padding:8px 2px;font:inherit;font-size:15px;color:var(--ink);min-width:0;outline:0}
+.qb-good{display:none;font-size:11px;font-weight:700;color:var(--ok);background:#FFFFFFB3;border-radius:999px;padding:2px 8px;white-space:nowrap}
+.qb-c:has(input[type=radio]:checked){background:var(--ok-bg);border-color:#9FD8BB}
+.qb-c:has(input[type=radio]:checked) b{background:var(--ok);color:#FFFFFF}
+.qb-c:has(input[type=radio]:checked) .qb-good{display:inline-block}
+.qb-expl{background:var(--info-bg);border-radius:var(--r-sm);padding:10px 12px 12px}
+.qb-expl>span{color:var(--info)}
+.qb-expl small{font-weight:400;color:var(--muted);margin-left:4px}
+.qb-expl textarea{background:var(--surface)}
+.qb-my{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
+.qb-h{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.qb-h h2{margin:0}
+.qb-card .row{margin-top:10px}
+.qb-bar{gap:12px}
+.qb-time b{font-variant-numeric:tabular-nums;font-size:16px;margin-left:4px}
+.qb-q h2{font-size:17px;line-height:1.4;margin:6px 0 14px}
+.qb-opts{display:flex;flex-direction:column;gap:8px}
+.qb-opt{display:flex;align-items:center;gap:12px;width:100%;min-height:46px;padding:10px 14px;text-align:left;background:var(--surface);border:1px solid var(--line-strong);border-radius:var(--r-sm);font:inherit;color:var(--ink);cursor:pointer}
+.qb-opt b{flex:none;display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:var(--surface-2);border:1px solid var(--line);font-size:12.5px}
+.qb-opt:hover:not(:disabled){border-color:var(--ink-2)}
+.qb-opt[aria-checked=true]{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.qb-opt[aria-checked=true] b{background:var(--accent);border-color:var(--accent);color:#FFF}
+.qb-opt.good{border-color:var(--ok);background:var(--ok-bg)}
+.qb-opt.bad{border-color:var(--bad);background:var(--bad-bg)}
+.qb-opt:disabled{cursor:default}
+.qb-nav{margin-top:14px}
+.qb-dots{display:flex;flex-wrap:wrap;gap:5px;margin:12px 0}
+.qb-dot{width:30px;height:30px;border:1px solid var(--line);border-radius:6px;background:var(--surface);font:600 12px/1 var(--font);color:var(--muted);cursor:pointer}
+.qb-dot.done{background:var(--info-bg);color:var(--ink);border-color:transparent}
+.qb-dot.on{border-color:var(--accent);color:var(--ink);box-shadow:inset 0 0 0 1px var(--accent)}
+.qb-end{gap:10px;align-items:center}
+.qb-end p{margin:0}
+.qb-score{font-size:15px;margin:6px 0 0}
+.qb-score b{font-size:26px;margin-right:4px}
+.qb-cors{margin:0;padding:0;list-style:none}
+.qb-cors li{padding:10px 12px;border-left:3px solid var(--line);margin-bottom:8px;background:var(--surface-2);border-radius:0 var(--r-sm) var(--r-sm) 0}
+.qb-cors li.good{border-left-color:var(--ok)}
+.qb-cors li.bad{border-left-color:var(--bad)}
+.qb-cors p{margin:0 0 4px}
+/* présence par code QR */
+.qr-row{margin:6px 0 10px;gap:10px;align-items:center}
+.qr-box{display:flex;gap:16px;align-items:flex-start;padding:12px;margin:6px 0 12px;border:1px solid var(--line);border-radius:var(--r);background:var(--surface-2)}
+.qr-img{flex:none;width:168px;height:168px;display:flex;align-items:center;justify-content:center;background:#FFF;border-radius:var(--r-sm);padding:8px;text-align:center}
+.qr-img svg{width:100%;height:100%}
+.qr-t{min-width:0}
+.qr-t p{margin:0 0 6px}
+.qr-code{font:700 20px/1.2 Consolas,monospace;letter-spacing:2px;color:var(--ink)}
+.qr-input{font:700 22px/1.2 Consolas,monospace!important;letter-spacing:4px;text-transform:uppercase}
+/* proposer des enseignants */
+.af-sugg{margin:6px 0 10px}
+.af-auto{margin:0 0 12px;gap:10px;align-items:center}
+.af-plan{list-style:none;margin:0;padding:0}
+.af-plan>li{padding:10px 0;border-top:1px solid var(--line)}
+.af-plan>li:first-child{border-top:0}
+.af-plan .ck{display:flex;gap:8px;align-items:baseline;padding:4px 0 0 4px}
+/* recherche Ctrl+K : le bouton sous le logo, puis la boîte */
+.side-search{display:flex;align-items:center;gap:10px;width:calc(100% - 20px);margin:0 10px 8px;padding:6px 10px;border:1px solid var(--side-line);border-radius:var(--r-sm);background:none;color:var(--side-muted);font:inherit;font-size:13px;text-align:left;cursor:pointer}
+.side-search:hover{background:var(--side-hover);color:#FFFFFF}
+.side-search span{flex:1}
+.side-search kbd{font:600 11.5px/1 var(--font);padding:3px 5px;border:1px solid var(--side-line);border-radius:4px;color:var(--side-muted)}
+.side-mini .side-search{justify-content:center;width:36px;margin:0 auto 8px;padding:6px 0}
+.side-mini .side-search span,.side-mini .side-search kbd{display:none}
+.cmdk{position:fixed;inset:0;z-index:80;display:flex;justify-content:center;align-items:flex-start;padding:12vh 16px 16px;background:rgba(14,26,43,.35)}
+.cmdk[hidden]{display:none}
+.cmdk-box{width:min(620px,100%);max-height:70vh;display:flex;flex-direction:column;background:var(--surface);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden}
+#cmdk-q{border:0;border-bottom:1px solid var(--line);border-radius:0;padding:14px 16px;font-size:15px;height:auto;outline:none;background:var(--surface)}
+#cmdk-l{list-style:none;margin:0;padding:6px;overflow:auto}
+.ck-g{padding:8px 10px 4px;font-size:11.5px;font-weight:700;color:var(--muted);text-transform:none}
+.ck-it{display:flex;align-items:baseline;gap:10px;padding:8px 10px;border-radius:var(--r-sm);cursor:pointer}
+.ck-it b{font-weight:600;color:var(--ink)}
+.ck-it small{color:var(--muted);font-size:12.5px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ck-it.on{background:var(--info-bg)}
+.ck-none{padding:14px 10px;color:var(--muted)}
+.cmdk-help{margin:0;padding:8px 14px;border-top:1px solid var(--line);font-size:12px;color:var(--muted)}
+/* vues enregistrées */
+.sv-bar{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:0 0 12px}
+.sv-chip{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:999px;background:var(--surface);font-size:12.5px;font-weight:600;color:var(--ink-2)}
+button.sv-chip,.sv-chip>button{border:0;background:none;font:inherit;color:inherit;padding:5px 12px;cursor:pointer;border-radius:999px}
+button.sv-chip{border:1px solid var(--line)}
+.sv-chip.on{border-color:var(--ink-2);color:var(--ink);background:var(--surface-2)}
+.sv-chip .sv-x{padding:5px 10px 5px 2px;color:var(--muted)}
+.sv-chip>button:first-child{padding-right:6px}
+.sv-form{display:inline-flex;gap:6px;align-items:center}
+.sv-form input{height:30px;width:180px}
+/* modification sur place */
+.ie-btn{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;margin-left:6px;padding:0;border:0;border-radius:6px;background:none;color:var(--muted);cursor:pointer;opacity:0;vertical-align:middle}
+.ie-btn .ic{width:14px;height:14px}
+tr:hover .ie-btn,.ie-btn:focus-visible{opacity:1}
+.ie-btn:hover{background:var(--surface-2);color:var(--ink)}
+.ie-edit input,.ie-edit select{height:30px;min-width:140px;font-size:13px}
+@media (hover:none){.ie-btn{opacity:.6}}
+@media (max-width:700px){.side-search,#sv-save{display:none}.grid3{grid-template-columns:1fr}.fo-er{grid-template-columns:22px minmax(0,1fr) auto auto auto;gap:8px}.fo-er .nm small{display:block}.fo-er .st-num{display:none}.fo-leg{columns:1}.qr-box{flex-direction:column}}
+/* les noms d’élèves en tête de ligne : comme du texte, pas comme un en-tête de colonne */
+#fo-mat tbody th,#fo-certs-t tbody th,#fo-enpq-t tbody th,#svc-t tbody th{text-transform:none;letter-spacing:0;font-size:13.5px;font-weight:600;color:var(--ink);text-align:left;white-space:nowrap}
+#svc-t tbody th small{font-weight:400}
+#fo-mycarnet .plist li{display:grid;grid-template-columns:minmax(0,1fr) auto 56px;gap:10px;align-items:center}
+#fo-mycarnet .plist li .btn{justify-self:end}

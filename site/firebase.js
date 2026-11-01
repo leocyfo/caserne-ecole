@@ -17,7 +17,10 @@ if(!cfg||!cfg.apiKey||!cfg.projectId){
   const app=initializeApp(cfg);
   const auth=A.getAuth(app);
   auth.languageCode='fr';
-  const fs=F.initializeFirestore(app,{ignoreUndefinedProperties:true});
+  /* les données restent aussi sur l’appareil : sans réseau, la page les lit et garde les modifications jusqu’au retour du réseau */
+  let fs;
+  try{fs=F.initializeFirestore(app,{ignoreUndefinedProperties:true,localCache:F.persistentLocalCache({tabManager:F.persistentMultipleTabManager()})});}
+  catch(e){fs=F.initializeFirestore(app,{ignoreUndefinedProperties:true});}
 
   // Les codes d’erreur de Firestore, traduits en ceux que la page connaît déjà
   const CODES={'permission-denied':'invalid_argument','unauthenticated':'revoked','unavailable':'unavailable','resource-exhausted':'quota_exceeded','not-found':'invalid_argument'};

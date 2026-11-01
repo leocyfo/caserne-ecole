@@ -7,7 +7,7 @@ const ago=t=>{if(!t)return '';const m=Math.round((Date.now()-new Date(t).getTime
 let _nf=null;
 function notifs(){
   const D=S.data, who=S.role==='teacher'?S.teacher:S.role==='student'?S.group:'', day=todayISO(), k=S.role+'|'+who+'|'+day;
-  if(_nf&&_nf.c===D.cours&&_nf.a===D.candidatures&&_nf.r===D.remplacements&&_nf.g===D.config&&_nf.st===D.stock&&_nf.cp===D.compta&&_nf.k===k) return _nf.out;
+  if(_nf&&_nf.c===D.cours&&_nf.a===D.candidatures&&_nf.r===D.remplacements&&_nf.g===D.config&&_nf.st===D.stock&&_nf.cp===D.compta&&_nf.ev===D.evals&&_nf.ce===D.certs&&_nf.bl===D.blancs&&_nf.tt===D.tentatives&&_nf.k===k) return _nf.out;
   const out=[], recent=iso(addDays(new Date(),-7));
   const info=(date,key)=>{const s=findSess(date,key);return s?{s,txt:`${s.c.code?s.c.code+' ':''}${s.c.titre} · ${gName(s.grp)}, ${dayLabel(parse(s.date)).toLowerCase()}`}:null;};
   /* séances annulées à venir : pour l’enseignant qui les donnait, ou pour la classe */
@@ -51,9 +51,10 @@ function notifs(){
     if(ap) out.push({id:`cp:paie:${ap}:${day}`,t:day+'T07:00',tone:'warn',title:'Compta',text:`${pl(ap,'relevé de paie à approuver','relevés de paie à approuver')}.`,go:{k:'compta',tab:'paie'}});
   }
   if(S.role==='teacher'&&who){const mine=(D.stock||[]).filter(a=>skLate(a)&&a.sortie.instr===who);if(mine.length) out.push({id:`sk:mine:${mine.length}:${day}`,t:day+'T07:00',tone:'warn',title:'Matériel à rentrer',text:mine.map(a=>skName(a)).slice(0,4).join(', ')+(mine.length>4?'…':'')+'.',go:{k:'stock',tab:'prep'}});}
+  out.push(...foNotifs());
   out.push(...annNotifs());
   out.sort((a,b)=>(b.t||'').localeCompare(a.t||''));
-  _nf={c:D.cours,a:D.candidatures,r:D.remplacements,g:D.config,st:D.stock,cp:D.compta,k,out};
+  _nf={c:D.cours,a:D.candidatures,r:D.remplacements,g:D.config,st:D.stock,cp:D.compta,ev:D.evals,ce:D.certs,bl:D.blancs,tt:D.tentatives,k,out};
   return out;
 }
 const nfNew=()=>{const seen=new Set(S.nfSeen||[]);return notifs().filter(n=>!seen.has(n.id));};

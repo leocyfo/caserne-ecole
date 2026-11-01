@@ -5,7 +5,7 @@ PompierNote est la version 2 de Caserne-École. Le site de gestion scolaire de l
 ## Le site
 
 - **`index.html`** : le site, avec connexion. On se connecte avec son courriel et son mot de passe. Pour avoir un compte, on clique **Demander un compte** ; l’administration approuve la demande dans le menu **Comptes**, en choisissant le rôle et la fiche de la personne.
-- **`demo.html`** : la démo, avec le même écran de connexion. Quatre comptes de démo (mot de passe `demo123`) : `admin@demo.ca`, `marie.leduc@demo.ca` (enseignante), `alexandre.beaulieu@demo.ca` (élève) et `vincent.tremblay@demo.ca` (instructeur qui postule aux journées de cours). On peut aussi demander un compte, puis l’approuver avec le compte Administration. Les comptes et les données (classes 119 à 123, horaire 2026–2027) restent dans le navigateur de chaque visiteur ; **Réinitialiser la démo** remet tout à zéro.
+- **`demo.html`** : la démo, avec le même écran de connexion. Quatre comptes de démo (mot de passe `demo123`) : `admin@demo.ca`, `marie.leduc@demo.ca` (enseignante), `alexandre.beaulieu@demo.ca` (élève) et `vincent.tremblay@demo.ca` (instructeur qui postule aux journées de cours). On peut aussi demander un compte, puis l’approuver avec le compte Administration. Les comptes et les données (classes 119 à 123, horaire 2026–2027) restent dans le navigateur de chaque visiteur ; **Réinitialiser la démo** remet tout à zéro. Quand une nouvelle version change les données d’exemple (`tests/seed-academy.json`), la démo repart de ces données au chargement suivant.
 
 Tant que Firebase n’est pas configuré (`config.js` vide), `index.html` renvoie vers la démo.
 
@@ -73,6 +73,24 @@ Paramètres, Stock et Compta ont un **menu à sections** : en les ouvrant, le me
 
 Données : `stock` (`aId` : l’élève ou la classe à qui l’article est attribué ; `modele` : sa fiche), `stock-mvt`, `stock-modeles` (fiches d’objets), `stock-fourn`, `stock-cmd`, `stock-rep`, `stock-cpt`, `compta` (écritures `rev`, `dep`, `red`), `compta-factures`, `compta-paie` (`<mois>_<enseignant>`), `compta-reglages/ecole` (taxes, taux, budget ; administration seulement), `config/ecole.tarifs`, `config/ecole.stock`, `config/ecole.annonces`, `archives`, `archives-parts`.
 
+## Formation, services incendie, confort
+
+**Formation** (menu à sections ; « Évaluations » pour les enseignants, « Ma formation » pour les élèves) :
+
+- **Grilles pratiques** : une grille par manœuvre (étapes, points critiques, seuil, temps limite, essais, autre évaluateur au deuxième essai, exigée ou non pour l’ENPQ). L’instructeur la remplit sur la tablette avec un chronomètre ; un point critique manqué fait échouer l’essai. L’évaluateur signe ; l’élève signe sur place ou plus tard dans son carnet. **Réussite en groupe** pour plusieurs élèves d’un coup.
+- **Carnets** : élèves × grilles pour chaque classe ; l’élève voit le sien. Option : niveau de maîtrise de 1 à 4.
+- **Préalables** par module (grilles, modules, certificats valides) : avertissement dans la feuille de présences et dans la cloche. **Certificats** avec date d’expiration et alerte.
+- **Dossier ENPQ** : conditions d’admission, ce qui manque, export des candidats prêts, frais d’examen ajoutés au compte (Compta), date d’inscription. **Relevé de formation** à imprimer.
+- **Banque de questions** (ajout, import d’une liste collée) et **examens blancs** en ligne, chronométrés, corrigés tout de suite ; questions les plus ratées ; « S’entraîner ».
+
+**Services incendie** : rôle de compte « Service incendie » ; le service ne lit que son rapport (`rapports-service/<id>`, écrit par l’administration) : présence, résultats, carnet et dossier de ses recrues, ses factures.
+
+**Hors ligne** : `sw.js` garde le site sur l’appareil (installé par `site/connexion.js`, pas dans claude.ai) ; la base Firestore garde ses données sur l’appareil (`site/firebase.js`) ; sans réseau, un avis s’affiche et les écritures n’attendent pas le serveur : elles partent au retour du réseau.
+
+**Confort** : présence par **code QR** (feuille de présences ; l’élève scanne ou tape le code), **proposer des enseignants** (Affectations), recherche **Ctrl+K** (bouton sous le logo), **vues enregistrées** (épingle à côté de la cloche), **modification sur place** (crayon dans les listes d’élèves et du personnel).
+
+Données : `grilles`, `evaluations`, `certificats/<élève>`, `dossiers-enpq/<élève>`, `questions`, `ex-blancs`, `ex-tentatives`, `presences-qr`, `rapports-service` ; réglages dans `config/ecole.formation` (certificats, préalables, pièces, frais, niveaux, services) ; `eleves.service`. Les règles de `firestore.rules` sont à jour.
+
 ## Essayer le site sur cet ordinateur
 
 Double-cliquez **`Lancer le site local.cmd`** (il faut Node.js) : le site s’ouvre à http://localhost:8080/demo.html. Fermez la fenêtre noire pour l’arrêter.
@@ -124,9 +142,12 @@ La page est découpée par sujet. Les fichiers sont réunis dans l’ordre de le
 | `05-horaire-rendu`, `06-horaire-pages` | le tableau de la semaine et les pages de l’horaire |
 | `07-classes`, `08-eleves-fiches`, `09-personnel-heures` | pages Classes, Élèves (et fiches), Personnel et heures enseignées |
 | `10-presences`, `11-examens`, `12-affectations` | présences, examens et résultats, affectation des enseignants |
+| `12-affectations-auto` | proposer des enseignants pour les places à combler |
 | `13-modules`, `14-reprises`, `15-locaux-equipements` | modules du programme, journées de reprise, locaux et équipements |
+| `14-formation`, `14-questions`, `14-services`, `14-presence-qr` | formation (grilles, évaluations, carnets, préalables, certificats, dossier ENPQ, relevés), banque de questions et examens blancs, services incendie, présence par code QR |
 | `15-stock-outils`, `15-stock-suivi`, `15-stock` | stock : fiches d’objets, import, QR et scanner, emplacements, kits ; préparation, achats, réparations, comptage, rapports ; inventaire, fiche d’un article, mouvements, inspections, réglages |
 | `16-compta`, `16-import`, `17-historique`, `18-notifications`, `19-impression` | compta, import d’élèves et copie d’horaire, historique, cloche, impression |
+| `22-confort` | recherche Ctrl+K, vues enregistrées, modification sur place |
 | `20-nouveautes`, `21-annee-parametres`, `21-annonces`, `21-archives`, `22-comptes` | Nouveautés, calendrier scolaire et paramètres, annonces, clôture de l’année et archives, comptes et profils |
 | `23-cadre`, `24-tiroir` | menu, en-tête et rendu général ; panneau latéral |
 | `25-enregistrement`, `26-evenements`, `27-glisser` | écritures dans la base ; clics et formulaires ; glisser-déposer |

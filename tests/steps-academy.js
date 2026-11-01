@@ -49,7 +49,7 @@ if(!$('#drawer').hidden){click($('#dr-close'));await wait(30);}
 // drag a dated session to Thursday (once)
 const src=$('.cc[data-key="k119-m08_a20261006am_2026-10-06"]');const cell=$('.wk-cell[data-date="2026-10-08"][data-grp="c119"]');
 const pt=await dragTo(src,cell,true);ptr('pointerup',pt[0],pt[1]);await wait(40);
-ok('move dialog no weekly',!!$('#drawer.dialog')&&!$('input[name=mv-scope][value=weekly]'));
+ok('move dialog no weekly',!!$('#drawer.sh-bottom')&&!$('input[name=mv-scope][value=weekly]'));
 click($('[data-act=mv-apply]'));await wait(150);
 ok('dated moved',XS('k119-m08').some(x=>x.id==='a20261006am'&&x.date==='2026-10-08'));
 click($$('.toast button').pop());await wait(150);
@@ -334,7 +334,7 @@ $('[data-form=sf-comp]').requestSubmit();await wait(300);
 ok('competences saved',window.__store.get('enseignants/e-vtremblay').competences.length===25);
 click($('[data-role=teacher]'));await wait(120);
 pick('#sel-teacher','e-vtremblay');await wait(120);
-ok('teacher nav 6',$$('#nav button').length===6&&!!$('#nav-stock')&&!!$('#nav-mescours')&&!!$('#nav-dispos'));
+ok('teacher nav 7',$$('#nav button').length===7&&!!$('#nav-stock')&&!!$('#nav-mescours')&&!!$('#nav-dispos'));
 click(navBtn('dispos'));await wait(120);
 ok('dispo calendar',!!$('.dp-grid')&&$$('.dp-c').length>=20&&$('#dp-save').disabled&&$$('.dp-wd').length===5);
 for(let i=0;i<12&&!$('#dp-'+AD);i++){click($('#dp-next'));await wait(50);}
@@ -806,10 +806,19 @@ ok('account deleted',!window.__store.get('comptes/u2')&&$$('#main .tbl tbody tr'
  /* ---------- Stock : menu à sections, tableau de bord, inventaire, article, mouvements, dotation, inspections, réglages ---------- */
  {const ST=id=>window.__store.get('stock/'+id), MV=()=>[...window.__store.entries()].filter(([k])=>k.startsWith('stock-mvt/')).map(([,v])=>v), setv=(id,v)=>{$(id).value=v;}, find=async q=>{const x=$('#stk-q');x.value=q;x.dispatchEvent(new Event('input',{bubbles:true}));await wait(150);}, sub=async()=>{$('#drawer form').requestSubmit();await wait(350);};
  click(navBtn('stock'));await wait(200);
- ok('stock side menu',$('#nav-stock').classList.contains('nav-back')&&$$('#nav [data-k=sk]').length===19&&$('#sk-dash').getAttribute('aria-current')==='page'&&!!$('#sk-insp .nav-todo.bad')&&!!$('#sk-conso .nav-todo.bad')&&/Inventaire/.test($('#nav').textContent),$$('#nav [data-k=sk]').length);
+ ok('stock side menu',$('#nav-stock').classList.contains('nav-back')&&$$('#nav [data-k=sk]').length===13&&$('#sk-dash').getAttribute('aria-current')==='page'&&!!$('#sk-insp .nav-todo.bad')&&!!$('#sk-buy .nav-todo.bad')&&!$('#sk-conso')&&!$('#sk-cmd')&&/Inventaire/.test($('#nav').textContent),$$('#nav [data-k=sk]').length);
  ok('stock dashboard',$$('#main .xm-tile').length===4&&/75/.test($('#skd-tout').textContent)&&$$('#skd-todo li').length>3&&/Tuyau/.test($('#skd-out').textContent)&&/Derniers mouvements/.test($('#main').textContent));
- click($('#sk-epi'));await wait(150);
- ok('stock category',$$('#main .xm-row').length===44&&!!$('#heading #stk-q')&&!!$('#heading #stk-add')&&!!$('#vm-cards'),$$('#main .xm-row').length);
+ click($('#sk-tout'));await wait(150);
+ ok('inventory tabs',$$('#main .stk-seg button').length===5&&!!$('#skt-conso .seg-n.bad')&&$('#skt-tout').getAttribute('aria-pressed')==='true',$$('#main .stk-seg button').length);
+ click($('#skt-epi'));await wait(150);
+ ok('stock category',$('#sk-tout').getAttribute('aria-current')==='page'&&$('#skt-epi').getAttribute('aria-pressed')==='true'&&$$('#main .xm-row').length===44&&!!$('#heading #stk-q')&&!!$('#heading #stk-add')&&!!$('#vm-cards'),$$('#main .xm-row').length);
+ // cartes légères : pas de titres de colonnes ; « par … » sous le mouvement
+ click($('#vm-cards'));await wait(150);
+ ok('light inventory cards',$('#main').classList.contains('view-cards')&&!!$('#main .xm-sk .stk-c')&&!$('#main .xm-row.xm-sk>[data-l]'));
+ click($('#sk-mvt'));await wait(150);
+ {const by=$('#main .xm-skm .skm-by');ok('light movement cards',!$('#main .xm-row.xm-skm>[data-l]')&&!!by&&getComputedStyle(by).display==='inline'&&!!$('#main .xm-skm .nw'));}
+ click($('#vm-list'));await wait(150);click($('#sk-mvt'));await wait(150);
+ ok('movement list keeps its columns',!$('#main').classList.contains('view-cards')&&getComputedStyle($('#main .xm-skm .skm-by')).display==='none');
  click($('#sk-tout'));await wait(150);await find('BAR-007');
  ok('stock search and state',$$('#main .xm-row').length===1&&/Épreuve hydraulique en retard/.test($('#main .xm-row').textContent),$$('#main .xm-row').map(r=>r.textContent).join('|'));
  click($('#main .xm-row'));await wait(150);
@@ -984,13 +993,13 @@ ok('account deleted',!window.__store.get('comptes/u2')&&$$('#main .tbl tbody tr'
  // achats : à commander, commandes préparées, réception partielle, fournisseurs
  click($('#sk-buy'));await wait(150);
  ok('to buy',$$('#main .xm-row').length>0&&/à commander/.test($('#main').textContent));
- {const n0=ALL('stock-cmd').length;click($('#stk-buy'));await wait(700);ok('purchase orders drafted',ALL('stock-cmd').length>n0&&$('#sk-cmd').getAttribute('aria-current')==='page');}
+ {const n0=ALL('stock-cmd').length;click($('#stk-buy'));await wait(700);ok('purchase orders drafted',ALL('stock-cmd').length>n0&&$('#sk-buy').getAttribute('aria-current')==='page'&&$('#skt-cmd').getAttribute('aria-pressed')==='true');}
  click($('#main [data-act=stk-cmd][data-id=bc-001]'));await wait(150);
  ok('purchase order',/BC-2026-001/.test($('#drawer').textContent)&&!!$('#drawer [data-rl="0"]'));
  {const q1=ST('sk-emu').qte;$('#drawer [data-rl="0"]').value='4';$('[data-form=stk-rcv]').requestSubmit();await wait(700);
   ok('partial receipt',ST('sk-emu').qte===q1+4&&window.__store.get('stock-cmd/bc-001').statut==='partielle'&&ALL('compta').some(x=>/BC-2026-001/.test(x.libelle||'')&&x.ttc===74000),ST('sk-emu').qte);}
  click($('#dr-close'));await wait(80);
- click($('#sk-fourn'));await wait(150);
+ click($('#skt-fourn'));await wait(150);
  ok('suppliers',$$('#main tbody tr').length===3);
  click($('#stk-fo-new'));await wait(120);setv('#sf2-nom','Hydro-Pro');setv('#sf2-delai','10');await sub();
  ok('new supplier',ALL('stock-fourn').some(v=>v.nom==='Hydro-Pro'&&v.delai===10));
@@ -1111,7 +1120,8 @@ ok('account deleted',!window.__store.get('comptes/u2')&&$$('#main .tbl tbody tr'
  click(navBtn('affectations'));await wait(150);
  ok('view kept per page',!$('#main').classList.contains('view-cards')&&$('#vm-list').getAttribute('aria-pressed')==='true');
  click($('#vm-cards'));await wait(150);
- ok('cards get column labels',$$('#main .xm-row [data-l]').some(x=>x.dataset.l==='Moment')&&$$('#main .xm-row [data-l]').some(x=>x.dataset.l==='Enseignants'));
+ {const L=$$('#main .xm-row [data-l]'), en=L.find(x=>x.dataset.l==='Enseignants'), bf=en&&getComputedStyle(en,'::before');
+ ok('light cards: small labels in front of the values',!!en&&!L.some(x=>x.dataset.l==='Moment')&&bf.textTransform==='none'&&getComputedStyle(en).flexDirection==='row'&&!$('#main .xm-row .xm-t[data-l]'));}
  click($('#vm-dense'));await wait(150);
  ok('dense view',$('#main').classList.contains('view-dense')&&parseFloat(getComputedStyle($('#main .xm-row')).paddingTop)<=4,getComputedStyle($('#main .xm-row')).paddingTop);
  click($('#vm-list'));await wait(100);click(navBtn('classes'));await wait(120);click($('#vm-list'));await wait(100);

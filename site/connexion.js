@@ -245,6 +245,7 @@
   // si le service de connexion ne se charge pas (réseau coupé, script bloqué), on le dit au lieu de rester sur « Chargement »
   const giveUp=setTimeout(()=>{if(!B&&st.view==='loading')go('offline');},15000);
   window.__backendFailed=()=>{clearTimeout(giveUp);if(st.view==='loading')go('offline');};
+  if('serviceWorker' in navigator&&/^https?:$/.test(location.protocol)) navigator.serviceWorker.register('sw.js').catch(()=>{});
   window.__setBackend=b=>{
     clearTimeout(giveUp);
     B=b;

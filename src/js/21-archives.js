@@ -19,7 +19,7 @@ async function yearSnapshot(){
   const [pres,resEl,journal,stockMvt,compta,factures,paie]=await Promise.all([all('presences'),all('resultats-eleves'),all('journal'),all('stock-mvt'),all('compta'),all('compta-factures'),all('compta-paie')]);
   return {version:1,nom:c.annee||'',debut:c.debut||'',fin:c.fin||'',config:D.config,groupes:strip(D.groupes),eleves:strip(D.eleves),enseignants:strip(D.enseignants),dossiers:D.dossiers,
     cours:strip(RAWC),examens:strip(D.examens),resultats:D.resultats,resultatsEleves:resEl,presences:pres,candidatures:strip(D.candidatures),remplacements:strip(D.remplacements),
-    dispos:D.dispos,staffPres:D.staffPres,absProfs:D.absProfs,journal,stock:strip(D.stock),stockMvt,compta,factures,paie};
+    dispos:D.dispos,staffPres:D.staffPres,absProfs:D.absProfs,journal,stock:strip(D.stock),stockMvt,compta,factures,paie,evaluations:strip(D.evals),tentatives:strip(D.tentatives),certificats:D.certs,dossiersEnpq:D.enpq};
 }
 /* Une facture envoyée et pas encore payée en entier reste ouverte */
 function yearOpenInv(f,sn){if(f.statut!=='envoyee')return false;const paid=sumC((sn.compta||[]).filter(x=>x.type==='rev'&&x.facture===f.id).map(x=>x.ttc))+(+f.report||0);return paid<cpFTot(f).ttc;}
@@ -30,7 +30,8 @@ function yearDocs(sn,keep){
   add('presences',ids(sn.presences));add('candidatures',ids(sn.candidatures));add('remplacements',ids(sn.remplacements));
   add('disponibilites',keys(sn.dispos));add('presences-personnel',keys(sn.staffPres));add('profs-absents',keys(sn.absProfs));add('journal',ids(sn.journal));
   add('stock-mvt',ids(sn.stockMvt));add('compta',ids(sn.compta));add('compta-paie',ids(sn.paie));add('compta-factures',ids((sn.factures||[]).filter(f=>!yearOpenInv(f,sn))));
-  if(!keep){add('groupes',ids(sn.groupes));add('eleves',ids(sn.eleves));}
+  add('evaluations',ids(sn.evaluations));add('ex-tentatives',ids(sn.tentatives));
+  if(!keep){add('groupes',ids(sn.groupes));add('eleves',ids(sn.eleves));add('certificats',keys(sn.certificats));add('dossiers-enpq',keys(sn.dossiersEnpq));}
   return out;
 }
 /* Première étape : vérifier la nouvelle année et demander confirmation */
@@ -80,7 +81,7 @@ async function openArchive(id){
   const sn=a.sn, map=arr=>{const m={};for(const d of arr||[]){const x=Object.assign({},d);delete x.id;m[d.id]=x;}return m;}, pres=map(sn.presences);
   S.liveData=S.data;S.liveRawc=RAWC;S.liveConn=S.conn;S.liveWeek=S.week;
   S.archive={id,nom:a.meta.nom,debut:sn.debut,fin:sn.fin,resEl:sn.resultatsEleves||[]};
-  S.data=Object.assign({},S.liveData,{stock:sn.stock||S.liveData.stock,stockMvt:(sn.stockMvt||[]).slice().sort((x,y)=>String(y.le||'').localeCompare(String(x.le||''))),compta:sn.compta||[],factures:sn.factures||[],paie:sn.paie||[],config:sn.config,groupes:sn.groupes||[],eleves:sn.eleves||[],enseignants:sn.enseignants||[],dossiers:sn.dossiers||{},examens:sn.examens||[],resultats:sn.resultats||{},
+  S.data=Object.assign({},S.liveData,{evals:sn.evaluations||[],tentatives:sn.tentatives||[],certs:sn.certificats||{},enpq:sn.dossiersEnpq||{},stock:sn.stock||S.liveData.stock,stockMvt:(sn.stockMvt||[]).slice().sort((x,y)=>String(y.le||'').localeCompare(String(x.le||''))),compta:sn.compta||[],factures:sn.factures||[],paie:sn.paie||[],config:sn.config,groupes:sn.groupes||[],eleves:sn.eleves||[],enseignants:sn.enseignants||[],dossiers:sn.dossiers||{},examens:sn.examens||[],resultats:sn.resultats||{},
     presences:pres,presTerm:pres,presOne:{},candidatures:sn.candidatures||[],remplacements:sn.remplacements||[],dispos:sn.dispos||{},staffPres:sn.staffPres||{},absProfs:sn.absProfs||{},journal:sn.journal||[],mesRes:{},mesPct:{}});
   RAWC=sn.cours||[];S.data.cours=normCours(RAWC);
   S.conn='archive';S.termLoaded=true;S.termFrom=sn.debut||'0000-01-01';S._mrFor=null;S.jrLoaded=true;

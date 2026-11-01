@@ -84,7 +84,7 @@ function myCoursesPage(){
     ${affTile('mt','mine',tab,W('Séances attribuées','Cours attribués'),B.mine.length,'',nx?'Prochain : '+esc(sDay(nx.s).toLowerCase()):W('Aucune séance à venir','Aucun cours à venir'))}
     ${affTile('mt','past',tab,W('Séances données','Cours donnés'),B.past.length,'',B.past.length?`${hrs} h depuis la rentrée`:'Aucun pour l’instant')}
   </div>`;
-  const head=[['Date'],[W('Séance','Cours')],['Classe'],['Moment'],['','r']];
+  const head=[['Date'],[W('Séance','Cours')],['Classe'],['Moment','',1],['','r']];
   const cells=(s,end)=>`${xDate(s,sHot(s))}<div class="xm-t"><b>${sTitle(s)}</b>${sSub(s)?`<small>${sSub(s)}</small>`:''}</div>${xCls(s)}<span class="xm-m">${esc(momentOf(s))}</span><div class="xm-end">${end}</div>`;
   let body='';
   if(tab==='open'){
@@ -175,18 +175,18 @@ function affPage(){
     ${affTile('at','all',tab,W('Toutes les séances','Tous les cours'),up.length,'',`${full} ${full>1?'complets':'complet'} · ${hz} jours`)}
   </div>`;
   const sessRows=list=>{const lim=+st.lim||30;
-    return xList('xm-a6',[['Date'],[W('Séance','Cours')],['Classe'],['Moment'],['Enseignants'],['','r']],list.slice(0,lim).map(({s,st:a})=>xRow('xm-a6',`data-act="sess-at" ${sAt(s)}`,`${xDate(s,sHot(s))}<div class="xm-t"><b>${sTitle(s)}</b>${sSub(s)?`<small>${sSub(s)}</small>`:''}</div>${xCls(s)}<span class="xm-m">${esc(momentOf(s))}</span>${affCell(a)}<div class="xm-end">${a.clash.length?'<span class="chip bad">Conflit</span>':a.rclash.length?`<span class="chip bad">${ressClashLbl(a.rclash)}</span>`:a.remp.length?'<span class="chip warn">Remplacement</span>':a.open>0?`<span class="chip ${a.firm?'warn':'bad'}">${a.open} à combler</span>`:'<span class="chip ok">Complet</span>'}</div>`,sAria(s))).join(''))
+    return xList('xm-a6',[['Date'],[W('Séance','Cours')],['Classe'],['Moment','',1],['Enseignants'],['','r']],list.slice(0,lim).map(({s,st:a})=>xRow('xm-a6',`data-act="sess-at" ${sAt(s)}`,`${xDate(s,sHot(s))}<div class="xm-t"><b>${sTitle(s)}</b>${sSub(s)?`<small>${sSub(s)}</small>`:''}</div>${xCls(s)}<span class="xm-m">${esc(momentOf(s))}</span>${affCell(a)}<div class="xm-end">${a.clash.length?'<span class="chip bad">Conflit</span>':a.rclash.length?`<span class="chip bad">${ressClashLbl(a.rclash)}</span>`:a.remp.length?'<span class="chip warn">Remplacement</span>':a.open>0?`<span class="chip ${a.firm?'warn':'bad'}">${a.open} à combler</span>`:'<span class="chip ok">Complet</span>'}</div>`,sAria(s))).join(''))
       +(list.length>lim?`<div class="row" style="margin-top:12px"><button class="btn" type="button" data-act="pg-set" data-k="lim" data-v="${lim+30}">Afficher plus (${list.length-lim})</button></div>`:'');};
   let body='';
   if(tab==='open') body=open.length?sessRows(open):`<div class="cl-list"><p class="miss-ok"><span class="chip ok">Complet</span>${W('Toutes les séances','Tous les cours')} des ${hz} prochains jours ont leurs enseignants.</p></div>`;
   else if(tab==='all') body=up.length?sessRows(up):`<section class="panel"><p class="help">${W('Aucune séance','Aucun cours')} dans cette période.</p></section>`;
-  else if(tab==='cand') body=cands.length?xList('xm-afc',[['Enseignant'],[W('Séance','Cours')],['Quand'],['','r']],cands.map(({d,s})=>{const a=staffing(s), tt=byId(S.data.enseignants,d.enseignant);
+  else if(tab==='cand') body=cands.length?xList('xm-afc',[['Enseignant'],[W('Séance','Cours')],['Quand','',1],['','r']],cands.map(({d,s})=>{const a=staffing(s), tt=byId(S.data.enseignants,d.enseignant);
       return xRow('xm-afc',`data-act="sess-at" ${sAt(s)}`,`${whoCell(d.enseignant,`${dispoChip(d.enseignant,s)}${hasComp(tt,s.c)?'':'<span class="chip bad">Hors compétences</span>'}${onLeave(tt)?'<span class="chip warn">En congé</span>':''}`)}<div class="xm-t"><b>${sTitle(s)}</b><small>${esc(gName(s.grp))} · ${a.firm} sur ${a.requis}${sSub(s)?' · '+sSub(s):''}</small></div><span class="xm-m">${esc(sDay(s))}<br><span class="muted">${esc(momentOf(s))}</span></span><div class="xm-end">${can?`<button class="btn sm yes" type="button" data-act="af-approve" data-id="${esc(d.id)}"${dis()}>Approuver</button><button class="btn sm ghost" type="button" data-act="af-refuse" data-id="${esc(d.id)}"${dis()}>Refuser</button>`:''}</div>`,`${tName(d.enseignant)} · ${sAria(s)}`);}).join(''))
     :'<div class="cl-list"><p class="miss-ok"><span class="chip ok">À jour</span>Aucune candidature en attente.</p></div>';
-  else body=remps.length?xList('xm-afc',[['Enseignant'],[W('Séance','Cours')],['Quand'],['','r']],remps.map(({d,s})=>{const a=staffing(s);
+  else body=remps.length?xList('xm-afc',[['Enseignant'],[W('Séance','Cours')],['Quand','',1],['','r']],remps.map(({d,s})=>{const a=staffing(s);
       return xRow('xm-afc',`data-act="sess-at" ${sAt(s)}`,`${whoCell(d.enseignant,d.motif?esc(d.motif):'Aucune raison indiquée')}<div class="xm-t"><b>${sTitle(s)}</b><small>${esc(gName(s.grp))} · ${a.pending.length?pl(a.pending.length,'candidat','candidats'):'aucun candidat'}</small></div><span class="xm-m">${esc(sDay(s))}<br><span class="muted">${esc(momentOf(s))}</span></span><div class="xm-end">${can?`<button class="btn sm primary" type="button" data-act="af-retire" ${sAt(s)} data-t="${esc(d.enseignant)}"${dis()}>Libérer l’enseignant</button><button class="btn sm ghost" type="button" data-act="af-remp-no" data-id="${esc(d.id)}"${dis()}>Refuser</button>`:''}</div>`,`${tName(d.enseignant)} · ${sAria(s)}`);}).join(''))
     :'<div class="cl-list"><p class="miss-ok"><span class="chip ok">À jour</span>Aucune demande de remplacement.</p></div>';
-  return tb+tiles+body;
+  return tb+tiles+(can&&tab==='open'?afAutoBar(open):'')+body;
 }
 /* Dans la fenêtre d’un cours (administration) : enseignants requis, attribués et candidats */
 function affBoxHTML(s){
@@ -200,7 +200,7 @@ function affBoxHTML(s){
   return `<section class="af-box" id="af-box"><div class="af-box-h"><h3 class="sb-h3">Enseignants <span class="chip ${a.open>0?(a.firm?'warn':'bad'):'ok'}" id="af-count">${a.firm} sur ${a.requis}</span></h3>
       ${lk?`<div class="af-req" id="af-req-ro"><span>Requis</span><b id="af-req-n">${a.requis}</b><small class="muted">selon le cours du module</small></div>`:can?`<div class="af-req" role="group" aria-label="Enseignants requis"><span>Requis</span><button type="button" class="icon-btn" id="af-req-m" data-act="af-req" ${sAt(s)} data-d="-1" aria-label="Un enseignant de moins"${S.busy||a.requis<=0?' disabled':''}>−</button><b id="af-req-n">${a.requis}</b><button type="button" class="icon-btn" id="af-req-p" data-act="af-req" ${sAt(s)} data-d="1" aria-label="Un enseignant de plus"${S.busy||a.requis>=9?' disabled':''}>+</button></div>`:''}</div>
     ${got||cand?`<ul class="af-list">${got}${cand}</ul>`:'<p class="help">Aucun enseignant attribué.</p>'}
-    ${can&&!past&&others.length?`<label class="field af-add"><span>Attribuer un enseignant</span><select id="af-assign" data-af="assign" ${sAt(s)}${dis()}><option value="">Choisir…</option>${others.map(t=>`<option value="${esc(t.id)}">${esc(t.nom)}${hint(t)?' ('+hint(t)+')':''}</option>`).join('')}</select></label>`:''}</section>`;
+    ${can&&!past&&a.open>0?afSuggestHTML(s,a):''}${can&&!past&&others.length?`<label class="field af-add"><span>Attribuer un enseignant</span><select id="af-assign" data-af="assign" ${sAt(s)}${dis()}><option value="">Choisir…</option>${others.map(t=>`<option value="${esc(t.id)}">${esc(t.nom)}${hint(t)?' ('+hint(t)+')':''}</option>`).join('')}</select></label>`:''}</section>`;
 }
 /* Écritures */
 async function affWrite(fn,msg){if(S.busy)return false;S.busy=true;render();const ok=await write(fn,msg);S.busy=false;render();return ok;}

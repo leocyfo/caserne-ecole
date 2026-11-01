@@ -68,6 +68,7 @@ function subscribe(){
   }
   /* années clôturées (administration seulement) */
   if(S.canAdmin!==false) col('archives').onSnapshot(q=>{LIVE().archives=q.docs.map(d=>Object.assign({},d.data(),{id:d.id})).sort((x,y)=>String(y.cloture||'').localeCompare(String(x.cloture||'')));schedule();},()=>{LIVE().archives=[];});
+  foSubscribe();
   subWeek();
 }
 async function init(){

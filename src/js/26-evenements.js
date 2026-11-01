@@ -272,6 +272,7 @@ document.addEventListener('click',async e=>{
       else if(g.k==='mes'){goPage('mescours');S.pg.mt=g.tab;render();}
       else if(g.k==='stock'){goPage('stock');S.pg.sk=g.tab;render();}
       else if(g.k==='compta'){goPage('compta');S.pg.cp=g.tab;render();}
+      else if(g.k==='fo'){goPage('formation');S.pg.fo=g.tab;render();}
       else if(g.k==='ann'){S.annVu=(S.annVu||[]).filter(k=>!k.startsWith(g.id+'@'));S.annAll=true;savePrefs();if(g.cal&&S.page!=='calendar')goPage('calendar');render();const el=document.getElementById('ann-'+g.id);if(el){el.scrollIntoView({block:'center'});el.classList.add('flash');}}
       else{const mon=monday(parse(g.date));if(iso(mon)!==iso(S.week)){S.week=mon;S.day=defaultDay();subWeek();}S.page='calendar';S.pg={};render();openSession(g.key,g.date);}
       break;}

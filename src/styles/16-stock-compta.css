@@ -3,11 +3,24 @@
 .nav button[aria-current="page"] .nav-todo.bad{background:#FFFFFF;color:var(--accent)}
 
 /* ---------- Stock ---------- */
+/* Inventaire et Achats : les onglets en haut de la page */
+.stk-seg{display:flex;width:fit-content;max-width:100%;margin-bottom:12px}
+.seg-n{margin-left:2px;color:var(--muted);font-style:normal;font-weight:500}
+.seg-n.bad{display:inline-block;min-width:18px;padding:0 5px;border-radius:999px;background:var(--accent);color:#FFFFFF;font-size:12px;font-weight:700;line-height:18px;text-align:center}
 .xm-sk{grid-template-columns:minmax(0,2.2fr) minmax(0,1fr) minmax(0,1.2fr) minmax(0,1.3fr) minmax(90px,auto)}
 .xm-hd.xm-sk{grid-template-columns:minmax(0,2.2fr) minmax(0,1fr) minmax(0,1.2fr) minmax(0,1.3fr) 90px}
 .xm-skm{grid-template-columns:44px minmax(0,2.4fr) minmax(0,1fr) minmax(0,1fr)}
 .xm-ski{grid-template-columns:44px minmax(0,2.4fr) minmax(0,1fr) minmax(150px,auto)}
 .xm-ski .xm-end,.xm-sk .xm-end{justify-content:flex-end}
+/* Stock en cartes : aucun libellé (.xm-lite) ; l’état, puis à qui ou combien, puis la catégorie (sélecteurs aussi forts que les règles générales des cartes, qui viennent après) */
+.skm-by{display:none}
+.nw{white-space:nowrap}
+#main.view-cards .xm-list>.xm-row.xm-lite>.xm-t:not([data-l]){flex:1 1 100%}
+#main.view-cards .xm-list>.xm-row.xm-sk>.stk-c{order:1}
+#main.view-cards .xm-list>.xm-row.xm-sk>:nth-child(3){order:2}
+#main.view-cards .xm-list>.xm-row.xm-sk>.xm-m{order:3;color:var(--muted)}
+#main.view-cards .xm-list>.xm-row.xm-sk>.xm-end{order:4;flex:none;margin-left:auto;padding:0;border:0}
+#main.view-cards .skm-by{display:inline}
 .stk-c{display:inline-flex;align-items:center;gap:7px;font-size:13px;min-width:0}
 .dot{flex:none;width:10px;height:10px;border-radius:50%;background:var(--muted)}
 .dot.ok{background:var(--ok)}.dot.warn{background:var(--warn)}.dot.bad{background:var(--bad)}
@@ -59,7 +72,6 @@ form:not([data-cat="ari"]) .sa-ari{display:none}
 .xm-hd.xm-skc{grid-template-columns:minmax(0,2fr) minmax(0,1fr) minmax(0,.7fr) minmax(0,.8fr) 120px}
 .xm-skb{grid-template-columns:minmax(0,1.6fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1.2fr)}
 .stk-kit td{white-space:nowrap}
-.drawer.wide{width:min(900px,100%)}
 .pr-labels{display:grid;grid-template-columns:repeat(3,1fr);gap:4mm}
 .lab{display:flex;gap:3mm;align-items:center;padding:2mm;border:1px dashed #999;break-inside:avoid;page-break-inside:avoid;min-height:24mm}
 .lab-qr{flex:none;width:20mm;height:20mm}

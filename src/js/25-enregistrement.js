@@ -294,9 +294,15 @@ function errMsg(e){
   if(c==='revoked'){S.conn='off';return 'Votre accès a changé. Rechargez la page.';}
   return 'Enregistrement impossible pour le moment. Réessayez.';
 }
+/* Sans réseau, la base garde l’écriture sur l’appareil, mais sa promesse n’aboutit qu’au retour du réseau : on n’attend pas */
+function offlineRun(fns,okMsg){
+  for(const fn of fns){try{const p=fn();if(p&&p.catch)p.catch(e=>toast(errMsg(e),'bad'));}catch(e){toast(errMsg(e),'bad');return false;}}
+  toast((okMsg?okMsg+' · ':'')+'gardé sur cet appareil, envoyé au retour du réseau');return true;
+}
 async function write(fn,okMsg){
   if(S.archive){toast('Archive en lecture seule : revenez à l’année en cours pour modifier.','bad');return false;}
   if(!DB){toast('Ouvrez la page dans claude.ai, connecté, pour enregistrer.','bad');return false;}
+  if(S.offline) return offlineRun([fn],okMsg);
   for(let i=0;i<2;i++){
     try{await fn();if(okMsg)toast(okMsg);return true;}
     catch(e){
@@ -309,6 +315,7 @@ async function write(fn,okMsg){
 async function runAll(fns,okMsg){
   if(S.archive){toast('Archive en lecture seule : revenez à l’année en cours pour modifier.','bad');return false;}
   if(!DB){toast('Ouvrez la page dans claude.ai, connecté, pour enregistrer.','bad');return false;}
+  if(S.offline){const ok=offlineRun(fns,okMsg);render();return ok;}
   S.busy=true;render();
   const q=[...fns];let fail=0,first=null;
   const worker=async()=>{while(q.length){const f=q.shift();try{await f();}catch(e){fail++;first=first||e;}}};
@@ -336,6 +343,8 @@ async function clearExamples(){
   for(const [id,z] of Object.entries(S.data.dossiers)) if(z&&z.exemple) fns.push(()=>col('dossiers-personnel').doc(id).delete());
   for(const k of ['candidatures','remplacements']) for(const d of S.data[k]) if(d.exemple) fns.push(()=>col(k).doc(d.id).delete());
   for(const [k,c] of [['stock','stock'],['stockMvt','stock-mvt'],['compta','compta'],['factures','compta-factures'],['paie','compta-paie'],['stockModeles','stock-modeles'],['stockFourn','stock-fourn'],['stockCmd','stock-cmd'],['stockRep','stock-rep'],['stockCpt','stock-cpt']]) for(const d of S.data[k]||[]) if(d.exemple) fns.push(()=>col(c).doc(d.id).delete());
+  for(const [k,c] of [['grilles','grilles'],['evals','evaluations'],['questions','questions'],['blancs','ex-blancs'],['tentatives','ex-tentatives']]) for(const d of S.data[k]||[]) if(d.exemple) fns.push(()=>col(c).doc(d.id).delete());
+  for(const [k,c] of [['certs','certificats'],['enpq','dossiers-enpq']]) for(const [id,z] of Object.entries(S.data[k]||{})) if(z&&z.exemple) fns.push(()=>col(c).doc(id).delete());
   for(const [id,z] of Object.entries(S.data.dispos)) if(z&&z.exemple) fns.push(()=>col('disponibilites').doc(id).delete());
   for(const [id,z] of Object.entries(S.data.resultats)) if(z&&z.exemple) fns.push(()=>col('resultats').doc(id).delete());
   try{const q=await col('resultats-eleves').where('exemple','==',true).get();for(const d of q.docs)fns.push(()=>col('resultats-eleves').doc(d.id).delete());}catch(e){}

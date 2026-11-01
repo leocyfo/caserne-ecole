@@ -36,8 +36,9 @@ const STATUTS={Actif:'ok','En congé':'warn','Suppléant':'info',Inactif:'off'};
 /* « Remplacement » était l’ancien nom du statut « Suppléant » */
 const statOf=p=>p&&p.statut==='Remplacement'?'Suppléant':(p&&p.statut)||'Actif';
 const onLeave=p=>statOf(p)==='En congé';
-const ROLE_LBL={admin:'Administrateur',teacher:'Enseignant',student:'Élève'};
+const ROLE_LBL={admin:'Administrateur',teacher:'Enseignant',student:'Élève',service:'Service incendie'};
 const IC={
+  pen:'<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/>',
   cal:'<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>',
   year:'<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"/>',
   users:'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>',

@@ -8,7 +8,8 @@
     {uid:'demo-admin',email:'admin@demo.ca',pw:'demo123',displayName:'Direction de l’Académie',label:'Administration'},
     {uid:'demo-mleduc',email:'marie.leduc@demo.ca',pw:'demo123',displayName:'Marie Leduc',label:'Enseignante · Marie Leduc'},
     {uid:'demo-alexandre',email:'alexandre.beaulieu@demo.ca',pw:'demo123',displayName:'Alexandre Beaulieu',label:'Élève · Alexandre Beaulieu'},
-    {uid:'demo-vtremblay',email:'vincent.tremblay@demo.ca',pw:'demo123',displayName:'Vincent Tremblay',label:'Instructeur · Vincent Tremblay'}
+    {uid:'demo-vtremblay',email:'vincent.tremblay@demo.ca',pw:'demo123',displayName:'Vincent Tremblay',label:'Instructeur · Vincent Tremblay'},
+    {uid:'demo-service',email:'service.stjerome@demo.ca',pw:'demo123',displayName:'Service incendie de Saint-Jérôme',label:'Service incendie · Saint-Jérôme'}
   ];
   function seed(){
     const now='2026-10-08T12:00:00.000Z';
@@ -21,16 +22,19 @@
     docs.push(['comptes/demo-alexandre',{role:'student',ref:'el-119-01',fiche:{nom:e.nom||'Alexandre Beaulieu',groupe:e.groupe||'c119',numero:e.numero==null?null:e.numero,fonction:e.fonction||'',naissance:e.naissance||'',parent:e.parent||'',courriel:e.courriel||'',telephone:e.telephone||''},maj:now}]);
     const j=get('enseignants/e-vtremblay');
     docs.push(['comptes/demo-vtremblay',{role:'teacher',ref:'e-vtremblay',fiche:{nom:j.nom||'Vincent Tremblay',fonction:j.fonction||'',statut:j.statut||'',courriel:j.courriel||'',telephone:''},maj:now}]);
+    docs.push(['comptes/demo-service',{role:'service',ref:'s-stjerome',fiche:{nom:'Ville de Saint-Jérôme, service de sécurité incendie'},maj:now}]);
     for(const u of DEMO) docs.push(['profils/'+u.uid,{nom:u.displayName,courriel:u.email,maj:now}]);
     return {users:DEMO.map(({uid,email,pw,displayName})=>({uid,email,pw,displayName})),store:docs,cur:null};
   }
+  /* l’empreinte des données d’exemple : quand une nouvelle version du site les change, la démo repart de ces données (on reste connecté) */
+  const SIG=(()=>{const t=JSON.stringify(window.__SEED||[]);let h=0;for(let i=0;i<t.length;i++)h=(h*31+t.charCodeAt(i))|0;return t.length+'.'+(h>>>0).toString(36);})();
   let state=null;
   try{state=JSON.parse(localStorage.getItem(KEY)||'null');}catch(e){state=null;}
-  if(!state||!Array.isArray(state.store)) state=seed();
+  if(!state||!Array.isArray(state.store)||state.sig!==SIG) state=Object.assign(seed(),{cur:state&&state.cur||null});
   const users=new Map(state.users.map(u=>[u.email.toLowerCase(),u]));
   const store=new Map(state.store);
   let cur=state.cur?[...users.values()].find(u=>u.uid===state.cur)||null:null;
-  const save=()=>{try{localStorage.setItem(KEY,JSON.stringify({users:[...users.values()],store:[...store],cur:cur?cur.uid:null}));}catch(e){}};
+  const save=()=>{try{localStorage.setItem(KEY,JSON.stringify({sig:SIG,users:[...users.values()],store:[...store],cur:cur?cur.uid:null}));}catch(e){}};
   save();
 
   const L=new Set(), authL=new Set();

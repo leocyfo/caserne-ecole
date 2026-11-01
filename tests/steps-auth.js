@@ -72,10 +72,16 @@ if(SC==='refused'){
 }
 if(SC==='demo-login'){
   await until(()=>!!$('#g-demo'));
-  ok('demo box',$$('#g-demo button[data-g=demo]').length===4&&/demo123/.test($('#g-demo').textContent));
+  ok('demo box',$$('#g-demo button[data-g=demo]').length===5&&/demo123/.test($('#g-demo').textContent));
   click($('#g-demo-2'));await until(()=>!gateOpen());await wait(700);
   ok('student demo login',!gateOpen()&&/élève/i.test($('#ws-label').textContent)&&/Alexandre Beaulieu/.test($('#person').textContent)&&!$('#logout-btn').hidden);
   ok('demo session kept',JSON.parse(localStorage.getItem('caserne-ecole-demo-v15')).cur==='demo-alexandre');
+}
+if(SC==='demo-stale'){
+  await until(()=>!gateOpen());await wait(700);
+  const saved=JSON.parse(localStorage.getItem('caserne-ecole-demo-v15'));
+  ok('old demo data replaced',!saved.store.some(([p])=>p==='stock/vieux')&&saved.store.some(([p])=>p==='stock-modeles/mo-cas')&&!!saved.sig);
+  ok('still signed in after the refresh',saved.cur==='demo-admin'&&!gateOpen()&&/administr/i.test($('#ws-label').textContent),$('#ws-label').textContent);
 }
 if(SC==='demo-request'){
   await until(()=>!!$('#g-demo'));

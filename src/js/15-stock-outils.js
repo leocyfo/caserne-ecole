@@ -52,7 +52,7 @@ function skCatalogPage(){
     const alert=A.some(a=>skConf(a)[0]==='bad')?'bad':A.some(a=>skConf(a)[0]==='warn')?'warn':'';
     return `<article class="stk-fiche${alert?' '+alert:''}" id="stk-f-${esc(m.id)}"><button type="button" class="stk-fh" data-act="stk-fiche" data-id="${esc(m.id)}"><span class="stk-fi">${icon(skCat(m.cat)[2])}</span><span><b>${esc(m.nom)}</b><small>${esc([skCat(m.cat)[1],m.sous].filter(Boolean).join(' · '))}</small></span></button>
       <p class="stk-fs">${stat}</p>${m.tailles&&m.tailles.length&&!q2?`<p class="stk-ft">${m.tailles.map(t=>{const n=A.filter(a=>skFree(a)&&String(a.taille||'')===t).length;return `<span class="chip ${n?'off':'warn'}" title="${pl(n,'libre','libres')}">${esc(t)} · ${n}</span>`;}).join('')}</p>`:''}
-      ${can?`<div class="row"><button class="btn sm primary" type="button" data-act="stk-add-to" data-id="${esc(m.id)}">${icon('plus')}Ajouter</button><button class="btn sm ghost" type="button" data-act="stk-fiche" data-id="${esc(m.id)}">Ouvrir</button></div>`:''}</article>`;};
+      ${can?`<div class="row"><button class="btn sm" type="button" data-act="stk-add-to" data-id="${esc(m.id)}">${icon('plus')}Ajouter</button><button class="btn sm ghost" type="button" data-act="stk-fiche" data-id="${esc(m.id)}">Ouvrir</button></div>`:''}</article>`;};
   return tb+auto+(M.length?`<div class="stk-fiches">${M.map(card).join('')}</div>`:'<section class="panel"><p class="help">Aucune fiche ne correspond.</p></section>');
 }
 /* Une fiche : ce qu’elle décrit, ses chiffres (par état et par taille), ses exemplaires */

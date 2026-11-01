@@ -49,24 +49,32 @@ function skConf(a){
 }
 const skWho=a=>{const x=a.attrib;if(!x||!x.id)return '';return x.t==='classe'?gName(x.id):(byId(S.data.eleves,x.id)||{}).nom||'';};
 const skCanDo=act=>S.role==='admin'?isAdmin():S.role==='teacher'&&((act==='sortie'||act==='retour')?skCfg().perms.sortie:act==='bris'?skCfg().perms.bris:false);
-/* Le menu du Stock */
+/* Le menu du Stock. Inventaire et Achats regroupent plusieurs pages (sub) : des onglets en haut de la page. */
 function stockTabs(){
   const A=skArts(), due=A.filter(a=>!skQte(a)&&skConf(a)[0]!=='ok'&&a.statut!=='hs'&&a.statut!=='manquant').length, low=A.filter(a=>skQte(a)&&skConf(a)[0]!=='ok').length, late=A.filter(skLate).length;
-  const cats=SK_CATS.map(([k,l,i])=>({k,l,i,n:k==='conso'&&low?low:0,bad:k==='conso'&&!!low,nt:k==='conso'&&low?pl(low,'consommable bas ou périmé','consommables bas ou périmés'):''}));
-  const prep={k:'prep',l:'Sorties et préparation',i:'cal',n:late,bad:!!late,nt:late?pl(late,'retour en retard','retours en retard'):''};
-  if(S.role!=='admin') return [{k:'tout',l:'Tout l’inventaire',i:'box',n:A.length}].concat(cats,[Object.assign({sec:'Suivi'},prep),{k:'mvt',l:'Mouvements',i:'move'}]);
+  const inv={k:'tout',l:'Inventaire',i:'box',n:A.length,sub:[{k:'tout',l:'Tout',n:A.length}].concat(SK_CATS.map(([k,l])=>({k,l,n:A.filter(a=>a.cat===k).length,bad:k==='conso'&&!!low,nb:low,nt:k==='conso'&&low?pl(low,'consommable bas ou périmé','consommables bas ou périmés'):''})))};
+  const prep={k:'prep',l:'Sorties',i:'cal',n:late,bad:!!late,nt:'Sorties et préparation des séances'+(late?' · '+pl(late,'retour en retard','retours en retard'):'')};
+  if(S.role!=='admin') return [inv,Object.assign({sec:'Suivi'},prep),{k:'mvt',l:'Mouvements',i:'move'}];
   const rep=(S.data.stockRep||[]).filter(r=>r.statut==='ouverte'), repLate=rep.filter(r=>r.prevu&&r.prevu<todayISO()).length, buy=skNeeds().length, rcv=skCmds().filter(c=>c.statut==='envoyee'||c.statut==='partielle').length;
-  return [{k:'dash',l:'Tableau de bord',i:'spark'},{k:'tout',l:'Tout l’inventaire',i:'box',sec:'Inventaire',n:A.length},{k:'cat',l:'Fiches d’objets',i:'clip',n:skModeles().length},{k:'empl',l:'Par emplacement',i:'layers'}].concat(cats,[
+  const buyT=buy?pl(buy,'consommable à commander','consommables à commander'):'', rcvT=rcv?pl(rcv,'commande à recevoir','commandes à recevoir'):'';
+  return [{k:'dash',l:'Tableau de bord',i:'spark'},Object.assign({sec:'Inventaire'},inv),{k:'cat',l:'Fiches d’objets',i:'clip',n:skModeles().length},{k:'empl',l:'Emplacements',i:'layers'},{k:'cpt',l:'Comptage',i:'check',nt:'Comptage d’inventaire'},
     {k:'dot',l:'Dotations',i:'users',sec:'Suivi'},prep,{k:'mvt',l:'Mouvements',i:'move'},
     {k:'insp',l:'Inspections',i:'calok',sec:'Entretien',n:due,bad:!!due,nt:due?pl(due,'échéance proche ou dépassée','échéances proches ou dépassées'):''},{k:'rep',l:'Réparations',i:'tool',n:rep.length,bad:!!repLate,nt:rep.length?pl(rep.length,'réparation en cours','réparations en cours'):''},
-    {k:'buy',l:'À commander',i:'receipt',sec:'Achats',n:buy,bad:!!buy,nt:buy?pl(buy,'consommable à commander','consommables à commander'):''},{k:'cmd',l:'Commandes',i:'clip',n:rcv,nt:rcv?pl(rcv,'commande à recevoir','commandes à recevoir'):''},{k:'fourn',l:'Fournisseurs',i:'users'},
-    {k:'cpt',l:'Comptage d’inventaire',i:'check',sec:'Outils'},{k:'rap',l:'Rapports',i:'chart'},{k:'regl',l:'Réglages du stock',i:'gear'}]);
+    {k:'buy',l:'Achats',i:'receipt',sec:'Gestion',n:buy||rcv,bad:!!buy,nt:[buyT,rcvT].filter(Boolean).join(' · '),sub:[{k:'buy',l:'À commander',n:buy,bad:!!buy,nb:buy,nt:buyT},{k:'cmd',l:'Commandes',n:rcv,nt:rcvT},{k:'fourn',l:'Fournisseurs',n:skFourn().length}]},
+    {k:'rap',l:'Rapports',i:'chart'},{k:'regl',l:'Réglages',i:'gear',nt:'Réglages du stock'}];
+}
+/* « Casque de pompier · CAS-001 » : le code ne se coupe pas en fin de ligne */
+const skNw=s=>esc(s).replace(/ · ([^ ]+)$/,' · <span class="nw">$1</span>');
+/* l’entrée du menu qui montre la page k (la page elle-même, ou un de ses onglets) */
+const skTabOf=(tabs,k)=>tabs.find(t=>t.k===k||(t.sub||[]).some(s=>s.k===k));
+function skSeg(t,cur){
+  return `<div class="seg stk-seg" role="group" aria-label="${esc(t.l)}">${t.sub.map(s=>`<button type="button" id="skt-${s.k}" data-act="pg-set" data-k="sk" data-v="${s.k}" aria-pressed="${s.k===cur}"${s.nt?` title="${esc(s.nt)}"`:''}>${esc(s.l)}${s.bad?` <i class="seg-n bad">${s.nb}</i>`:s.n?` <i class="seg-n">${s.n}</i>`:''}</button>`).join('')}</div>`;
 }
 function stockPage(){
-  const tabs=stockTabs(), tab=tabs.some(t=>t.k===S.pg.sk)?S.pg.sk:tabs[0].k;
+  const tabs=stockTabs(), t=skTabOf(tabs,S.pg.sk), tab=t?S.pg.sk:tabs[0].k;
   if(!S.loaded.stock) return '<div class="empty"><p>Chargement du stock…</p></div>';
   const P={dash:skDash,dot:skDotPage,mvt:skMvtPage,insp:skInspPage,regl:skReglPage,empl:skEmplPage,cat:skCatalogPage,prep:skPrepPage,rep:skRepPage,buy:skToBuyPage,cmd:skCmdPage,fourn:skFournPage,cpt:skCountPage,rap:skReportPage}[tab];
-  return P?P():skList(tab==='tout'?'':tab);
+  return (t&&t.sub?skSeg(t,tab):'')+(P?P():skList(tab==='tout'?'':tab));
 }
 /* Par emplacement : l’arbre, et le contenu de l’emplacement choisi (avec ce qu’il contient) */
 function skEmplPage(){
@@ -114,7 +122,7 @@ function skList(cat,empl,mod){
   if(!tot) return tb+emptyBox(empl?'Rien à cet emplacement':cat?`Aucun article dans ${skCat(cat)[1]}`:'Le stock est vide',isAdmin()?'« Ajouter un article » inscrit un équipement, un lot ou un consommable ; « Importer » reprend une liste d’Excel.':'L’administration inscrit le matériel de l’école.');
   const rows=A.map(a=>{const c=skConf(a), who=skWho(a);
     const qty=skQte(a)?`<span class="stk-q"><b class="${c[0]==='ok'?'':c[0]}">${esc(String(+a.qte||0))}</b> ${esc(a.unite||'')}${a.min?`<small> · seuil ${esc(String(a.min))}</small>`:''}</span>`:who?`<span>${esc(who)}</span>`:a.sortie&&a.sortie.le?`<span class="${skLate(a)?'bad-t':'muted'}">Sorti${skLate(a)?' (en retard)':''}</span>`:`<span class="muted">${esc((SK_ST[a.statut]||SK_ST.service)[1])}</span>`;
-    return xRow('xm-sk',`data-act="stk-open" data-id="${esc(a.id)}"`,`<div class="xm-t${adm?' stk-tt':''}">${adm?`<input type="checkbox" class="stk-ck" data-act="stk-sel" data-id="${esc(a.id)}"${sel.has(a.id)?' checked':''} aria-label="Cocher ${esc(skName(a))}">`:''}<b>${esc(a.nom)}</b><small>${esc([a.code,a.serie?'n° '+a.serie:'',a.taille?'taille '+a.taille:''].filter(Boolean).join(' · ')||'—')}</small></div>
+    return xRow('xm-sk xm-lite',`data-act="stk-open" data-id="${esc(a.id)}"`,`<div class="xm-t${adm?' stk-tt':''}">${adm?`<input type="checkbox" class="stk-ck" data-act="stk-sel" data-id="${esc(a.id)}"${sel.has(a.id)?' checked':''} aria-label="Cocher ${esc(skName(a))}">`:''}<b>${esc(a.nom)}</b><small>${esc([a.code,a.serie?'n° '+a.serie:'',a.taille?'taille '+a.taille:''].filter(Boolean).join(' · ')||'—')}</small></div>
       <span class="xm-m">${esc(cat?a.empl||'—':skCat(a.cat)[1])}</span>${qty}<span class="stk-c"><i class="dot ${c[0]}" aria-hidden="true"></i>${esc(c[1])}</span><div class="xm-end">${a.resa?'<span class="chip off">Réservable</span>':''}</div>`,skName(a));}).join('');
   return tb+skBulkBar()+(A.length?xList('xm-sk',head,rows):'<section class="panel"><p class="help">Aucun article ne correspond.</p></section>')
     +`<p class="help" style="margin-top:8px">${A.length===tot?pl(tot,'article','articles'):`${A.length} sur ${tot}`}.${adm&&A.length?` <button class="link" type="button" id="stk-all" data-act="stk-bk" data-v="all">Cocher les ${A.length}</button>`:''}</p>`;
@@ -141,7 +149,7 @@ function skMvtPage(){
   const tb=`<div class="toolbar"><input class="search" id="stk-mq" type="search" placeholder="Article, personne, séance" aria-label="Rechercher un mouvement" autocomplete="off" value="${esc(st.smq||'')}"><select id="stk-mt" aria-label="Type de mouvement"><option value="">Tous les mouvements</option>${Object.entries(SK_MV).map(([k,[,l]])=>`<option value="${k}"${ty===k?' selected':''}>${l}</option>`).join('')}</select><span class="grow"></span><button class="btn" type="button" id="stk-mvt-exp" data-act="stk-mvt-exp">${icon('down')}Exporter</button></div>`;
   if(!M.length) return tb+emptyBox('Aucun mouvement','Les dotations, sorties, retours, bris, inspections et consommations paraîtront ici.');
   const det=m=>[m.qte&&m.qte!==1?`${m.qte>0&&m.type!=='conso'?'+':''}${m.type==='conso'?'−':''}${Math.abs(m.qte)}`:'',m.eleve?(byId(S.data.eleves,m.eleve)||{}).nom:'',m.classe?gName(m.classe):'',m.seance&&m.seance.titre,m.instr?tName(m.instr):'',m.note].filter(Boolean).join(' · ');
-  const rows=M.slice(0,lim).map(m=>xRow('xm-skm',m.art?`data-act="stk-open" data-id="${esc(m.art)}"`:'',`${xDate({date:m.date||String(m.le).slice(0,10)},'')}<div class="xm-t"><b>${esc(m.nom||'')}</b><small>${esc(det(m)||'—')}</small></div><span><span class="chip ${(SK_MV[m.type]||['off'])[0]}">${esc((SK_MV[m.type]||['',m.type])[1])}</span></span><span class="xm-m">${esc(m.par||'')}</span>`,m.nom||'')).join('');
+  const rows=M.slice(0,lim).map(m=>xRow('xm-skm xm-lite',m.art?`data-act="stk-open" data-id="${esc(m.art)}"`:'',`${xDate({date:m.date||String(m.le).slice(0,10)},'')}<div class="xm-t"><b>${skNw(m.nom||'')}</b>${det(m)?`<small>${esc(det(m))}</small>`:''}</div><span class="skm-ty"><span class="chip ${(SK_MV[m.type]||['off'])[0]}">${esc((SK_MV[m.type]||['',m.type])[1])}</span></span><span class="xm-m skm-par">${m.par?`<span class="skm-by">par </span>${esc(m.par)}`:''}</span>`,m.nom||'')).join('');
   return tb+xList('xm-skm',[[''],['Article'],['Mouvement'],['Par']],rows)+(M.length>lim?`<div class="row" style="margin-top:12px"><button class="btn" type="button" data-act="pg-set" data-k="lim" data-v="${lim+60}">Afficher plus (${M.length-lim})</button></div>`:'');
 }
 /* Inspections : les échéances, de la plus urgente à la plus lointaine (90 jours) */
@@ -153,7 +161,7 @@ function skInspPage(){
   if(!L.length) return top+emptyBox('Aucune échéance dans les 90 prochains jours','Les inspections, épreuves hydrauliques et fins de vie à venir paraîtront ici.');
   const grp=[['En retard',x=>x.d.date<t,'bad'],[`Dans les ${skCfg().alerte} prochains jours`,x=>x.d.date>=t&&x.d.date<=soon,'warn'],['Plus tard (90 jours)',x=>x.d.date>soon,'']];
   return top+grp.map(([l,f,cls])=>{const xs=L.filter(f);if(!xs.length)return '';
-    return `<section class="panel stk-ig"><h2>${l} <span class="chip ${cls||'off'}">${xs.length}</span></h2>${xList('xm-ski',[[''],['Article'],['Échéance'],['','r']],xs.map(({a,d})=>xRow('xm-ski','',`${xDate({date:d.date},cls==='bad'?'hot':'')}<div class="xm-t"><button class="link" type="button" data-act="stk-open" data-id="${esc(a.id)}">${esc(skName(a))}</button><small>${esc([skCat(a.cat)[1],a.empl,skWho(a)].filter(Boolean).join(' · '))}</small></div><span class="xm-m">${esc(d.l)}</span><div class="xm-end">${can?d.t==='vie'?`<button class="btn sm ghost" type="button" data-act="stk-go" data-id="${esc(a.id)}" data-v="hs">Retirer du service</button>`:`<button class="btn sm" type="button" data-act="stk-go" data-id="${esc(a.id)}" data-v="${d.t}">${d.t==='epreuve'?'Épreuve faite':'Inspection faite'}</button>`:''}</div>`,'')).join(''))}</section>`;}).join('');
+    return `<section class="panel stk-ig"><h2>${l} <span class="chip ${cls||'off'}">${xs.length}</span></h2>${xList('xm-ski',[[''],['Article'],['Échéance'],['','r']],xs.map(({a,d})=>xRow('xm-ski xm-lite','',`${xDate({date:d.date},cls==='bad'?'hot':'')}<div class="xm-t"><button class="link" type="button" data-act="stk-open" data-id="${esc(a.id)}">${skNw(skName(a))}</button><small>${esc([skCat(a.cat)[1],a.empl,skWho(a)].filter(Boolean).join(' · '))}</small></div><span class="xm-m">${esc(d.l)}</span><div class="xm-end">${can?d.t==='vie'?`<button class="btn sm ghost" type="button" data-act="stk-go" data-id="${esc(a.id)}" data-v="hs">Retirer du service</button>`:`<button class="btn sm" type="button" data-act="stk-go" data-id="${esc(a.id)}" data-v="${d.t}">${d.t==='epreuve'?'Épreuve faite':'Inspection faite'}</button>`:''}</div>`,'')).join(''))}</section>`;}).join('');
 }
 /* Réglages du stock */
 function skReglPage(){

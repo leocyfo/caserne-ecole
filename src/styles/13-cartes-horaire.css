@@ -103,9 +103,7 @@ body.is-dragging .cell-add{opacity:0!important}
 .cell-add:hover{color:var(--ink);border-color:var(--muted);background:var(--surface)}
 .wk-cell:hover .cell-add,.cell-add:focus-visible{opacity:1}
 @media (hover:none){.cell-add{opacity:1}}
-.drawer.dialog{top:50%;left:50%;right:auto;bottom:auto;transform:translate(-50%,-50%);width:min(520px,calc(100% - 32px));max-height:calc(100% - 32px);border-radius:var(--r);animation:pop .16s ease-out}
-@keyframes pop{from{opacity:0;transform:translate(-50%,-47%)}to{opacity:1;transform:translate(-50%,-50%)}}
-@media (prefers-reduced-motion: reduce){.drawer.dialog{animation:none}.cell-add{transition:none}}
+@media (prefers-reduced-motion: reduce){.cell-add{transition:none}}
 .mv-route{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:10px;align-items:center}
 .mv-arrow{font-size:20px;color:var(--muted);font-weight:700}
 .mv-box{border:1px solid var(--line);border-radius:var(--r);padding:10px 12px;background:var(--surface-2);min-width:0}

@@ -11,7 +11,8 @@ service cloud.firestore {
     function role() { return hasAcct() ? get(acctDoc()).data.role : ''; }
     function isAdmin() { return isOwner() || role() == 'admin'; }
     function isStaff() { return isAdmin() || role() == 'teacher'; }
-    function member() { return isOwner() || hasAcct(); }
+    // Un compte « Service incendie » n’est pas un membre de l’école : il lit les réglages et son propre rapport, rien d’autre
+    function member() { return isOwner() || (hasAcct() && role() != 'service'); }
     function self(uid) { return signedIn() && request.auth.uid == uid; }
     function myRef() { return hasAcct() ? get(acctDoc()).data.ref : ''; }
     function isTeacher() { return role() == 'teacher'; }
@@ -22,7 +23,7 @@ service cloud.firestore {
       allow create: if signedIn() && !exists(ownerDoc()) && request.resource.data.uid == request.auth.uid;
       allow update, delete: if false;
     }
-    match /config/ecole { allow read: if member(); allow write: if isAdmin(); }
+    match /config/ecole { allow read: if member() || role() == 'service'; allow write: if isAdmin(); }
 
     match /groupes/{id} { allow read: if member(); allow write: if isAdmin(); }
     match /cours/{id} { allow read: if member(); allow write: if isAdmin(); }
@@ -111,6 +112,35 @@ service cloud.firestore {
       allow read: if isStaff() || (hasAcct() && resource.data.eleve == myRef());
       allow write: if isStaff();
     }
+
+    // Formation : grilles pratiques (administration), évaluations (personnel ; l’élève lit les siennes et y ajoute sa signature),
+    // certificats et dossier ENPQ (administration ; l’élève lit les siens), questions et examens blancs (personnel),
+    // tentatives (l’élève crée et remplit les siennes jusqu’à la remise), présences par code QR (l’élève signale la sienne)
+    match /grilles/{id} { allow read: if member(); allow write: if isAdmin(); }
+    match /evaluations/{id} {
+      allow read: if isStaff() || (hasAcct() && resource.data.eleve == myRef());
+      allow create: if isStaff();
+      allow update: if isStaff() || (role() == 'student' && resource.data.eleve == myRef()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['sig']) && request.resource.data.sig.ev == resource.data.sig.ev);
+      allow delete: if isAdmin();
+    }
+    match /certificats/{eid} { allow read: if isStaff() || (role() == 'student' && eid == myRef()); allow write: if isAdmin(); }
+    match /dossiers-enpq/{eid} { allow read: if isStaff() || (role() == 'student' && eid == myRef()); allow write: if isAdmin(); }
+    match /questions/{id} { allow read: if member(); allow write: if isStaff(); }
+    match /ex-blancs/{id} { allow read: if member(); allow write: if isStaff(); }
+    match /ex-tentatives/{id} {
+      allow read: if isStaff() || (hasAcct() && resource.data.eleve == myRef());
+      allow create: if role() == 'student' && request.resource.data.eleve == myRef();
+      allow update: if role() == 'student' && resource.data.eleve == myRef() && resource.data.fin == '';
+      allow delete: if isAdmin();
+    }
+    match /presences-qr/{id} {
+      allow read: if isStaff();
+      allow create: if role() == 'student' && request.resource.data.eleve == myRef();
+      allow delete: if isAdmin();
+    }
+    // Rapport d’un service incendie : écrit par l’administration, lu par les comptes de ce service
+    match /rapports-service/{sid} { allow read: if isAdmin() || (role() == 'service' && sid == myRef()); allow write: if isAdmin(); }
 
     // Comptes : chacun lit le sien ; l’administration les gère tous
     match /comptes/{uid} {

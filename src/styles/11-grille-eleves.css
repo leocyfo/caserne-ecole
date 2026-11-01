@@ -83,7 +83,7 @@ button.xg-c:hover{filter:brightness(.95)}
   .st-hd{display:none}
   .st-cols{grid-template-columns:40px minmax(0,1fr) 64px 64px;grid-template-areas:"num name name x" "rate rate a r";row-gap:12px}
   .st-num{grid-area:num}.st-name{grid-area:name}.st-x{grid-area:x}.st-rate{grid-area:rate}.st-a{grid-area:a}.st-r{grid-area:r}
-  .st-row [data-l]::before{content:attr(data-l);display:block;margin-bottom:5px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);text-align:left}
+  .st-row [data-l]::before{content:attr(data-l);display:block;margin-bottom:3px;font-size:12px;font-weight:400;color:var(--muted);text-align:left}
 }
 /* Cours à rattraper */
 .miss-list .lrow{grid-template-columns:52px minmax(0,1fr) auto;gap:16px;padding:14px 22px;cursor:pointer}

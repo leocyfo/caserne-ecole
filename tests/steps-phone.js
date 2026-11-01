@@ -44,10 +44,11 @@ ok('text at 12 px or more',!tiny.length,tiny.join(' ; '));
   if(tooWide())bad.push(k+' '+document.documentElement.scrollWidth+' px');const f=smallFields(),t=smallText();if(f.length||t.length)bad.push(k+' : '+f.concat(t).slice(0,3).join(', '));}
  ok('settings sections fit the phone',!bad.length,bad.join(' ; '));}
 /* les sections du Stock et de la Compta */
-for(const [pg,k,n] of [['stock','sk',19],['compta','cp',9]]){click($('#nav .nav-back'));await wait(150);click(navBtn(pg));await wait(250);const bad=[];
+for(const [pg,k,n] of [['stock','sk',13],['compta','cp',9]]){click($('#nav .nav-back'));await wait(150);click(navBtn(pg));await wait(250);const bad=[];
  const ks=$$('#nav [data-k='+k+']').map(b=>b.id);if(ks.length!==n)bad.push('sections : '+ks.length);
- for(const id of ks){click($('#'+id));await wait(180);window.scrollTo(0,0);
-  if(tooWide())bad.push(id+' '+document.documentElement.scrollWidth+' px');const f=smallFields(),t=smallText();if(f.length||t.length)bad.push(id+' : '+f.concat(t).slice(0,3).join(', '));}
+ const look=async id=>{click($('#'+id));await wait(180);window.scrollTo(0,0);
+  if(tooWide())bad.push(id+' '+document.documentElement.scrollWidth+' px');const f=smallFields(),t=smallText();if(f.length||t.length)bad.push(id+' : '+f.concat(t).slice(0,3).join(', '));};
+ for(const id of ks){await look(id);for(const sid of $$('#main .stk-seg button').map(b=>b.id).slice(1))await look(sid);}
  ok(pg+' sections fit the phone',!bad.length,bad.join(' ; '));}
 click($('#nav .nav-back'));await wait(150);
 
@@ -98,6 +99,9 @@ ok('mark-all, save and close at 44 px',!!all&&!!save&&rect(all).height>=44&&rect
 const names=$$('#drawer .att-list li').filter(vis);
 ok('names never under the buttons',names.length>0&&names.every(li=>{const n=rect(li.querySelector('.nm')),g=rect(li.querySelector('.att-btns'));return n.right<=g.left+1||n.bottom<=g.top+1;}),names.length);
 await closeDrawer();
+
+/* Fenêtres : la bulle et la fenêtre du centre montent du bas, sur toute la largeur */
+if($('#nf-bell')){click($('#nf-bell'));await wait(250);const r=(e=>({left:e.offsetLeft,top:e.offsetTop,right:e.offsetLeft+e.offsetWidth,bottom:e.offsetTop+e.offsetHeight,width:e.offsetWidth,height:e.offsetHeight}))($('#drawer'));ok('bell panel rises from the bottom',$('#drawer').classList.contains('sh-pop')&&Math.round(r.width)===390&&Math.round(r.bottom)===innerHeight&&r.top>0,Math.round(r.width)+' · '+Math.round(r.bottom));await closeDrawer();}
 
 /* Élève : examens à venir avec le titre entier et l’étiquette dessous */
 click($('[data-role=student]'));await wait(150);click(navBtn('calendar'));await wait(220);

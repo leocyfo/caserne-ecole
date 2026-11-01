@@ -78,7 +78,8 @@ const xSub=x=>esc([x.c&&!x.rep&&x.e.titre&&x.e.titre!=='Examen'?x.e.titre:'',x.s
 const xWhen=x=>{const k=daysBetween(todayISO(),x.date);return `<span class="chip ${x.rep?'info':k<=2?'exam':'off'}">${k<=0?'Aujourd’hui':k===1?'Demain':k<14?'Dans '+k+' jours':'Dans '+Math.round(k/7)+' semaines'}</span>`;};
 const xCls=x=>`<span class="cl-num sm" title="${esc(gName(x.grp))}">${esc(xNum(x.grp))}</span>`;
 const xRow=(cls,act,cells,label)=>`<article class="xm-row xm-cols ${cls}${act?' go':''}"${act?` ${act} tabindex="0" role="button" aria-label="${esc(label)}"`:''}>${cells}</article>`;
-const xList=(cls,head,rows)=>`<div class="cl-list xm-list"><div class="xm-hd xm-cols ${cls}" aria-hidden="true">${head.map(h=>`<span${h[1]?` class="${h[1]}"`:''}>${h[0]}</span>`).join('')}</div>${rows}</div>`;
+/* head : [libellé, classe, sans libellé dans les cartes (Moment, Quand : la valeur se lit seule)] */
+const xList=(cls,head,rows)=>`<div class="cl-list xm-list"><div class="xm-hd xm-cols ${cls}" aria-hidden="true">${head.map(h=>`<span${h[1]?` class="${h[1]}"`:''}${h[2]?' data-nl':''}>${h[0]}</span>`).join('')}</div>${rows}</div>`;
 const xLabel=x=>`${x.rep?'Journée de reprise':(x.c?x.c.titre:x.e.titre||'Examen')} · ${dayLabel(parse(x.date))} · ${gName(x.grp)}`;
 /* Ouvrir un examen : la fiche pour un examen planifié, sinon les résultats de la séance (ou la séance si elle n’a pas encore eu lieu) */
 const xOpen=x=>!x.fromSess?`data-act="exam" data-id="${esc(x.e.id)}"`:x.past&&!x.rep&&x.els&&x.els.length?`data-act="x-open" data-key="${esc(x.key)}"`:examAct(x);
@@ -112,7 +113,7 @@ function examsPage(){
   let body='';
   if(tab==='up'){
     const lim=+st.lim||25, list=B.up.slice(0,lim), RSu=repSessions();
-    body=list.length?xList('xm-up',[['Date'],['Examen'],['Classe'],['Moment'],['','r']],list.map(x=>{const k=daysBetween(todayISO(),x.date);
+    body=list.length?xList('xm-up',[['Date'],['Examen'],['Classe'],['Moment','',1],['','r']],list.map(x=>{const k=daysBetween(todayISO(),x.date);
       const rs=x.rep?RSu.find(y=>y.key===x.key):null, nq=rs?B.reps.filter(q=>{const dq=repDayFor(q.x,RSu);return dq&&dq.key===rs.key;}).length:0;
       const sub=x.rep?(rs&&rs.mods.length?`${rs.mods.map(m=>'M'+m).join(', ')}${nq?' · '+pl(nq,'reprise à faire','reprises à faire'):''}`:'Modules à reprendre : à choisir'):xSub(x);
       return xRow('xm-up'+(x.rep?' is-rep':''),xOpen(x),`${xDate(x,x.rep?'rep':k<=2?'hot':'')}<div class="xm-t"><b>${xTitle(x)}</b>${sub?`<small>${sub}</small>`:''}</div>${xCls(x)}<span class="xm-m">${esc(momentOf(x))}</span><div class="xm-end">${x.rep?'<span class="chip info">Reprise</span>':xWhen(x)}</div>`,xLabel(x));}).join(''))
@@ -139,8 +140,8 @@ function studentExams(){
   const up=B.items.filter(x=>!x.past).sort((a,b)=>a.date.localeCompare(b.date)||a.start-b.start).slice(0,6);
   const tb=`<div class="toolbar">${identitySelect()}<span class="grow"></span>${me&&mine.length?`<button class="btn" type="button" id="pr-releve" data-act="pr-releve" data-id="${esc(sid)}">${icon('print')}Imprimer mon relevé</button>`:''}</div>`;
   const note=me?repNotice({id:sid},B.items):'';
-  const upH=up.length?xList('xm-me',[['Date'],['Examen'],['Moment'],['','r']],up.map(x=>{const k=daysBetween(todayISO(),x.date);return xRow('xm-me',examAct(x),`${xDate(x,x.rep?'rep':k<=2?'hot':'')}<div class="xm-t"><b>${xTitle(x)}</b>${xSub(x)?`<small>${xSub(x)}</small>`:''}</div><span class="xm-m">${esc(momentOf(x))}</span><div class="xm-end">${x.rep?'<span class="chip info">Reprise</span>':xWhen(x)}</div>`,xLabel(x));}).join('')):`<section class="panel"><p class="help">Les examens de votre classe apparaîtront ici dès qu’ils seront planifiés.</p></section>`;
-  const resH=!me?'':mine.length?xList('xm-me',[['Date'],['Examen'],['Moment'],['Résultat','r']],mine.map(x=>{const v=x.res[sid];return xRow('xm-me','',`${xDate(x,'')}<div class="xm-t"><b>${xTitle(x)}</b></div><span class="xm-m">${esc(momentOf(x))}</span><div class="xm-end"><span class="chip ${RES[v][0]}">${RES[v][1]}${x.pct[sid]!=null?' · '+esc(noteTxt(x.pct[sid])):''}</span></div>`,'');}).join('')):`<section class="panel"><p class="help">Aucun résultat pour l’instant.</p></section>`;
+  const upH=up.length?xList('xm-me',[['Date'],['Examen'],['Moment','',1],['','r']],up.map(x=>{const k=daysBetween(todayISO(),x.date);return xRow('xm-me',examAct(x),`${xDate(x,x.rep?'rep':k<=2?'hot':'')}<div class="xm-t"><b>${xTitle(x)}</b>${xSub(x)?`<small>${xSub(x)}</small>`:''}</div><span class="xm-m">${esc(momentOf(x))}</span><div class="xm-end">${x.rep?'<span class="chip info">Reprise</span>':xWhen(x)}</div>`,xLabel(x));}).join('')):`<section class="panel"><p class="help">Les examens de votre classe apparaîtront ici dès qu’ils seront planifiés.</p></section>`;
+  const resH=!me?'':mine.length?xList('xm-me',[['Date'],['Examen'],['Moment','',1],['Résultat','r']],mine.map(x=>{const v=x.res[sid];return xRow('xm-me','',`${xDate(x,'')}<div class="xm-t"><b>${xTitle(x)}</b></div><span class="xm-m">${esc(momentOf(x))}</span><div class="xm-end"><span class="chip ${RES[v][0]}">${RES[v][1]}${x.pct[sid]!=null?' · '+esc(noteTxt(x.pct[sid])):''}</span></div>`,'');}).join('')):`<section class="panel"><p class="help">Aucun résultat pour l’instant.</p></section>`;
   return tb+note+`<h2 class="xm-h">Prochains examens</h2>${upH}${me?`<h2 class="xm-h">Mes résultats</h2>${resH}`:''}`;
 }
 /* Ouvre les résultats d’une séance « Examen » de l’horaire */
@@ -182,7 +183,7 @@ function studentExamsTab(e){
   const res=mine.length?xList('xm-sres',[['Date'],['Examen'],['Résultat'],['','r']],mine.map(x=>{const v=x.res[e.id], can=canEditItem(x);
     return xRow('xm-sres',can?xOpen(x):'',`${xDate(x,'')}<div class="xm-t"><b>${xTitle(x)}</b>${xSub(x)?`<small>${xSub(x)}</small>`:''}</div><div><span class="chip ${RES[v][0]}">${RES[v][1]}${x.pct[e.id]!=null?' · '+esc(noteTxt(x.pct[e.id])):''}</span></div><div class="xm-end">${resKo(v)&&can?`<button class="btn sm" type="button" data-act="x-rep" data-key="${esc(x.key)}" data-el="${esc(e.id)}"${dis()}>Réussi en reprise</button>`:''}</div>`,xLabel(x));}).join('')):'<section class="panel"><p class="help">Aucun résultat inscrit.</p></section>';
   const up=B.up.slice(0,5);
-  const upH=up.length?xList('xm-me',[['Date'],['Examen'],['Moment'],['','r']],up.map(x=>{const k=daysBetween(todayISO(),x.date);return xRow('xm-me',examAct(x),`${xDate(x,x.rep?'rep':k<=2?'hot':'')}<div class="xm-t"><b>${xTitle(x)}</b>${xSub(x)?`<small>${xSub(x)}</small>`:''}</div><span class="xm-m">${esc(momentOf(x))}</span><div class="xm-end">${x.rep?'<span class="chip info">Reprise</span>':xWhen(x)}</div>`,xLabel(x));}).join('')):'<section class="panel"><p class="help">Aucun examen prévu.</p></section>';
+  const upH=up.length?xList('xm-me',[['Date'],['Examen'],['Moment','',1],['','r']],up.map(x=>{const k=daysBetween(todayISO(),x.date);return xRow('xm-me',examAct(x),`${xDate(x,x.rep?'rep':k<=2?'hot':'')}<div class="xm-t"><b>${xTitle(x)}</b>${xSub(x)?`<small>${xSub(x)}</small>`:''}</div><span class="xm-m">${esc(momentOf(x))}</span><div class="xm-end">${x.rep?'<span class="chip info">Reprise</span>':xWhen(x)}</div>`,xLabel(x));}).join('')):'<section class="panel"><p class="help">Aucun examen prévu.</p></section>';
   return bar+note+`<h2 class="xm-h">Résultats</h2>${res}<h2 class="xm-h">À venir</h2>${upH}`;
 }
 /* Onglet Examens d’une fiche de classe : réussite, grille des résultats et prochains examens */
@@ -190,7 +191,7 @@ function classExamsTab(g){
   const B=examBoard(x=>x.grp===g.id);
   const bar=`<div class="st-bar"><p class="summary"><span><b class="${passCls(B.rate)}">${B.rate==null?'—':B.rate+' %'}</b>de réussite</span><span class="${B.todo.length?'need':''}"><b>${B.todo.length}</b>${B.todo.length>1?'examens à compléter':'examen à compléter'}</span><span class="${B.reps.length?'need':''}"><b>${B.reps.length}</b>${B.reps.length>1?'reprises à faire':'reprise à faire'}</span></p></div>`;
   const up=B.up.slice(0,5);
-  const upH=up.length?xList('xm-me',[['Date'],['Examen'],['Moment'],['','r']],up.map(x=>{const k=daysBetween(todayISO(),x.date);return xRow('xm-me',xOpen(x),`${xDate(x,x.rep?'rep':k<=2?'hot':'')}<div class="xm-t"><b>${xTitle(x)}</b>${xSub(x)?`<small>${xSub(x)}</small>`:''}</div><span class="xm-m">${esc(momentOf(x))}</span><div class="xm-end">${x.rep?'<span class="chip info">Reprise</span>':xWhen(x)}</div>`,xLabel(x));}).join('')):'<section class="panel"><p class="help">Aucun examen prévu.</p></section>';
+  const upH=up.length?xList('xm-me',[['Date'],['Examen'],['Moment','',1],['','r']],up.map(x=>{const k=daysBetween(todayISO(),x.date);return xRow('xm-me',xOpen(x),`${xDate(x,x.rep?'rep':k<=2?'hot':'')}<div class="xm-t"><b>${xTitle(x)}</b>${xSub(x)?`<small>${xSub(x)}</small>`:''}</div><span class="xm-m">${esc(momentOf(x))}</span><div class="xm-end">${x.rep?'<span class="chip info">Reprise</span>':xWhen(x)}</div>`,xLabel(x));}).join('')):'<section class="panel"><p class="help">Aucun examen prévu.</p></section>';
   return bar+`<section class="panel xg-panel"><h2>Grille des résultats</h2>${resultsGrid(g.id)}</section><h2 class="xm-h">Prochains examens</h2>${upH}`;
 }
 

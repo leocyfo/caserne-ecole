@@ -6,9 +6,9 @@
 let USER=null, ROOM;
 /* Sur le site (hors claude.ai), la connexion se fait par courriel et les comptes naissent d’une demande. */
 const siteMode=()=>!!window.__AUTH;
-const ROLES=['admin','teacher','student'];
-const ROLE_CHIP={admin:'k2',teacher:'k0',student:'k6'};
-const ACCESS={admin:'Éditeur',teacher:'Contributeur',student:'Lecteur'};
+const ROLES=['admin','teacher','student','service'];
+const ROLE_CHIP={admin:'k2',teacher:'k0',student:'k6',service:'k4'};
+const ACCESS={admin:'Éditeur',teacher:'Contributeur',student:'Lecteur',service:'Lecteur'};
 const PROF={}, profAsk=new Set();
 const profOf=id=>PROF[id]||null;
 function needProfiles(ids){
@@ -33,6 +33,7 @@ const acctRec=a=>a.role==='student'?(byId(S.data.eleves,a.ref)||a.fiche||{}):(a.
 /* La personne affichée dans le menu et dans « Mon profil » : son compte, sinon l’aperçu choisi. */
 function subject(){
   const a=acctForRole(), r=S.role;
+  if(r==='service'){const id=svcCur(), s=svcOf(id);return {a,id,rec:s,name:(s&&s.nom)||(a&&a.fiche&&a.fiche.nom)||'Service incendie'};}
   if(r==='teacher'){const id=a?a.ref:S.teacher, rec=byId(S.data.enseignants,id)||(a&&a.fiche)||null;return {a,id,rec,name:(rec&&rec.nom)||(a&&S.me.name)||'Enseignant'};}
   if(r==='student'){const id=a?a.ref:S.student, rec=byId(S.data.eleves,id)||(a&&a.fiche)||null;return {a,id,rec,name:(rec&&rec.nom)||(a&&S.me.name)||'Élève'};}
   const id=a?a.ref:'', rec=id?(byId(S.data.enseignants,id)||a.fiche||null):null;
@@ -40,6 +41,7 @@ function subject(){
 }
 function ficheOf(role,ref,rec,dz){
   if(!ref) return {};
+  if(role==='service'){const s=svcOf(ref)||{};return {nom:s.nom||'',courriel:s.courriel||''};}
   if(role==='student'){const e=rec||byId(S.data.eleves,ref)||{};return {nom:e.nom||'',groupe:e.groupe||'',numero:e.numero==null?null:e.numero,fonction:e.fonction||'',naissance:e.naissance||'',parent:e.parent||'',courriel:e.courriel||'',telephone:e.telephone||''};}
   const p=rec||byId(S.data.enseignants,ref)||{}, z=dz||S.data.dossiers[ref]||{};
   return {nom:p.nom||'',fonction:p.fonction||'',statut:p.statut||'',courriel:p.courriel||'',telephone:z.telephone||''};
@@ -124,7 +126,9 @@ function accountDrawer(){
   }
   const roleSeg=`<div class="seg" role="group" aria-label="Rôle">${ROLES.map(k=>`<button type="button" id="ac-role-${k}" data-act="ac-role" data-v="${k}" aria-pressed="${f.role===k}">${ROLE_LBL[k]}</button>`).join('')}</div>`;
   const used=new Set(all.filter(a=>a.ref&&a.id!==d.id).map(a=>a.ref)), mark=id=>used.has(id)?' (a déjà un compte)':'';
-  const opts=f.role==='student'
+  const opts=f.role==='service'
+    ?'<option value="">Choisir le service</option>'+svcList().map(s=>`<option value="${esc(s.id)}"${f.ref===s.id?' selected':''}>${esc(s.nom+mark(s.id))}</option>`).join('')
+    :f.role==='student'
     ?'<option value="">Choisir l’élève</option>'+groups().map(g=>{const els=studentsOf(g.id);return els.length?`<optgroup label="${esc(g.nom)}">${els.map(e=>`<option value="${esc(e.id)}"${f.ref===e.id?' selected':''}>${esc(e.nom+mark(e.id))}</option>`).join('')}</optgroup>`:'';}).join('')
     :`<option value="">${f.role==='admin'?'Aucune fiche':'Choisir l’enseignant'}</option>`+staff().filter(p=>f.role==='admin'||isTeacher(p)).map(p=>`<option value="${esc(p.id)}"${f.ref===p.id?' selected':''}>${esc(p.nom+mark(p.id))}</option>`).join('');
   const body=`<form id="ac-form" data-form="acct" novalidate>
@@ -132,7 +136,7 @@ function accountDrawer(){
     ${d.demande?`<div class="notice"><p><b>Demande de ${esc(d.demande.nom||'')}</b>${d.demande.message?` : « ${esc(d.demande.message)} »`:''}. Choisissez son rôle et sa fiche (la fiche d’un élève donne sa classe), puis approuvez.</p></div>`:''}
     <section class="dr-sec"><h3>1. La personne</h3>${person}</section>
     <section class="dr-sec"><h3>2. Son rôle</h3>${roleSeg}${siteMode()?'':`<p class="help">Dans Partager, donnez-lui l’accès <b>${ACCESS[f.role]}</b>.</p>`}</section>
-    <section class="dr-sec"><h3>3. Sa fiche</h3><label class="field"><span>${f.role==='student'?'Fiche de l’élève':f.role==='teacher'?'Fiche de l’enseignant':'Fiche du personnel (facultatif)'}</span><select id="ac-ref">${opts}</select></label>${f.role==='student'?'<p class="help">L’élève voit seulement sa propre fiche dans « Mon profil ».</p>':''}</section>
+    <section class="dr-sec"><h3>3. Sa fiche</h3><label class="field"><span>${f.role==='service'?'Service incendie':f.role==='student'?'Fiche de l’élève':f.role==='teacher'?'Fiche de l’enseignant':'Fiche du personnel (facultatif)'}</span><select id="ac-ref">${opts}</select></label>${f.role==='student'?'<p class="help">L’élève voit seulement sa propre fiche dans « Mon profil ».</p>':''}</section>
     ${d.err?`<p class="form-err" role="alert">${esc(d.err)}</p>`:''}</form>`;
   const foot=d.confirmDel
     ?`<p>Supprimer ce compte ? La personne garde son accès à la page, mais n’arrivera plus directement sur son profil.</p><button class="btn danger" type="button" id="ac-del-yes" data-act="ac-del-yes"${dis()}>Supprimer</button><button class="btn ghost" type="button" data-act="ac-del-no">Annuler</button>`
@@ -142,7 +146,7 @@ function accountDrawer(){
 async function saveAccount(){
   const d=S.dr, f=d.draft;if(S.busy)return;
   if(!f.uid){d.err='Choisissez la personne à relier.';renderDrawer();return;}
-  if(f.role!=='admin'&&!f.ref){d.err=f.role==='student'?'Choisissez la fiche de l’élève.':'Choisissez la fiche de l’enseignant.';renderDrawer();return;}
+  if(f.role!=='admin'&&!f.ref){d.err=f.role==='service'?'Choisissez le service incendie.':f.role==='student'?'Choisissez la fiche de l’élève.':'Choisissez la fiche de l’enseignant.';renderDrawer();return;}
   const o=byId(S.data.comptes,f.uid);
   if(o&&o.id!==d.id&&!d.over){d.over=true;d.err=`Cette personne a déjà un compte (${ROLE_LBL[o.role]}). Enregistrez de nouveau pour le remplacer.`;renderDrawer();return;}
   const doc={role:f.role,ref:f.ref||'',fiche:ficheOf(f.role,f.ref),maj:new Date().toISOString()};
@@ -191,10 +195,14 @@ function profilePage(){
     panels+=`<section class="panel"><h2>Ma semaine</h2><p class="big">${wk.length}<span> ${W(wk.length>1?'séances':'séance','cours')}</span></p><p class="help">${late?`<b class="need-t">${pl(late,'présence à prendre','présences à prendre')}</b> pour des ${W('séances passées','cours passés')}. `:''}${nx?`${W('Prochaine séance','Prochain cours')} : ${esc(nx.s.c.titre)}, ${esc(sess(nx.s).toLowerCase())}.`:W('Aucune séance prévue prochainement.','Aucun cours prévu prochainement.')}</p></section>`;
     panels+=myTeacherPanel(id);
     if(a&&S.canWrite===false) warn='<div class="notice warn"><p>Votre accès à cette page ne permet pas encore d’enregistrer les présences. Demandez à l’administration l’accès <b>Contributeur</b> dans Partager.</p></div>';
+  }else if(r==='service'){
+    const s=svcOf(svcCur())||{};
+    panels+=`<section class="panel"><h2>Mes informations</h2>${facts([['Rôle','Service incendie'],['Service',s.nom],['Personne-ressource',s.contact],['Courriel',s.courriel]])}</section>`;
+    panels+=`<section class="panel"><h2>Ce que vous voyez</h2><p class="help">La présence, les résultats, le carnet de compétences et le dossier ENPQ de vos recrues seulement, et les factures de votre service. Rien d’autre de l’école.</p><div class="row" style="margin-top:10px"><button class="btn sm" type="button" data-act="nav" data-page="recrues">Voir mes recrues</button></div></section>`;
   }else{
     const c=cfg(), all=S.data.comptes, n=k=>all.filter(x=>x.role===k).length;
     panels+=`<section class="panel"><h2>Mes informations</h2>${facts([['Rôle','Administrateur'],['Établissement',c.nom],['Année scolaire',c.annee],['Fiche du personnel',rec.nom||'']])}</section>`;
-    panels+=`<section class="panel"><h2>Comptes</h2><ul class="acc-list"><li><span>Administrateurs</span><b>${n('admin')}</b></li><li><span>Enseignants</span><b>${n('teacher')}</b></li><li><span>Élèves</span><b>${n('student')}</b></li></ul><div class="row" style="margin-top:12px"><button class="btn sm" type="button" data-act="nav" data-page="comptes">Gérer les comptes</button></div></section>`;
+    panels+=`<section class="panel"><h2>Comptes</h2><ul class="acc-list"><li><span>Administrateurs</span><b>${n('admin')}</b></li><li><span>Enseignants</span><b>${n('teacher')}</b></li><li><span>Élèves</span><b>${n('student')}</b></li>${n('service')?`<li><span>Services incendie</span><b>${n('service')}</b></li>`:''}</ul><div class="row" style="margin-top:12px"><button class="btn sm" type="button" data-act="nav" data-page="comptes">Gérer les comptes</button></div></section>`;
   }
   return head+warn+`<div class="panels">${panels}</div>`;
 }

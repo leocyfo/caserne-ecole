@@ -3,20 +3,21 @@ const PREF='calendrier-cours-prefs';
 let prefs={};
 try{prefs=JSON.parse(localStorage.getItem(PREF)||'{}')||{};}catch(e){prefs={};}
 const S={
-  role:['admin','teacher','student'].includes(prefs.role)?prefs.role:'admin',
+  role:['admin','teacher','student','service'].includes(prefs.role)?prefs.role:'admin',
   teacher:prefs.teacher||'', group:prefs.group||'', student:prefs.student||'', filtre:prefs.filtre||'', fmode:prefs.fmode==='e'?'e':'g', compact:prefs.compact===true, view:prefs.view==='jour'?'jour':'semaine', dayDate:'', sideMini:prefs.sideMini===true||(prefs.sideMini===undefined&&typeof window!=='undefined'&&window.innerWidth<=900), demoHidden:prefs.demoHidden===true, nvSeen:typeof prefs.nvSeen==='string'?prefs.nvSeen:'', nfSeen:Array.isArray(prefs.nfSeen)?prefs.nfSeen.slice(-400):[],
-  views:prefs.views&&typeof prefs.views==='object'?prefs.views:{},
+  views:prefs.views&&typeof prefs.views==='object'?prefs.views:{}, saved:prefs.saved&&typeof prefs.saved==='object'?prefs.saved:{},
   annVu:Array.isArray(prefs.annVu)?prefs.annVu.slice(-150):[], annAll:false,
   page:'calendar', pg:{},
   week:(()=>{const d=new Date(),j=d.getDay();return monday(j===6?addDays(d,2):j===0?addDays(d,1):d);})(), day:0,
   conn:'loading', canAdmin:null, canWrite:null,
   me:{id:null,name:'',avatarUrl:''}, isOwner:false, myAcct:null, peers:[],
   loaded:{}, busy:false, confirmClear:false, termKey:'', termLoaded:false,
-  data:{comptes:[],demandes:[],config:null,cours:[],enseignants:[],dossiers:{},groupes:[],eleves:[],examens:[],presences:{},presTerm:{},presOne:{},staffPres:{},absProfs:{},candidatures:[],remplacements:[],dispos:{},resultats:{},mesRes:{},mesPct:{},journal:[],archives:[],stock:[],stockMvt:[],stockModeles:[],stockFourn:[],stockCmd:[],stockRep:[],stockCpt:[],compta:[],factures:[],paie:[],cptCfg:null},
-  dr:null
+  data:{comptes:[],demandes:[],config:null,cours:[],enseignants:[],dossiers:{},groupes:[],eleves:[],examens:[],presences:{},presTerm:{},presOne:{},staffPres:{},absProfs:{},candidatures:[],remplacements:[],dispos:{},resultats:{},mesRes:{},mesPct:{},journal:[],archives:[],stock:[],stockMvt:[],stockModeles:[],stockFourn:[],stockCmd:[],stockRep:[],stockCpt:[],grilles:[],evals:[],certs:{},enpq:{},questions:[],blancs:[],tentatives:[],rapports:[],qrScans:[],compta:[],factures:[],paie:[],cptCfg:null},
+  dr:null,
+  offline:typeof navigator!=='undefined'&&navigator.onLine===false
 };
 let DB=null, unsubPres=null, unsubTerm=null, unsubMR=null, uidSeq=0;
-function savePrefs(){try{localStorage.setItem(PREF,JSON.stringify({role:S.role,teacher:S.teacher,group:S.group,student:S.student,filtre:S.filtre,fmode:S.fmode,compact:S.compact,view:S.view,sideMini:S.sideMini,demoHidden:S.demoHidden,nvSeen:S.nvSeen,nfSeen:S.nfSeen,views:S.views,annVu:S.annVu}));}catch(e){}}
+function savePrefs(){try{localStorage.setItem(PREF,JSON.stringify({role:S.role,teacher:S.teacher,group:S.group,student:S.student,filtre:S.filtre,fmode:S.fmode,compact:S.compact,view:S.view,sideMini:S.sideMini,demoHidden:S.demoHidden,nvSeen:S.nvSeen,nfSeen:S.nfSeen,views:S.views,saved:S.saved,annVu:S.annVu}));}catch(e){}}
 
 const byId=(arr,id)=>arr.find(x=>x.id===id);
 const cfg=()=>Object.assign({nom:'',annee:'',debut:'',fin:'',conges:[],etapes:[],competences:[]},S.data.config||{});
@@ -51,6 +52,7 @@ function visibleRoles(){
   if(S.canAdmin!==false) r.push('admin');
   if(S.canAdmin===true||S.canWrite!==false) r.push('teacher');
   r.push('student');
+  if(S.canAdmin!==false) r.push('service');
   return r;
 }
 

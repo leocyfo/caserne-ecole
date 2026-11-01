@@ -16,9 +16,10 @@ function setHTML(el,html,key){
 /* Menu : [page, libellé, icône, section qui commence à cette entrée, pages réunies sous cette entrée (onglets), étiquette]
    Une entrée qui réunit plusieurs pages les montre en onglets à côté du titre ; elle s’ouvre sur sa première page. */
 const NAV={
-  admin:[['calendar','Calendrier','cal','Horaire',['calendar','annee']],['affectations','Affectations','clip'],['classes','Classes','teach','École'],['eleves','Élèves et personnel','users',null,['eleves','personnel']],['modules','Modules et examens','layers','Ressources',['modules','examens']],['stock','Stock','box'],['compta','Compta','coin'],['comptes','Comptes','key','Administration'],['historique','Historique','clock'],['params','Paramètres','gear'],['nouveautes','Nouveautés','spark']],
-  teacher:[['calendar','Mon horaire','cal',null,['calendar','annee']],['mescours','Mes cours','clip'],['dispos','Disponibilités','calok'],['examens','Examens','exam'],['stock','Matériel','box'],['profil','Mon profil','user']],
-  student:[['calendar','Mon horaire','cal',null,['calendar','annee']],['examens','Examens','exam'],['profil','Mon profil','user']]
+  admin:[['calendar','Calendrier','cal','Horaire',['calendar','annee']],['affectations','Affectations','clip'],['classes','Classes','teach','École'],['eleves','Élèves et personnel','users',null,['eleves','personnel']],['formation','Formation','check'],['modules','Modules et examens','layers','Ressources',['modules','examens']],['stock','Stock','box'],['compta','Compta','coin'],['comptes','Comptes','key','Administration'],['historique','Historique','clock'],['params','Paramètres','gear'],['nouveautes','Nouveautés','spark']],
+  teacher:[['calendar','Mon horaire','cal',null,['calendar','annee']],['mescours','Mes cours','clip'],['dispos','Disponibilités','calok'],['examens','Examens','exam'],['formation','Évaluations','check'],['stock','Matériel','box'],['profil','Mon profil','user']],
+  service:[['recrues','Mes recrues','users']],
+  student:[['calendar','Mon horaire','cal',null,['calendar','annee']],['examens','Examens','exam'],['formation','Ma formation','check'],['profil','Mon profil','user']]
 };
 const TAB_LBL={calendar:'Horaire',annee:'Année scolaire',eleves:'Élèves',personnel:'Personnel',modules:'Modules',examens:'Examens'};
 /* L’entrée du menu qui contient une page (elle-même, ou celle qui la réunit avec d’autres) */
@@ -35,7 +36,7 @@ function ensureSel(){
   if(siteMode()&&!S._role0){S._role0=true;S.role=vis[0];}
   if(!vis.includes(S.role)) S.role=vis[0];
   if(S.page==='presences') S.page='classes';
-  if(!navGroup(S.page)&&S.page!=='profil') S.page='calendar';
+  if(!navGroup(S.page)&&S.page!=='profil') S.page=S.role==='service'?'recrues':'calendar';
   if(!allLoaded()) return;
   // Un compte enseignant ou élève choisit lui-même l’enseignant ou la classe affichés.
   const a=locked()?myAcct():null;
@@ -48,6 +49,8 @@ function ensureSel(){
   if(S.filtre){const k=S.filtre[0],id=S.filtre.slice(2);if((k==='g'&&!gs.some(g=>g.id===id))||(k==='e'&&!ts.some(t=>t.id===id)))S.filtre='';else S.fmode=k;}
   if(S.role==='student') ensureMyRes();
   if(S.role!=='admin') ensureMine();
+  foMine();
+  svcMine();
 }
 /* Résultats de l’élève affiché : il ne peut lire que les siens */
 function ensureMyRes(){
@@ -59,11 +62,11 @@ function ensureMyRes(){
   const who=S.student;
   unsubMR=col('resultats-eleves').where('eleve','==',who).onSnapshot(q=>{if(S._mrFor!==who)return;const m={},mp={};for(const d of q.docs){const v=d.data();if(v&&v.examen){m[v.examen]=v.v;if(v.pct!=null)mp[v.examen]=v.pct;}}S.data.mesRes=m;S.data.mesPct=mp;schedule();},()=>{});
 }
-function exampleCount(){let n=0;for(const k of ['cours','enseignants','groupes','eleves','examens','comptes','candidatures','remplacements','stock','stockMvt','compta','factures','paie','stockModeles','stockFourn','stockCmd','stockRep','stockCpt']) n+=S.data[k].filter(d=>d.exemple).length;n+=Object.values(S.data.dispos).filter(d=>d&&d.exemple).length+Object.values(S.data.resultats).filter(d=>d&&d.exemple).length;return n;}
+function exampleCount(){let n=0;for(const k of ['cours','enseignants','groupes','eleves','examens','comptes','candidatures','remplacements','stock','stockMvt','compta','factures','paie','stockModeles','stockFourn','stockCmd','stockRep','stockCpt','grilles','evals','questions','blancs','tentatives']) n+=(S.data[k]||[]).filter(d=>d.exemple).length;n+=Object.values(S.data.dispos).filter(d=>d&&d.exemple).length+Object.values(S.data.resultats).filter(d=>d&&d.exemple).length;return n;}
 function renderSide(){
   const nom=(cfg().nomCourt||cfg().nom||'').trim();
   setHTML($('#brand-text'),`<span class="bn">Pompier<i>Note</i></span><small>${nom?esc(nom):'v2'}</small>`);
-  $('#ws-label').textContent='Espace '+(S.role==='admin'?'administrateur':S.role==='teacher'?'enseignant':'élève');
+  $('#ws-label').textContent='Espace '+(S.role==='admin'?'administrateur':S.role==='teacher'?'enseignant':S.role==='service'?'service incendie':'élève');
   $('.app').classList.toggle('side-mini',S.sideMini);
   $('#logout-btn').hidden=!siteMode();
   const tg=$('#side-toggle'), tl=S.sideMini?'Afficher le menu':'Réduire le menu';
@@ -83,10 +86,11 @@ let navMode='';
 const SUBNAV={
   params:{lbl:'Paramètres',key:'ps',id:'ps',tabs:()=>PS_TABS.map(([k,l,i])=>{const n=k==='annonces'?annList().filter(a=>annState(a)==='cours').length:0;return {k,l,i,n,nt:n?pl(n,'annonce en cours','annonces en cours'):''};})},
   stock:{lbl:'Stock',key:'sk',id:'sk',tabs:stockTabs},
-  compta:{lbl:'Compta',key:'cp',id:'cpt',tabs:comptaTabs}
+  compta:{lbl:'Compta',key:'cp',id:'cpt',tabs:comptaTabs},
+  formation:{lbl:'Formation',key:'fo',id:'fo',tabs:foTabs}
 };
 function subNavHTML(p){
-  const d=SUBNAV[p], ts=d.tabs(), cur=ts.some(t=>t.k===S.pg[d.key])?S.pg[d.key]:ts[0].k, lbl=S.role==='teacher'&&p==='stock'?'Matériel':(S.role==='admin'&&menuNom(p))||d.lbl;
+  const d=SUBNAV[p], ts=d.tabs(), hit=ts.find(t=>t.k===S.pg[d.key]||(t.sub||[]).some(s=>s.k===S.pg[d.key])), cur=(hit||ts[0]).k, lbl=S.role==='teacher'&&p==='stock'?'Matériel':p==='formation'&&S.role!=='admin'?(S.role==='teacher'?'Évaluations':'Ma formation'):(S.role==='admin'&&menuNom(p))||d.lbl;
   return `<li><button type="button" class="nav-back" id="nav-${p}" title="Revenir au menu" data-act="nav" data-page="${esc(S.navFrom&&S.navFrom!==p?S.navFrom:'calendar')}">${icon('left')}<span>${esc(lbl)}</span></button></li>`
     +ts.map(t=>`${t.sec?`<li class="nav-sec">${t.sec}</li>`:''}<li><button type="button" id="${d.id}-${t.k}" title="${t.l}${t.nt?' · '+t.nt:''}" data-act="pg-set" data-k="${d.key}" data-v="${t.k}"${cur===t.k?' aria-current="page"':''}>${icon(t.i)}<span>${t.l}</span>${t.n?`<i class="nav-todo${t.bad?' bad':''}"${t.nt?` title="${esc(t.nt)}"`:''}>${t.n}</i>`:''}</button></li>`).join('');
 }
@@ -128,6 +132,7 @@ function renderTop(){
 const demoHidden=()=>S.demoHidden&&S.conn!=='off';
 function renderNotices(){
   let h='';
+  if(S.offline&&S.conn==='shared'&&!S.archive) h+='<div class="notice warn" id="offline-note" role="status"><p><b>Hors ligne.</b> Vous pouvez continuer : présences, évaluations et autres modifications sont gardées sur cet appareil et partiront au retour du réseau.</p></div>';
   /* les annonces (Paramètres > Annonces), ou la barre d’une archive consultée ; hors du bandeau de démo,
      pour rester visibles quand on le masque */
   let ah='';
@@ -161,7 +166,9 @@ const HEAD={
   stock:['Stock','Le matériel et les équipements de l’école : inventaire, dotations, mouvements et inspections.'],
   params:['Paramètres','L’établissement, l’année scolaire et les accès.'],
   nouveautes:['Nouveautés','Ce qui a changé sur le site : nouvelles fonctions, améliorations et corrections.'],
-  compta:['Compta','L’argent de l’école : frais des élèves, factures, paie des instructeurs, dépenses et budget.']
+  compta:['Compta','L’argent de l’école : frais des élèves, factures, paie des instructeurs, dépenses et budget.'],
+  recrues:['Mes recrues','La présence, les résultats et le dossier de vos recrues, et les factures de votre service.'],
+  formation:['Formation','Évaluations pratiques, carnets de compétences, examens blancs, certificats et dossier ENPQ.']
 };
 /* Les mêmes titres, avec le mot « séance », quand l’école a des modules */
 const HEAD_AC={
@@ -183,7 +190,7 @@ function renderHeading(){
   const prBtn=S.page==='calendar'&&S.conn==='shared'&&allLoaded()?`<button type="button" class="bell" id="pr-open" data-act="pr-open" aria-label="Imprimer" title="Imprimer l’horaire de la semaine ou la feuille de présences">${icon('print')}</button>`:'';
   /* affichage des listes (Liste, Cartes, Compact) : à côté de la cloche */
   const vmode=viewMode();
-  const side=(vmode?viewSwitchHTML(vmode):'')+show+prBtn+bellHTML();
+  const side=svBtnHTML()+(vmode?viewSwitchHTML(vmode):'')+show+prBtn+qrBtnHTML()+bellHTML();
   /* Calendrier : la barre de l’horaire (remplie par renderMain) se place dans la barre du titre, sur la même ligne */
   const cal=S.page==='calendar', g=navGroup(S.page), tabs=g&&g[4]&&g[4].length>1?g[4]:null;
   /* entrée qui réunit plusieurs pages : le titre est celui de l’entrée, et ses pages sont des onglets à côté */
@@ -223,26 +230,24 @@ function viewMode(){
   if(S.role!=='admin'||!VIEW_PAGES.includes(S.page)||S.pg.fiche||(S.page==='personnel'&&(S.pg.who||'liste')!=='liste')) return '';
   const v=(S.views||{})[S.page]||cfg().vueDefaut;return VIEW_M.some(m=>m[0]===v)?v:'list';
 }
-/* Cartes : chaque valeur d’une ligne reçoit le libellé de sa colonne (sauf la vignette, le titre et les boutons) */
+/* Cartes : chaque valeur d’une ligne reçoit le libellé de sa colonne, écrit en petit devant elle
+   (sauf la vignette, les titres, les boutons et les colonnes data-nl). Les lignes .xm-lite (Stock) n’en ont aucun. */
 function labelCards(el){
   for(const l of el.querySelectorAll('.xm-list')){
     const hd=l.querySelector(':scope>.xm-hd');if(!hd) continue;
-    const labels=[...hd.children].map(x=>x.textContent.trim());
-    for(const r of l.querySelectorAll(':scope>.xm-row')){
-      let title=false;
+    const labels=[...hd.children].map(x=>x.hasAttribute('data-nl')?'':x.textContent.trim());
+    for(const r of l.querySelectorAll(':scope>.xm-row:not(.xm-lite)'))
       [...r.children].forEach((c,i)=>{
-        if(c.matches('.xm-d,.cl-num,.xm-end')) return;
-        if(c.matches('.xm-t,.xm-who')&&!title){title=true;return;}
+        if(c.matches('.xm-d,.cl-num,.xm-end,.xm-t,.xm-who')) return;
         if(labels[i]&&!c.dataset.l) c.dataset.l=labels[i];
       });
-    }
   }
 }
 function viewSwitchHTML(v){
   return `<div class="seg vm-seg" role="group" aria-label="Affichage de la liste">${VIEW_M.map(([k,l,i])=>`<button type="button" id="vm-${k}" data-act="view-mode" data-v="${k}" aria-pressed="${v===k}" title="${l}" aria-label="${l}">${icon(i)}</button>`).join('')}</div>`;
 }
 function renderMain(){
-  if(typeof DRAG!=='undefined'&&DRAG&&DRAG.active){pendingMain=true;return;}
+  if((typeof DRAG!=='undefined'&&DRAG&&DRAG.active)||IE.on){pendingMain=true;return;}
   const loading=S.conn==='loading'||(S.conn==='shared'&&!allLoaded());
   const wait=loading?'<div class="empty"><p>Chargement de l’horaire…</p></div>':S.conn==='off'?emptyBox('Horaire indisponible','L’horaire partagé n’est pas accessible dans cette fenêtre. Ouvrez la page dans claude.ai en étant connecté.'):'';
   let html;
@@ -250,8 +255,8 @@ function renderMain(){
   let tools='';
   if(p==='calendar'){S._stats=null;html=wait||(S.role==='admin'?teacherChipsHTML()+adminMain():S.role==='teacher'?teacherMain():studentMain());tools=toolbarHTML();}
   else{
-    html=wait||(p==='classes'?classesPage():p==='eleves'?studentsPage():p==='personnel'?staffPage():p==='modules'?modulesPage():p==='affectations'?affPage():p==='mescours'?myCoursesPage():p==='dispos'?disposPage():p==='examens'?examsPage():p==='annee'?yearPage():p==='nouveautes'?newsPage():p==='historique'?historyPage():p==='stock'?stockPage():p==='compta'?comptaPage():p==='comptes'?accountsPage():p==='profil'?profilePage():paramsPage());
-    if(!wait){const x=splitTools(html);html=x.body;tools=x.tools;}
+    html=wait||(p==='classes'?classesPage():p==='eleves'?studentsPage():p==='personnel'?staffPage():p==='modules'?modulesPage():p==='affectations'?affPage():p==='mescours'?myCoursesPage():p==='dispos'?disposPage():p==='examens'?examsPage():p==='annee'?yearPage():p==='nouveautes'?newsPage():p==='historique'?historyPage():p==='stock'?stockPage():p==='compta'?comptaPage():p==='formation'?formationPage():p==='recrues'?recruesPage():p==='comptes'?accountsPage():p==='profil'?profilePage():paramsPage());
+    if(!wait){const x=splitTools(html);html=svBarHTML()+x.body;tools=x.tools;}
   }
   const vm=wait?'':viewMode();
   /* Paramètres : chaque enregistrement (nouvelle version des réglages) redonne aux champs les valeurs enregistrées */
@@ -306,7 +311,8 @@ function glide(el,b,keepH){
 }
 function render(){choreMemo=new Map();applyConfig();ensureSel();
   /* une étiquette QR scannée avec l’appareil photo : l’article s’ouvre dès que le stock est chargé */
-  if(!S._skHash&&S.loaded.stock&&S.conn==='shared'&&/#stk=/.test(location.hash)){S._skHash=true;setTimeout(skHash,0);}renderSide();renderTop();renderNotices();renderHeading();renderMain();renderDrawer();}
+  if(!S._skHash&&S.loaded.stock&&S.conn==='shared'&&/#stk=/.test(location.hash)){S._skHash=true;setTimeout(skHash,0);}
+  if(!S._qrHash&&S.conn==='shared'&&allLoaded()&&/#pres=/.test(location.hash)){S._qrHash=true;setTimeout(qrHash,0);}renderSide();renderTop();renderNotices();renderHeading();renderMain();renderDrawer();}
 let rq=false;
 function schedule(){if(rq)return;rq=true;setTimeout(()=>{rq=false;render();},16);}
 

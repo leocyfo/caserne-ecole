@@ -3,8 +3,42 @@ const dTop=(eyebrow,title,sub)=>`<div class="dr-top"><div class="dr-tt"><p class
 const goneHTML=(w)=>dTop(w||'Cours',(w||'Cours')+' introuvable')+'<div class="dr-body"><p class="help">Cet élément n’existe plus. Il a peut-être été modifié ou supprimé.</p></div>';
 const findSess=(date,key)=>sessionsOn(date).find(x=>x.key===key);
 const titleOf=c=>`${c.code?`<span class="chip ${tone(c)}">${esc(c.code)}</span>`:''}<span>${esc(c.titre)}</span>`;
+/* Forme de chaque fenêtre : chaque liste ouvre toujours la même, taillée pour ce qu’elle montre.
+   side : panneau à droite, la liste reste visible (fiche à consulter, longue liste à cocher)
+   center : fenêtre au centre, pour un formulaire qu’on remplit puis ferme
+   sheet : grande feuille presque plein écran, pour un tableau ou beaucoup de cases
+   bottom : bande en bas, la semaine reste visible au-dessus
+   pop : bulle collée à ce qu’on vient de cliquer, pour quelques renseignements (au centre si ouverte autrement)
+   Sur téléphone, side et sheet prennent tout l’écran ; les autres montent du bas. */
+const DR_SHAPES={
+  info:['pop',360],att:['side',600],course:['side',660],move:['bottom',760],print:['center',480],notifs:['pop',420,'below'],
+  addc:['center',600],exam:['center',600],student:['center',660],staff:['side',600],acct:['center',520],
+  stk:['side',600],'stk:pick':['center',680],'stk:add':['center',520],'stk:dot':['sheet',980],'stk:mod':['side',720],'stk:imp':['center',840],'stk:scan':['center',560],
+  'stk:kit':['sheet',1100],'stk:sizes':['sheet',980],'stk:cmd':['sheet',1100],'stk:fourn':['center',600],'stk:rep':['center',600],
+  'cpt:eleve':['side',600],'cpt:fact':['center',840],'cpt:factEdit':['center',840],'cpt:entry':['center',560],'cpt:slip':['center',840],
+  'fo:grille':['side',720],'fo:sheet':['sheet',980],'fo:grp':['center',620],'fo:view':['side',480],'fo:pre':['center',760],'fo:certs':['side',560],'fo:enpq':['side',520],
+  'fo:qrin':['pop',360,'below'],'fo:afauto':['sheet',1100],'fo:serv':['sheet',980],'fo:q':['center',640],'fo:qimp':['center',840],'fo:blanc':['center',840]
+};
+const drShape=d=>DR_SHAPES[d.kind+':'+d.mode]||DR_SHAPES[d.kind]||['side',520];
+/* La bulle se colle au dernier élément cliqué hors de la fenêtre */
+let drFrom=null;
+document.addEventListener('click',e=>{const t=e.target.closest&&e.target.closest('button,a,[data-act],[data-key],[tabindex]');if(t&&!t.closest('#drawer'))drFrom={el:t,t:Date.now()};},true);
+function drPlace(el,d){
+  el.style.left=el.style.top=el.style.maxHeight='';
+  const [sh,,at]=drShape(d);
+  if(sh!=='pop'||!d.at||matchMedia('(max-width:760px)').matches) return;
+  const a=d.at, vw=innerWidth, vh=innerHeight, m=12;
+  if(at==='below') el.style.maxHeight=(vh-a.b-8-m)+'px';
+  const W=el.offsetWidth, H=el.offsetHeight;
+  let x,y;
+  if(at==='below'){x=a.r-W;y=a.b+8;}
+  else{x=a.r+10;if(x+W>vw-m)x=a.l-10-W;if(x<m)x=a.l;y=a.t;}
+  el.style.left=Math.max(m,Math.min(x,vw-m-W))+'px';el.style.top=Math.max(m,Math.min(y,vh-m-H))+'px';
+}
+window.addEventListener('resize',()=>{if(S.dr)drPlace($('#drawer'),S.dr);});
 function openDrawer(dr){
   dr.uid=++uidSeq;S.dr=dr;
+  if(drShape(dr)[0]==='pop'&&drFrom&&Date.now()-drFrom.t<1500&&drFrom.el.isConnected){const r=drFrom.el.getBoundingClientRect();dr.at={l:r.left,t:r.top,r:r.right,b:r.bottom};}
   if(dr.kind==='att'||dr.kind==='info') loadPres(dr.key,dr.date);
   else if(dr.kind==='course'&&dr.sess) loadPres(dr.sess.key,dr.sess.date);
   renderDrawer();
@@ -23,13 +57,14 @@ function renderDrawer(){
   }
   const d=S.dr;
   if(d.kind==='att') syncAtt();
-  const html=d.kind==='att'?attDrawer():d.kind==='addc'?addCourseDrawer():d.kind==='course'?courseDrawer():d.kind==='exam'?examDrawer():d.kind==='student'?studentDrawer():d.kind==='staff'?staffDrawer():d.kind==='move'?moveDrawer():d.kind==='acct'?accountDrawer():d.kind==='print'?printDrawer():d.kind==='notifs'?notifDrawer():d.kind==='stk'?stockDrawer():d.kind==='cpt'?comptaDrawer():infoDrawer();
-  const fresh=el._k!==d.uid;
-  el.classList.toggle('dialog',d.kind==='move');
-  el.classList.toggle('wide',d.kind==='stk'&&(d.mode==='kit'||d.mode==='cmd'));
+  const html=d.kind==='att'?attDrawer():d.kind==='fo'?foDrawer():d.kind==='addc'?addCourseDrawer():d.kind==='course'?courseDrawer():d.kind==='exam'?examDrawer():d.kind==='student'?studentDrawer():d.kind==='staff'?staffDrawer():d.kind==='move'?moveDrawer():d.kind==='acct'?accountDrawer():d.kind==='print'?printDrawer():d.kind==='notifs'?notifDrawer():d.kind==='stk'?stockDrawer():d.kind==='cpt'?comptaDrawer():infoDrawer();
+  const fresh=el._k!==d.uid, [shape,w]=drShape(d), sh=shape==='pop'&&!d.at?'center':shape;
+  el.className='drawer sh-'+sh;el.style.setProperty('--dw',w+'px');
+  sc.classList.toggle('light',sh==='pop'||sh==='bottom');
   setHTML(el,html,d.uid);
   if(fresh) el.scrollTop=0;
   if(el.hidden){el.hidden=false;sc.hidden=false;document.body.classList.add('lock');const c=$('#dr-close');if(c)c.focus({preventScroll:true});}
+  drPlace(el,d);
 }
 
 /* Présences d’un cours */
@@ -46,7 +81,7 @@ function attDrawer(){
   const cnt={P:0,A:0,R:0,M:0};let marked=0;
   for(const e of els){const v=st[e.id];if(cnt[v]!=null){cnt[v]++;marked++;}}
   const sub=esc(`${dayLabel(parse(s.date))} · ${momentOf(s)} · ${gName(c.groupe)}${s.salle?' · Local '+s.salle:''}`);
-  let body=choreNote(s);
+  let body=choreNote(s)+foAttWarn(s)+qrAttHTML(s);
   if(!isPast(s)) body+='<p class="help">'+W('Cette séance n’a pas encore commencé.','Ce cours n’a pas encore commencé.')+' Vous pouvez quand même préparer la liste.</p>';
   if(!els.length) body+=`<div class="notice"><p>Aucun élève dans ${esc(gName(c.groupe))}. L’administration les inscrit dans le menu Classes.</p></div>`;
   else{
@@ -84,7 +119,7 @@ function infoDrawer(){
   return dTop(W('Séance','Cours'),titleOf(c))+`<div class="dr-body">
     ${s.cancelled?'<div class="notice warn"><p>'+W('Cette séance est annulée.','Ce cours est annulé ce jour-là.')+'</p></div>':choreNote(s)}
     <dl class="facts"><div><dt>Quand</dt><dd>${esc(dayLabel(parse(s.date)))}, ${momentOf(s).toLowerCase()}</dd></div><div><dt>Local</dt><dd>${esc(s.salle)||'À confirmer'}</dd></div><div><dt>Enseignant</dt><dd>${esc(tchNames(s))}</dd></div><div><dt>Classe</dt><dd>${esc(gName(c.groupe))}</dd></div></dl>
-    <section class="dr-sec"><h3>Chaque semaine</h3><ul class="wlist">${weekly}</ul></section></div>`;
+    ${weekly?`<section class="dr-sec"><h3>Chaque semaine</h3><ul class="wlist">${weekly}</ul></section>`:''}</div>`;
 }
 
 /* Cours (administration) */
