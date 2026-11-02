@@ -30,6 +30,7 @@
 .cl-go{display:flex;align-items:center;justify-content:flex-end;gap:10px}
 .cl-go>.ic{width:18px;height:18px;color:var(--muted);flex:none}
 .cl-row [data-l]::before{display:none}
+.cl-basis{font-size:12px;color:var(--muted);white-space:nowrap}
 /* largeur moyenne : l’avancement se retire et le bouton Horaire devient une icône */
 @container (max-width:1180px){
   .cl-cols{grid-template-columns:minmax(0,1.4fr) minmax(0,1.6fr) 64px minmax(0,1fr) 124px 44px}

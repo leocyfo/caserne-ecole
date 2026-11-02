@@ -29,7 +29,7 @@ function classesPage(){
     const state=!n?'<span class="chip off">Aucun élève</span>':!S.termLoaded?'':x.missing.length?`<span class="chip warn" title="${esc(pl(x.missing.length,W('séance sans présences','cours sans présences'),W('séances sans présences','cours sans présences')))}">${x.missing.length} à rattraper</span>`:x.past?'<span class="chip ok">À jour</span>':'';
     return `<article class="cl-row cl-cols" id="cl-${esc(g.id)}" data-act="class" data-id="${esc(g.id)}" tabindex="0" role="button" aria-label="${esc('Ouvrir '+g.nom)}">
       <div class="cl-c"><span class="cl-num" aria-hidden="true">${esc(num)}</span><span class="cl-name"><b>${esc(g.nom)}</b>${g.description?`<small>${esc(g.description)}</small>`:''}</span></div>
-      <div class="cl-prin" data-act="stop" data-l="Enseignant principal">${pid?avHTML(tName(pid),''):'<span class="av none" aria-hidden="true">?</span>'}${prin}</div>
+      <div class="cl-prin" data-act="stop" data-l="Enseignant principal">${pid?avHTML(tName(pid),photoOf(pid)):'<span class="av none" aria-hidden="true">?</span>'}${prin}</div>
       <div class="cl-n${n?'':' zero'}" data-l="Élèves">${n}</div>
       <div class="cl-big cl-rate ${c}" data-l="Présence">${rate}</div>
       <div class="cl-big cl-adv" data-l="Avancement">${adv}</div>

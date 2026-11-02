@@ -91,6 +91,8 @@ Données : `stock` (`aId` : l’élève ou la classe à qui l’article est attr
 
 Données : `grilles`, `evaluations`, `certificats/<élève>`, `dossiers-enpq/<élève>`, `questions`, `ex-blancs`, `ex-tentatives`, `presences-qr`, `rapports-service` ; réglages dans `config/ecole.formation` (certificats, préalables, pièces, frais, niveaux, services) ; `eleves.service`. Les règles de `firestore.rules` sont à jour.
 
+**Accueil et photos** : on arrive sur l’**Accueil** en se connectant, et on y revient en cliquant sur le logo (`src/js/06-accueil.js`, `src/styles/07-accueil.css`) : la journée en ligne du temps, l’année scolaire, ce qui est à faire, les prochains examens. **Photo de profil** des élèves et du personnel : champ `photo` de `eleves/<id>` et `enseignants/<id>` (image JPEG carrée de 240 px, recadrée et allégée dans le navigateur, une quinzaine de Ko) ; seule l’administration la change. **Dossier de l’élève** : la fiche est une chemise à intercalaires ; les pièces d’admission reçues sont dans `eleves/<id>.docs` ({ clé : date de réception, vide si décochée }).
+
 ## Essayer le site sur cet ordinateur
 
 Double-cliquez **`Lancer le site local.cmd`** (il faut Node.js) : le site s’ouvre à http://localhost:8080/demo.html. Fermez la fenêtre noire pour l’arrêter.
@@ -120,10 +122,11 @@ config.js                   réglages Firebase du site
 firestore.rules             qui peut lire et modifier quoi (à publier dans Firebase)
 site/connexion.js           écran de connexion et demandes de compte
 site/firebase.js            branchement sur Firebase (connexion + base de données)
+site/logo.svg, embleme.svg  logo de l’Académie des pompiers (en couleur, en blanc -blanc.svg, emblème seul) : menu, connexion, onglet, feuilles imprimées
 demo/connexion-demo.js      connexion et base de données simulées de la démo (localStorage)
 demo/donnees.js             données d’exemple (générées)
 src/page.html               la coquille de la page (titre, structure, emplacement des styles et du code)
-src/styles/NN-nom.css       les styles, un fichier par sujet (18 fichiers, dont 17-affichages.css : Liste, Cartes, Compact ; 15-telephone.css : les écrans étroits)
+src/styles/NN-nom.css       les styles, un fichier par sujet (20 fichiers ; voir le tableau plus bas)
 src/js/NN-nom.js            le code, un fichier par sujet (34 fichiers)
 tests/                      tests automatiques (Chrome sans fenêtre)
 outils/assembler.js         réunit les fichiers de src/ en une seule page
@@ -152,6 +155,21 @@ La page est découpée par sujet. Les fichiers sont réunis dans l’ordre de le
 | `23-cadre`, `24-tiroir` | menu, en-tête et rendu général ; panneau latéral |
 | `25-enregistrement`, `26-evenements`, `27-glisser` | écritures dans la base ; clics et formulaires ; glisser-déposer |
 | `28-donnees` | lecture de la base et démarrage |
+
+| Fichier de `src/styles/` | Contenu |
+| --- | --- |
+| `01-base` | couleurs (bloc `:root` : rouge, menu, vert, orange, arrondis, ombres), police, couleurs des cours, petites classes utiles |
+| `02-coquille` | menu de gauche, barre du titre, bandeau de démonstration, cloche et notifications |
+| `03-controles` | boutons, champs, barre d’outils, étiquettes, puces de filtre, messages en bas (toasts) |
+| `04-horaire` | tout le calendrier : semaine, cartes des cours, examens, corvées, barre de l’horaire, glisser-déposer |
+| `05-panneaux` | panneaux, indicateurs, tableaux, listes, messages vides, impression |
+| `06-fenetres-formulaires` | les fenêtres (5 formes), les formulaires, la prise des présences, les cases à cocher |
+| `07-accueil` | la page d’accueil : la journée en ligne du temps, l’année scolaire, ce qui est à faire, les prochains examens |
+| `07-comptes` à `12-fiches` | une page chacun : comptes, classes, examens et nouveautés, affectations et modules, élèves et résultats, fiches |
+| `13-stock`, `14-compta` | stock ; compta |
+| `15-affichages` | affichages Liste, Cartes et Compact des listes |
+| `16-parametres-annonces`, `17-formation`, `18-confort` | paramètres et annonces ; formation ; recherche Ctrl+K, vues enregistrées, modification sur place |
+| `19-telephone` | ce qui change partout sur téléphone (chaque fichier finit aussi par ses propres règles de téléphone, jusqu’à 760 px) |
 
 Pour ajouter un fichier, donnez-lui un numéro : `outils/assembler.js` prend tous les fichiers `NN-nom.js` et `NN-nom.css` dans l’ordre.
 

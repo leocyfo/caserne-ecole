@@ -56,6 +56,44 @@ function studentsPage(){
     <div class="tbl-wrap"><table class="tbl stack st-cards"><thead><tr><th>Élève</th><th>Classe</th><th>Présence</th><th class="num" title="Moyenne des notes d’examens en %">Note</th><th class="num">Absences</th><th class="num">Retards</th><th>Téléphone</th></tr></thead><tbody>${body||'<tr><td colspan="7" class="muted">Aucun élève ne correspond à la recherche ou aux filtres.</td></tr>'}</tbody></table></div>`;
 }
 
+/* ---------- Photos de profil (élèves et personnel) ----------
+   Gardée dans la fiche de la personne (eleves/<id>.photo, enseignants/<id>.photo) : une image JPEG carrée de 240 px,
+   recadrée au centre et allégée dans le navigateur (une quinzaine de Ko). L’administration la choisit en cliquant
+   sur la photo (ou les initiales) de la fiche, ou dans « Modifier » ; sans photo, les initiales restent. */
+const PH_COL={eleve:'eleves',staff:'enseignants'};
+const photoOf=id=>{const p=byId(S.data.eleves,id)||byId(S.data.enseignants,id);return (p&&p.photo)||'';};
+const canPhoto=()=>isAdmin()&&S.conn==='shared'&&!S.archive;
+/* La photo (ou les initiales) ; pour l’administration, un clic choisit une image (l’appareil photo sur un téléphone) */
+const photoPick=(kind,p,cls)=>{
+  const av=avHTML(p.nom,p.photo||'',cls), lbl=(p.photo?'Changer la photo de ':'Ajouter une photo de ')+(p.nom||'');
+  return canPhoto()&&p.id?`<label class="ph-pick" title="${esc(p.photo?'Changer la photo':'Ajouter une photo')}">${av}<span class="ph-cam" aria-hidden="true">${icon('cam')}</span><input type="file" accept="image/*" class="vh" data-photo="${kind}" data-id="${esc(p.id)}" aria-label="${esc(lbl)}"></label>`:av;
+};
+/* Dans « Modifier » : la photo, puis Changer / Retirer (enregistré tout de suite, sans attendre le bouton du formulaire) */
+const photoRow=(kind,p)=>!p?'':`<div class="ph-row">${photoPick(kind,p,'lg')}<div><b>Photo</b><p class="help">${canPhoto()?(p.photo?'Cliquez sur la photo pour la changer.':'Cliquez sur les initiales pour choisir une photo.'):'Seule l’administration peut changer la photo.'}</p>${p.photo&&canPhoto()?`<button class="btn sm ghost" type="button" data-act="photo-del" data-kind="${kind}" data-id="${esc(p.id)}">Retirer la photo</button>`:''}</div></div>`;
+function readPhoto(file){
+  return new Promise((ok,ko)=>{
+    if(!file||!/^image\//.test(file.type)) return ko(new Error('Choisissez une image (photo JPEG, PNG…).'));
+    const url=URL.createObjectURL(file), img=new Image();
+    img.onload=()=>{
+      const n=240, w=img.naturalWidth, h=img.naturalHeight, s=Math.min(w,h), c=document.createElement('canvas'), x=c.getContext('2d');
+      c.width=c.height=n;x.fillStyle='#FFFFFF';x.fillRect(0,0,n,n);x.drawImage(img,(w-s)/2,(h-s)/2,s,s,0,0,n,n);
+      URL.revokeObjectURL(url);ok(c.toDataURL('image/jpeg',.82));
+    };
+    img.onerror=()=>{URL.revokeObjectURL(url);ko(new Error('Cette image ne peut pas être lue.'));};
+    img.src=url;
+  });
+}
+async function setPhoto(kind,id,data){
+  if(!PH_COL[kind]||!id) return;
+  await write(()=>col(PH_COL[kind]).doc(id).update({photo:data||''}),data?'Photo enregistrée':'Photo retirée');
+  render();
+}
+document.addEventListener('change',async ev=>{
+  const t=ev.target;if(!t||!t.dataset||!t.dataset.photo) return;
+  const f=t.files&&t.files[0], kind=t.dataset.photo, id=t.dataset.id;t.value='';if(!f) return;
+  try{await setPhoto(kind,id,await readPhoto(f));}catch(err){toast(err.message,'bad');}
+});
+
 /* ---------- Fiches en pleine page (élèves et personnel) ----------
    Une liste à gauche pour passer d’une personne à l’autre, « Précédent / Suivant » (ou ← →),
    et « Retour à la liste » (ou Échap) qui revient à l’endroit où l’on était. */
@@ -121,46 +159,68 @@ const ficheHead=(name,chips,actions,stats,av)=>`<section class="panel fiche-head
   <dl class="fh-stats">${stats.map(([k,v,cls])=>`<div><dt>${k}</dt><dd${cls?` class="${cls}"`:''}>${v}</dd></div>`).join('')}</dl></section>`;
 const rows=items=>items.length?`<ul class="plist">${items.join('')}</ul>`:'';
 
+/* Fiche d’un élève : une chemise de dossier.
+   En haut, des intercalaires (Identité, Présences, Examens, Équipement, Documents, Suivi) ; dans la chemise, une feuille :
+   l’en-tête (classe, numéro, nom, « Modifier » et « ⋯ »), puis le contenu de l’intercalaire. Sur « Identité », la photo
+   d’identité et les renseignements en formulaire. « Retour », « n sur N » et « Précédent / Suivant » (ou ← →) sont dans l’en-tête de la page. */
+const DOCS_ADM=[['naiss','Certificat de naissance (grand format)'],['dip','Diplôme d’études secondaires ou dernier relevé de notes'],['cv','Curriculum vitae'],['permis','Permis de conduire'],['sante','Déclaration de bonne santé'],['opto','Rapport d’optométriste'],['embarc','Carte de conducteur d’embarcation de plaisance']];
+const DOS_TABS=[['identite','Identité'],['presences','Présences'],['examens','Examens'],['equipement','Équipement'],['documents','Documents'],['suivi','Suivi']];
 function studentFiche(){
   const e=byId(S.data.eleves,S.pg.fiche);
   if(!e){S.pg.fiche=null;return studentsPage();}
   ensureTerm(yearStart());
-  const list=studentList(), s=studentStats(yearStart(),todayISO())[e.id], r=rateOf(s), age=ageOf(e.naissance);
-  const up=upcomingExams(x=>x.grp===e.groupe,6), nextEx=up[0];
-  const item=x=>`<span class="fl-name">${esc(x.nom)}</span><span class="fl-sub">${esc(gName(x.groupe))}${x.numero?` · n° ${esc(x.numero)}`:''}</span>`;
-  const chips=`<span class="chip">${esc(gName(e.groupe))}</span>${e.numero?`<span class="chip off">n° ${esc(e.numero)}</span>`:''}${e.fonction?`<span class="role-chip">${esc(e.fonction)}</span>`:''}${acctChip(e.id)}`;
-  const actions=`<button class="btn sm primary" type="button" id="fi-edit" data-act="st-edit" data-id="${esc(e.id)}">Modifier le dossier</button>${e.groupe?`<button class="btn sm" type="button" data-act="see-group" data-id="${esc(e.groupe)}">Horaire de la classe</button>`:''}${acctBtn(e.id,'student')}`;
-  const loaded=S.termLoaded, n=s?s.n:0;
-  const stats=[
-    ['Présence',!loaded?'…':n?`${r} %`:'—',n?(r>=95?'ok':r>=90?'warn':'bad'):''],
-    ['Absences',!loaded?'…':String(s?s.A+s.M:0),s&&s.A?'bad':''],
-    ['Retards',!loaded?'…':String(s?s.R:0),s&&s.R?'warn':''],
-    ['Prochain examen',nextEx?esc(`${dn(parse(nextEx.date))} ${fMonthS.format(parse(nextEx.date))}`):'Aucun','']
-  ];
-  const head=ficheHead(e.nom,chips,actions,stats);
-  const content=tab=>{
+  const list=studentList(), i=list.findIndex(x=>x.id===e.id), prev=list[i-1], next=list[i+1], fk=fnKind(e.fonction), ac=acctOfRef(e.id);
+  const s=studentStats(yearStart(),todayISO())[e.id], r=rateOf(s), age=ageOf(e.naissance), loaded=S.termLoaded, n=s?s.n:0, ab=s?s.A+s.M:0, rt=s?s.R:0;
+  const nextEx=upcomingExams(x=>x.grp===e.groupe,1)[0], tab=DOS_TABS.some(t=>t[0]===S.pg.tab)?S.pg.tab:'identite';
+  const from=S.pg.from&&S.pg.from!==S.page?S.pg.from:null;
+  /* barre d’outils : elle monte dans l’en-tête de la page, à côté des onglets Élèves / Personnel */
+  const nav=`<div class="toolbar fiche-nav sf-nav"><button class="btn sm ghost" type="button" id="fi-back" data-act="fi-back">${icon('left')}${from==='classes'?'Retour aux classes':'Retour à la liste'}</button><span class="grow"></span>${i>=0?`<span class="muted sm">${i+1} sur ${list.length}</span>`:''}
+    <button class="btn sm" type="button" id="fi-prev" data-act="fi-step" data-d="-1"${prev?` title="${esc(prev.nom)} (←)"`:' disabled'}>${icon('left')}Précédent</button>
+    <button class="btn sm" type="button" id="fi-next" data-act="fi-step" data-d="1"${next?` title="${esc(next.nom)} (→)"`:' disabled'}>Suivant${icon('right')}</button></div>`;
+  const more=`<details class="sf-more"><summary class="btn sm" id="fi-more" title="Autres actions" aria-label="Autres actions">⋯</summary><div class="sf-menu">${e.groupe?`<button type="button" data-act="see-group" data-id="${esc(e.groupe)}">Horaire de la classe</button>`:''}${ac?`<button type="button" id="fi-acct-btn" data-act="ac-edit" data-id="${esc(ac.id)}">Modifier le compte</button>`:`<button type="button" id="fi-acct-btn" data-act="fi-acct" data-role="student" data-id="${esc(e.id)}"${dis()}>Créer son compte</button>`}${e.photo&&canPhoto()?`<button type="button" id="fi-photo-del" data-act="photo-del" data-kind="eleve" data-id="${esc(e.id)}">Retirer la photo</button>`:''}</div></details>`;
+  const docs=e.docs||{}, nDocs=DOCS_ADM.filter(([k])=>docs[k]).length;
+  /* une ligne du formulaire : le libellé, des pointillés, la valeur */
+  const ln=(k,v)=>`<div class="dos-l"><span class="k">${k}</span><i aria-hidden="true"></i><span class="v">${v||'<span class="muted">—</span>'}</span></div>`;
+  const tabs=`<div class="dos-tabs fiche-tabs" role="group" aria-label="Intercalaires du dossier">${DOS_TABS.map(([k,l])=>`<button type="button" class="dos-tab" id="fi-tab-${k}" data-act="fi-tab" data-v="${k}" aria-pressed="${k===tab}">${l}${k==='documents'?` <small>${nDocs}/${DOCS_ADM.length}</small>`:''}</button>`).join('')}</div>`;
+  const top=`<div class="dos-top"><div class="dos-tt"><span class="dos-kind">Dossier de l’élève</span><span class="dos-ref">${esc(gName(e.groupe))}${e.numero?` · n° ${esc(e.numero)}`:''}</span><h2 id="fi-name">${esc(e.nom)}</h2></div><span class="grow"></span><button class="btn sm primary" type="button" id="fi-edit" data-act="st-edit" data-id="${esc(e.id)}">Modifier</button>${more}</div>`;
+  const stats=!loaded?'<p class="sf-line muted">Chargement des présences…</p>'
+    :`<p class="sf-line" id="sf-stats">${n?`<span class="${rateCls(r)}-t"><b>${r} %</b> de présence</span>`:'<span class="muted">Aucune présence notée</span>'}<span class="sf-dot">·</span><span${ab?' class="bad-t"':''}><b>${ab}</b> ${ab>1?'absences':'absence'}</span><span class="sf-dot">·</span><span${rt?' class="warn-t"':''}><b>${rt}</b> ${rt>1?'retards':'retard'}</span></p>`;
+  const content=()=>{
     if(tab==='presences'){
-      if(!loaded) return '<section class="panel"><p class="help">Chargement des présences…</p></section>';
-      const log=s?s.log.slice().sort((a,b)=>b.date.localeCompare(a.date)):[];
-      const byC={};
+      if(!loaded) return '<p class="help">Chargement des présences…</p>';
+      const log=s?s.log.slice().sort((p,q)=>q.date.localeCompare(p.date)):[], byC={};
       for(const p of Object.values(S.data.presTerm)){const v=p&&p.statuts&&p.statuts[e.id];if(!v||!LBL[v])continue;const x=byC[p.cours]||(byC[p.cours]={P:0,A:0,R:0,M:0,n:0});x[v]++;x.n++;}
       const per=Object.entries(byC).map(([cid,x])=>({c:byId(S.data.cours,cid),x})).sort((p,q)=>collator.compare(p.c?p.c.titre:'',q.c?q.c.titre:''));
-      return `<div class="fiche-two"><section class="panel"><h2>Absences et retards</h2>${log.length?rows(log.map(x=>{const c=byId(S.data.cours,x.cours);return `<li><span>${esc(dayLabel(parse(x.date)))}<span class="muted sm"> · ${esc(c?c.titre:'Cours')}</span></span><span class="chip ${CHIP[x.v]}">${LBL[x.v]}</span></li>`;})):'<p class="help">Aucune absence ni aucun retard depuis la rentrée.</p>'}</section>
-        <section class="panel"><h2>${W('Par module','Par cours')}</h2>${per.length?rows(per.map(({c,x})=>{const rr=pct(x.P+x.R,x.n);return `<li><span>${esc(c?c.titre:W('Module supprimé','Cours supprimé'))}</span><span class="chip ${rr>=95?'ok':rr>=90?'warn':'bad'}">${rr} %</span></li>`;})):`<p class="help">${W('Aucune séance notée','Aucun cours noté')} pour l’instant.</p>`}
-        <p class="help" style="margin-top:10px">${n?`${pl(n,W('séance notée','cours noté'),W('séances notées','cours notés'))} depuis le ${esc(longDate(parse(yearStart())))}.`:''}</p></section></div>`;
+      return stats+`<div class="sf-two"><div><h4>Absences et retards</h4>${log.length?rows(log.map(x=>{const c=byId(S.data.cours,x.cours);return `<li><span>${esc(dayLabel(parse(x.date)))}<span class="muted sm"> · ${esc(c?c.titre:'Cours')}</span></span><span class="chip ${CHIP[x.v]}">${LBL[x.v]}</span></li>`;})):'<p class="help">Aucune absence ni aucun retard depuis la rentrée.</p>'}</div>
+        <div><h4>${W('Par module','Par cours')}</h4>${per.length?rows(per.map(({c,x})=>{const rr=pct(x.P+x.R,x.n);return `<li><span>${esc(c?c.titre:W('Module supprimé','Cours supprimé'))}</span><span class="chip ${rr>=95?'ok':rr>=90?'warn':'bad'}">${rr} %</span></li>`;})):`<p class="help">${W('Aucune séance notée','Aucun cours noté')} pour l’instant.</p>`}</div></div>
+        ${n?`<p class="help">${pl(n,W('séance notée','cours noté'),W('séances notées','cours notés'))} depuis le ${esc(longDate(parse(yearStart())))}.</p>`:''}`;
     }
     if(tab==='examens') return studentExamsTab(e);
     if(tab==='equipement') return skStudentTab(e);
-    return `<section class="panel"><dl class="facts facts3">
-      <div><dt>Enseignant principal</dt><dd>${principalOf(e.groupe)?esc(tName(principalOf(e.groupe))):'<span class="muted">—</span>'}</dd></div>
-      <div><dt>Date de naissance</dt><dd>${e.naissance?esc(longDate(parse(e.naissance)))+(age!=null?` <span class="muted">(${age} ans)</span>`:''):'<span class="muted">—</span>'}</dd></div>
-      <div><dt>Contact d’urgence</dt><dd>${e.parent?esc(e.parent):'<span class="muted">—</span>'}</dd></div>
-      <div><dt>Téléphone</dt><dd>${e.telephone?`<a href="tel:${esc(String(e.telephone).replace(/\s+/g,''))}">${esc(e.telephone)}</a>`:'<span class="muted">—</span>'}</dd></div>
-      <div><dt>Courriel</dt><dd>${e.courriel?`<a href="mailto:${esc(e.courriel)}">${esc(e.courriel)}</a>`:'<span class="muted">—</span>'}</dd></div>
-      <div class="wide"><dt>Suivi</dt><dd>${e.notes?`<span class="pre">${esc(e.notes)}</span>`:'<span class="muted">Aucune note.</span>'}</dd></div></dl></section>`;
+    if(tab==='documents'){
+      const can=canPhoto();
+      return `<h4>Pièces du dossier d’admission · ${nDocs} sur ${DOCS_ADM.length} reçues</h4><ul class="dos-docs">${DOCS_ADM.map(([k,l])=>`<li><label class="ck"><input type="checkbox" data-doc="${k}" data-id="${esc(e.id)}"${docs[k]?' checked':''}${can?'':' disabled'}><span>${l}${docs[k]?`<small>reçue le ${esc(shortDate(parse(docs[k])))}</small>`:''}</span></label></li>`).join('')}</ul>
+        ${can?'<p class="help">Cochez une pièce quand elle est reçue : la date du jour est notée.</p>':''}`;
+    }
+    if(tab==='suivi') return e.notes?`<p class="pre">${esc(e.notes)}</p>`:'<p class="help">Aucune note. Les rencontres, mesures d’aide et remarques s’ajoutent avec « Modifier ».</p>';
+    /* Identité : la photo d’identité, le nom, puis le formulaire */
+    return `<div class="dos-id">${photoPick('eleve',e,'id')}<div class="dos-form">
+      <div class="dos-lines">${ln('Classe',esc(gName(e.groupe))+(e.numero?' · n° '+esc(e.numero):''))}${ln('Grade',e.fonction?`<span class="role-chip${fk?' rc-'+fk:''}">${esc(e.fonction)}</span>`:'')}${ln('Date de naissance',e.naissance?esc(longDate(parse(e.naissance)))+(age!=null?` (${age} ans)`:''):'')}
+      ${ln('Téléphone',e.telephone?`<a href="tel:${esc(String(e.telephone).replace(/\s+/g,''))}">${esc(e.telephone)}</a>`:'')}${ln('Courriel',e.courriel?`<a href="mailto:${esc(e.courriel)}">${esc(e.courriel)}</a>`:'')}${ln('Contact d’urgence',e.parent?esc(e.parent):'')}</div></div></div>
+      <div class="dos-foot">${stats}<p class="sf-line sf-sub">Prochain examen : ${nextEx?`<b>${esc(dn(parse(nextEx.date))+' '+fMonthS.format(parse(nextEx.date)))}</b>${nextEx.c?' · '+esc((nextEx.c.code?nextEx.c.code+' ':'')+nextEx.c.titre):''}`:'aucun'}</p></div>`;
   };
-  return ficheShell('eleves',list,e,item,head,[['dossier','Dossier'],['presences','Présences'],['examens','Examens'],['equipement','Équipement']],content);
+  return `${nav}<div class="dos" data-enter="fiche">${tabs}<div class="dos-body"><article class="dos-sheet">${top}<div class="dos-c fiche-body" data-enter="tab">${content()}</div></article></div></div>`;
 }
+/* Documents : cocher une pièce note la date du jour ; décocher l’efface */
+document.addEventListener('change',async ev=>{
+  const t=ev.target;if(!t||!t.dataset||!t.dataset.doc) return;
+  const el=byId(S.data.eleves,t.dataset.id);if(!el) return;
+  /* une pièce décochée garde sa clé, vide : la mise à jour ne dépend pas de la façon dont la base fusionne les objets */
+  const docs=Object.assign({},el.docs||{},{[t.dataset.doc]:t.checked?todayISO():''});
+  await write(()=>col('eleves').doc(el.id).update({docs}),t.checked?'Pièce reçue':'Pièce retirée');render();
+});
+/* « ⋯ » : le petit menu se referme quand on clique ailleurs */
+document.addEventListener('click',ev=>{for(const d of document.querySelectorAll('details.sf-more[open]'))if(!d.contains(ev.target))d.open=false;});
 
 function staffFiche(){
   const p=byId(S.data.enseignants,S.pg.fiche);
@@ -175,7 +235,7 @@ function staffFiche(){
   const actions=`<button class="btn sm primary" type="button" id="fi-edit" data-act="sf-edit" data-id="${esc(p.id)}">Modifier le dossier</button>${teach?`<button class="btn sm" type="button" data-act="see-teacher" data-id="${esc(p.id)}">Son horaire</button>`:''}${acctBtn(p.id,p.fonction&&!teach?'admin':'teacher')}`;
   const stats=teach?[['Modules',String(acad()?new Set(cs.map(modKey).filter(x=>x!=null)).size:cs.length),''],['Classes',String(Object.keys(byG).length),''],['Cette semaine',pl(wk.length,W('séance','cours'),W('séances','cours')),''],['Présences à prendre',String(late),late?'warn':'']]
     :[['Statut',esc(st),''],['Courriel',p.courriel?esc(p.courriel):'—','']];
-  const head=ficheHead(p.nom,chips,actions,stats);
+  const head=ficheHead(p.nom,chips,actions+(p.photo&&canPhoto()?`<button class="btn sm ghost" type="button" id="fi-photo-del" data-act="photo-del" data-kind="staff" data-id="${esc(p.id)}">Retirer la photo</button>`:''),stats,photoPick('staff',p,'lg'));
   const SCH={P:'ok',A:'bad',C:'warn',F:'info'};
   const tabs=[['dossier','Dossier']].concat(teach?[['cours',acad()?'Modules':'Cours'],['competences','Compétences et disponibilités']]:[],[['travail','Présences au travail']]);
   const content=tab=>{

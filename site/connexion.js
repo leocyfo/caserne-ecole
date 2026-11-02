@@ -26,8 +26,10 @@
 .g-brand{display:flex;align-items:center;gap:12px;font-weight:800;font-size:20px;letter-spacing:-.015em;line-height:1.2}
 .g-brand i{font-style:normal;color:#F3A19D}
 .g-brand small{display:block;margin-top:2px;font-size:12.5px;letter-spacing:0;color:#9AA7B9;font-weight:500}
-.g-logo{width:42px;height:46px;border-radius:10px 10px 18px 18px;background:#C62F2A;box-shadow:inset 0 -3px 0 rgba(0,0,0,.18);display:grid;place-items:center;flex:none}
-.g-logo svg{width:24px;height:24px}
+.g-logo{width:48px;height:48px;flex:none}
+.g-logo img{width:100%;height:100%;display:block}
+.g-side .g-ecole{margin-top:auto;font-size:12.5px;line-height:1.5;color:#9AA7B9}
+.g-side .g-ecole b{color:#E9EEF5;font-weight:600}
 .g-side p{margin:0;color:#C7CED8;font-size:14.5px;line-height:1.55}
 .g-side ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:10px;font-size:14px;color:#C7CED8}
 .g-side li{display:flex;gap:10px;align-items:flex-start}
@@ -73,10 +75,11 @@
   document.body.appendChild(root);
 
   const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  const logo='<span class="g-logo" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c.5 2.6 2 4.2 3.4 5.7C17 10.4 18 12 18 14.3A6 6 0 0 1 6 14.3c0-1.8.7-3.2 1.8-4.3.2 1.5 1 2.6 2.2 3.1C9.6 9.6 10.6 6 12 3z"/></svg></span>';
+  const logo='<span class="g-logo" aria-hidden="true"><img src="site/embleme-blanc.svg" alt=""></span>';
   const side=`<aside class="g-side"><div class="g-brand">${logo}<span>Pompier<i>Note</i><small>Académie des pompiers</small></span></div>
     <p>L’horaire des classes, les présences, les examens et les corvées, au même endroit.</p>
-    <ul><li>Chaque élève voit son horaire, ses examens et ses résultats.</li><li>Chaque enseignant voit ses cours, indique ses disponibilités et prend les présences.</li><li>L’administration gère les classes, les modules, le personnel et les comptes.</li></ul></aside>`;
+    <ul><li>Chaque élève voit son horaire, ses examens et ses résultats.</li><li>Chaque enseignant voit ses cours, indique ses disponibilités et prend les présences.</li><li>L’administration gère les classes, les modules, le personnel et les comptes.</li></ul>
+    <p class="g-ecole"><b>Académie des pompiers</b> · on forme les meilleurs pompiers depuis 1979<br>Caserne-école : 9577, rue Saint-Vincent, Mirabel · <span style="white-space:nowrap">450 258-4460</span></p></aside>`;
   const v=k=>esc(st.vals[k]||'');
   const field=(id,label,type,extra)=>`<label class="g-field" for="g-${id}"><span>${label}</span><input id="g-${id}" name="${id}" type="${type}" value="${type==='password'?'':v(id)}" ${extra||''}></label>`;
   const msg=()=>(st.err?`<p class="g-err" role="alert">${esc(st.err)}</p>`:'')+(st.info?`<p class="g-info" role="status">${esc(st.info)}</p>`:'');

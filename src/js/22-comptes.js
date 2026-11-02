@@ -171,7 +171,7 @@ function profilePage(){
       :groups().map(g=>{const els=studentsOf(g.id);return els.length?`<optgroup label="${esc(g.nom)}">${els.map(e=>`<option value="${esc(e.id)}"${e.id===S.student?' selected':''}>${esc(e.nom)}</option>`).join('')}</optgroup>`:'';}).join('');
     if(o) pick=`<label class="field pf-pick"><span>Voir le profil de</span><select id="pf-who">${o}</select></label>`;
   }
-  const head=`<section class="panel prof-head">${avHTML(P.name,own?S.me.avatarUrl:'','lg')}<div class="prof-id"><h2 id="pf-name">${esc(P.name)}</h2><div class="prof-chips">${chips.join('')}</div><p class="help">${note}</p>${siteMode()?'<button class="btn sm" type="button" id="pf-logout" data-act="logout">Se déconnecter</button>':''}</div>${pick}</section>`;
+  const head=`<section class="panel prof-head">${avHTML(P.name,(own&&S.me.avatarUrl)||(P.rec&&P.rec.photo)||'','lg')}<div class="prof-id"><h2 id="pf-name">${esc(P.name)}</h2><div class="prof-chips">${chips.join('')}</div><p class="help">${note}</p>${siteMode()?'<button class="btn sm" type="button" id="pf-logout" data-act="logout">Se déconnecter</button>':''}</div>${pick}</section>`;
   const facts=rows=>`<dl class="facts">${rows.map(([k,v])=>`<div><dt>${k}</dt><dd>${v!=null&&v!==''?esc(v):'<span class="muted">—</span>'}</dd></div>`).join('')}</dl>`;
   const sess=s=>`${dayLabel(parse(s.date))} · ${momentOf(s).toLowerCase()}`;
   let panels='', warn='';

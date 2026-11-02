@@ -6,7 +6,7 @@ try{
 await wait(900);
 const U=window.__USER;
 if(U.id==='u9'){
-  ok('locked student role',/élève/i.test($('#ws-label').textContent)&&$('.roles').hidden&&!$('#sel-group')&&$$('#main .week button.cc').length>0,$('#ws-label').textContent);
+  ok('locked student role',/élève/i.test($('#ws-label').textContent)&&$('.roles').hidden&&!$('#sel-group')&&$('#nav-accueil').getAttribute('aria-current')==='page'&&$$('#main .tl-card').length>0,$('#ws-label').textContent);
   ok('student name in menu',/Alexandre Beaulieu/.test($('#person').textContent)&&!/aperçu/.test($('#person').textContent),$('#person').textContent);
   ok('no admin nav',!$('#nav-comptes')&&!!$('#nav-profil'));
   click($('#nav-profil'));await wait(150);
@@ -18,7 +18,7 @@ if(U.id==='u9'){
   click($('#nav-formation'));await wait(400);
   ok('student formation: own carnet',!!$('#fo-mycarnet')&&$$('#fo-mycarnet li').length===11&&/Réussie/.test($('#fo-mycarnet').textContent)&&!!$('#fo-tosign'),($('#main')||{}).textContent.slice(0,200));
   ok('student reads only own formation documents',(window.__subs||[]).includes('evaluations?eleve==el-119-01')&&(window.__subs||[]).includes('ex-tentatives?eleve==el-119-01')&&!(window.__subs||[]).includes('evaluations'),(window.__subs||[]).filter(s=>/eval|tentat/.test(s)).join(' '));
-  click($('#fo-certs'));await wait(200);ok('student own certificates',$$('#fo-mycerts li').length===4&&/Valide/.test($('#fo-mycerts').textContent));
+  click($('#fo-certs'));await wait(200);ok('student own certificates',$$('#fo-mycerts li').length===5&&/Valide/.test($('#fo-mycerts').textContent));
   click($('#fo-enpq'));await wait(200);ok('student own ENPQ file',!!$('#fo-myenpq')&&/Examens de l’école/.test($('#fo-myenpq').textContent)&&/Frais à jour/.test($('#fo-myenpq').textContent));
   ok('student has no class data',!$('[data-act=x-rep]')&&!$('.xm-tile')&&!$('#nav-eleves'));
 }else{

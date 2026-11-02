@@ -49,8 +49,6 @@ button.xg-c:hover{filter:brightness(.95)}
 .xg-c:focus-visible,.xg-who:focus-visible,.xg-h button:focus-visible{outline:3px solid var(--focus);outline-offset:1px}
 .xg-f{font-variant-numeric:tabular-nums}
 @container (max-width:720px){.xm-cols{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px}.xm-hd.xm-cols{display:none}.xm-cols>.xm-p{flex:1 1 120px}.xm-cols>.xm-t,.xm-cols>.xm-who{flex:1 1 calc(100% - 90px)}.xm-end{margin-left:auto}}
-@media (max-width:900px){.xm-tiles{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media (max-width:520px){.sidebar #side-toggle>span{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}.sidebar #side-toggle{padding:8px 10px}}
 .cl-num.lg{width:72px;height:72px;border-radius:16px;font-size:24px}
 .cl-num.sm{width:34px;height:34px;border-radius:var(--r);font-size:13px}
 .fl-row{display:flex;align-items:center;gap:10px;min-width:0}
@@ -85,6 +83,16 @@ button.xg-c:hover{filter:brightness(.95)}
   .st-num{grid-area:num}.st-name{grid-area:name}.st-x{grid-area:x}.st-rate{grid-area:rate}.st-a{grid-area:a}.st-r{grid-area:r}
   .st-row [data-l]::before{content:attr(data-l);display:block;margin-bottom:3px;font-size:12px;font-weight:400;color:var(--muted);text-align:left}
 }
+/* Listes des élèves et du personnel : cellules du tableau */
+.tb-who{display:flex;align-items:center;gap:12px;min-width:0}
+.tb-who .link{font-size:15px;font-weight:700;color:var(--ink)}
+.tb-who .av{width:36px;height:36px;font-size:12.5px}
+.tb-sub{display:block;margin-top:2px;font-size:12.5px;color:var(--muted)}
+.tb-rate{min-width:120px}
+.tb-rate b{font-size:18px}
+.tb-rate .meter{max-width:150px;height:6px}
+.tb-n{font-size:18px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink)}
+.tb-n.zero{color:#A9B4C2;font-weight:400}.tb-n.bad{color:var(--bad)}.tb-n.warn{color:var(--warn)}
 /* Cours à rattraper */
 .miss-list .lrow{grid-template-columns:52px minmax(0,1fr) auto;gap:16px;padding:14px 22px;cursor:pointer}
 .miss-list .lrow:hover{background:var(--surface-2)}
@@ -106,3 +114,10 @@ button.xg-c:hover{filter:brightness(.95)}
 .row-prin{display:block;margin-top:4px;font-size:12px;font-weight:600;color:#60758F}
 .col-prin{display:block;font-size:11.5px;font-weight:600;color:#60758F;margin-top:2px}
 .prin-chip{background:#E3EEFB;color:#275F9D}
+@media (max-width:760px){
+  /* À rattraper : la date à gauche, le bouton sous le titre */
+  .miss-list .lrow{grid-template-columns:52px minmax(0,1fr);column-gap:14px;row-gap:10px}
+  .miss-list .lrow>.miss-d{grid-column:1;grid-row:1/span 2;align-self:start}
+  .miss-list .lrow>.what{grid-column:2;grid-row:1}
+  .miss-list .lrow>.miss-go{grid-column:2;grid-row:2;justify-self:start}
+}

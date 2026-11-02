@@ -22,6 +22,7 @@ if(SC==='setup'){
   ok('admin app',!gateOpen()&&!!$('#nav-comptes')&&!$('#logout-btn').hidden&&/Thierry Mayrand/.test($('#person').textContent));
   ok('import button',!!$('#import-demo'));
   click($('#import-demo'));
+  await until(()=>!!store().get('cours/k119-m08'),5000);await wait(300);click($('#nav-calendar'));
   await until(()=>$$('#main .week button.cc').length>20,5000);await wait(300);
   ok('demo imported',$$('#main .week button.cc').length>20&&!!store().get('cours/k119-m08')&&!store().get('comptes/exemple-e-mleduc'),$$('#main .week button.cc').length);
 }

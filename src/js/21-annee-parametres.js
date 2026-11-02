@@ -32,12 +32,12 @@ function yearPage(){
 /* ---------- Pages : paramètres ----------
    Onze sections (dans le menu de gauche). Chaque réglage est gardé dans config/ecole et agit vraiment sur le site ;
    un champ absent garde le fonctionnement par défaut.
-   École : nom, nomCourt, resp, web, adresse, tel, courriel   Annonces : annonces [] (voir 21-annonces.js)
+   École : nom, nomCourt, resp, programme, web, adresse, tel, courriel   Annonces : annonces [] (voir 21-annonces.js)
    Année : annee, debut, fin   Horaire : moments { am, pm }, requisDef, horizon, vueCal, menage
    Résultats : seuil, notesEleves, presOk, presWarn, motivePresent, retardPresent
    Élèves : grades [{ nom, c }]   Personnel : fonctions []   Droits : perms { cand, auto, remp, pres, notes }
-   Menu : couleur, couleurPerso, vueDefaut, accueil, menuMasque [], menuNoms {}   Notifications : notifs { … }
-   Impression : impCoord, impDate, pied, impSign */
+   Menu : couleur, couleurPerso, vueDefaut, ouverture, menuMasque [], menuNoms {}   Notifications : notifs { … }
+   Impression : impLogo, impCoord, impDate, pied, impSign */
 const PS_TABS=[['ecole','École','gear'],['annonces','Annonces','mega'],['annee','Année scolaire','year'],['horaire','Horaire','cal'],['resultats','Résultats et présences','exam'],['eleves','Élèves','users'],['personnel','Personnel','user'],['acces','Droits et accès','key'],['menu','Menu et affichage','layers'],['notifs','Notifications','bell'],['impression','Impression','print'],['donnees','Données','down']];
 const COULEURS=[['','Rouge pompier','#C62F2A','#AD2722'],['orange','Orange','#C2410C','#9A3412'],['vert','Vert','#15803D','#166534'],['bleu','Bleu','#1D4ED8','#1E40AF'],['bordeaux','Bordeaux','#9F1239','#881337'],['ardoise','Ardoise','#334155','#1E293B']];
 /* Entrées du menu que l’administration peut masquer ou renommer (le calendrier, les paramètres et les nouveautés restent toujours) */
@@ -50,7 +50,7 @@ const PERM_EL=[['equipEl','Leur équipement attribué','Dans leur profil, avec l
 const GRADE_C=[['cap','Rouge foncé','#9F2D35'],['lt','Marine','#1E3A5F'],['vert','Vert forêt','#1F5F45'],['or','Doré','#8A6416'],['gris','Gris','#4B5563']];
 const GRADES_DEF=[{nom:'Capitaine',c:'cap'},{nom:'Lieutenant 1',c:'lt'},{nom:'Lieutenant 2',c:'lt'}];
 const FONCTIONS_DEF=FONCTIONS.slice();
-const ACCUEIL_OPT=[['calendar','Calendrier'],['affectations','Affectations'],['classes','Classes'],['eleves','Élèves et personnel'],['modules','Modules et examens']];
+const ACCUEIL_OPT=[['accueil','Accueil'],['calendar','Calendrier'],['affectations','Affectations'],['classes','Classes'],['eleves','Élèves et personnel'],['modules','Modules et examens']];
 const nfOn=k=>((cfg().notifs||{})[k])!==false;
 const permOn=k=>{const v=(cfg().perms||{})[k];return k==='auto'?v===true:v!==false;};
 const presOk=()=>{const n=+cfg().presOk;return n>=1&&n<=100?n:95;};
@@ -78,7 +78,7 @@ function applyConfig(){
   /* à l’ouverture du site : la vue du calendrier et la page d’accueil choisies (si la personne n’a rien choisi elle-même) */
   if(!cfgInit&&S.data.config){cfgInit=true;
     if(c.vueCal==='jour'&&!prefs.view) S.view='jour';
-    if(S.role==='admin'&&S.page==='calendar'&&c.accueil&&c.accueil!=='calendar'&&navGroup(c.accueil)) S.page=c.accueil;}
+    if(S.role==='admin'&&S.page==='accueil'&&c.ouverture&&c.ouverture!=='accueil'&&navGroup(c.ouverture)) S.page=c.ouverture;}
 }
 /* Durée d’un moment (minutes) : la journée compte l’avant-midi et l’après-midi */
 const perMin=p=>p.k==='jour'?(toMin(PERIODES[0].fin)-toMin(PERIODES[0].debut))+(toMin(PERIODES[1].fin)-toMin(PERIODES[1].debut)):toMin(p.fin)-toMin(p.debut);
@@ -98,7 +98,8 @@ function paramsPage(){
     body=form('L’école','Le nom paraît dans le menu et en tête des documents imprimés, avec les coordonnées.',
       card('Identité',`${fld('p-nom','Nom de l’établissement',c.nom,'maxlength="80" autocomplete="off"')}
         ${fld('p-court','Nom court (dans le menu, facultatif)',c.nomCourt,'maxlength="30" autocomplete="off" placeholder="Ex. Académie"')}
-        ${fld('p-resp','Direction ou responsable',c.resp,'maxlength="80" autocomplete="off"')}`)
+        ${fld('p-resp','Direction ou responsable',c.resp,'maxlength="80" autocomplete="off"')}
+        ${fld('p-prog','Programme (en tête des feuilles imprimées)',c.programme,'maxlength="120" autocomplete="off" placeholder="Ex. DEP 5322 – Intervention en sécurité incendie"')}`)
       +card('Coordonnées',`${fld('p-adresse','Adresse',c.adresse,'maxlength="120" autocomplete="off"')}
         <div class="grid2">${fld('p-tel','Téléphone',c.tel,'maxlength="30" autocomplete="off"')}${fld('p-courriel','Courriel',c.courriel,'type="email" maxlength="80" autocomplete="off"')}</div>
         ${fld('p-web','Site web',c.web,'maxlength="100" autocomplete="off" placeholder="https://"')}`)
@@ -161,7 +162,7 @@ function paramsPage(){
     body=form('Menu et affichage','La couleur principale sert aux boutons, à la page ouverte du menu et aux repères du jour.',
       card('Couleur principale',`<div class="ps-colors">${COULEURS.map(([k,l,h])=>`<label class="ps-color"><input type="radio" name="p-couleur" id="p-col-${k||'rouge'}" value="${k}"${cur===k?' checked':''}${off}><span class="ps-sw" style="background:${h}"></span><span>${l}</span></label>`).join('')}
         <label class="ps-color"><input type="radio" name="p-couleur" id="p-col-perso" value="perso"${cur==='perso'?' checked':''}${off}><span>Autre</span><input type="color" id="p-col-hex" value="${esc(ph)}" aria-label="Choisir une autre couleur"${off}></label></div>`,'ps-wide')
-      +card('Ouverture et listes',`<div class="grid2">${sel('p-accueil','Page d’ouverture de l’administration',ACCUEIL_OPT,c.accueil||'calendar')}
+      +card('Ouverture et listes',`<div class="grid2">${sel('p-ouverture','Page d’ouverture de l’administration',ACCUEIL_OPT,c.ouverture||'accueil')}
         ${sel('p-vue','Affichage des listes par défaut',VIEW_M.map(([k,l])=>[k,l]),c.vueDefaut||'list')}</div>
         <p class="help">Chaque personne peut changer l’affichage d’une liste avec les boutons à côté de la cloche ; son choix reste pour elle.</p>`)
       +card('Entrées du menu de l’administration',`<div class="ps-menu">${MENU_OPT.map(([k,l])=>`<div class="ps-mrow"><label class="ps-mchk"><input type="checkbox" id="p-menu-${k}" data-menu="${k}"${!(c.menuMasque||[]).includes(k)?' checked':''}${off}><span>${l}</span></label>
@@ -173,7 +174,8 @@ function paramsPage(){
       card('Pour l’administration',grp('Administration'))+card('Pour les enseignants',grp('Enseignants'))+card('Pour les élèves',grp('Élèves')));
   }else if(tab==='impression'){
     body=form('Impression','L’horaire de la semaine, les feuilles de présences et les relevés de résultats.',
-      card('En-tête',`${chk('p-imp-coord','Les coordonnées de l’école',c.impCoord!==false,'Direction, adresse, téléphone et courriel, à droite du titre.')}
+      card('En-tête',`${chk('p-imp-logo','Le logo de l’Académie',c.impLogo!==false,'À gauche du titre.')}
+        ${chk('p-imp-coord','Les coordonnées de l’école',c.impCoord!==false,'Direction, adresse, téléphone et courriel, à droite du titre.')}
         ${chk('p-imp-date','La date d’impression',c.impDate===true,'« Imprimé le … », sous le nom de l’école.')}`)
       +card('Bas de page',`${fld('p-pied','Mention sous l’en-tête',c.pied,'maxlength="140" autocomplete="off" placeholder="Ex. Document confidentiel — usage interne"')}
         ${fld('p-sign','Ligne de signature au bas de chaque page',c.impSign,'maxlength="60" autocomplete="off" placeholder="Ex. Signature de la direction"')}`));
@@ -194,7 +196,7 @@ function paramsPage(){
   return `<div class="ps-body">${body}</div>`;
 }
 /* Les réglages que « Remettre les réglages par défaut » efface */
-const PS_RESET=['couleur','couleurPerso','vueDefaut','accueil','menuMasque','menuNoms','perms','notifs','impCoord','impDate','impSign','pied'];
+const PS_RESET=['couleur','couleurPerso','vueDefaut','ouverture','menuMasque','menuNoms','perms','notifs','impLogo','impCoord','impDate','impSign','pied'];
 /* Exports de la page Données */
 async function exportData(kind){
   const D=S.data, day=todayISO();

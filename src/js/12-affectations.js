@@ -152,7 +152,7 @@ function disposPage(){
 
 /* ---------- Administration : affectations (cours à combler, candidatures, remplacements) ---------- */
 const dispoChip=(tid,s)=>{const v=dispoOf(tid,s.date);return dispoCovers(v,s)?'<span class="chip ok">Disponible</span>':v?`<span class="chip warn">Disponible : ${DISPO[v].toLowerCase()}</span>`:'<span class="chip off">Disponibilité non indiquée</span>';};
-const whoCell=(tid,sub)=>`<div class="xm-who">${avHTML(tName(tid),'')}<span class="xm-t"><b>${esc(tName(tid))}</b>${sub?`<small>${sub}</small>`:''}</span></div>`;
+const whoCell=(tid,sub)=>`<div class="xm-who">${avHTML(tName(tid),photoOf(tid))}<span class="xm-t"><b>${esc(tName(tid))}</b>${sub?`<small>${sub}</small>`:''}</span></div>`;
 function affCell(st){
   const c=st.clash.length?'bad':st.open>0?(st.firm?'warn':'bad'):'ok';
   if(!st.requis&&!st.clash.length) return `<div class="af-n"><b class="none">—</b><small>${st.assigned.length?st.assigned.map(id=>esc(shortName(tName(id)))).join(', '):'aucun enseignant requis'}</small></div>`;
@@ -191,7 +191,7 @@ function affPage(){
 /* Dans la fenêtre d’un cours (administration) : enseignants requis, attribués et candidats */
 function affBoxHTML(s){
   const a=staffing(s), I=affIdx(), can=isAdmin()&&S.conn==='shared', past=isPast(s), lk=linkedX(s);
-  const li=(tid,sub,btns)=>`<li>${avHTML(tName(tid),'')}<span class="nm">${esc(tName(tid))}<small>${sub}</small></span><span class="af-btns">${btns}</span></li>`;
+  const li=(tid,sub,btns)=>`<li>${avHTML(tName(tid),photoOf(tid))}<span class="nm">${esc(tName(tid))}<small>${sub}</small></span><span class="af-btns">${btns}</span></li>`;
   const got=a.assigned.map(tid=>{const r=I.rp[s.key+'|'+tid];
     return li(tid,(r?`<span class="need-t">Remplacement demandé${r.motif?' : '+esc(r.motif):''}</span>`:tid===s.c.enseignant?(modOf(s.c)?'Chargé de cours':acad()?'Responsable de l’activité':'Enseignant du cours'):'Approuvé')+(a.clash.includes(tid)?' · <span class="bad-t">'+W('déjà dans une autre séance à ce moment','déjà dans un autre cours à ce moment')+'</span>':''),can?`<button class="btn sm ghost" type="button" data-act="af-retire" ${sAt(s)} data-t="${esc(tid)}"${dis()}>Retirer</button>`:'');}).join('');
   const cand=a.pending.map(tid=>li(tid,`A postulé · ${dispoCovers(dispoOf(tid,s.date),s)?'disponible':'disponibilité non indiquée'}`,can?`<button class="btn sm yes" type="button" data-act="af-approve" data-id="${esc(candId(s.key,tid))}"${dis()}>Approuver</button><button class="btn sm ghost" type="button" data-act="af-refuse" data-id="${esc(candId(s.key,tid))}"${dis()}>Refuser</button>`:'')).join('');

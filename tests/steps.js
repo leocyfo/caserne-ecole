@@ -15,9 +15,15 @@ const XS=id=>{const d=window.__store.get('cours/'+id)||{},m=new Map((d.extras||[
 try{
 await wait(400);
 ok('banner',/Horaire partagé/.test($('#banner-text').textContent));
-ok('nav admin 12',$$('#nav button').length===12&&!!$('#nav-compta')&&!/À faire/.test($('#nav').textContent)&&!$('#nav-annee')&&!$('#nav-personnel')&&!$('#nav-examens')&&!!$('#nav-stock')&&$$('#nav .nav-sec').length===4&&!!$('#nav-historique')&&$$('#nav button').pop().id==='nav-nouveautes'&&!!$('#nav-comptes')&&!!$('#nav-modules')&&!!$('#nav-affectations')&&!$('#nav-presences'));
+ok('nav admin 13',$$('#nav button').length===13&&!!$('#nav-accueil')&&!!$('#nav-compta')&&!/À faire/.test($('#nav').textContent)&&!$('#nav-annee')&&!$('#nav-personnel')&&!$('#nav-examens')&&!!$('#nav-stock')&&$$('#nav .nav-sec').length===4&&!!$('#nav-historique')&&$$('#nav button').pop().id==='nav-nouveautes'&&!!$('#nav-comptes')&&!!$('#nav-modules')&&!!$('#nav-affectations')&&!$('#nav-presences'));
+ok('home on sign-in',$('#nav-accueil').getAttribute('aria-current')==='page'&&!!$('#main .hm')&&/Bonjour/.test($('#heading').textContent)&&!!$('#hm-today')&&$$('#main .tl-card').length>0,$('#heading').textContent);
+ok('home timeline',!!$('#main .tl-now')&&/Maintenant/.test($('#main .tl-now').textContent)&&/Semaine [0-9]+/.test($('#main .hm-year').textContent)&&!!$('#main .hm-year .ring'),($('#main .hm-year')||{}).textContent);
+click($('#hm-cal'));await wait(150);
 ok('board',$$('#main .week button.cc').length===41,$$('#main .week button.cc').length);
 ok('exam card on board',$$('#main .cc.exam').length===1);
+click($('#brand'));await wait(150);
+ok('logo goes home',$('#nav-accueil').getAttribute('aria-current')==='page'&&!!$('#main .hm'));
+click(navBtn('calendar'));await wait(150);
 /* DND */
 click($('#pick-g-302'));await wait(40);
 ok('chip filter 302',$$('#main .week button.cc').length===20,$$('#main .week button.cc').length);
@@ -96,8 +102,10 @@ ok('plus key expands',!$('#main .week.compact')&&metaVisible());
 document.body.dispatchEvent(new KeyboardEvent('keydown',{key:'-',bubbles:true}));await wait(60);
 ok('minus key reduces',!!$('#main .week.compact'));
 click($('[data-role=teacher]'));await wait(60);
+ok('role change goes home',!!$('#main .hm')&&!!$('#sel-teacher'));
+click(navBtn('calendar'));await wait(60);
 ok('teacher compact kept',!!$('#main .week.compact')&&!!$('#exp-btn'));
-click($('[data-role=admin]'));await wait(60);
+click($('[data-role=admin]'));await wait(60);click(navBtn('calendar'));await wait(60);
 click($('#exp-btn'));await wait(400);
 ok('back to detailed',!$('#main .week.compact'));
 // calendar course + attendance
@@ -125,8 +133,8 @@ ok('students table',$$('#main tbody tr').length===20,$$('#main tbody tr').length
 typeIn('#s-q','nath');await wait(40);
 ok('search',$$('#main tbody tr').length===1&&/Nathan/.test($('#main tbody').textContent));
 ok('search kept',$('#s-q').value==='nath');
-click($('#main tbody .link'));await wait(80);
-ok('student fiche + stats',!!$('.fiche')&&+(l=>{const d=[...document.querySelectorAll('.fh-stats>div')].find(x=>x.querySelector('dt').textContent===l);return d?d.querySelector('dd').textContent:'';})('Absences')>=5&&$('#drawer').hidden,(l=>{const d=[...document.querySelectorAll('.fh-stats>div')].find(x=>x.querySelector('dt').textContent===l);return d?d.querySelector('dd').textContent:'';})('Absences'));
+click($('#main tbody .link'));await wait(450);
+ok('student fiche + stats',!!$('.dos')&&+((($('#sf-stats')||{}).textContent||'').match(/(\d+) absences?/)||[])[1]>=5&&$('#drawer').hidden,(l=>{const d=[...document.querySelectorAll('.fh-stats>div')].find(x=>x.querySelector('dt').textContent===l);return d?d.querySelector('dd').textContent:'';})('Absences'));
 ok('fiche nav with search',$('#fi-prev').disabled&&$('#fi-next').disabled&&/1 sur 1/.test($('.fiche-nav').textContent));
 click($('#fi-edit'));await wait(60);
 typeIn('#st-parent','Line Ouellet');$('#st-form').requestSubmit();await wait(120);
@@ -186,7 +194,8 @@ $('#p-enom').value='Test étape';$('#p-edu').value='2027-06-01';$('#p-eau').valu
 ok('etape added',window.__store.get('config/ecole').etapes.length===4);
 // enseignant
 click($('[data-role=teacher]'));await wait(60);
-ok('teacher nav',$$('#nav button').length===7&&!!$('#nav-stock')&&/Matériel/.test($('#nav-stock').textContent)&&!!$('#nav-profil')&&!!$('#nav-mescours')&&!!$('#nav-dispos'));
+ok('teacher nav',$$('#nav button').length===8&&!!$('#nav-stock')&&/Matériel/.test($('#nav-stock').textContent)&&!!$('#nav-profil')&&!!$('#nav-mescours')&&!!$('#nav-dispos'));
+click(navBtn('calendar'));await wait(60);
 ok('teacher board',$$('#main .week button.cc').length>0);
 {const c=$$('#main .week button.cc').find(b=>!b.classList.contains('exam'));click(c);await wait(60);const r=(e=>({left:e.offsetLeft,top:e.offsetTop,right:e.offsetLeft+e.offsetWidth,bottom:e.offsetTop+e.offsetHeight,width:e.offsetWidth,height:e.offsetHeight}))($('#drawer'));
  ok('teacher card: side panel',$('#drawer').classList.contains('sh-side')&&Math.round(r.width)===600&&Math.round(r.right)===innerWidth&&Math.round(r.height)===innerHeight,Math.round(r.width));
@@ -194,7 +203,7 @@ ok('teacher board',$$('#main .week button.cc').length>0);
 click(navBtn('examens'));await wait(40);
 ok('teacher exams',$$('#main [data-act=exam]').length>=1||/Aucun examen/.test($('#main').textContent));
 // élève
-click($('[data-role=student]'));await wait(60);
+click($('[data-role=student]'));await wait(60);click(navBtn('calendar'));await wait(60);
 ok('student exams panel',/Prochains examens/.test($('#main').textContent));
 {const c=$$('#main .week button.cc').find(b=>!b.classList.contains('exam')),cr=c.getBoundingClientRect();click(c);await wait(60);const r=(e=>({left:e.offsetLeft,top:e.offsetTop,right:e.offsetLeft+e.offsetWidth,bottom:e.offsetTop+e.offsetHeight,width:e.offsetWidth,height:e.offsetHeight}))($('#drawer'));
  ok('student card: bubble beside the course',$('#drawer').classList.contains('sh-pop')&&Math.round(r.width)===360&&(r.left>=cr.right||r.right<=cr.left)&&r.top>=0&&r.bottom<=innerHeight,[Math.round(r.left),Math.round(cr.right)].join(' '));

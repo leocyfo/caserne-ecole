@@ -1,7 +1,10 @@
 /* ---------- Événements ---------- */
 function setWeek(d){S.week=d;S.day=defaultDay();subWeek();render();}
-function setRole(r){if(r===S.role)return;S.role=r;S.page='calendar';S.pg={};S.dr=null;S.confirmClear=false;savePrefs();render();}
-function goPage(p){if(p==='presences')p='classes';if(SUBNAV[p]&&S.page!==p)S.navFrom=S.page;S.page=p;S.pg={};if(p==='eleves'||p==='classes')ensureTerm();render();window.scrollTo({top:0});}
+function setRole(r){if(r===S.role)return;S.role=r;S.page=homePage();S.pg={};S.dr=null;S.confirmClear=false;savePrefs();render();}
+function goPage(p){if(p==='presences')p='classes';
+  /* l’accueil montre toujours la semaine en cours (présences du jour, retards) */
+  if(p==='accueil'){const mon=monday(new Date());if(iso(mon)!==iso(S.week)){S.week=mon;S.day=defaultDay();subWeek();}}
+  if(SUBNAV[p]&&S.page!==p)S.navFrom=S.page;S.page=p;S.pg={};if(p==='eleves'||p==='classes')ensureTerm();render();window.scrollTo({top:0});}
 function openSession(key,date){
   const s=date?findSess(date,key):weekItems().find(x=>x.key===key);if(!s)return;
   const base={key,coursId:s.c.id,slotId:s.sl.id,date:s.date};
@@ -78,15 +81,16 @@ document.addEventListener('click',async e=>{
     case 'rd-mod-del':await repModules(b.dataset.date,b.dataset.m,false);break;
     case 'x-res':{if(!d||d.kind!=='exam')break;const r=d.draft.resultats||(d.draft.resultats={}),id=b.dataset.el,v=b.dataset.v;if(r[id]===v)delete r[id];else r[id]=v;if(d.draft.pct)delete d.draft.pct[id];renderDrawer();break;}
     case 'new-exam':if(acad())openAddCourse(S.pg.g?{groupe:S.pg.g}:null);else openExam(null,b.dataset.cours?{cours:b.dataset.cours,date:b.dataset.date||''}:null);break;
-    case 'student':openFiche('eleves',b.dataset.id);break;
+    case 'student':{const id=b.dataset.id;vtGo(()=>openFiche('eleves',id));break;}
     case 'st-edit':openStudent(b.dataset.id);break;
     case 'new-student':openStudent(null);break;
     case 'staff':openFiche('personnel',b.dataset.id);break;
     case 'sf-edit':openStaff(b.dataset.id);break;
-    case 'fi-back':closeFiche();break;
+    case 'fi-back':vtGo(closeFiche);break;
+    case 'photo-del':await setPhoto(b.dataset.kind,b.dataset.id,'');break;
     case 'fi-tab':S.pg.tab=b.dataset.v;render();break;
     case 'fi-og':{const og=Object.assign({},S.pg.og||{});og[b.dataset.g]=!og[b.dataset.g];S.pg.og=og;render();break;}
-    case 'fi-step':ficheStep(+b.dataset.d);break;
+    case 'fi-step':{const d=+b.dataset.d;vtGo(()=>ficheStep(d));break;}
     case 'fi-acct':openAccount(null,{draft:{uid:'',role:b.dataset.role,ref:b.dataset.id}});break;
     case 'see-teacher':S.filtre='e:'+b.dataset.id;S.fmode='e';savePrefs();goPage('calendar');break;
     case 'new-staff':openStaff(null);break;
@@ -267,6 +271,7 @@ document.addEventListener('click',async e=>{
       break;}
     case 'md-del-x':{if(S.busy)break;const c0=byId(S.data.cours,b.dataset.c);if(!c0)break;const doc=courseDoc(c0), xid=b.dataset.x;doc.extras=doc.extras.filter(x=>x.id!==xid&&!(x.de&&String(x.de).endsWith('@'+xid)));doc.annulees=doc.annulees.filter(t=>!String(t).endsWith('@'+xid));pg.askx='';const x0=(c0.extras||[]).find(x=>x.id===xid), se0=x0?findSess(x0.date,`${c0.id}_${xid}_${x0.date}`):null;if(await affWrite(()=>putCours(c0.id,doc),'Séance supprimée')&&se0)logEv('horaire','a supprimé la séance',sObj(se0));break;}
     case 'nf-open':{const fresh=nfNew().map(n=>n.id);openDrawer({kind:'notifs',fresh});if(fresh.length){S.nfSeen=[...new Set([...(S.nfSeen||[]),...fresh])].slice(-400);savePrefs();renderHeading();}break;}
+    case 'home':S.dr=null;goHome();break;
     case 'nf-go':{const n=notifs()[+b.dataset.i];if(!n)break;const g=n.go;S.dr=null;
       if(g.k==='aff'){goPage('affectations');S.pg.at=g.tab;render();}
       else if(g.k==='mes'){goPage('mescours');S.pg.mt=g.tab;render();}
@@ -324,7 +329,7 @@ document.addEventListener('submit',async e=>{
     const isNew=k==='md-add', code=isNew?Math.round(+$('#md-code').value):+f.dataset.code, nom=String($('#md-nom').value||'').trim();
     if(!code||code<1){toast('Indiquez le numéro du module.','bad');return;}
     if(!nom){toast('Indiquez le nom du module.','bad');return;}
-    const ok=await saveModule(code,{nom,heuresT:numOrNull($('#md-ht').value),heuresP:numOrNull($('#md-hp').value),charge:$('#md-charge').value},isNew);
+    const ok=await saveModule(code,{nom,heuresT:numOrNull($('#md-ht').value),heuresP:numOrNull($('#md-hp').value),charge:$('#md-charge').value,...($('#md-un')?{unites:numOrNull($('#md-un').value)}:{})},isNew);
     if(ok) logEv('module',isNew?`a créé le module M${code}`:`a modifié le module M${code}`,nom+($('#md-charge')&&$('#md-charge').value?' · chargé de cours : '+tName($('#md-charge').value):''));
     if(ok&&isNew){S.pg.adding='';S.pg.justAdded=String(code);openFiche('modules',String(code));}
     return;
@@ -432,7 +437,7 @@ document.addEventListener('submit',async e=>{
   if(k==='p-save'){
     /* chaque section a son formulaire : on prend seulement les champs qu’il contient */
     const c=configDoc(), q=id=>f.querySelector('#'+id), val=id=>String(q(id).value).trim(), on=id=>q(id).checked, all=x=>[...f.querySelectorAll(x)];
-    for(const [id,key] of [['p-nom','nom'],['p-court','nomCourt'],['p-resp','resp'],['p-adresse','adresse'],['p-tel','tel'],['p-courriel','courriel'],['p-web','web'],['p-pied','pied'],['p-sign','impSign'],['p-annee','annee']]) if(q(id)) c[key]=val(id);
+    for(const [id,key] of [['p-nom','nom'],['p-court','nomCourt'],['p-resp','resp'],['p-prog','programme'],['p-adresse','adresse'],['p-tel','tel'],['p-courriel','courriel'],['p-web','web'],['p-pied','pied'],['p-sign','impSign'],['p-annee','annee']]) if(q(id)) c[key]=val(id);
     if(q('p-debut')){c.debut=val('p-debut');c.fin=val('p-fin');if(c.debut&&c.fin&&c.fin<c.debut){toast('Le dernier jour précède le premier jour de classe.','bad');return;}}
     if(q('p-seuil')){const sv=Math.round(+val('p-seuil'));c.seuil=sv>=1&&sv<=100?sv:60;}
     if(q('p-pres-ok')){const o=Math.round(+val('p-pres-ok')), w=Math.round(+val('p-pres-warn'));if(!(o>=1&&o<=100&&w>=0&&w<=o)){toast('Le seuil orange doit être sous le seuil vert (entre 0 et 100 %).','bad');return;}c.presOk=o;c.presWarn=w;}
@@ -456,10 +461,11 @@ document.addEventListener('submit',async e=>{
     if(all('[data-perm]').length){const p={};for(const x of all('[data-perm]')) p[x.dataset.perm]=x.checked;c.perms=p;}
     if(f.querySelector('[name=p-couleur]')){const x=f.querySelector('[name=p-couleur]:checked');c.couleur=x?x.value:'';if(c.couleur==='perso'){if(!okHex(val('p-col-hex'))){toast('Choisissez une couleur.','bad');return;}c.couleurPerso=val('p-col-hex').toUpperCase();}}
     if(q('p-vue')) c.vueDefaut=val('p-vue');
-    if(q('p-accueil')) c.accueil=val('p-accueil');
+    if(q('p-ouverture')) c.ouverture=val('p-ouverture');
     if(all('[data-menu]').length) c.menuMasque=all('[data-menu]').filter(x=>!x.checked).map(x=>x.dataset.menu);
     if(all('[data-menu-nom]').length){const m={};for(const x of all('[data-menu-nom]')){const v=x.value.trim();if(v)m[x.dataset.menuNom]=v;}c.menuNoms=m;}
     if(all('[data-nf]').length){const n={};for(const x of all('[data-nf]')) n[x.dataset.nf]=x.checked;c.notifs=n;}
+    if(q('p-imp-logo')) c.impLogo=on('p-imp-logo');
     if(q('p-imp-coord')) c.impCoord=on('p-imp-coord');
     if(q('p-imp-date')) c.impDate=on('p-imp-date');
     await saveConfig(c,'Paramètres enregistrés');return;

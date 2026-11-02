@@ -1,5 +1,5 @@
 /* ---------- Administration : modules du programme ----------
-   Le catalogue est dans config/ecole.competences : { code, nom, heuresT, heuresP, heures, charge, cours[], examens[] }.
+   Le catalogue est dans config/ecole.competences : { code, nom, heuresT, heuresP, heures, unites, charge, cours[], examens[] } (unites : les unités du programme du Ministère).
    · COURS du module : { id, num, type, requis } — ce qui compose le module, pareil pour toutes les classes.
    · EXAMENS du module : { id, type (t : théorique, p : pratique), nom }.
    · SÉANCE : un cours ou un examen donné à une classe, à une date. Chaque classe a son document cours/<id> (sigle M7) ;
@@ -47,7 +47,7 @@ function modHours(c){
 }
 function modulesPage(){
   if(S.pg.fiche) return moduleFiche();
-  const ms=modList(), st=S.pg, can=isAdmin()&&S.conn==='shared', tot=ms.reduce((n,m)=>n+modTot(m.k),0);
+  const ms=modList(), st=S.pg, can=isAdmin()&&S.conn==='shared', tot=ms.reduce((n,m)=>n+modTot(m.k),0), un=ms.reduce((n,m)=>n+(+m.k.unites||0),0);
   const add=st.adding&&can?`<section class="panel cl-add"><form class="inline-add" data-form="md-add">
       <label class="field" style="flex:0 1 90px"><span>N°</span><input type="number" id="md-code" min="1" step="1" inputmode="numeric" required></label>
       <label class="field" style="flex:2 1 240px"><span>Nom du module</span><input id="md-nom" maxlength="90" autocomplete="off" required></label>
@@ -55,7 +55,7 @@ function modulesPage(){
       <label class="field" style="flex:0 1 130px"><span>Heures de pratique</span><input type="number" id="md-hp" min="0" step="1" inputmode="numeric"></label>
       <label class="field" style="flex:1 1 200px"><span>Chargé de cours</span>${chargeSelect('md-charge','',null)}</label>
       <button class="btn primary" type="submit"${dis()}>Créer le module</button><button class="btn ghost" type="button" data-act="pg-set" data-k="adding" data-v="">Annuler</button></form></section>`:'';
-  const tb=`<div class="toolbar"><p class="summary" style="margin:0"><span><b>${ms.length}</b>${ms.length>1?'modules':'module'}</span><span><b>${tot}</b>heures au programme</span></p><span class="grow"></span>${can&&!st.adding?`<button class="btn primary" type="button" id="md-add-open" data-act="pg-set" data-k="adding" data-v="1">${icon('plus')}Créer un module</button>`:''}</div>`;
+  const tb=`<div class="toolbar"><p class="summary" style="margin:0"><span><b>${ms.length}</b>${ms.length>1?'modules':'module'}</span><span><b>${tot}</b>heures au programme</span>${un?`<span><b>${un}</b>unités</span>`:''}</p><span class="grow"></span>${can&&!st.adding?`<button class="btn primary" type="button" id="md-add-open" data-act="pg-set" data-k="adding" data-v="1">${icon('plus')}Créer un module</button>`:''}</div>`;
   if(!ms.length) return tb+add+(st.adding?'':emptyBox('Aucun module pour l’instant','Créez les modules du programme : leur numéro, leur nom, leurs heures de théorie et de pratique et leur chargé de cours.'));
   const rows=ms.map(({k})=>{const n=new Set(modCourses(k.code).map(c=>c.groupe)).size, ch=chargeName(k), nc=mCours(k).length;
     return xRow('md-cols',`id="md-${esc(k.code)}" data-act="module" data-id="${esc(k.code)}"`,`<span class="cl-num md-num" aria-hidden="true">M${esc(k.code)}</span><div class="xm-t"><b>${esc(k.nom)}</b></div><span class="xm-m md-ch">${ch?esc(ch):'<span class="muted">À choisir</span>'}</span><span class="md-h">${hTxt(modT(k))}</span><span class="md-h">${hTxt(modP(k))}</span><span class="md-h"><b>${modTot(k)} h</b></span><span class="md-h">${nc||'<span class="muted">—</span>'}</span><span class="md-h">${n||'<span class="muted">—</span>'}</span>${icon('right')}`,'Ouvrir le module '+k.nom);}).join('');
@@ -69,7 +69,7 @@ function moduleFiche(){
   const k=cur.k, st=S.pg, cs=modCourses(k.code), gs=groups(), can=isAdmin()&&S.conn==='shared', U=modUse(k.code), kc=mCours(k), ke=mExams(k), ch=chargeName(k), code=esc(k.code);
   const item=m=>`<span class="fl-row"><span class="cl-num sm md-num" aria-hidden="true">M${esc(m.k.code)}</span><span class="fl-txt"><span class="fl-name">${esc(m.nom)}</span><span class="fl-sub">${modTot(m.k)} h</span></span></span>`;
   const nG=new Set(cs.map(c=>c.groupe)).size;
-  const head=ficheHead(k.nom,`<span class="chip off">${nG?pl(nG,'classe','classes'):'Aucune classe'}</span><span class="chip ${ch?'k0':'warn'}" id="md-charge-chip">${ch?'Chargé de cours · '+esc(ch):'Chargé de cours à choisir'}</span>`,'',[['Théorie',hTxt(modT(k)),''],['Pratique',hTxt(modP(k)),''],['Total',modTot(k)+' h',''],['Cours',String(kc.length),''],['Examens',String(ke.length),'']],`<span class="cl-num lg md-num" aria-hidden="true">M${code}</span>`);
+  const head=ficheHead(k.nom,`<span class="chip off">${nG?pl(nG,'classe','classes'):'Aucune classe'}</span><span class="chip ${ch?'k0':'warn'}" id="md-charge-chip">${ch?'Chargé de cours · '+esc(ch):'Chargé de cours à choisir'}</span>`,'',[['Théorie',hTxt(modT(k)),''],['Pratique',hTxt(modP(k)),''],['Total',modTot(k)+' h',''],...(k.unites?[['Unités',String(k.unites),'']]:[]),['Cours',String(kc.length),''],['Examens',String(ke.length),'']],`<span class="cl-num lg md-num" aria-hidden="true">M${code}</span>`);
   const useCell=id=>{const n=U.n(id);return `<span class="md-h">${n?`${n}<small class="muted"> sur ${gs.length}</small>`:'<span class="muted">—</span>'}</span>`;};
   /* × d’une ligne : on confirme ; si le cours ou l’examen est déjà à l’horaire, on explique pourquoi il reste */
   const delCell=(key,act,id,lbl)=>{if(!can)return '';const n=U.n(id);
@@ -81,7 +81,7 @@ function moduleFiche(){
       const nS=cs.reduce((n,c)=>n+datedOf(c).length,0), left=[kc.length?pl(kc.length,'cours','cours'):'',ke.length?pl(ke.length,'examen','examens'):'',nS?pl(nS,'séance à l’horaire','séances à l’horaire'):''].filter(Boolean), blocked=left.length>0, conf=st.ask==='mod'&&!blocked;
       return `<div class="fiche-two"><section class="panel"><h2>Le module</h2><form class="stackf" data-form="md-save" data-code="${code}">
           <label class="field"><span>Nom du module</span><input id="md-nom" value="${esc(k.nom)}" maxlength="90" autocomplete="off" required></label>
-          <div class="grid2"><label class="field"><span>Heures de théorie requises</span><input type="number" id="md-ht" value="${modT(k)==null?'':modT(k)}" min="0" step="1" inputmode="numeric"></label><label class="field"><span>Heures de pratique requises</span><input type="number" id="md-hp" value="${modP(k)==null?'':modP(k)}" min="0" step="1" inputmode="numeric"></label></div>
+          <div class="grid3"><label class="field"><span>Heures de théorie requises</span><input type="number" id="md-ht" value="${modT(k)==null?'':modT(k)}" min="0" step="1" inputmode="numeric"></label><label class="field"><span>Heures de pratique requises</span><input type="number" id="md-hp" value="${modP(k)==null?'':modP(k)}" min="0" step="1" inputmode="numeric"></label><label class="field"><span>Unités</span><input type="number" id="md-un" value="${k.unites==null?'':esc(k.unites)}" min="0" step="1" inputmode="numeric"></label></div>
           <label class="field" style="max-width:340px"><span>Chargé de cours</span>${chargeSelect('md-charge',k.charge||'',k)}</label>
           <p class="help">Le chargé de cours donne les séances du module à toutes les classes. Dans la fenêtre d’une séance, on peut le retirer ou lui ajouter des enseignants.</p>
           <div class="row"><button class="btn primary" type="submit"${can?dis():' disabled'}>Enregistrer</button></div></form></section>
@@ -159,6 +159,7 @@ async function saveModule(code,vals,isNew){
   if(isNew&&i>=0){toast(`Le module M${code} existe déjà.`,'bad');return false;}
   const tot=vals.heuresT!=null||vals.heuresP!=null?(vals.heuresT||0)+(vals.heuresP||0):(i>=0?+c.competences[i].heures||0:0);
   const k=Object.assign({cours:[],examens:[]},i>=0?c.competences[i]:{code:+code},{nom:vals.nom,heuresT:vals.heuresT,heuresP:vals.heuresP,heures:tot,charge:vals.charge||''});
+  if(vals.unites!==undefined){if(vals.unites==null)delete k.unites;else k.unites=vals.unites;}
   delete k.requis;
   if(i>=0)c.competences[i]=k;else c.competences.push(k);
   c.competences.sort((a,b)=>a.code-b.code);

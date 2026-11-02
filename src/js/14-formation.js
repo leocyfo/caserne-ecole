@@ -7,7 +7,7 @@
    Réglages (config/ecole.formation) : types de certificats, préalables par module, pièces du dossier ENPQ, frais d’examen,
    niveaux de maîtrise 1 à 4, services incendie. */
 const FO_DEF={
-  certs:[{id:'ps',nom:'Premiers soins',mois:36,enpq:true},{id:'masque',nom:'Essai d’ajustement du masque',mois:12,enpq:false},{id:'med',nom:'Examen médical',mois:24,enpq:false},{id:'4a',nom:'Permis de conduire classe 4A',mois:0,enpq:false}],
+  certs:[{id:'ps',nom:'Premiers soins',mois:36,enpq:true},{id:'masque',nom:'Essai d’ajustement du masque',mois:12,enpq:false},{id:'med',nom:'Examen médical',mois:24,enpq:false},{id:'4a',nom:'Permis de conduire classe 4A',mois:0,enpq:false},{id:'embarc',nom:'Carte d’embarcation de plaisance',mois:0,enpq:false}],
   pieces:[{id:'form',nom:'Formulaire d’inscription signé'},{id:'id',nom:'Pièce d’identité vérifiée'},{id:'photo',nom:'Photo récente'}],
   frais:[{nom:'Examens théoriques de l’ENPQ',montant:46000},{nom:'Examen pratique de l’ENPQ',montant:34430}]
 };

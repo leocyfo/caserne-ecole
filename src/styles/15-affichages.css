@@ -75,6 +75,7 @@
 #main.view-cards .tbl.stack .tb-cls .cl-num,#main.view-cards .tbl.stack .tb-rate .meter{display:none}
 #main.view-cards .tbl.stack .tb-rate{min-width:0}
 
+
 /* ----- Cartes des élèves : compactes (numéro, nom, rôle, présence ; puis la classe, et les absences et retards seulement
    s’il y en a ; le téléphone reste dans la fiche). Capitaine en rouge foncé, lieutenants en bleu marine. ----- */
 #main.view-cards .st-cards tbody{grid-template-columns:repeat(auto-fill,minmax(min(100%,220px),1fr));gap:8px}

@@ -4,12 +4,14 @@
 @media (prefers-reduced-motion: reduce){.app{transition:none}}
 .sidebar{background:var(--side);color:var(--side-ink);display:flex;flex-direction:column;padding:0 10px;position:sticky;top:0;height:100vh;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--side-line) transparent}
 .brand{display:flex;align-items:center;gap:10px;padding:14px 4px 12px;color:#FFFFFF;font-weight:800;font-size:17px;letter-spacing:-.01em;line-height:1.2;min-width:0}
-.brand>div{min-width:0;overflow-wrap:anywhere}
+.brand{width:100%;border:0;background:none;text-align:left;font-family:inherit;cursor:pointer;border-radius:var(--r-sm)}
+.brand:hover .bn{text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:3px}
+.brand-t{display:block;min-width:0;overflow-wrap:anywhere}
 .brand .bn{white-space:nowrap;font-size:16px;letter-spacing:-.015em}
 .brand .bn i{font-style:normal;color:#F3A19D}
 .brand small{display:block;margin-top:1px;font-size:11.5px;letter-spacing:0;color:var(--side-muted);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.brand-icon{width:32px;height:36px;border-radius:8px 8px 15px 15px;background:var(--accent);display:grid;place-items:center;flex:none;color:#FFFFFF;box-shadow:inset 0 -3px 0 rgba(0,0,0,.18)}
-.brand-icon svg{width:18px;height:18px}
+.brand-icon{width:38px;height:38px;display:grid;place-items:center;flex:none}
+.brand-icon img{width:100%;height:100%;display:block}
 .ws-label{display:inline-flex;align-self:flex-start;margin:0 4px 2px;padding:2px 8px;border-radius:999px;background:var(--side-hover);color:var(--side-soft);letter-spacing:.08em;font-size:10px;font-weight:700;text-transform:uppercase}
 .nav{position:relative;z-index:1;list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:1px}
 .nav-sec{padding:12px 10px 3px;color:var(--side-muted);font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase}
@@ -22,7 +24,7 @@
 .nav button[aria-current="page"] .nav-todo{background:rgba(255,255,255,.22);color:#FFFFFF}
 .nav button[aria-current="page"]{background:none;color:#FFFFFF;font-weight:600}
 .nav button[aria-current="page"] .ic{opacity:1;color:#FFFFFF}
-/* Page ouverte : la bulle rouge du logo est derrière son entrée et glisse jusqu’à la page choisie (placée par placeNavBulle).
+/* Page ouverte : une bulle rouge est derrière son entrée et glisse jusqu’à la page choisie (placée par placeNavBulle).
    Menu réduit : la bulle a la taille et la forme du logo, derrière l’icône. */
 .nav-bulle{position:absolute;top:0;left:0;opacity:0;pointer-events:none;will-change:transform;border-radius:var(--r-sm);background:var(--accent);box-shadow:inset 0 -2px 0 rgba(0,0,0,.18),0 4px 14px rgba(198,47,42,.38);transition:transform .38s cubic-bezier(.34,1.3,.5,1),width .3s ease,height .3s ease,border-radius .3s ease,opacity .2s}
 .side-mini .nav-bulle{border-radius:8px 8px 14px 14px}
@@ -48,7 +50,7 @@
 .side-toggle .ic{transition:transform .2s}
 .side-mini .sidebar{padding:0 8px}
 .side-mini .brand{justify-content:center;padding-inline:0}
-.side-mini .brand>div,.side-mini .ws-label,.side-mini .person>div,.side-mini .nav-sec{display:none}
+.side-mini .brand-t,.side-mini .ws-label,.side-mini .person>div,.side-mini .nav-sec{display:none}
 .side-mini .nav button,.side-mini .side-toggle{justify-content:center;padding-inline:0;position:relative}
 .side-mini .nav button{padding-block:9px}
 .side-mini .nav button>span,.side-mini .side-toggle>span{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
@@ -71,7 +73,7 @@
 .demo.is-hidden .demo-in{padding:0}
 .demo-hide{display:inline-flex;align-items:center;gap:7px;min-height:32px;padding:0 11px;border:1px solid var(--line);border-radius:var(--r-sm);background:var(--surface);color:var(--muted);font-size:12.5px;font-weight:600;flex:none}
 .demo-hide:hover{color:var(--ink);border-color:var(--line-strong);background:var(--surface-2)}
-.head-side{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px}
+.head-side{display:flex;flex-wrap:nowrap;align-items:center;gap:8px 10px}
 .demo-show{display:inline-flex;align-items:center;gap:6px;min-height:30px;padding:0 10px;border:1px solid var(--line);border-radius:999px;background:var(--surface);color:var(--muted);font-size:12px;font-weight:600}
 .demo-show:hover{color:var(--ink);border-color:var(--line-strong)}
 .demo-hide .ic,.demo-show .ic{width:15px;height:15px}
@@ -97,7 +99,6 @@
 .ph-tools:empty{display:none}
 .page-heading.with-tools{flex-wrap:nowrap;gap:8px 14px}
 .with-tools .ph-t,.with-tools .head-side{flex:none}
-.head-side{flex-wrap:nowrap}
 .ph-tools>.ctl,.ph-tools>.toolbar{flex-wrap:nowrap;gap:8px;margin:0;padding:0;background:none;border:0;border-radius:0;box-shadow:none}
 .ph-tools>.ctl>*:not(.grow),.ph-tools>.toolbar>*:not(.grow){flex:none}
 .ph-tools .seg.sm button{padding:5px 11px}
@@ -117,3 +118,56 @@
 /* sur deux lignes, la barre de la page peut aussi se replier (onglets, résumés, recherche) pour ne jamais dépasser */
 .hd-two .ph-tools>.toolbar>*:not(.grow){flex:0 1 auto;min-width:0}
 .hd-two .ph-tools .summary{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* Pastilles du menu : nombre de choses à faire, alerte */
+.nav-n{margin-left:auto;min-width:20px;height:20px;padding:0 6px;border-radius:var(--r);background:var(--accent);color:#FFFFFF;font-size:11.5px;font-weight:700;font-style:normal;display:grid;place-items:center;flex:none}
+.nav button[aria-current="page"] .nav-n{display:none}
+.side-mini .nav-n{position:absolute;top:3px;right:3px;min-width:16px;height:16px;padding:0 4px;font-size:10px}
+/* Menus latéraux à sections (Paramètres, Stock, Compta) : une pastille d’alerte */
+.nav-todo.bad{background:var(--accent);color:#FFFFFF}
+.nav button[aria-current="page"] .nav-todo.bad{background:#FFFFFF;color:var(--accent)}
+/* Cloche et notifications */
+.bell{position:relative;width:34px;height:34px;border:1px solid var(--line);border-radius:var(--r-sm);box-shadow:0 1px 2px rgba(14,26,43,.05);background:var(--surface);display:inline-grid;place-items:center;color:var(--ink-2);flex:none}
+.bell:hover{background:var(--surface-2);color:var(--ink)}
+.bell .ic{width:17px;height:17px}
+.bell-n{position:absolute;top:-4px;right:-4px;min-width:17px;height:17px;padding:0 5px;border-radius:999px;background:var(--bad);color:#FFFFFF;font-size:10.5px;font-weight:700;font-style:normal;line-height:17px;text-align:center}
+.nf-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.nf-row{display:flex;flex-direction:column;gap:6px;width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:var(--r);background:var(--surface);text-align:left;font:inherit;color:var(--ink);cursor:pointer}
+.nf-row:hover{background:var(--surface-2)}
+.nf-row.new{border-color:var(--role);box-shadow:inset 3px 0 0 var(--role)}
+.nf-h{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.nf-h small{font-size:12.5px;color:var(--muted);white-space:nowrap}
+.nf-tx{font-size:14.5px;line-height:1.4}
+/* Écran moyen : le menu passe en haut de la page */
+@media (max-width:900px){
+  /* le menu garde sa hauteur ; une page courte ne l’étire pas, le contenu prend le reste */
+  .app{grid-template-columns:minmax(0,1fr);grid-template-rows:auto 1fr}
+  .sidebar{position:relative;height:auto;padding:0 16px 12px}
+  .brand{padding:16px 120px 12px 0}
+  .ws-label,.person{display:none}
+  .side-toggle{position:absolute;top:16px;right:16px;width:auto;margin:0;padding:8px 10px;border:1px solid var(--side-line)}
+  .side-toggle .ic{transform:rotate(90deg)}
+  .app.side-mini{grid-template-columns:minmax(0,1fr);grid-template-rows:auto 1fr}
+  .side-mini .sidebar{padding:0 16px 4px}
+  .side-mini .brand{justify-content:flex-start;padding:16px 0 12px}
+  .side-mini .brand-t{display:block}
+  .side-mini .nav{display:none}
+  .side-mini .side-toggle{position:absolute;padding:8px 10px}
+  .side-mini .side-toggle>span{position:static;width:auto;height:auto;overflow:visible;clip:auto}
+  .side-mini .side-toggle .ic{transform:rotate(-90deg)}
+  .sidebar .side-toggle.side-out{right:16px;padding:8px 10px}
+  .sidebar .side-toggle.side-out>span{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+  .sidebar .side-out .ic,.side-mini .sidebar .side-out .ic{transform:none}
+  .sidebar:has(.side-out:not([hidden])) #side-toggle{right:64px}
+  .nav{flex-direction:row;flex-wrap:wrap;gap:6px}
+  .nav button{width:auto;padding:8px 12px;font-size:14px}
+  .nav button[aria-current="page"]::after{display:none}
+}
+@media (max-width:520px){.sidebar #side-toggle>span{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}.sidebar #side-toggle{padding:8px 10px}}
+@media (max-width:760px){
+  /* Barre de titre plus basse et blocs plus serrés : l’horaire arrive plus vite */
+  .page-heading{min-height:0;padding-top:12px;padding-bottom:12px}
+  .page-heading h1{font-size:20px}
+  .content{gap:14px}
+  .roles{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;width:100%}
+  .roles button{padding:9px 4px}
+}

@@ -16,15 +16,15 @@ function setHTML(el,html,key){
 /* Menu : [page, libellé, icône, section qui commence à cette entrée, pages réunies sous cette entrée (onglets), étiquette]
    Une entrée qui réunit plusieurs pages les montre en onglets à côté du titre ; elle s’ouvre sur sa première page. */
 const NAV={
-  admin:[['calendar','Calendrier','cal','Horaire',['calendar','annee']],['affectations','Affectations','clip'],['classes','Classes','teach','École'],['eleves','Élèves et personnel','users',null,['eleves','personnel']],['formation','Formation','check'],['modules','Modules et examens','layers','Ressources',['modules','examens']],['stock','Stock','box'],['compta','Compta','coin'],['comptes','Comptes','key','Administration'],['historique','Historique','clock'],['params','Paramètres','gear'],['nouveautes','Nouveautés','spark']],
-  teacher:[['calendar','Mon horaire','cal',null,['calendar','annee']],['mescours','Mes cours','clip'],['dispos','Disponibilités','calok'],['examens','Examens','exam'],['formation','Évaluations','check'],['stock','Matériel','box'],['profil','Mon profil','user']],
+  admin:[['accueil','Accueil','home'],['calendar','Calendrier','cal','Horaire',['calendar','annee']],['affectations','Affectations','clip'],['classes','Classes','teach','École'],['eleves','Élèves et personnel','users',null,['eleves','personnel']],['formation','Formation','check'],['modules','Modules et examens','layers','Ressources',['modules','examens']],['stock','Stock','box'],['compta','Compta','coin'],['comptes','Comptes','key','Administration'],['historique','Historique','clock'],['params','Paramètres','gear'],['nouveautes','Nouveautés','spark']],
+  teacher:[['accueil','Accueil','home'],['calendar','Mon horaire','cal',null,['calendar','annee']],['mescours','Mes cours','clip'],['dispos','Disponibilités','calok'],['examens','Examens','exam'],['formation','Évaluations','check'],['stock','Matériel','box'],['profil','Mon profil','user']],
   service:[['recrues','Mes recrues','users']],
-  student:[['calendar','Mon horaire','cal',null,['calendar','annee']],['examens','Examens','exam'],['formation','Ma formation','check'],['profil','Mon profil','user']]
+  student:[['accueil','Accueil','home'],['calendar','Mon horaire','cal',null,['calendar','annee']],['examens','Examens','exam'],['formation','Ma formation','check'],['profil','Mon profil','user']]
 };
 const TAB_LBL={calendar:'Horaire',annee:'Année scolaire',eleves:'Élèves',personnel:'Personnel',modules:'Modules',examens:'Examens'};
 /* L’entrée du menu qui contient une page (elle-même, ou celle qui la réunit avec d’autres) */
-/* Entrées masquées dans Paramètres (administration seulement ; jamais le calendrier, les paramètres ni les nouveautés) */
-const navHidden=r=>r==='admin'?(cfg().menuMasque||[]).filter(k=>!['calendar','params','nouveautes'].includes(k)):r==='teacher'&&!(skCfg().perms.sortie||skCfg().perms.bris)?['stock']:[];
+/* Entrées masquées dans Paramètres (administration seulement ; jamais l’accueil, le calendrier, les paramètres ni les nouveautés) */
+const navHidden=r=>r==='admin'?(cfg().menuMasque||[]).filter(k=>!['accueil','calendar','params','nouveautes'].includes(k)):r==='teacher'&&!(skCfg().perms.sortie||skCfg().perms.bris)?['stock']:[];
 const navList=r=>NAV[r].filter(n=>!navHidden(r).includes(n[0]));
 /* Le menu affiché : une section masquée en entier disparaît ; sinon son titre passe à sa première entrée visible */
 function navShown(){const hid=navHidden(S.role), out=[];let pend='';for(const n of NAV[S.role]){if(n[3])pend=n[3];if(hid.includes(n[0]))continue;const x=[...n];x[3]=pend;out.push(x);pend='';}return out;}
@@ -36,7 +36,7 @@ function ensureSel(){
   if(siteMode()&&!S._role0){S._role0=true;S.role=vis[0];}
   if(!vis.includes(S.role)) S.role=vis[0];
   if(S.page==='presences') S.page='classes';
-  if(!navGroup(S.page)&&S.page!=='profil') S.page=S.role==='service'?'recrues':'calendar';
+  if(!navGroup(S.page)&&S.page!=='profil') S.page=homePage();
   if(!allLoaded()) return;
   // Un compte enseignant ou élève choisit lui-même l’enseignant ou la classe affichés.
   const a=locked()?myAcct():null;
@@ -78,7 +78,7 @@ function renderSide(){
   navMode=mode;
   const P=subject(), own=!!P.a||S.role==='admin', sub=(S.role==='student'?'Élève · '+gName(S.group):ROLE_LBL[S.role])+(own?'':' · aperçu');
   placeNavBulle();
-  setHTML($('#person'),`<button type="button" class="person-btn" id="person-btn" data-act="nav" data-page="profil" title="Mon profil"${S.page==='profil'?' aria-current="page"':''}>${avHTML(P.name,own?S.me.avatarUrl:'','')}<span class="pinfo"><b>${esc(P.name)}</b><small>${esc(sub)}</small></span></button>`);
+  setHTML($('#person'),`<button type="button" class="person-btn" id="person-btn" data-act="nav" data-page="profil" title="Mon profil"${S.page==='profil'?' aria-current="page"':''}>${avHTML(P.name,(own&&S.me.avatarUrl)||(P.rec&&P.rec.photo)||'','')}<span class="pinfo"><b>${esc(P.name)}</b><small>${esc(sub)}</small></span></button>`);
 }
 /* Pages à sous-menu (Paramètres, Stock, Compta) : le menu de gauche cède la place aux sections de la page ;
    l’entrée en tête ramène au menu, sur la page d’avant. Une section : { k, l, i, sec (titre avant elle), n (pastille), bad, nt } */
@@ -148,6 +148,7 @@ function renderNotices(){
   setHTML($('#annonces'),ah);
 }
 const HEAD={
+  accueil:['Accueil',''],
   comptes:['Comptes','Qui ouvre la page, avec quel rôle et quelle fiche.'],
   profil:['Mon profil','Vos informations et votre semaine.'],
   admin:['Calendrier','Les cours et les examens de la semaine pour chaque classe.'],
@@ -184,7 +185,7 @@ const navLbl=(k,l)=>(S.role==='admin'&&menuNom(k))||(k==='mescours'&&acad()?'Mes
 /* Barre de la page affichée dans la barre du titre (pour la redessiner seule, par exemple quand on ouvre la cloche) */
 let hdTools={k:'',html:''};
 function renderHeading(){
-  const h0=S.page==='calendar'?HEAD[S.role]:S.page==='examens'&&S.role==='student'?['Mes examens','Vos prochains examens, vos résultats et vos reprises.']:S.page==='profil'&&S.role==='admin'?['Mon profil','Vos informations et les comptes du site.']:HEAD[S.page];
+  const h0=S.page==='accueil'?[accueilTitle(),'']:S.page==='calendar'?HEAD[S.role]:S.page==='examens'&&S.role==='student'?['Mes examens','Vos prochains examens, vos résultats et vos reprises.']:S.page==='profil'&&S.role==='admin'?['Mon profil','Vos informations et les comptes du site.']:HEAD[S.page];
   const hk=S.page==='calendar'?S.role:S.page, h1=acad()&&HEAD_AC[hk]&&h0===HEAD[hk]?HEAD_AC[hk]:h0, nm=S.role==='admin'?menuNom(S.page):'', h=nm?[nm,h1[1]]:h1;
   const show=demoHidden()?`<button type="button" class="demo-show" id="demo-show" data-act="demo" title="Réafficher le bandeau des profils et des données d’exemple" aria-label="Afficher le bandeau">${icon('eye')}<span class="ds-t">Afficher le bandeau</span></button>`:'';
   const prBtn=S.page==='calendar'&&S.conn==='shared'&&allLoaded()?`<button type="button" class="bell" id="pr-open" data-act="pr-open" aria-label="Imprimer" title="Imprimer l’horaire de la semaine ou la feuille de présences">${icon('print')}</button>`:'';
@@ -255,7 +256,7 @@ function renderMain(){
   let tools='';
   if(p==='calendar'){S._stats=null;html=wait||(S.role==='admin'?teacherChipsHTML()+adminMain():S.role==='teacher'?teacherMain():studentMain());tools=toolbarHTML();}
   else{
-    html=wait||(p==='classes'?classesPage():p==='eleves'?studentsPage():p==='personnel'?staffPage():p==='modules'?modulesPage():p==='affectations'?affPage():p==='mescours'?myCoursesPage():p==='dispos'?disposPage():p==='examens'?examsPage():p==='annee'?yearPage():p==='nouveautes'?newsPage():p==='historique'?historyPage():p==='stock'?stockPage():p==='compta'?comptaPage():p==='formation'?formationPage():p==='recrues'?recruesPage():p==='comptes'?accountsPage():p==='profil'?profilePage():paramsPage());
+    html=wait||(p==='accueil'?accueilPage():p==='classes'?classesPage():p==='eleves'?studentsPage():p==='personnel'?staffPage():p==='modules'?modulesPage():p==='affectations'?affPage():p==='mescours'?myCoursesPage():p==='dispos'?disposPage():p==='examens'?examsPage():p==='annee'?yearPage():p==='nouveautes'?newsPage():p==='historique'?historyPage():p==='stock'?stockPage():p==='compta'?comptaPage():p==='formation'?formationPage():p==='recrues'?recruesPage():p==='comptes'?accountsPage():p==='profil'?profilePage():paramsPage());
     if(!wait){const x=splitTools(html);html=svBarHTML()+x.body;tools=x.tools;}
   }
   const vm=wait?'':viewMode();
@@ -265,6 +266,7 @@ function renderMain(){
   setHTML(el,html,key);
   el.classList.toggle('view-cards',vm==='cards');el.classList.toggle('view-dense',vm==='dense');
   if(vm==='cards') labelCards(el);
+  playEnter(el,p,vm);
   hdTools={k:S.role+'/'+p,html:tools};
   $('#heading').classList.toggle('with-tools',!!tools);
   const ht=$('#hd-tools');if(ht) setHTML(ht,tools);
@@ -272,6 +274,32 @@ function renderMain(){
   const pin=S._pin;S._pin=null;
   if(pin) pinRow(pin);
   if(before) glide(el,before,!!pin);
+}
+/* Entrées animées : un élément [data-enter="list|fiche|tab"] reçoit la classe « enter » (qui lance son animation)
+   seulement quand on arrive sur la liste, sur une autre fiche ou sur un autre onglet ; un simple rafraîchissement
+   des données ne la rejoue pas. Pendant une transition entre la liste et la fiche (vtGo), rien ne se rejoue. */
+function playEnter(el,p,vm){
+  const keys={list:S.role+'/'+p+'/'+vm+'/'+(S.pg.fiche?'f':''),fiche:S.role+'/'+p+'/'+(S.pg.fiche||''),tab:S.role+'/'+p+'/'+(S.pg.fiche||'')+'/'+(S.pg.tab||'')};
+  const prev=el._enter||(el._enter={});
+  for(const k in keys){
+    const nodes=el.querySelectorAll('[data-enter="'+k+'"]');if(!nodes.length) continue;
+    if(prev[k]!==keys[k]&&!S.vt&&!reduceMotion()) nodes.forEach(n=>n.classList.add('enter'));
+    prev[k]=keys[k];
+  }
+}
+/* Passer de la liste à une fiche (et revenir) : le navigateur fait glisser les initiales et le nom de la carte
+   jusqu’à l’en-tête de la fiche (transition de vue) ; sans cette fonction, ou si l’on réduit les animations, on change directement. */
+let vtOff=false;
+function vtGo(fn){
+  if(vtOff||!document.startViewTransition||reduceMotion()||S.vt){fn();return;}
+  /* une erreur dans la transition serait avalée par le navigateur : on la relance pour qu’elle reste visible */
+  let done=false;const run=()=>{if(done)return;done=true;try{fn();}catch(e){setTimeout(()=>{throw e;});}};
+  S.vt=true;
+  try{
+    const t=document.startViewTransition(run), q=()=>{};t.ready.catch(q);t.updateCallbackDone.catch(q);t.finished.catch(q).finally(()=>{S.vt=false;});
+    /* si le navigateur ne lance jamais la transition (onglet caché, navigateur sans écran…), on change directement et on n’essaie plus */
+    setTimeout(()=>{if(!done){vtOff=true;S.vt=false;try{t.skipTransition();}catch(e){}run();}},300);
+  }catch(e){S.vt=false;run();}
 }
 /* Ligne d’une classe : quand on isole une classe puis qu’on revient à toutes les classes,
    la ligne de cette classe revient exactement à l’endroit de l’écran où on l’avait cliquée. */

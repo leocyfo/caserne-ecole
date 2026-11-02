@@ -9,7 +9,9 @@ const prCSS=land=>`@page{size:letter ${land?'landscape':'portrait'};margin:12mm}
 .pr-head{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;border-bottom:2px solid #111;padding-bottom:6px;margin-bottom:10px}
 .pr-head h1{margin:0;font-size:16pt;line-height:1.2}
 .pr-head p{margin:3px 0 0;font-size:10.5pt;color:#333}
-.pr-org{text-align:right;font-size:10pt;color:#333}
+.pr-org{text-align:right;font-size:10pt;color:#333;max-width:52%}
+.pr-logo{height:15mm;width:auto;flex:none;align-self:center}
+.pr-head>div:first-of-type{flex:1 1 auto;min-width:45mm}
 .pr-t{width:100%;border-collapse:collapse;table-layout:fixed}
 .pr-t th,.pr-t td{border:1px solid #777;padding:5px 6px;vertical-align:top;text-align:left;overflow-wrap:anywhere}
 .pr-t thead th{background:#e8e8e8;font-size:9.5pt}
@@ -39,7 +41,9 @@ const prCSS=land=>`@page{size:letter ${land?'landscape':'portrait'};margin:12mm}
 const prSlug=v=>String(v||'').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^A-Za-z0-9]+/g,'-').replace(/^-|-$/g,'').toLowerCase()||'feuille';
 /* Ligne de signature au bas de chaque page (Paramètres > Impression) */
 const prFoot=()=>{const x=String(cfg().impSign||'').trim();return x?`<p class="pr-sign">${esc(x)}</p>`:'';};
-function prHead(title,sub){const c=cfg(), co=c.impCoord!==false, ad=[c.adresse,c.tel,c.courriel,c.web].filter(Boolean);return `<header class="pr-head"><div><h1>${esc(title)}</h1><p>${sub}</p></div><div class="pr-org"><b>${esc(c.nom||'')}</b><br>${esc(c.annee||'')}${co&&c.resp?'<br>'+esc(c.resp):''}${co&&ad.length?'<br>'+esc(ad.join(' · ')):''}${c.impDate===true?'<br>Imprimé le '+esc(longDate(new Date())):''}</div></header>${c.pied?`<p class="pr-pied">${esc(c.pied)}</p>`:''}`;}
+/* Le logo de l’Académie (site/logo.svg) : adresse complète, pour qu’il paraisse aussi dans la feuille remise en fichier */
+const prLogo=()=>cfg().impLogo===false?'':`<img class="pr-logo" src="${esc(new URL('site/logo.svg',location.href).href)}" alt="">`;
+function prHead(title,sub){const c=cfg(), co=c.impCoord!==false, ad=[c.adresse,c.tel,c.courriel,c.web].filter(Boolean);return `<header class="pr-head">${prLogo()}<div><h1>${esc(title)}</h1><p>${sub}</p></div><div class="pr-org"><b>${esc(c.nom||'')}</b><br>${esc(c.annee||'')}${c.programme?'<br>'+esc(c.programme):''}${co&&c.resp?'<br>'+esc(c.resp):''}${co&&ad.length?'<br>'+esc(ad.join(' · ')):''}${c.impDate===true?'<br>Imprimé le '+esc(longDate(new Date())):''}</div></header>${c.pied?`<p class="pr-pied">${esc(c.pied)}</p>`:''}`;}
 const prWeekLbl=mon=>{const a=mon, b=addDays(mon,4);return a.getMonth()===b.getMonth()?`${dn(a)} au ${dn(b)} ${fMonth.format(b)} ${b.getFullYear()}`:`${dn(a)} ${fMonth.format(a)} au ${dn(b)} ${fMonth.format(b)} ${b.getFullYear()}`;};
 /* Tout ce qui est à l’horaire d’une semaine (du lundi au vendredi) */
 function weekItemsOf(mon){

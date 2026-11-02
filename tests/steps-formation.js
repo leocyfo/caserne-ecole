@@ -146,7 +146,7 @@ click($('[data-act=qb-back]'));await wait(150);
 click($('#fo-train'));await wait(150);click($('#qb-train-go'));await wait(150);
 click($('#qb-train-q .qb-opt'));await wait(100);
 ok('training feedback',!!$('#qb-fb')&&/réponse/.test($('#qb-fb').textContent)&&!!$('#qb-tnext'));
-click($('#fo-certs'));await wait(150);ok('my certificates',$$('#fo-mycerts li').length===4);
+click($('#fo-certs'));await wait(150);ok('my certificates',$$('#fo-mycerts li').length===5&&/embarcation de plaisance/.test($('#fo-mycerts').textContent));
 click($('#fo-enpq'));await wait(150);ok('my ENPQ file',!!$('#fo-myenpq')&&$$('#fo-myenpq li').length>=6);
 /* ---------- présence par code QR ---------- */
 click($('[data-role=admin]'));await wait(200);

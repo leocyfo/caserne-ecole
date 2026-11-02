@@ -203,8 +203,9 @@ function studentDrawer(){
       ${log.length?`<ul class="plist">${log.map(x=>{const c=byId(S.data.cours,x.cours);return `<li><span>${esc(dayLabel(parse(x.date)))} · ${esc(c?c.titre:'Cours')}</span><span class="chip ${CHIP[x.v]}">${LBL[x.v]}</span></li>`;}).join('')}</ul>`:''}`:'<p class="help">Aucune présence notée pour l’instant.</p>'}</section>`;
   }
   const gOpts='<option value="">Choisir une classe</option>'+groups().map(g=>`<option value="${esc(g.id)}"${f.groupe===g.id?' selected':''}>${esc(g.nom)}</option>`).join('');
+  const ph=d.id?photoRow('eleve',byId(S.data.eleves,d.id)):'';
   const body=`${track}<form id="st-form" data-form="student" novalidate>
-    <h3 class="dr-h3">Dossier</h3>
+    <h3 class="dr-h3">Dossier</h3>${ph}
     <div class="grid2"><label class="field"><span>Nom de l’élève</span><input id="st-nom" data-f="nom" value="${esc(f.nom)}" maxlength="80" autocomplete="off"></label><label class="field"><span>Classe</span><select id="st-groupe" data-f="groupe">${gOpts}</select></label></div>
     <div class="grid2"><label class="field"><span>Date de naissance</span><input type="date" id="st-naiss" data-f="naissance" value="${esc(f.naissance)}"></label><label class="field"><span>Personne à joindre en cas d’urgence</span><input id="st-parent" data-f="parent" value="${esc(f.parent)}" maxlength="80" autocomplete="off"></label></div>
     <div class="grid2"><label class="field"><span>Courriel</span><input type="email" id="st-mail" data-f="courriel" value="${esc(f.courriel)}" maxlength="80" autocomplete="off"></label><label class="field"><span>Téléphone</span><input id="st-tel" data-f="telephone" value="${esc(f.telephone)}" maxlength="30" autocomplete="off"></label></div>
@@ -221,7 +222,8 @@ async function saveStudent(){
   if(!f.nom.trim()){d.err='Indiquez le nom de l’élève.';renderDrawer();return;}
   if(!f.groupe){d.err='Choisissez la classe de l’élève.';renderDrawer();return;}
   const doc={fonction:f.fonction||'',numero:f.numero===''?null:Math.max(1,Math.round(+f.numero))||null,nom:f.nom.trim(),groupe:f.groupe,naissance:f.naissance,parent:f.parent.trim(),courriel:f.courriel.trim(),telephone:f.telephone.trim(),notes:f.notes.trim()};
-  const id=d.id||genId('el');
+  const id=d.id||genId('el'), old=d.id?byId(S.data.eleves,d.id):null;
+  for(const k of ['photo','docs']) if(old&&old[k]) doc[k]=old[k];
   S.busy=true;d.err='';renderDrawer();
   const ok=await write(async()=>{await col('eleves').doc(id).set(doc);if(d.id)await syncFiches(id,doc);},d.id?'Dossier enregistré':'Élève ajouté');
   S.busy=false;if(ok&&S.dr===d)S.dr=null;render();
@@ -238,7 +240,7 @@ function staffDrawer(){
   const d=S.dr, f=d.draft;
   if(d.id&&!byId(S.data.enseignants,d.id)) return goneHTML('Membre');
   const cs=d.id?S.data.cours.filter(c=>c.enseignant===d.id):[];
-  const body=`<form id="sf-form" data-form="staff" novalidate>
+  const body=`<form id="sf-form" data-form="staff" novalidate>${d.id?photoRow('staff',byId(S.data.enseignants,d.id)):''}
     <label class="field"><span>Nom</span><input id="sf-nom" data-f="nom" value="${esc(f.nom)}" maxlength="80" autocomplete="off"></label>
     <div class="grid2"><label class="field"><span>Fonction</span><select id="sf-fonc" data-f="fonction">${FONCTIONS.concat(f.fonction&&!FONCTIONS.includes(f.fonction)?[f.fonction]:[]).map(x=>`<option${f.fonction===x?' selected':''}>${esc(x)}</option>`).join('')}</select></label><label class="field"><span>Statut d’emploi</span><select id="sf-stat" data-f="statut">${Object.keys(STATUTS).map(x=>`<option${f.statut===x?' selected':''}>${x}</option>`).join('')}</select></label></div>
     <div class="grid2"><label class="field"><span>Courriel</span><input type="email" id="sf-mail" data-f="courriel" value="${esc(f.courriel)}" maxlength="80" autocomplete="off"></label><label class="field"><span>Téléphone</span><input id="sf-tel" data-f="telephone" value="${esc(f.telephone)}" maxlength="30" autocomplete="off"></label></div>
@@ -255,9 +257,9 @@ function staffDrawer(){
 async function saveStaff(){
   const d=S.dr, f=d.draft;if(S.busy)return;
   if(!f.nom.trim()){d.err='Indiquez le nom.';renderDrawer();return;}
-  const id=d.id||genId('e');
+  const id=d.id||genId('e'), old=d.id?byId(S.data.enseignants,d.id):null;
   S.busy=true;d.err='';renderDrawer();
-  const ok=await write(async()=>{await col('enseignants').doc(id).set({nom:f.nom.trim(),fonction:f.fonction,statut:f.statut,courriel:f.courriel.trim()});await col('dossiers-personnel').doc(id).set({telephone:f.telephone.trim(),embauche:f.embauche,notes:f.notes.trim()});if(d.id)await syncFiches(id,{nom:f.nom.trim(),fonction:f.fonction,statut:f.statut,courriel:f.courriel.trim()},{telephone:f.telephone.trim()});},d.id?'Dossier enregistré':'Membre ajouté');
+  const ok=await write(async()=>{await col('enseignants').doc(id).set(Object.assign({nom:f.nom.trim(),fonction:f.fonction,statut:f.statut,courriel:f.courriel.trim()},old&&old.photo?{photo:old.photo}:{}));await col('dossiers-personnel').doc(id).set({telephone:f.telephone.trim(),embauche:f.embauche,notes:f.notes.trim()});if(d.id)await syncFiches(id,{nom:f.nom.trim(),fonction:f.fonction,statut:f.statut,courriel:f.courriel.trim()},{telephone:f.telephone.trim()});},d.id?'Dossier enregistré':'Membre ajouté');
   S.busy=false;if(ok&&S.dr===d)S.dr=null;render();
 }
 

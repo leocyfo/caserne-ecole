@@ -20,8 +20,8 @@ await wait(700);
 ok('phone width',innerWidth===390&&matchMedia('(max-width:760px)').matches,innerWidth);
 
 /* Toutes les pages des trois rôles : rien de plus large que l’écran, champs à 16 px, textes à 12 px au moins */
-const PAGES={admin:['calendar','classes','eleves','personnel','modules','affectations','examens','annee','stock','comptes','historique','params','nouveautes'],
-  teacher:['calendar','mescours','dispos','examens','annee','profil'],student:['calendar','examens','annee','profil']};
+const PAGES={admin:['accueil','calendar','classes','eleves','personnel','modules','affectations','examens','annee','stock','comptes','historique','params','nouveautes'],
+  teacher:['accueil','calendar','mescours','dispos','examens','annee','profil'],student:['accueil','calendar','examens','annee','profil']};
 const wide=[],fields=[],tiny=[];let seen=0;
 for(const role of Object.keys(PAGES)){
   click($('[data-role='+role+']'));await wait(150);
@@ -33,7 +33,7 @@ for(const role of Object.keys(PAGES)){
     const t=smallText();if(t.length)tiny.push(role+'/'+p+' : '+t.length+' · '+t.slice(0,3).join(' · '));
   }
 }
-ok('23 pages visited',seen===23,seen);
+ok('26 pages visited',seen===26,seen);
 ok('no page wider than the phone',!wide.length,wide.join(' ; '));
 ok('fields at 16 px (no zoom on iPhone)',!fields.length,fields.join(' ; '));
 ok('text at 12 px or more',!tiny.length,tiny.join(' ; '));

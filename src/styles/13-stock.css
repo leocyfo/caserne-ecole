@@ -1,7 +1,3 @@
-/* Menus latéraux à sections (Paramètres, Stock, Compta) : une pastille d’alerte */
-.nav-todo.bad{background:var(--accent);color:#FFFFFF}
-.nav button[aria-current="page"] .nav-todo.bad{background:#FFFFFF;color:var(--accent)}
-
 /* ---------- Stock ---------- */
 /* Inventaire et Achats : les onglets en haut de la page */
 .stk-seg{display:flex;width:fit-content;max-width:100%;margin-bottom:12px}
@@ -34,7 +30,6 @@
 .stk-ig h2{display:flex;align-items:center;gap:8px}
 form[data-suivi="qte"] .sa-u,form[data-suivi="unite"] .sa-q{display:none}
 form:not([data-cat="ari"]) .sa-ari{display:none}
-.pk-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,200px),1fr));gap:6px}
 .pr-note{margin:14px 0 0;font-size:12px}
 .pr-sign2{display:flex;justify-content:space-between;gap:40px;margin-top:46px}
 .pr-sign2 p{flex:1;margin:0;padding-top:4px;border-top:1px solid #333;font-size:11px;text-align:center}
@@ -68,8 +63,6 @@ form:not([data-cat="ari"]) .sa-ari{display:none}
 .chip-btn.ok{background:var(--ok);border-color:var(--ok);color:#FFFFFF}
 .chip-btn.bad{background:var(--bad);border-color:var(--bad);color:#FFFFFF}
 .chip-btn.warn{background:var(--warn);border-color:var(--warn);color:#FFFFFF}
-.xm-skc{grid-template-columns:minmax(0,2fr) minmax(0,1fr) minmax(0,.7fr) minmax(0,.8fr) minmax(120px,auto)}
-.xm-hd.xm-skc{grid-template-columns:minmax(0,2fr) minmax(0,1fr) minmax(0,.7fr) minmax(0,.8fr) 120px}
 .xm-skb{grid-template-columns:minmax(0,1.6fr) minmax(0,1fr) minmax(0,1fr) minmax(0,1.2fr)}
 .stk-kit td{white-space:nowrap}
 .pr-labels{display:grid;grid-template-columns:repeat(3,1fr);gap:4mm}
@@ -108,36 +101,4 @@ form:not([data-cat="ari"]) .sa-ari{display:none}
 .stk-pk>span:nth-child(2){flex:1;min-width:0}
 .stk-pk b{display:block;font-size:14px}
 .stk-pk small{display:block;font-size:12.5px;color:var(--muted)}
-.bad-t{color:var(--bad)}.warn-t{color:var(--warn)}
 form[data-form="stk-mod"][data-suivi="qte"] .sa-u,form[data-form="stk-mod"][data-suivi="unite"] .sa-q{display:none}
-
-/* ---------- Compta ---------- */
-.cp-tbl td.num,.cp-tbl th.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
-.cp-tbl tfoot th,.cp-tbl tfoot td{border-top:2px solid var(--line-strong);font-weight:700}
-.cp-tbl .num.bad,.cp-tbl .num .bad{color:var(--bad)}
-.cp-tbl .num.warn{color:var(--warn)}
-.cp-amt{font-variant-numeric:tabular-nums;white-space:nowrap}
-.cp-amt.rev{color:var(--ok)}
-.cp-amt.dep{color:var(--ink)}
-.cp-in{width:120px;min-height:32px;padding:0 8px;border:1px solid var(--line-strong);border-radius:var(--r-sm);background:var(--surface);text-align:right;font:inherit;font-variant-numeric:tabular-nums}
-.cp-bar{min-width:140px}
-.cp-bar .meter{margin:0 0 2px}
-.cp-bar small{font-size:12px;color:var(--muted)}
-.cp-box{margin-top:14px;padding:12px;border:1px solid var(--line);border-radius:var(--r);background:var(--surface-2);display:flex;flex-direction:column;gap:10px}
-.cp-box .sb-h3{margin:0}
-.cp-lines{margin-top:12px}
-.cp-lines td.num,.cp-lines th.num{text-align:right;white-space:nowrap}
-.cp-lines tfoot th{text-align:right;font-weight:600}
-.cp-fl{display:flex;flex-direction:column;gap:6px}
-.cp-fli{display:grid;grid-template-columns:minmax(0,1fr) 70px 110px;gap:8px;align-items:end}
-.cp-tarifs{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,330px),1fr));gap:12px}
-.cp-tarif{display:flex;flex-direction:column;gap:8px;margin:0;padding:10px 12px;border:1px solid var(--line);border-radius:var(--r-sm)}
-.cp-tarif legend{padding:0 4px;font-weight:700;font-size:13.5px}
-.cp-ech{grid-template-columns:minmax(0,1fr) 90px}
-.cp-det summary{cursor:pointer;font-weight:600;font-size:13.5px;margin:4px 0 8px}
-.cp-tx{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px}
-@media (max-width:760px){
-  .cp-fli{grid-template-columns:minmax(0,1fr) 60px 96px}
-  .cp-in{width:100%;font-size:16px}
-  .pr-sign2{gap:20px}
-}

@@ -19,7 +19,6 @@
 .ps-chk input{margin-top:2px;flex:none;width:16px;height:16px;accent-color:var(--accent)}
 .ps-chk b{display:block;font-size:13.5px;color:var(--ink)}
 .ps-chk small{display:block;margin-top:1px;font-size:12.5px;color:var(--muted)}
-.ps-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px}
 .ps-list{display:flex;flex-direction:column;gap:8px}
 .ps-times{display:grid;grid-template-columns:110px repeat(2,minmax(0,160px));gap:8px 12px;align-items:end}
 .ps-tl{padding-bottom:10px;font-size:13.5px;font-weight:600;color:var(--ink)}
@@ -30,7 +29,6 @@
 .ps-color:has(input:checked){border-color:var(--ink);box-shadow:0 0 0 1px var(--ink)}
 .ps-color:has(input:focus-visible){outline:2px solid var(--focus);outline-offset:2px}
 .ps-sw{width:18px;height:18px;border-radius:50%;box-shadow:inset 0 0 0 2px rgba(255,255,255,.35)}
-.ps-facts{grid-template-columns:repeat(2,minmax(0,200px))}
 .ps-exp{display:flex;flex-direction:column}
 .ps-exp>div{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"t b" "s b";gap:2px 16px;align-items:center;padding:10px 0;border-top:1px solid var(--line-2)}
 .ps-exp>div:first-child{border-top:0;padding-top:0}
@@ -103,4 +101,4 @@
 .an-prev{display:flex;flex-direction:column;gap:8px}
 @media (max-width:760px){.notice.ann{flex-wrap:wrap}.ann-ic{display:none}.ann-a{width:100%;justify-content:flex-start}.an-row{grid-template-columns:1fr}.an-act{justify-content:flex-start;max-width:none}}
 .pr-pied{margin:0 0 10px;font-size:11px;font-style:italic;color:#555}
-@media (max-width:760px){.ps-grade{grid-template-columns:20px minmax(0,1fr) 116px}.ps-gs{display:none}.ps-mrow{grid-template-columns:1fr}.ps-times{grid-template-columns:1fr 1fr}.ps-tl{grid-column:1/-1;padding:0}.ps-facts{grid-template-columns:1fr 1fr}.ps-exp>div{grid-template-columns:1fr;grid-template-areas:"t" "s" "b"}.ps-exp .btn{justify-self:start;margin-top:6px}}
+@media (max-width:760px){.ps-grade{grid-template-columns:20px minmax(0,1fr) 116px}.ps-gs{display:none}.ps-mrow{grid-template-columns:1fr}.ps-times{grid-template-columns:1fr 1fr}.ps-tl{grid-column:1/-1;padding:0}.ps-exp>div{grid-template-columns:1fr;grid-template-areas:"t" "s" "b"}.ps-exp .btn{justify-self:start;margin-top:6px}}

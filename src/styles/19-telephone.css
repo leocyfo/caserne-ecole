@@ -1,0 +1,11 @@
+/* Téléphone : ce qui change partout sur un écran étroit (jusqu’à 760 px). Chaque fichier finit par ses propres règles
+   de téléphone ; celles-ci valent pour tout le site. Vérifié par tests/steps-phone.js à 390 px. */
+@media (max-width:760px){
+  /* Champs à 16 px : en dessous, l’iPhone zoome chaque fois qu’on touche un champ */
+  :is(input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=color]),select,textarea){font-size:16px}
+  /* Petits textes : 12 px au moins */
+  .chip,.chore-chip,.role-chip,.wk-corner,.wk-class small,.day-pick small,.cc-kind,.cc-flag,.kpi span,.tbl th,.eyebrow,.facts dt,
+  .cl-hd,.cl-row [data-l]::before,.xm-tile .lbl,.xm-hd,.xm-d small,.nav-n,.nav-todo,.dp-wd,.dp-c span,.md-m>span,.xg thead th,.xg tfoot .xg-n,
+  .xg thead .xg-r,.xg-r small,.xg-h small,.st-hd,.st-row [data-l]::before,.miss-d small,.col-prin,.fh-stats dt,.fiche-h3,
+  .cell-chore small,.fchip small,.mv-box small,.pick-hint{font-size:12px}
+}

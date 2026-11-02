@@ -21,7 +21,7 @@ const afWhy=o=>[o.pend?'a postulé':'',o.dispo?'disponible':'',o.ch?'chargé du 
 /* Dans la fenêtre d’une séance : les trois meilleurs */
 function afSuggestHTML(s,a){
   const L=afSuggest(s,a).slice(0,3);if(!L.length) return '';
-  return `<div class="af-sugg" id="af-sugg"><p class="sb-h3">Proposés</p><ul class="af-list">${L.map(o=>`<li>${avHTML(o.t.nom,'')}<span class="nm">${esc(o.t.nom)}<small>${esc(afWhy(o))}</small></span><span class="af-btns"><button class="btn sm yes" type="button" data-act="af-sugg" data-tid="${esc(o.t.id)}" ${sAt(s)}${dis()}>Attribuer</button></span></li>`).join('')}</ul></div>`;
+  return `<div class="af-sugg" id="af-sugg"><p class="sb-h3">Proposés</p><ul class="af-list">${L.map(o=>`<li>${avHTML(o.t.nom,o.t.photo||'')}<span class="nm">${esc(o.t.nom)}<small>${esc(afWhy(o))}</small></span><span class="af-btns"><button class="btn sm yes" type="button" data-act="af-sugg" data-tid="${esc(o.t.id)}" ${sAt(s)}${dis()}>Attribuer</button></span></li>`).join('')}</ul></div>`;
 }
 /* Sur la page des affectations : une proposition pour chaque place à combler, à accepter d’un coup */
 function afAutoBar(open){
