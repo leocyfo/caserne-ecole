@@ -72,7 +72,7 @@ function dayBoardHTML(list,cols){
 }
 function boardHTML(list,rows,mode,corner){
   const today=todayISO();
-  let h=`<div class="boardbox">${expBtn()}<div class="week${S.compact?' compact':''}" role="table" aria-label="Horaire du lundi au vendredi"><div class="wk-row wk-head" role="row"><div class="wk-corner" role="columnheader">${esc(corner||'')}</div>`;
+  let h=`<div class="boardbox">${expBtn()}<div class="week${S.compact?' compact':''}" role="table" aria-label="Horaire du lundi au vendredi"><div class="wk-row wk-head" role="row"><div class="wk-corner" role="columnheader">${corner?esc(corner):'<span class="vh">Moment</span>'}</div>`;
   for(let i=0;i<5;i++){const d=addDays(S.week,i);h+=`<div class="wk-day${iso(d)===today?' is-today':''}" role="columnheader">${DAYS[i]} ${dn(d)} ${fMonthS.format(d)}</div>`;}
   h+='</div>';
   const edit=mode==='admin'&&isAdmin()&&S.conn==='shared';

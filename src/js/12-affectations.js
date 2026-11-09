@@ -77,7 +77,7 @@ function myCoursesPage(){
   const nWait=B.wait.filter(x=>x.v==='attente').length, nRef=B.wait.length-nWait, nx=B.mine[0], hrs=Math.round(B.past.reduce((n,s)=>n+sHours(s),0));
   const myMods=((B.t.competences||[]).map(Number).filter(n=>!isNaN(n)).sort((a,b)=>a-b));
   const hasDispo=Object.keys((S.data.dispos[tid]||{}).jours||{}).some(d=>d>=todayISO());
-  const tb=`<div class="toolbar">${identitySelect()}<p class="summary" style="margin:0"><span>${myMods.length?`Vos modules : <b style="font-size:14px" title="${esc(myMods.map(n=>'M'+n).join(', '))}">${myMods.length>6?pl(myMods.length,'module','modules'):esc(myMods.map(n=>'M'+n).join(', '))}</b>`:'Aucun module inscrit à vos compétences'}</span></p><span class="grow"></span><button class="btn" type="button" id="go-dispos" data-act="nav" data-page="dispos">${icon('calok')}Mes disponibilités</button></div>`;
+  const tb=`<div class="toolbar">${identitySelect()}<p class="summary u-m0"><span>${myMods.length?`Vos modules : <b class="u-fs875" title="${esc(myMods.map(n=>'M'+n).join(', '))}">${myMods.length>6?pl(myMods.length,'module','modules'):esc(myMods.map(n=>'M'+n).join(', '))}</b>`:'Aucun module inscrit à vos compétences'}</span></p><span class="grow"></span><button class="btn" type="button" id="go-dispos" data-act="nav" data-page="dispos">${icon('calok')}Mes disponibilités</button></div>`;
   const tiles=`<div class="xm-tiles" role="group" aria-label="${W('Mes séances','Mes cours')}">
     ${affTile('mt','open',tab,'À pourvoir',B.open.length,'','selon vos disponibilités')}
     ${affTile('mt','wait',tab,'En attente de réponse',nWait,nWait?'warn':'',nRef?pl(nRef,'candidature refusée','candidatures refusées'):nWait?(nWait>1?'candidatures envoyées':'candidature envoyée'):'Aucune candidature')}
@@ -102,12 +102,12 @@ function myCoursesPage(){
         const ask=st.rp===s.key&&!remp;
         return xRow('xm-a5','',cells(s,remp?`<span class="chip warn">Remplacement demandé</span>${can?`<button class="btn sm ghost" type="button" data-act="af-remp-cancel" ${sAt(s)}${dis()}>Annuler</button>`:''}`:can&&!ask&&permOn('remp')?`<button class="btn sm" type="button" data-act="pg-set" data-k="rp" data-v="${esc(s.key)}">Demander un remplacement</button>`:''),'')
           +(ask?`<form class="xm-row af-ask" data-form="af-remp" ${sAt(s)}><label class="field"><span>Raison du remplacement (facultatif)</span><input id="rp-motif" maxlength="140" autocomplete="off" placeholder="Ex. garde en caserne ce jour-là"></label><button class="btn sm primary" type="submit"${dis()}>Envoyer la demande</button><button class="btn sm ghost" type="button" data-act="pg-set" data-k="rp" data-v="">Annuler</button></form>`:'');}).join(''))
-        +(B.mine.length>lim?`<div class="row" style="margin-top:12px"><button class="btn" type="button" data-act="pg-set" data-k="lim" data-v="${lim+25}">Afficher plus (${B.mine.length-lim})</button></div>`:'')
+        +(B.mine.length>lim?`<div class="row u-mt12"><button class="btn" type="button" data-act="pg-set" data-k="lim" data-v="${lim+25}">Afficher plus (${B.mine.length-lim})</button></div>`:'')
       :`<section class="panel"><p class="help">${W('Aucune séance attribuée','Aucun cours attribué')} à venir.</p></section>`;
   }else{
     const lim=+st.lim||25;
     body=B.past.length?xList('xm-a5',head,B.past.slice(0,lim).map(s=>xRow('xm-a5','',cells(s,`<span class="xm-m">${String(sHours(s)).replace('.',',')} h</span>`),'')).join(''))
-        +(B.past.length>lim?`<div class="row" style="margin-top:12px"><button class="btn" type="button" data-act="pg-set" data-k="lim" data-v="${lim+25}">Afficher plus (${B.past.length-lim})</button></div>`:'')
+        +(B.past.length>lim?`<div class="row u-mt12"><button class="btn" type="button" data-act="pg-set" data-k="lim" data-v="${lim+25}">Afficher plus (${B.past.length-lim})</button></div>`:'')
       :`<section class="panel"><p class="help">${W('Aucune séance donnée','Aucun cours donné')} depuis la rentrée.</p></section>`;
   }
   return tb+tiles+body;
@@ -138,7 +138,7 @@ function dispoCalHTML(tid,edit){
   }
   let state='Aucune modification';if(dr.dirty)state='Modifications non enregistrées';else if(dr.maj){const t=new Date(dr.maj);if(!isNaN(t))state=`Enregistrées le ${shortDate(t)}`;}
   return `<div class="toolbar dp-bar"><div class="weeknav"><button class="icon-btn" type="button" id="dp-prev" data-act="dp-month" data-n="-1" aria-label="Mois précédent">${icon('left')}</button><span class="range" id="dp-month">${esc(mName.charAt(0).toUpperCase()+mName.slice(1))} ${Y}</span><button class="icon-btn" type="button" id="dp-next" data-act="dp-month" data-n="1" aria-label="Mois suivant">${icon('right')}</button></div>
-      <p class="summary" style="margin:0"><span><b>${n}</b>${n>1?'jours disponibles':'jour disponible'}</span></p><span class="grow"></span>
+      <p class="summary u-m0"><span><b>${n}</b>${n>1?'jours disponibles':'jour disponible'}</span></p><span class="grow"></span>
       ${edit?`<button class="btn sm" type="button" data-act="dp-all">Tout le mois</button><button class="btn sm ghost" type="button" data-act="dp-none">Effacer le mois</button>`:''}</div>
     <div class="dp-grid" role="group" aria-label="${esc('Disponibilités de '+mName+' '+Y)}">${DAYS.map((nm,i)=>edit?`<button type="button" class="dp-wd" data-act="dp-col" data-j="${i}" title="${esc('Tous les '+nm.toLowerCase()+'s du mois')}">${nm}</button>`:`<span class="dp-wd">${nm}</span>`).join('')}${cells}</div>
     <div class="dp-legend"><span><i class="dp-k v-J"></i>Toute la journée</span><span><i class="dp-k v-AM"></i>Avant-midi</span><span><i class="dp-k v-PM"></i>Après-midi</span><span><i class="dp-dot"></i>${W('Séance attribuée','Cours attribué')}</span></div>
@@ -176,7 +176,7 @@ function affPage(){
   </div>`;
   const sessRows=list=>{const lim=+st.lim||30;
     return xList('xm-a6',[['Date'],[W('Séance','Cours')],['Classe'],['Moment','',1],['Enseignants'],['','r']],list.slice(0,lim).map(({s,st:a})=>xRow('xm-a6',`data-act="sess-at" ${sAt(s)}`,`${xDate(s,sHot(s))}<div class="xm-t"><b>${sTitle(s)}</b>${sSub(s)?`<small>${sSub(s)}</small>`:''}</div>${xCls(s)}<span class="xm-m">${esc(momentOf(s))}</span>${affCell(a)}<div class="xm-end">${a.clash.length?'<span class="chip bad">Conflit</span>':a.rclash.length?`<span class="chip bad">${ressClashLbl(a.rclash)}</span>`:a.remp.length?'<span class="chip warn">Remplacement</span>':a.open>0?`<span class="chip ${a.firm?'warn':'bad'}">${a.open} à combler</span>`:'<span class="chip ok">Complet</span>'}</div>`,sAria(s))).join(''))
-      +(list.length>lim?`<div class="row" style="margin-top:12px"><button class="btn" type="button" data-act="pg-set" data-k="lim" data-v="${lim+30}">Afficher plus (${list.length-lim})</button></div>`:'');};
+      +(list.length>lim?`<div class="row u-mt12"><button class="btn" type="button" data-act="pg-set" data-k="lim" data-v="${lim+30}">Afficher plus (${list.length-lim})</button></div>`:'');};
   let body='';
   if(tab==='open') body=open.length?sessRows(open):`<div class="cl-list"><p class="miss-ok"><span class="chip ok">Complet</span>${W('Toutes les séances','Tous les cours')} des ${hz} prochains jours ont leurs enseignants.</p></div>`;
   else if(tab==='all') body=up.length?sessRows(up):`<section class="panel"><p class="help">${W('Aucune séance','Aucun cours')} dans cette période.</p></section>`;

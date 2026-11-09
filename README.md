@@ -61,6 +61,20 @@ Chaque classe a un document `cours/<id>` par module (sigle `M7`). Ses séances s
 
 Données : `config/ecole.ressources` (`{ id, nom, type }`, type `local` ou `equip`), `cours[].ress` dans un module et `ress` sur une séance (listes d’identifiants), `journal/<AAAA-MM>` (un document par mois, une entrée par action dans `ev` : `{ le, par, role, cat, txt, obj, seance, date, groupe }`) et `cours/<id>.annule` (`{ "date@séance": { le, par } }` pour chaque séance annulée).
 
+## Options : Stock et Compta
+
+Le Stock et la Compta sont des **options** : chacune est un fichier à part (`options/stock.js`, `options/compta.js`). **Le fichier est là, l’option s’affiche ; pas de fichier, le site fonctionne sans elle** : pas d’entrée dans le menu, pas d’intercalaire « Équipement » dans le dossier d’un élève, pas de « Mon compte » ni de « Ma paie » dans le profil, pas de frais dans le dossier ENPQ ni de factures dans le rapport d’un service. Le Stock sans la Compta n’inscrit simplement pas de dépenses. Enlever un fichier ne supprime aucune donnée.
+
+```
+node outils/options.js               l’état de chaque option
+node outils/options.js stock on      met le fichier
+node outils/options.js stock off     l’enlève
+```
+
+Le hub fait la même chose (Projet › PompierNote). `node outils/construire.js` ne reconstruit que les fichiers présents ; le changement part sur GitHub avec le prochain envoi.
+
+Le code est dans `src/options/<nom>/` et son branchement sur le site dans le dernier fichier de ce dossier (`addOption`). `src/js/02-options.js` décrit ce qu’une option peut fournir.
+
 ## Stock, compta, annonces, clôture de l’année
 
 Paramètres, Stock et Compta ont un **menu à sections** : en les ouvrant, le menu de gauche montre leurs sections ; l’entrée en tête ramène au menu, sur la page d’avant.
@@ -92,6 +106,18 @@ Données : `stock` (`aId` : l’élève ou la classe à qui l’article est attr
 Données : `grilles`, `evaluations`, `certificats/<élève>`, `dossiers-enpq/<élève>`, `questions`, `ex-blancs`, `ex-tentatives`, `presences-qr`, `rapports-service` ; réglages dans `config/ecole.formation` (certificats, préalables, pièces, frais, niveaux, services) ; `eleves.service`. Les règles de `firestore.rules` sont à jour.
 
 **Accueil et photos** : on arrive sur l’**Accueil** en se connectant, et on y revient en cliquant sur le logo (`src/js/06-accueil.js`, `src/styles/07-accueil.css`) : la journée en ligne du temps, l’année scolaire, ce qui est à faire, les prochains examens. **Photo de profil** des élèves et du personnel : champ `photo` de `eleves/<id>` et `enseignants/<id>` (image JPEG carrée de 240 px, recadrée et allégée dans le navigateur, une quinzaine de Ko) ; seule l’administration la change. **Dossier de l’élève** : la fiche est une chemise à intercalaires ; les pièces d’admission reçues sont dans `eleves/<id>.docs` ({ clé : date de réception, vide si décochée }).
+
+## Normes du Web et accessibilité
+
+Le site suit les règles du cours IFT1005 (Design et développement Web) et les principes WCAG (perceptible, utilisable, compréhensible, robuste) :
+
+- **HTML** : `<nav>` pour le menu, `<header>` pour la barre du titre, `<main>` pour le contenu, `<footer>` pour le pied de page (coordonnées de l’école, liens `tel:` et `mailto:`) ; les styles et les polices sont dans le `<head>` ; le titre de l’onglet nomme la page ouverte ; les sigles du métier passent par `abbr()` (`<abbr title>`).
+- **Clavier** : le lien « Aller au contenu » paraît au premier Tab ; une rangée qu’on clique est un bouton (`xRow`, `rowOpen`) : si elle contient déjà des boutons, un bouton invisible à part l’ouvre, pour ne jamais mettre un contrôle dans un autre ; un tableau large qui défile prend le focus (`scrollKeys`).
+- **CSS** : tailles de texte en `rem` (elles suivent la taille choisie dans le navigateur) ; pas de `style="…"` fixe dans le code (classes de `20-utilitaires.css`) ; `!important` seulement pour `[hidden]`, « moins d’animations », le glisser-déposer, l’impression et la coquille du téléphone.
+- **Couleurs** : tout le texte atteint le contraste AA (4,5 pour 1) ; une information n’est jamais donnée par la couleur seule (texte caché pour les lecteurs d’écran) ; avec « moins d’animations » dans le système, aucune animation.
+- **Lecture** : 75 caractères au plus par ligne dans les paragraphes ; pas de défilement horizontal sur téléphone.
+
+`tests/steps.js` vérifie une partie de ces règles (vérifications « ift1005 »).
 
 ## Essayer le site sur cet ordinateur
 
@@ -127,7 +153,9 @@ demo/connexion-demo.js      connexion et base de données simulées de la démo 
 demo/donnees.js             données d’exemple (générées)
 src/page.html               la coquille de la page (titre, structure, emplacement des styles et du code)
 src/styles/NN-nom.css       les styles, un fichier par sujet (20 fichiers ; voir le tableau plus bas)
-src/js/NN-nom.js            le code, un fichier par sujet (34 fichiers)
+src/options/<nom>/          le code et les styles d’une option (stock, compta)
+options/<nom>.js            le fichier d’une option, généré à partir de src/options/<nom>/
+src/js/NN-nom.js            le code, un fichier par sujet (35 fichiers)
 tests/                      tests automatiques (Chrome sans fenêtre)
 outils/assembler.js         réunit les fichiers de src/ en une seule page
 outils/construire.js        régénère index.html, demo.html et demo/donnees.js
@@ -140,7 +168,7 @@ La page est découpée par sujet. Les fichiers sont réunis dans l’ordre de le
 
 | Fichier de `src/js/` | Contenu |
 | --- | --- |
-| `01-outils`, `02-etat` | petites fonctions communes, état de la page |
+| `01-outils`, `02-etat`, `02-options` | petites fonctions communes, état de la page, chargement des options |
 | `03-seances`, `04-stats-presence` | calcul des séances d’une journée, taux de présence |
 | `05-horaire-rendu`, `06-horaire-pages` | le tableau de la semaine et les pages de l’horaire |
 | `07-classes`, `08-eleves-fiches`, `09-personnel-heures` | pages Classes, Élèves (et fiches), Personnel et heures enseignées |
@@ -148,13 +176,20 @@ La page est découpée par sujet. Les fichiers sont réunis dans l’ordre de le
 | `12-affectations-auto` | proposer des enseignants pour les places à combler |
 | `13-modules`, `14-reprises`, `15-locaux-equipements` | modules du programme, journées de reprise, locaux et équipements |
 | `14-formation`, `14-questions`, `14-services`, `14-presence-qr` | formation (grilles, évaluations, carnets, préalables, certificats, dossier ENPQ, relevés), banque de questions et examens blancs, services incendie, présence par code QR |
-| `15-stock-outils`, `15-stock-suivi`, `15-stock` | stock : fiches d’objets, import, QR et scanner, emplacements, kits ; préparation, achats, réparations, comptage, rapports ; inventaire, fiche d’un article, mouvements, inspections, réglages |
-| `16-compta`, `16-import`, `17-historique`, `18-notifications`, `19-impression` | compta, import d’élèves et copie d’horaire, historique, cloche, impression |
+| `16-import`, `17-historique`, `18-notifications`, `19-impression` | import d’élèves et copie d’horaire, historique, cloche, impression |
 | `22-confort` | recherche Ctrl+K, vues enregistrées, modification sur place |
+| `29-mobile` | sur téléphone (jusqu’à 760 px) : onglets en bas selon le rôle, menu « Plus » en tuiles, sections en pastilles |
 | `20-nouveautes`, `21-annee-parametres`, `21-annonces`, `21-archives`, `22-comptes` | Nouveautés, calendrier scolaire et paramètres, annonces, clôture de l’année et archives, comptes et profils |
 | `23-cadre`, `24-tiroir` | menu, en-tête et rendu général ; panneau latéral |
 | `25-enregistrement`, `26-evenements`, `27-glisser` | écritures dans la base ; clics et formulaires ; glisser-déposer |
 | `28-donnees` | lecture de la base et démarrage |
+
+| Fichier de `src/options/` | Contenu |
+| --- | --- |
+| `stock/01-outils`, `02-suivi`, `03-stock` | fiches d’objets, import, QR et scanner, emplacements, kits ; préparation, achats, réparations, comptage, rapports ; inventaire, dotations, inspections |
+| `compta/01-compta` | frais des élèves, factures, paie, dépenses, budget, rapports |
+| `stock/04-branchement`, `compta/02-branchement` | ce que l’option fournit au site : `addOption(…)` |
+| `stock/01-stock.css`, `compta/01-compta.css` | les styles de l’option, dans son fichier |
 
 | Fichier de `src/styles/` | Contenu |
 | --- | --- |
@@ -166,16 +201,17 @@ La page est découpée par sujet. Les fichiers sont réunis dans l’ordre de le
 | `06-fenetres-formulaires` | les fenêtres (5 formes), les formulaires, la prise des présences, les cases à cocher |
 | `07-accueil` | la page d’accueil : la journée en ligne du temps, l’année scolaire, ce qui est à faire, les prochains examens |
 | `07-comptes` à `12-fiches` | une page chacun : comptes, classes, examens et nouveautés, affectations et modules, élèves et résultats, fiches |
-| `13-stock`, `14-compta` | stock ; compta |
 | `15-affichages` | affichages Liste, Cartes et Compact des listes |
 | `16-parametres-annonces`, `17-formation`, `18-confort` | paramètres et annonces ; formation ; recherche Ctrl+K, vues enregistrées, modification sur place |
 | `19-telephone` | ce qui change partout sur téléphone (chaque fichier finit aussi par ses propres règles de téléphone, jusqu’à 760 px) |
+| `20-mobile` | l’apparence du téléphone (Barlow, charbon et jaune, fenêtres qui montent du bas) et la coquille de `29-mobile` |
+| `20-utilitaires` | petites classes `u-…` (marges, largeurs de champ) qui remplacent les `style="…"` dans le code ; lu en dernier |
 
 Pour ajouter un fichier, donnez-lui un numéro : `outils/assembler.js` prend tous les fichiers `NN-nom.js` et `NN-nom.css` dans l’ordre.
 
 ## Modifier la page
 
-1. Modifiez le fichier concerné dans `src/js/` ou `src/styles/` (ou `site/connexion.js`).
+1. Modifiez le fichier concerné dans `src/js/`, `src/styles/` ou `src/options/` (ou `site/connexion.js`).
 2. Régénérez : `node outils/construire.js`
 3. Lancez les tests : `node tests/lancer.js`
 4. Poussez le dépôt : GitHub Pages met le site à jour en une ou deux minutes, et GitHub relance les tests de son côté.
@@ -188,11 +224,12 @@ Les tests tournent avec une date figée (vendredi 9 octobre 2026) : leurs dates 
 
 - `test.html` et `test-ac.html` : un collège fictif et les données de l’Académie, parcours complet ;
 - `test-lock-s.html` et `test-lock-t.html` : un élève et un enseignant qui ouvrent la page avec leur propre compte ;
+- `test-opt.html`, `test-opt-s.html`, `test-opt-c.html`, `test-opt-2.html` : le site sans ses options, avec le Stock seul, avec la Compta seule, et avec les deux (les vrais fichiers, chargés de `tests/options/`) ;
 - `test-phone.html` : la page dans un cadre de 390 × 844 px (un téléphone) : les 22 écrans des trois rôles ne dépassent pas de l’écran, les champs sont en 16 px, les textes en 12 px au moins, les boutons des présences font 44 px ;
 - `test-auth-*.html` : la connexion avec un Firebase simulé (première installation, demande de compte, approbation, refus, connexion) et la démo (compte de démo, demande de compte).
 
 La commande se termine en erreur s’il y a un échec, une erreur de la page ou une page qui ne termine pas. Sous Windows, `tests/lancer-tests.ps1` lance la même chose.
 
-**À chaque envoi sur GitHub**, `.github/workflows/tests.yml` refait la même chose sur les serveurs de GitHub : il régénère le site, vérifie que `index.html` et `demo.html` envoyés correspondent bien aux sources, puis lance toute la suite. Le résultat est dans l’onglet **Actions** du dépôt (coche verte ou croix rouge à côté de chaque envoi) ; en cas d’échec, les pages de résultats y sont jointes pendant sept jours.
+**À chaque envoi sur GitHub**, `.github/workflows/tests.yml` refait la même chose sur les serveurs de GitHub : il régénère le site, vérifie que `index.html`, `demo.html` et `options/` envoyés correspondent bien aux sources, puis lance toute la suite. Le résultat est dans l’onglet **Actions** du dépôt (coche verte ou croix rouge à côté de chaque envoi) ; en cas d’échec, les pages de résultats y sont jointes pendant sept jours.
 
 Il faut Node.js et Google Chrome. Les vérifications suivent l’horaire d’exemple d’octobre 2026 : en dehors de cette période, certaines peuvent échouer sans que la page soit en cause.

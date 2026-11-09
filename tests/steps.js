@@ -18,6 +18,17 @@ ok('banner',/Horaire partagé/.test($('#banner-text').textContent));
 ok('nav admin 13',$$('#nav button').length===13&&!!$('#nav-accueil')&&!!$('#nav-compta')&&!/À faire/.test($('#nav').textContent)&&!$('#nav-annee')&&!$('#nav-personnel')&&!$('#nav-examens')&&!!$('#nav-stock')&&$$('#nav .nav-sec').length===4&&!!$('#nav-historique')&&$$('#nav button').pop().id==='nav-nouveautes'&&!!$('#nav-comptes')&&!!$('#nav-modules')&&!!$('#nav-affectations')&&!$('#nav-presences'));
 ok('home on sign-in',$('#nav-accueil').getAttribute('aria-current')==='page'&&!!$('#main .hm')&&/Bonjour/.test($('#heading').textContent)&&!!$('#hm-today')&&$$('#main .tl-card').length>0,$('#heading').textContent);
 ok('home timeline',!!$('#main .tl-now')&&/Maintenant/.test($('#main .tl-now').textContent)&&/Semaine [0-9]+/.test($('#main .hm-year').textContent)&&!!$('#main .hm-year .ring'),($('#main .hm-year')||{}).textContent);
+/* IFT1005 (Design et développement Web) : structure HTML5, accessibilité (WCAG), CSS */
+ok('ift1005 landmarks',!!$('nav.sidebar[aria-label]')&&$('#heading').tagName==='HEADER'&&$('#main').tagName==='MAIN'&&$('#site-foot').tagName==='FOOTER'&&$$('main').length===1&&!$('aside.sidebar')&&$('#drawer').tagName==='DIV',$('#heading').tagName);
+ok('ift1005 skip link',(()=>{const a=$('a.skip');if(!a)return false;click(a);return document.activeElement===$('#main');})(),document.activeElement&&document.activeElement.id);
+ok('ift1005 tab title',/^Accueil · PompierNote/.test(document.title),document.title);
+ok('ift1005 text sizes in rem',getComputedStyle(document.body).fontSize==='13.5px'&&getComputedStyle(document.documentElement).fontSize==='16px'&&!/font(-size)?:[^;"{}]*\dpx/.test([...document.querySelectorAll('style')].map(s=>s.textContent).join('').replace(/@media print[\s\S]*?\}\}/g,'')),getComputedStyle(document.body).fontSize);
+ok('ift1005 severity not by color only',$$('#main .hm-dot.bad').every(d=>/Urgent/.test(d.parentElement.textContent)));
+click(navBtn('classes'));await wait(150);
+ok('ift1005 clickable rows',/^Classes · /.test(document.title)&&!$$('#main article[role]').length&&$$('#main .cl-row').length>0&&$$('#main .cl-row').every(r=>r.querySelector(':scope>.row-open[aria-label]'))
+  &&$$('#main [role=button]').every(b=>!b.querySelector('button,a[href],input,select,textarea,[tabindex]')),document.title);
+ok('ift1005 no inline margins',!$$('#main [style*="margin"],#main [style*="flex:"]').length,$$('#main [style*="margin"],#main [style*="flex:"]').map(e=>e.getAttribute('style')).slice(0,3).join(' | '));
+click(navBtn('accueil'));await wait(150);
 click($('#hm-cal'));await wait(150);
 ok('board',$$('#main .week button.cc').length===41,$$('#main .week button.cc').length);
 ok('exam card on board',$$('#main .cc.exam').length===1);

@@ -1,7 +1,7 @@
 // Construit test-phone.html : la page de l’Académie dans un cadre de 390 × 844 px, la taille d’un téléphone
 // (Chrome sans fenêtre ne descend pas sous 500 px). Les résultats du cadre sont recopiés dans la page.
 const fs=require('fs');
-const page=require('../outils/assembler.js').assembler();
+const page=require('../outils/assembler.js').avecOptions();
 const seed=fs.readFileSync('seed-academy.json','utf8');
 const inner='<!doctype html><html lang="fr"><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"></head><body><script>window.__SEED='+seed+';</script><script>'+fs.readFileSync('mock.js','utf8')+'</script>'+page+'<script>'+fs.readFileSync('steps-phone.js','utf8')+'</script></body></html>';
 // La page devient une chaîne JavaScript : « </ » et « <!-- » sont neutralisés pour ne pas fermer le script qui la contient

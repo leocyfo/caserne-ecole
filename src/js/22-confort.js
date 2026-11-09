@@ -26,12 +26,12 @@ function cmdkItems(){
     for(const g of groups()) add('Classes',g.nom,pl(studentsOf(g.id).length,'élève','élèves'),()=>openFiche('classes',g.id));
     for(const k of comps()) add('Modules',`M${k.code} · ${k.nom}`,'',()=>openFiche('modules',String(k.code)));
   }
-  if(r!=='student'&&S.loaded.stock&&(adm||!navHidden(r).includes('stock'))) for(const a of skArts()) add('Stock',skName(a),[skCat(a.cat)[1],a.empl].filter(Boolean).join(' · '),()=>{if(S.page!=='stock')goPage('stock');openDrawer({kind:'stk',id:a.id,mode:'view'});},[a.serie,a.lot].join(' '));
+  for(const o of optAll()) if(o.search) o.search(add,r,adm);
   if(r!=='student') for(const g of foG()) add('Grilles pratiques',g.nom,g.module?'M'+g.module:'',()=>{goPage('formation');S.pg.fo=r==='admin'?'grilles':'grilles';render();openDrawer({kind:'fo',mode:'grille',id:g.id});});
   const can=S.conn==='shared'&&!S.archive, A=(l,sub,run,kw)=>add('Actions',l,sub,run,kw);
   if(can&&adm){
     A(W('Nouvelle séance','Nouveau cours'),'Calendrier',()=>{goPage('calendar');if(acad())openAddCourse({});else openCourse(null,null,null);},'ajouter cours seance');
-    A('Ajouter un article au stock','Stock',()=>{goPage('stock');openDrawer({kind:'stk',mode:'pick',cat:'',empl:''});},'materiel equipement');
+    for(const o of optAll()) if(o.actions) o.actions(A);
     A('Proposer des enseignants','Affectations',()=>{goPage('affectations');openDrawer({kind:'fo',mode:'afauto'});},'combler attribuer');
     A('Nouvelle grille pratique','Formation',()=>{goPage('formation');S.pg.fo='grilles';render();openDrawer({kind:'fo',mode:'grille',id:''});},'evaluation manoeuvre');
     A('Nouvelle annonce','Paramètres',()=>{goPage('params');S.pg.ps='annonces';render();},'message');

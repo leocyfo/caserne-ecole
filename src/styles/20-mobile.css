@@ -1,0 +1,125 @@
+/* Téléphone (jusqu’à 760 px) : la coquille mobile de src/js/29-mobile.js (onglets en bas, menu « Plus », sous-menus en pastilles)
+   et son apparence (Barlow, charbon et jaune). Sur un grand écran, rien ici ne s’applique. */
+@media (max-width:760px){
+:root{
+  --side:#1B1F24; --side-ink:#EEF0F2; --side-soft:#C9CED4; --side-muted:#8A929B; --side-line:#2C333B; --side-hover:#252B32; --side-active:#2C333B;
+  --bg:#F3F1EC; --surface:#FFFFFF; --surface-2:#F8F6F1; --head:#F8F6F1; --head-ink:#4A525C; --row-ink:#1B1F24;
+  --ink:#1B1F24; --ink-2:#3A424C; --muted:#5C636C; --line:#E4DFD5; --line-2:#ECE8DF; --line-strong:#CFC8BB;
+  --role:#1B1F24; --role-bg:#E9E5DC; --eyebrow:#5C636C;
+  --accent:#C8402E; --accent-hover:#AD3524; --today:#C8402E; --focus:#B98A00;
+  --y:#F2B705; --y-ink:#1B1F24; --y-soft:#FBEFC4; --y-hover:#E0A800;
+  --font:"Barlow",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+  --fh:"Barlow Condensed","Barlow",system-ui,sans-serif;
+  --r:14px; --r-sm:10px;
+  --mtabs-h:64px;
+}
+body{font-size:.9375rem;line-height:1.45;font-feature-settings:normal}
+h1,h2,h3,.dr-top h2,.page-heading h1{font-family:var(--fh);letter-spacing:.01em}
+
+/* ---------- coquille ---------- */
+.m .sidebar{display:none!important}
+.m .app{display:block;min-height:100vh}
+.m .content{padding:0 16px calc(var(--mtabs-h) + 28px + env(safe-area-inset-bottom,0px));gap:14px}
+.m .page-heading{margin:0 -16px;padding:calc(14px + env(safe-area-inset-top,0px)) 16px 12px;background:var(--bg);border-bottom:0;min-height:0}
+.m .page-heading h1{font-size:1.875rem;font-weight:700;line-height:1.05}
+.m .page-heading p{font-size:.875rem}
+
+/* onglets du bas */
+.mtabs{position:fixed;left:0;right:0;bottom:0;z-index:19;display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:2px;background:var(--surface);border-top:1px solid var(--line);padding:6px 6px calc(6px + env(safe-area-inset-bottom,0px));box-shadow:0 -6px 20px rgba(27,31,36,.06)}
+.mtabs button{position:relative;border:0;background:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-height:52px;padding:4px 2px;font-size:.75rem;font-weight:600;color:var(--muted);border-radius:12px;-webkit-tap-highlight-color:transparent}
+.mtabs button span{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mtabs .ic{width:22px;height:22px;padding:4px 16px;box-sizing:content-box;border-radius:999px;transition:background .15s}
+.mtabs button[aria-current="page"]{color:var(--ink)}
+.mtabs button[aria-current="page"] .ic{background:var(--y);color:var(--y-ink)}
+.m-dot{position:absolute;top:4px;left:calc(50% + 12px);width:9px;height:9px;border-radius:50%;background:var(--accent);border:2px solid var(--surface)}
+
+/* sous-menus (Paramètres, Stock, Compta, Formation) : pastilles qui défilent */
+.msub{display:flex;gap:6px;overflow-x:auto;margin:-4px -16px 0;padding:2px 16px 4px;scrollbar-width:none}
+.msub::-webkit-scrollbar{display:none}
+.msub[hidden]{display:none!important}
+.msub button{flex:none;position:relative;display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:8px 14px;font-weight:600;font-size:.875rem;color:var(--ink-2);white-space:nowrap}
+.msub button .ic{width:16px;height:16px}
+.msub button[aria-current="page"]{background:var(--side);border-color:var(--side);color:#FFFFFF}
+.msub .nav-todo{margin-left:2px;padding:0 6px;border-radius:999px;background:var(--line-2);color:var(--ink-2);font-size:.75rem;font-style:normal}
+.msub .nav-todo.bad{background:var(--accent);color:#FFFFFF}
+.msub button[aria-current="page"] .nav-todo{background:rgba(255,255,255,.2);color:#FFFFFF}
+
+/* menu « Plus » : feuille qui monte du bas */
+.mmore{position:fixed;inset:0;z-index:40;background:rgba(15,18,22,.45);display:flex;align-items:flex-end;animation:mFade .15s}
+.mmore[hidden]{display:none!important}
+.mm-in{background:var(--bg);width:100%;max-height:90vh;overflow-y:auto;border-radius:22px 22px 0 0;padding:6px 16px calc(20px + env(safe-area-inset-bottom,0px));animation:mUp .22s ease-out;overscroll-behavior:contain}
+.mm-grab{width:42px;height:5px;border-radius:9px;background:var(--line-strong);margin:4px auto 10px}
+.mm-top{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.mm-brand{display:flex;align-items:center;gap:10px;flex:1;min-width:0}
+.mm-brand .lg{width:38px;height:38px;border-radius:10px;background:var(--side);display:grid;place-items:center;flex:none}
+.mm-brand .lg img{width:26px;height:26px}
+.mm-brand b{font-family:var(--fh);font-size:1.375rem;display:block;line-height:1}
+.mm-brand b i{font-style:normal;color:var(--accent)}
+.mm-brand small{display:block;color:var(--muted);font-size:.78125rem}
+.mm-x{width:40px;height:40px;border-radius:12px;border:1px solid var(--line);background:var(--surface);display:grid;place-items:center;flex:none}
+.mm-person .person-btn{width:100%;display:flex;align-items:center;gap:12px;border:1px solid var(--line);background:var(--surface);border-radius:var(--r);padding:10px 12px;text-align:left}
+.mm-person .pinfo b{display:block;font-size:.9375rem}
+.mm-person .pinfo small{display:block;color:var(--muted);font-size:.8125rem}
+.mm-search{display:flex;align-items:center;gap:10px;width:100%;margin-top:10px;border:1px solid var(--line);background:var(--surface);border-radius:var(--r);padding:12px 14px;color:var(--muted);font-size:.9375rem;text-align:left}
+.mm-sec{font-family:var(--fh);font-weight:700;font-size:.8125rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:18px 2px 8px}
+.mm-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.mm-grid:first-of-type{margin-top:14px}
+.mm-grid button{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;min-height:84px;padding:10px 6px;border:1px solid var(--line);background:var(--surface);border-radius:var(--r);font-weight:600;font-size:.84375rem;line-height:1.15;text-align:center;color:var(--ink)}
+.mm-grid .ic{width:24px;height:24px}
+.mm-grid button[aria-current="page"]{background:var(--y);border-color:var(--y);color:var(--y-ink)}
+.mm-todo{position:absolute;top:6px;right:6px;min-width:20px;padding:0 6px;border-radius:999px;background:var(--accent);color:#FFFFFF;font-size:.75rem;font-style:normal;font-weight:700;line-height:18px}
+.mm-out{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;margin-top:18px;border:1px solid var(--line);background:var(--surface);border-radius:var(--r);padding:12px;font-weight:600;color:var(--accent)}
+@keyframes mFade{from{opacity:0}}
+@keyframes mUp{from{transform:translateY(40px);opacity:.5}}
+@media (prefers-reduced-motion:reduce){.mmore,.mm-in{animation:none}.mtabs .ic{transition:none}}
+
+/* ---------- apparence ---------- */
+.btn.primary{background:var(--y);border-color:var(--y);color:var(--y-ink);box-shadow:none}
+.btn.primary:hover{background:var(--y-hover);border-color:var(--y-hover)}
+.btn{border-radius:var(--r-sm)}
+.chip.today{background:var(--y);color:var(--y-ink)}
+.banner{border-left-color:var(--y);border-radius:var(--r)}
+.roles{border-radius:12px}
+.roles button{border-radius:9px}
+.notice,.card,.panel{border-radius:var(--r)}
+/* aperçu de l’espace élève : « Aperçu » + choix de l’élève */
+.m-apercu{display:inline-flex;align-items:center;gap:6px;max-width:100%}
+.m-apercu span{flex:none;padding:2px 8px;border-radius:999px;background:var(--y-soft);color:var(--ink);font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em}
+.m-apercu select{min-width:0;max-width:220px}
+/* barre « Enregistrer » des Paramètres : collée au-dessus des onglets, pas dessous */
+.m .ps-save{bottom:calc(var(--mtabs-h) + 10px + env(safe-area-inset-bottom,0px))}
+/* bouton de fermeture des fenêtres à la taille du doigt */
+.dr-top .icon-btn{width:44px;height:44px;font-size:1.5rem;line-height:1;flex:none;display:grid;place-items:center}
+.toasts{bottom:calc(var(--mtabs-h) + 18px + env(safe-area-inset-bottom,0px))}
+.toast{background:var(--side);border-radius:12px}
+
+/* écran de connexion (site/connexion.js) : mêmes couleurs et polices ; « html #gate » l’emporte sur ses propres styles */
+html #gate{background:var(--bg);font-family:var(--font);color:var(--ink);align-items:flex-start;padding:0}
+html #gate .g-card{border:0;border-radius:0;box-shadow:none;min-height:100%;width:100%;align-content:start;background:var(--bg)}
+html #gate .g-side{background:var(--side);padding:calc(28px + env(safe-area-inset-top,0px)) 22px 26px;border-radius:0 0 26px 26px}
+html #gate .g-brand{font-family:var(--fh);font-size:1.75rem;font-weight:700;letter-spacing:.01em}
+html #gate .g-brand i{color:var(--y)}
+html #gate .g-brand small{font-family:var(--font);font-size:.8125rem}
+html #gate .g-side li::before{background:var(--y)}
+html #gate .g-main{padding:24px 20px 32px}
+html #gate .g-main h1{font-family:var(--fh);font-size:2rem;font-weight:700}
+html #gate .g-btn{background:var(--y);border-color:var(--y);color:var(--y-ink);border-radius:12px;min-height:50px;font-weight:700}
+html #gate .g-btn:hover{background:var(--y-hover)}
+html #gate .g-btn.alt{background:var(--surface);border-color:var(--line-strong)}
+html #gate .g-tabs{background:var(--role-bg);border-radius:12px}
+html #gate .g-tabs button{border-radius:9px;font-size:.90625rem}
+html #gate .g-field input,html #gate .g-field select,html #gate .g-field textarea{border-radius:12px;min-height:48px;border-color:var(--line-strong);font-size:1rem}
+html #gate .g-field input:focus,html #gate .g-field select:focus,html #gate .g-field textarea:focus{outline-color:var(--focus);border-color:var(--focus)}
+html #gate .g-link{color:var(--ink);text-decoration:underline;text-underline-offset:3px}
+html #gate .g-demo{background:var(--surface);border:1px solid var(--line);border-radius:var(--r)}
+html #gate .g-demo-btns{flex-direction:column}
+html #gate .g-demo-btns button{border-radius:12px;padding:12px 14px;text-align:left;font-size:.9375rem;border-color:var(--line)}
+html #gate .g-demo-btns button:hover{background:var(--y-soft);border-color:var(--y)}
+
+/* fenêtres : feuilles arrondies qui montent du bas, avec une poignée */
+.drawer.sh-center,.drawer.sh-bottom,.drawer.sh-pop{border-radius:22px 22px 0 0}
+.drawer.sh-center::before,.drawer.sh-bottom::before,.drawer.sh-pop::before{content:"";display:block;flex:none;width:42px;height:5px;border-radius:9px;background:var(--line-strong);margin:8px auto 0}
+.dr-top h2{font-size:1.5rem}
+.icon-btn{border-radius:12px}
+.scrim{background:rgba(15,18,22,.45)}
+}

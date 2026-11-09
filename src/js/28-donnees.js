@@ -55,17 +55,7 @@ function subscribe(){
   if(S.me.id) DB.doc('comptes/'+S.me.id).onSnapshot(x=>{S.myAcct=x.exists?Object.assign({},x.data(),{id:x.id}):null;schedule();},()=>{});
   if(S.canAdmin!==false) col('demandes').onSnapshot(q=>{LIVE().demandes=q.docs.map(d=>Object.assign({},d.data(),{id:d.id}));schedule();},()=>{LIVE().demandes=[];});
   if(S.canAdmin!==false) col('comptes').onSnapshot(q=>{LIVE().comptes=q.docs.map(d=>Object.assign({},d.data(),{id:d.id}));schedule();},()=>{LIVE().comptes=[];});
-  /* stock : le personnel ; compta : l’administration */
-  if(S.canAdmin!==false||S.role!=='student'){
-    col('stock').onSnapshot(q=>{LIVE().stock=q.docs.map(d=>Object.assign({},d.data(),{id:d.id}));S.loaded.stock=true;schedule();},()=>{S.loaded.stock=true;schedule();});
-    col('stock-mvt').onSnapshot(q=>{LIVE().stockMvt=q.docs.map(d=>Object.assign({},d.data(),{id:d.id})).sort((x,y)=>String(y.le||'').localeCompare(String(x.le||'')));schedule();},()=>{});
-  }else S.loaded.stock=true;
-  if(S.canAdmin!==false) for(const [c,k] of [['stock-modeles','stockModeles'],['stock-fourn','stockFourn'],['stock-cmd','stockCmd'],['stock-rep','stockRep'],['stock-cpt','stockCpt']]) col(c).onSnapshot(q=>{LIVE()[k]=q.docs.map(d=>Object.assign({},d.data(),{id:d.id}));schedule();},()=>{});
-  if(S.canAdmin!==false){
-    let n=0;const done=()=>{if(++n>=4){S.loaded.compta=true;}schedule();};
-    for(const [c,k] of [['compta','compta'],['compta-factures','factures'],['compta-paie','paie']]) col(c).onSnapshot(q=>{LIVE()[k]=q.docs.map(d=>Object.assign({},d.data(),{id:d.id}));if(!S['_cp'+k]){S['_cp'+k]=1;done();}else schedule();},()=>{if(!S['_cp'+k]){S['_cp'+k]=1;done();}});
-    DB.doc('compta-reglages/ecole').onSnapshot(x=>{LIVE().cptCfg=x.exists?x.data():null;if(!S._cpcfg){S._cpcfg=1;done();}else schedule();},()=>{if(!S._cpcfg){S._cpcfg=1;done();}});
-  }
+  for(const o of optAll()) if(o.listen) o.listen();
   /* années clôturées (administration seulement) */
   if(S.canAdmin!==false) col('archives').onSnapshot(q=>{LIVE().archives=q.docs.map(d=>Object.assign({},d.data(),{id:d.id})).sort((x,y)=>String(y.cloture||'').localeCompare(String(x.cloture||'')));schedule();},()=>{LIVE().archives=[];});
   foSubscribe();
@@ -74,6 +64,7 @@ function subscribe(){
 async function init(){
   S.day=defaultDay();
   render();
+  await optLoad();
   const C=window.claude;
   if(!C||typeof C.use!=='function'){S.conn='off';render();return;}
   let db=null,user=null;

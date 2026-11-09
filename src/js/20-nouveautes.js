@@ -5,7 +5,26 @@
    items : [type, titre, explication, page à ouvrir]. Types : new (nouvelle fonction), up (amélioration), fix (correction). */
 const NV_REPO='https://github.com/leocyfo/caserne-ecole';
 const NOUVEAUTES=[
-  {date:'2026-11-01',id:'',push:'Page d’accueil ; fiche d’un élève en dossier et photo de profil ; logo et informations de l’Académie des pompiers ; styles triés',items:[
+  {date:'2026-11-08',id:'',push:'Version mobile ; le Stock et la Compta deviennent des options ; un site plus accessible et conforme aux normes du Web',items:[
+    ['new','Onglets en bas sur téléphone','Sur un téléphone, le menu de gauche laisse la place à quatre onglets en bas de l’écran, choisis selon le rôle (administration : Accueil, Horaire, Classes, Élèves ; enseignant : Accueil, Horaire, Séances, Examens ; élève : Accueil, Horaire, Examens, Formation), et à « Plus ». Sur un ordinateur, rien ne change.','accueil'],
+    ['new','Menu « Plus »','Le bouton « Plus » ouvre une feuille qui monte du bas : tout le menu en tuiles, regroupé par section, le profil, la recherche et la déconnexion. Un choix (ou un toucher à côté) la referme.',''],
+    ['up','Sections en pastilles sur téléphone','Paramètres, Stock, Compta et Formation montrent leurs sections en pastilles qui défilent sous le titre ; la barre « Enregistrer » des paramètres reste au-dessus des onglets.','params'],
+    ['up','Nouveau style sur téléphone','Police Barlow, gris charbon et jaune, fenêtres arrondies qui montent du bas avec une poignée, écran de connexion assorti.',''],
+    ['up','Aperçu de l’espace élève sur téléphone','En aperçu (bouton « Élève » du bandeau), on choisit l’élève affiché, et sa classe suit ; un vrai compte élève n’a rien à choisir.',''],
+    ['up','Horaire de l’élève sur téléphone','Le bloc « Prochains examens » est retiré de l’horaire : les examens sont dans l’onglet Examens.','calendar'],
+    ['new','Options','Le Stock et la Compta sont maintenant des fichiers à part. Sans leur fichier, le site fonctionne sans eux : pas d’entrée dans le menu, pas d’intercalaire « Équipement », pas de « Mon compte ». Leurs données restent.',''],
+    ['up','Tout au clavier','Un lien « Aller au contenu » paraît à la première pression de Tab et saute le menu. Chaque rangée qu’on clique est un vrai bouton, encadré quand on y arrive au clavier ; un tableau plus large que l’écran défile aux flèches.',''],
+    ['up','Lecteurs d’écran','Le menu, l’en-tête, le contenu et le pied de page sont nommés comme tels ; les sigles ENPQ, EPI et ARI donnent leur sens au survol ; un point de couleur dit aussi « Urgent » ou « À surveiller » en toutes lettres.',''],
+    ['up','Contraste et lisibilité','Les gris des petits textes sont un peu plus foncés : tout le texte atteint le contraste minimal recommandé (4,5 pour 1). Les longs paragraphes s’arrêtent à 75 caractères par ligne, plus faciles à lire.',''],
+    ['up','Texte agrandi','Les tailles du texte suivent la taille de police choisie dans le navigateur.',''],
+    ['up','Moins d’animations','Si l’appareil demande moins d’animations (réglage d’accessibilité du système), le site n’en fait plus aucune.',''],
+    ['up','Titre de l’onglet','L’onglet du navigateur nomme la page ouverte (« Classes · PompierNote »), et la section dans Paramètres, Formation, Stock et Compta : plus clair dans les favoris et l’historique.',''],
+    ['up','Menu des enseignants en groupes','Comme celui de l’administration, en trois groupes : Horaire, École, Compte.',''],
+    ['new','Pied de page','En bas de chaque page : le nom de l’école, son téléphone, son courriel et son site, qu’on peut cliquer (Paramètres › École).','params'],
+    ['fix','Messages en bas de l’écran','Un message reste affiché tant que la souris ou le clavier est dessus.',''],
+    ['fix','HTML et CSS','Les styles sont dans l’en-tête de la page, comme le veut la norme HTML ; les marges écrites dans le code sont passées dans les feuilles de style ; les téléphones des fournisseurs s’appellent d’un clic.','']
+  ]},
+  {date:'2026-11-01',id:'21b6a63',push:'Page d’accueil ; fiche d’un élève en dossier et photo de profil ; logo et informations de l’Académie des pompiers ; styles triés',items:[
     ['new','Photo de profil','Les élèves et le personnel peuvent avoir une photo : l’administration clique sur la photo (ou sur les initiales) de la fiche, ou dans « Modifier », et choisit une image (sur un téléphone, l’appareil photo). L’image est recadrée en carré et allégée avant d’être gardée ; « Retirer la photo » remet les initiales. La photo paraît sur la fiche, dans la liste du personnel, les affectations et le menu (Mon profil).','eleves'],
     ['up','Fiche d’un élève en dossier','La fiche d’un élève ressemble à une chemise de dossier : des intercalaires en haut (Identité, Présences, Examens, Équipement, Documents, Suivi) et, dedans, une feuille. Sur « Identité » : la photo d’identité et les renseignements en formulaire (classe, grade, naissance, téléphone, courriel, contact d’urgence), puis la présence et le prochain examen. Nouvel intercalaire « Documents » : les pièces du dossier d’admission de l’Académie (certificat de naissance, diplôme, CV, permis, déclaration de santé, optométriste, carte d’embarcation), cochées quand elles sont reçues, avec la date. La fiche prend toute la largeur ; « Retour », « 3 sur 52 » et « Précédent / Suivant » sont dans l’en-tête de la page.','eleves'],
     ['fix','Menu du téléphone','Sur une page courte, la bande du menu en haut de l’écran ne s’étire plus : elle garde sa hauteur et le contenu prend le reste.',''],
@@ -337,7 +356,7 @@ function newsPage(){
       :`<div class="xm-hd nv-hd"><span>${esc(day)}</span>${g.n>1?`<span class="nv-k">${g.n} pushes</span>`:''}${fresh}${n}</div>`;
     return `<section class="cl-list nv-list" id="nv-${g.p?'p'+g.num:g.date}">${head}${items.map(row).join('')}</section>`;
   }).join('');
-  const more=!all&&vis.length>lim?`<div class="row" style="margin-top:4px"><button class="btn" type="button" id="nv-more" data-act="pg-set" data-k="nall" data-v="1">${byDate?'Voir les jours précédents':`Voir les ${vis.length-lim} pushes précédents`}</button></div>`:'';
+  const more=!all&&vis.length>lim?`<div class="row u-mt4"><button class="btn" type="button" id="nv-more" data-act="pg-set" data-k="nall" data-v="1">${byDate?'Voir les jours précédents':`Voir les ${vis.length-lim} pushes précédents`}</button></div>`:'';
   return `<div class="toolbar">${view}${seg}</div>`+(blocks||'<section class="panel"><p class="help">Rien de ce type dans les dernières mises à jour.</p></section>')+more;
 }
 

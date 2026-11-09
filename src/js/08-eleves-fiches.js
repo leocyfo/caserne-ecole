@@ -136,7 +136,7 @@ function ficheShell(kind,list,cur,listItem,head,tabs,content){
     <button class="btn sm" type="button" id="fi-next" data-act="fi-step" data-d="1"${next?` title="${esc(next.nom)} (→)"`:' disabled'}><span class="fi-lbl">${next?esc(next.nom):'Suivant'}</span>${icon('right')}</button></div>`;
   const tab=S.pg.tab&&tabs.some(t=>t[0]===S.pg.tab)?S.pg.tab:tabs[0][0];
   const tabBar=`<div class="seg fiche-tabs" role="group" aria-label="Sections de la fiche">${tabs.map(([k,l])=>`<button type="button" id="fi-tab-${k}" data-act="fi-tab" data-v="${k}" aria-pressed="${k===tab}">${l}</button>`).join('')}</div>`;
-  return `<div class="fiche"><aside class="fiche-list" aria-label="${kind==='eleves'?'Élèves':kind==='classes'?'Classes':kind==='modules'?'Modules':'Personnel'}">${filt}<ul>${list.map(x=>`<li><button type="button" class="fl-item" id="fl-${esc(x.id)}" data-act="${kind==='eleves'?'student':kind==='classes'?'class':kind==='modules'?'module':'staff'}" data-id="${esc(x.id)}" aria-current="${x.id===cur.id}">${listItem(x)}</button></li>`).join('')||'<li class="muted sm" style="padding:12px">Aucun résultat.</li>'}</ul></aside>
+  return `<div class="fiche"><aside class="fiche-list" aria-label="${kind==='eleves'?'Élèves':kind==='classes'?'Classes':kind==='modules'?'Modules':'Personnel'}">${filt}<ul>${list.map(x=>`<li><button type="button" class="fl-item" id="fl-${esc(x.id)}" data-act="${kind==='eleves'?'student':kind==='classes'?'class':kind==='modules'?'module':'staff'}" data-id="${esc(x.id)}" aria-current="${x.id===cur.id}">${listItem(x)}</button></li>`).join('')||'<li class="muted sm u-p12">Aucun résultat.</li>'}</ul></aside>
     <div class="fiche-main">${nav}${head}${tabBar}<div class="fiche-body">${content(tab)}</div></div></div>`;
 }
 /* Compte de la personne, affiché dans l’en-tête de sa fiche */
@@ -171,7 +171,7 @@ function studentFiche(){
   ensureTerm(yearStart());
   const list=studentList(), i=list.findIndex(x=>x.id===e.id), prev=list[i-1], next=list[i+1], fk=fnKind(e.fonction), ac=acctOfRef(e.id);
   const s=studentStats(yearStart(),todayISO())[e.id], r=rateOf(s), age=ageOf(e.naissance), loaded=S.termLoaded, n=s?s.n:0, ab=s?s.A+s.M:0, rt=s?s.R:0;
-  const nextEx=upcomingExams(x=>x.grp===e.groupe,1)[0], tab=DOS_TABS.some(t=>t[0]===S.pg.tab)?S.pg.tab:'identite';
+  const nextEx=upcomingExams(x=>x.grp===e.groupe,1)[0], dosTabs=DOS_TABS.filter(t=>t[0]!=='equipement'||opt('stock')), tab=dosTabs.some(t=>t[0]===S.pg.tab)?S.pg.tab:'identite';
   const from=S.pg.from&&S.pg.from!==S.page?S.pg.from:null;
   /* barre d’outils : elle monte dans l’en-tête de la page, à côté des onglets Élèves / Personnel */
   const nav=`<div class="toolbar fiche-nav sf-nav"><button class="btn sm ghost" type="button" id="fi-back" data-act="fi-back">${icon('left')}${from==='classes'?'Retour aux classes':'Retour à la liste'}</button><span class="grow"></span>${i>=0?`<span class="muted sm">${i+1} sur ${list.length}</span>`:''}
@@ -181,7 +181,7 @@ function studentFiche(){
   const docs=e.docs||{}, nDocs=DOCS_ADM.filter(([k])=>docs[k]).length;
   /* une ligne du formulaire : le libellé, des pointillés, la valeur */
   const ln=(k,v)=>`<div class="dos-l"><span class="k">${k}</span><i aria-hidden="true"></i><span class="v">${v||'<span class="muted">—</span>'}</span></div>`;
-  const tabs=`<div class="dos-tabs fiche-tabs" role="group" aria-label="Intercalaires du dossier">${DOS_TABS.map(([k,l])=>`<button type="button" class="dos-tab" id="fi-tab-${k}" data-act="fi-tab" data-v="${k}" aria-pressed="${k===tab}">${l}${k==='documents'?` <small>${nDocs}/${DOCS_ADM.length}</small>`:''}</button>`).join('')}</div>`;
+  const tabs=`<div class="dos-tabs fiche-tabs" role="group" aria-label="Intercalaires du dossier">${dosTabs.map(([k,l])=>`<button type="button" class="dos-tab" id="fi-tab-${k}" data-act="fi-tab" data-v="${k}" aria-pressed="${k===tab}">${l}${k==='documents'?` <small>${nDocs}/${DOCS_ADM.length}</small>`:''}</button>`).join('')}</div>`;
   const top=`<div class="dos-top"><div class="dos-tt"><span class="dos-kind">Dossier de l’élève</span><span class="dos-ref">${esc(gName(e.groupe))}${e.numero?` · n° ${esc(e.numero)}`:''}</span><h2 id="fi-name">${esc(e.nom)}</h2></div><span class="grow"></span><button class="btn sm primary" type="button" id="fi-edit" data-act="st-edit" data-id="${esc(e.id)}">Modifier</button>${more}</div>`;
   const stats=!loaded?'<p class="sf-line muted">Chargement des présences…</p>'
     :`<p class="sf-line" id="sf-stats">${n?`<span class="${rateCls(r)}-t"><b>${r} %</b> de présence</span>`:'<span class="muted">Aucune présence notée</span>'}<span class="sf-dot">·</span><span${ab?' class="bad-t"':''}><b>${ab}</b> ${ab>1?'absences':'absence'}</span><span class="sf-dot">·</span><span${rt?' class="warn-t"':''}><b>${rt}</b> ${rt>1?'retards':'retard'}</span></p>`;
@@ -196,7 +196,7 @@ function studentFiche(){
         ${n?`<p class="help">${pl(n,W('séance notée','cours noté'),W('séances notées','cours notés'))} depuis le ${esc(longDate(parse(yearStart())))}.</p>`:''}`;
     }
     if(tab==='examens') return studentExamsTab(e);
-    if(tab==='equipement') return skStudentTab(e);
+    if(tab==='equipement') return opt('stock').studentTab(e);
     if(tab==='documents'){
       const can=canPhoto();
       return `<h4>Pièces du dossier d’admission · ${nDocs} sur ${DOCS_ADM.length} reçues</h4><ul class="dos-docs">${DOCS_ADM.map(([k,l])=>`<li><label class="ck"><input type="checkbox" data-doc="${k}" data-id="${esc(e.id)}"${docs[k]?' checked':''}${can?'':' disabled'}><span>${l}${docs[k]?`<small>reçue le ${esc(shortDate(parse(docs[k])))}</small>`:''}</span></label></li>`).join('')}</ul>
@@ -206,7 +206,7 @@ function studentFiche(){
     /* Identité : la photo d’identité, le nom, puis le formulaire */
     return `<div class="dos-id">${photoPick('eleve',e,'id')}<div class="dos-form">
       <div class="dos-lines">${ln('Classe',esc(gName(e.groupe))+(e.numero?' · n° '+esc(e.numero):''))}${ln('Grade',e.fonction?`<span class="role-chip${fk?' rc-'+fk:''}">${esc(e.fonction)}</span>`:'')}${ln('Date de naissance',e.naissance?esc(longDate(parse(e.naissance)))+(age!=null?` (${age} ans)`:''):'')}
-      ${ln('Téléphone',e.telephone?`<a href="tel:${esc(String(e.telephone).replace(/\s+/g,''))}">${esc(e.telephone)}</a>`:'')}${ln('Courriel',e.courriel?`<a href="mailto:${esc(e.courriel)}">${esc(e.courriel)}</a>`:'')}${ln('Contact d’urgence',e.parent?esc(e.parent):'')}</div></div></div>
+      ${ln('Téléphone',e.telephone?`<a href="tel:${esc(String(e.telephone).replace(/\s+/g,''))}">${telNb(esc(e.telephone))}</a>`:'')}${ln('Courriel',e.courriel?`<a href="mailto:${esc(e.courriel)}">${esc(e.courriel)}</a>`:'')}${ln('Contact d’urgence',e.parent?telNb(esc(e.parent)):'')}</div></div></div>
       <div class="dos-foot">${stats}<p class="sf-line sf-sub">Prochain examen : ${nextEx?`<b>${esc(dn(parse(nextEx.date))+' '+fMonthS.format(parse(nextEx.date)))}</b>${nextEx.c?' · '+esc((nextEx.c.code?nextEx.c.code+' ':'')+nextEx.c.titre):''}`:'aucun'}</p></div>`;
   };
   return `${nav}<div class="dos" data-enter="fiche">${tabs}<div class="dos-body"><article class="dos-sheet">${top}<div class="dos-c fiche-body" data-enter="tab">${content()}</div></article></div></div>`;
@@ -241,10 +241,10 @@ function staffFiche(){
   const content=tab=>{
     if(tab==='competences'){
       const mine=new Set((p.competences||[]).map(Number)), can=isAdmin()&&S.conn==='shared';
-      return `<section class="panel"><h2>Compétences</h2><p class="help" style="margin-bottom:10px">Les modules que ${esc(p.nom)} peut donner. Les séances à pourvoir lui sont proposées selon cette liste.</p>
+      return `<section class="panel"><h2>Compétences</h2><p class="help u-mb10">Les modules que ${esc(p.nom)} peut donner. Les séances à pourvoir lui sont proposées selon cette liste.</p>
           ${comps().length?`<form data-form="sf-comp" data-id="${esc(p.id)}"><div class="ck-grid">${comps().map(k=>`<label class="ck"><input type="checkbox" name="comp" value="${esc(k.code)}"${mine.has(+k.code)?' checked':''}${can?'':' disabled'}><span><b>M${esc(k.code)}</b> ${esc(k.nom)}</span></label>`).join('')}</div>
-          ${can?`<div class="row" style="margin-top:12px"><button class="btn primary" type="submit"${dis()}>Enregistrer les compétences</button><button class="btn sm ghost" type="button" data-act="sf-comp-all" data-v="1">Tout cocher</button><button class="btn sm ghost" type="button" data-act="sf-comp-all" data-v="">Tout décocher</button></div>`:''}</form>`:'<p class="help">Créez d’abord les modules du programme dans le menu Modules.</p>'}</section>
-        <section class="panel dp-panel" style="margin-top:14px"><h2>Disponibilités</h2>${dispoCalHTML(p.id,can)}</section>`;
+          ${can?`<div class="row u-mt12"><button class="btn primary" type="submit"${dis()}>Enregistrer les compétences</button><button class="btn sm ghost" type="button" data-act="sf-comp-all" data-v="1">Tout cocher</button><button class="btn sm ghost" type="button" data-act="sf-comp-all" data-v="">Tout décocher</button></div>`:''}</form>`:'<p class="help">Créez d’abord les modules du programme dans le menu Modules.</p>'}</section>
+        <section class="panel dp-panel u-mt14"><h2>Disponibilités</h2>${dispoCalHTML(p.id,can)}</section>`;
     }
     if(tab==='cours'){
       const og=S.pg.og||{}, nx=nextSession(x=>x.tch.includes(p.id)), surv=upcomingExams(x=>x.e&&x.e.surveillant===p.id,5);
@@ -263,7 +263,7 @@ function staffFiche(){
       for(const [ds,doc] of Object.entries(S.data.staffPres)){if(ds<yearStart()||ds>todayISO())continue;const v=doc&&doc.statuts&&doc.statuts[p.id];if(!v||cnt[v]==null)continue;cnt[v]++;if(v!=='P')off.push([ds,v]);}
       off.sort((x,y)=>y[0].localeCompare(x[0]));
       return `<section class="panel"><div class="att-sum">${Object.entries(cnt).map(([k,v])=>`<span class="chip ${SCH[k]}">${v} ${SLBL[k].toLowerCase()}${v>1&&k!=='F'?'s':''}</span>`).join('')}</div>
-        <p class="help" style="margin:6px 0 10px">Depuis le ${esc(longDate(parse(yearStart())))}.</p>${off.length?rows(off.map(([ds,v])=>`<li><span>${esc(dayLabel(parse(ds)))}</span><span class="chip ${SCH[v]}">${SLBL[v]}</span></li>`)):'<p class="help">Aucune absence ni aucun congé.</p>'}</section>`;
+        <p class="help u-m6-0-10">Depuis le ${esc(longDate(parse(yearStart())))}.</p>${off.length?rows(off.map(([ds,v])=>`<li><span>${esc(dayLabel(parse(ds)))}</span><span class="chip ${SCH[v]}">${SLBL[v]}</span></li>`)):'<p class="help">Aucune absence ni aucun congé.</p>'}</section>`;
     }
     const emb=z.embauche?parse(z.embauche):null, yrs=emb?Math.floor((Date.now()-emb.getTime())/(365.25*864e5)):null;
     return `<section class="panel"><dl class="facts facts3">

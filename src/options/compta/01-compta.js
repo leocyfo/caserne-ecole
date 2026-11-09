@@ -11,11 +11,6 @@
 const CP_DEP=[['salaires','Salaires des instructeurs'],['materiel','Matériel et équipement'],['conso','Consommables'],['entretien','Entretien et réparations'],['examens','Frais d’examens'],['admin','Administration'],['autres','Autres dépenses']];
 const CP_REV=[['frais','Frais des élèves'],['factures','Contrats de formation'],['subv','Subventions'],['autres','Autres revenus']];
 const CP_DEF={taxes:{on:false,tps:5,tvq:9.975},prefixe:'F-',modes:['Comptant','Chèque','Virement','Carte de crédit'],taux:{defaut:4500,theorie:null,pratique:null}};
-const _fmtM=new Intl.NumberFormat('fr-CA',{style:'currency',currency:'CAD'});
-const fmtM=c=>_fmtM.format((+c||0)/100);
-const money=v=>{const s=String(v==null?'':v).replace(/[\s  $]/g,'').replace(',','.');if(!/^\d+(\.\d{0,2})?$/.test(s))return null;return Math.round(parseFloat(s)*100);};
-const moneyIn=c=>c==null||c===''?'':((+c)/100).toFixed(2).replace('.',',');
-const sumC=a=>a.reduce((n,x)=>n+(+x||0),0);
 function cpCfg(){
   const c=S.data.cptCfg||{}, t=c.taux||{};
   return {taxes:Object.assign({},CP_DEF.taxes,c.taxes||{}),prefixe:c.prefixe!=null?c.prefixe:CP_DEF.prefixe,modes:Array.isArray(c.modes)&&c.modes.length?c.modes:CP_DEF.modes,
@@ -39,7 +34,6 @@ function cpFee(e,src){
 }
 const CP_FE={paye:['ok','Payé'],retard:['bad','En retard'],ajour:['info','À jour'],aucun:['off','Aucun frais']};
 /* Factures */
-function cpFTot(f){const ht=sumC((f.lignes||[]).map(l=>Math.round((+l.q||0)*(+l.p||0)))), tps=f.tx?Math.round(ht*f.tx.tps/100):0, tvq=f.tx?Math.round(ht*f.tx.tvq/100):0;return {ht,tps,tvq,ttc:ht+tps+tvq};}
 const cpFPaid=f=>sumC(cpE().filter(x=>x.type==='rev'&&x.facture===f.id).map(x=>x.ttc))+(+f.report||0);
 function cpFState(f){const tot=cpFTot(f).ttc, p=cpFPaid(f);if(f.statut==='annulee')return 'annulee';if(f.statut==='brouillon')return 'brouillon';if(p>=tot&&tot>0)return 'payee';if(f.echeance&&f.echeance<todayISO())return 'retard';return 'envoyee';}
 const CP_FS={brouillon:['off','Brouillon'],envoyee:['info','Envoyée'],retard:['bad','En retard'],payee:['ok','Payée'],annulee:['off','Annulée']};
@@ -74,7 +68,6 @@ function comptaPage(){
   const tabs=comptaTabs(), tab=tabs.some(t=>t.k===S.pg.cp)?S.pg.cp:'dash';
   return tab==='frais'?cpFraisPage():tab==='fact'?cpFactPage():tab==='pay'?cpEntriesPage('rev'):tab==='dep'?cpEntriesPage('dep'):tab==='paie'?cpPaiePage():tab==='budget'?cpBudgetPage():tab==='rap'?cpRapPage():tab==='regl'?cpReglPage():cpDash();
 }
-const cpKpi=(id,l,v,cls,sub)=>`<div class="kpi" id="${id}"><span>${l}</span><b class="${cls||''}">${v}</b>${sub?`<small>${sub}</small>`:''}</div>`;
 function cpDash(){
   const E=cpE(), rev=sumC(E.filter(x=>x.type==='rev').map(x=>x.ttc)), dep=sumC(E.filter(x=>x.type==='dep').map(x=>x.ttc));
   const fees=S.data.eleves.map(e=>({e,f:cpFee(e)})), du=sumC(fees.map(x=>Math.max(0,x.f.solde))), late=fees.filter(x=>x.f.etat==='retard');
@@ -85,8 +78,8 @@ function cpDash(){
     ap?[`${pl(ap,'relevé de paie à approuver','relevés de paie à approuver')}`,'paie','warn']:null,
     ...over.map(([k,l])=>[`Budget dépassé : ${l}`,'budget','warn'])].filter(Boolean);
   const last=E.slice().sort((x,y)=>String(y.le||y.date).localeCompare(String(x.le||x.date))).slice(0,8);
-  return `<div class="kpis">${cpKpi('cpd-rev','Revenus',fmtM(rev),'','depuis le début de l’année')}${cpKpi('cpd-dep','Dépenses',fmtM(dep),'','depuis le début de l’année')}${cpKpi('cpd-sol','Solde',fmtM(rev-dep),rev-dep<0?'bad':'ok','revenus moins dépenses')}${cpKpi('cpd-du','À recevoir',fmtM(du+fdu),du+fdu?'warn':'',`${fmtM(du)} des élèves · ${fmtM(fdu)} en factures`)}</div>
-    <div class="two" style="margin-top:12px"><section class="panel" id="cpd-todo"><h2>À faire</h2>${todo.length?`<ul class="plist">${todo.map(([l,k,c])=>`<li><span><span class="chip ${c}">${c==='bad'?'Retard':'À faire'}</span> ${esc(l)}</span><button class="btn sm ghost" type="button" data-act="pg-set" data-k="cp" data-v="${k}">Voir</button></li>`).join('')}</ul>`:'<p class="help">Rien à faire : les paiements sont à jour, la paie est approuvée et le budget est respecté.</p>'}</section>
+  return `<div class="kpis">${kpiBox('cpd-rev','Revenus',fmtM(rev),'','depuis le début de l’année')}${kpiBox('cpd-dep','Dépenses',fmtM(dep),'','depuis le début de l’année')}${kpiBox('cpd-sol','Solde',fmtM(rev-dep),rev-dep<0?'bad':'ok','revenus moins dépenses')}${kpiBox('cpd-du','À recevoir',fmtM(du+fdu),du+fdu?'warn':'',`${fmtM(du)} des élèves · ${fmtM(fdu)} en factures`)}</div>
+    <div class="two u-mt12"><section class="panel" id="cpd-todo"><h2>À faire</h2>${todo.length?`<ul class="plist">${todo.map(([l,k,c])=>`<li><span><span class="chip ${c}">${c==='bad'?'Retard':'À faire'}</span> ${esc(l)}</span><button class="btn sm ghost" type="button" data-act="pg-set" data-k="cp" data-v="${k}">Voir</button></li>`).join('')}</ul>`:'<p class="help">Rien à faire : les paiements sont à jour, la paie est approuvée et le budget est respecté.</p>'}</section>
     <section class="panel" id="cpd-last"><h2>Dernières écritures</h2>${last.length?`<ul class="plist">${last.map(x=>`<li><span>${esc(x.libelle||cpPoste(x.type,x.poste))}<span class="muted sm"> · ${esc(shortDate(parse(x.date)))}</span></span><b class="cp-amt ${x.type==='dep'?'dep':'rev'}">${x.type==='dep'?'−':'+'}${esc(fmtM(x.ttc))}</b></li>`).join('')}</ul>`:'<p class="help">Aucune écriture pour l’instant.</p>'}</section></div>`;
 }
 /* Frais des élèves */
@@ -99,7 +92,7 @@ function cpFraisPage(){
   const tot=k=>fmtM(sumC(L.map(x=>x.f[k])));
   const rows=L.map(({e,f})=>`<tr class="row-link" data-act="ca-el" data-id="${esc(e.id)}"><td><span class="tb-who"><span class="st-num sm" aria-hidden="true">${e.numero!=null&&e.numero!==''?esc(e.numero):'—'}</span><button class="link" type="button" data-act="ca-el" data-id="${esc(e.id)}">${esc(e.nom)}</button></span></td><td>${esc(gName(e.groupe))}</td><td class="num">${esc(fmtM(f.du))}</td><td class="num">${esc(fmtM(f.paid+f.red))}</td><td class="num"><b>${esc(fmtM(f.solde))}</b></td><td>${f.next?esc(shortDate(parse(f.next.date)))+` <span class="muted sm">${esc(fmtM(f.next.m))}</span>`:'<span class="muted">—</span>'}</td><td><span class="chip ${CP_FE[f.etat][0]}">${CP_FE[f.etat][1]}${f.etat==='retard'?' · '+esc(fmtM(f.retard)):''}</span></td></tr>`).join('');
   return tb+`<div class="tbl-wrap"><table class="tbl stack cp-tbl"><thead><tr><th>Élève</th><th>Classe</th><th class="num">Dû</th><th class="num">Payé et réductions</th><th class="num">Solde</th><th>Prochaine échéance</th><th>État</th></tr></thead><tbody>${rows||'<tr><td colspan="7" class="muted">Aucun élève.</td></tr>'}</tbody>
-    <tfoot><tr><th colspan="2">${pl(L.length,'élève','élèves')}</th><th class="num">${tot('du')}</th><th class="num">${esc(fmtM(sumC(L.map(x=>x.f.paid+x.f.red))))}</th><th class="num">${tot('solde')}</th><th colspan="2"></th></tr></tfoot></table></div>`;
+    <tfoot><tr><th colspan="2">${pl(L.length,'élève','élèves')}</th><th class="num">${tot('du')}</th><th class="num">${esc(fmtM(sumC(L.map(x=>x.f.paid+x.f.red))))}</th><th class="num">${tot('solde')}</th><td colspan="2" class="tf-empty"></td></tr></tfoot></table></div>`;
 }
 /* Factures */
 function cpFactPage(){
@@ -117,10 +110,10 @@ function cpEntriesPage(t){
   if(q) E=E.filter(x=>[x.libelle,x.tiers,x.note,x.eleve?(byId(S.data.eleves,x.eleve)||{}).nom:''].some(y=>String(y||'').toLowerCase().includes(q)));
   E=E.slice().sort((a,b)=>String(b.date).localeCompare(String(a.date))||String(b.le||'').localeCompare(String(a.le||'')));
   const tb=`<div class="toolbar"><input class="search" id="ca-q2" type="search" placeholder="Libellé, fournisseur, élève" aria-label="Rechercher" autocomplete="off" value="${esc(st.cq2||'')}"><select id="ca-pf" aria-label="Poste"><option value="">Tous les postes</option>${P.map(([k,l])=>`<option value="${k}"${pf===k?' selected':''}>${l}</option>`).join('')}</select><span class="grow"></span><button class="btn" type="button" data-act="ca-exp" data-v="ecritures">${icon('down')}Exporter</button><button class="btn primary" type="button" id="ca-new-${t}" data-act="ca-entry-new" data-t="${t}">${icon('plus')}${t==='dep'?'Nouvelle dépense':'Autre revenu'}</button></div>`;
-  if(!E.length) return tb+emptyBox(t==='dep'?'Aucune dépense':'Aucun paiement reçu',t==='dep'?'Les achats, l’entretien et la paie payée paraîtront ici. Un réapprovisionnement du Stock avec un coût s’y ajoute tout seul.':'Les paiements des élèves, des factures et les autres revenus (subventions) paraîtront ici.');
+  if(!E.length) return tb+emptyBox(t==='dep'?'Aucune dépense':'Aucun paiement reçu',t==='dep'?'Les achats, l’entretien et la paie payée paraîtront ici. '+(opt('stock')?'Un réapprovisionnement du Stock avec un coût s’y ajoute tout seul.':''):'Les paiements des élèves, des factures et les autres revenus (subventions) paraîtront ici.');
   const rows=E.slice(0,lim).map(x=>`<tr class="row-link" data-act="ca-entry" data-id="${esc(x.id)}"><td>${esc(shortDate(parse(x.date)))}</td><td><b>${esc(x.libelle||cpPoste(x.type,x.poste))}</b>${x.type==='red'?' <span class="chip off">Réduction</span>':''}<small class="tb-sub">${esc([cpPoste(x.type==='red'?'rev':x.type,x.poste),x.eleve?(byId(S.data.eleves,x.eleve)||{}).nom:'',x.tiers].filter(Boolean).join(' · '))}</small></td><td>${esc(x.mode||'')}</td><td class="num"><b class="cp-amt ${x.type==='dep'?'dep':'rev'}">${esc(fmtM(x.ttc))}</b>${x.tps||x.tvq?`<small class="tb-sub">dont taxes ${esc(fmtM((+x.tps||0)+(+x.tvq||0)))}</small>`:''}</td></tr>`).join('');
   return tb+`<div class="tbl-wrap"><table class="tbl stack cp-tbl"><thead><tr><th>Date</th><th>Écriture</th><th>Mode</th><th class="num">Montant</th></tr></thead><tbody>${rows}</tbody><tfoot><tr><th colspan="3">${pl(E.length,'écriture','écritures')}</th><th class="num">${esc(fmtM(sumC(E.map(x=>x.ttc))))}</th></tr></tfoot></table></div>`
-    +(E.length>lim?`<div class="row" style="margin-top:12px"><button class="btn" type="button" data-act="pg-set" data-k="lim" data-v="${lim+80}">Afficher plus (${E.length-lim})</button></div>`:'');
+    +(E.length>lim?`<div class="row u-mt12"><button class="btn" type="button" data-act="pg-set" data-k="lim" data-v="${lim+80}">Afficher plus (${E.length-lim})</button></div>`:'');
 }
 /* Paie des instructeurs */
 function cpPaiePage(){
@@ -131,8 +124,8 @@ function cpPaiePage(){
     const st=sl?sl.statut==='paye'?['ok','Payé']:['info','Approuvé']:['warn',cur?'Mois en cours':'À approuver'];
     return `<tr id="ca-p-${esc(r.t)}"><td><button class="link" type="button" data-act="ca-slip" data-t="${esc(r.t)}" data-m="${m}">${esc(tName(r.t))}</button>${changed?'<small class="tb-sub bad-t">Les heures ont changé depuis l’approbation</small>':''}</td><td class="num">${esc(hrFmt(h))} h</td><td class="num">${esc(fmtM(Math.round(mt/(h||1))))} / h</td><td class="num"><b>${esc(fmtM(mt))}</b></td><td><span class="chip ${st[0]}">${st[1]}</span></td>
       <td class="r">${!sl&&!cur?`<button class="btn sm" type="button" data-act="ca-paie-ok" data-t="${esc(r.t)}" data-m="${m}"${dis()}>Approuver</button>`:''}${sl&&sl.statut!=='paye'?`<button class="btn sm" type="button" data-act="ca-paie-pay" data-id="${esc(sl.id)}"${dis()}>Marquer payé</button>`:''}${sl?`<button class="btn sm ghost" type="button" data-act="ca-slip-pr" data-t="${esc(r.t)}" data-m="${m}">${icon('print')}Relevé</button>`:''}</td></tr>`;}).join('');
-  return tb+`<div class="tbl-wrap"><table class="tbl stack cp-tbl"><thead><tr><th>Instructeur</th><th class="num">Heures</th><th class="num">Taux moyen</th><th class="num">Montant</th><th>État</th><th class="r"></th></tr></thead><tbody>${rows}</tbody><tfoot><tr><th>${pl(R.length,'instructeur','instructeurs')}</th><th class="num">${esc(hrFmt(sumC(R.map(r=>r.h))))} h</th><th></th><th class="num">${esc(fmtM(sumC(R.map(r=>r.mt))))}</th><th colspan="2"></th></tr></tfoot></table></div>
-    <p class="help" style="margin-top:8px">${cur?'Le mois n’est pas terminé : la paie s’approuve une fois le mois fini. ':''}Les taux se règlent dans Réglages de la compta. « Marquer payé » inscrit la dépense au poste Salaires.</p>`;
+  return tb+`<div class="tbl-wrap"><table class="tbl stack cp-tbl"><thead><tr><th>Instructeur</th><th class="num">Heures</th><th class="num">Taux moyen</th><th class="num">Montant</th><th>État</th><th class="r"><span class="vh">Actions</span></th></tr></thead><tbody>${rows}</tbody><tfoot><tr><th>${pl(R.length,'instructeur','instructeurs')}</th><th class="num">${esc(hrFmt(sumC(R.map(r=>r.h))))} h</th><td class="tf-empty"></td><th class="num">${esc(fmtM(sumC(R.map(r=>r.mt))))}</th><td colspan="2" class="tf-empty"></td></tr></tfoot></table></div>
+    <p class="help u-mt8">${cur?'Le mois n’est pas terminé : la paie s’approuve une fois le mois fini. ':''}Les taux se règlent dans Réglages de la compta. « Marquer payé » inscrit la dépense au poste Salaires.</p>`;
 }
 /* Budget de l’année : prévu et réel par poste */
 function cpBudgetPage(){
@@ -140,8 +133,8 @@ function cpBudgetPage(){
   const rows=CP_DEP.map(([k,l])=>{const p=+b[k]||0, r=sumC(E.filter(x=>x.poste===k).map(x=>x.ttc)), pc=p?Math.round(r/p*100):0, cls=!p?'':pc>100?'bad':pc>=85?'warn':'';
     return `<tr><td>${l}</td><td class="num"><input class="cp-in" id="ca-b-${k}" data-cpb="${k}" inputmode="decimal" autocomplete="off" value="${esc(p?moneyIn(p):'')}" placeholder="0,00" aria-label="Prévu : ${esc(l)}"></td><td class="num">${esc(fmtM(r))}</td><td class="num ${cls}">${p?esc(fmtM(p-r)):'—'}</td><td class="cp-bar">${p?`<div class="meter ${cls}"><i style="width:${Math.min(100,pc)}%"></i></div><small>${pc} %</small>`:''}</td></tr>`;}).join('');
   const P=sumC(CP_DEP.map(([k])=>+b[k]||0)), Rr=sumC(E.map(x=>x.ttc));
-  return `<form data-form="ca-budget" novalidate><div class="tbl-wrap"><table class="tbl cp-tbl"><thead><tr><th>Poste</th><th class="num">Prévu</th><th class="num">Réel</th><th class="num">Reste</th><th>Utilisé</th></tr></thead><tbody>${rows}</tbody><tfoot><tr><th>Total</th><th class="num">${esc(fmtM(P))}</th><th class="num">${esc(fmtM(Rr))}</th><th class="num ${P&&Rr>P?'bad':''}">${P?esc(fmtM(P-Rr)):'—'}</th><th></th></tr></tfoot></table></div>
-    <div class="ps-save" style="margin-top:12px"><button class="btn primary" type="submit" id="ca-budget-save"${dis()}>Enregistrer le budget</button><span class="help">Le réel additionne les dépenses de chaque poste, taxes comprises.</span></div></form>`;
+  return `<form data-form="ca-budget" novalidate><div class="tbl-wrap"><table class="tbl cp-tbl"><thead><tr><th>Poste</th><th class="num">Prévu</th><th class="num">Réel</th><th class="num">Reste</th><th>Utilisé</th></tr></thead><tbody>${rows}</tbody><tfoot><tr><th>Total</th><th class="num">${esc(fmtM(P))}</th><th class="num">${esc(fmtM(Rr))}</th><th class="num ${P&&Rr>P?'bad':''}">${P?esc(fmtM(P-Rr)):'—'}</th><td class="tf-empty"></td></tr></tfoot></table></div>
+    <div class="ps-save u-mt12"><button class="btn primary" type="submit" id="ca-budget-save"${dis()}>Enregistrer le budget</button><span class="help">Le réel additionne les dépenses de chaque poste, taxes comprises.</span></div></form>`;
 }
 /* Rapports */
 function cpRapPage(){
@@ -151,12 +144,12 @@ function cpRapPage(){
   /* coût par module : heures données au taux des instructeurs, et consommables utilisés pendant ses séances */
   const byM={};const mk=s=>{const k=modOf(s.c);return k?`M${k.code} ${k.nom||''}`.trim():(s.c.code||s.c.titre||'—');};
   for(const r of TR){const k=mk(r.s), o=byM[k]||(byM[k]={h:0,sal:0,con:0});o.h+=r.h;o.sal+=Math.round(r.h*cpRate(r.t,r.s));}
-  for(const m of S.data.stockMvt||[]) if(m.type==='conso'&&m.seance){const s=findSess(m.seance.date,m.seance.key), a=byId(skArts(),m.art);if(!s||!a||!a.prix) continue;const k=mk(s), o=byM[k]||(byM[k]={h:0,sal:0,con:0});o.con+=Math.round((+m.qte||0)*a.prix);}
+  for(const m of S.data.stockMvt||[]) if(m.type==='conso'&&m.seance){const s=findSess(m.seance.date,m.seance.key), a=byId(S.data.stock||[],m.art);if(!s||!a||!a.prix) continue;const k=mk(s), o=byM[k]||(byM[k]={h:0,sal:0,con:0});o.con+=Math.round((+m.qte||0)*a.prix);}
   const mods=Object.entries(byM).sort((a,b)=>collator.compare(a[0],b[0]));
-  return `<div class="kpis">${cpKpi('cpr-el','Coût par élève',nEl?fmtM(Math.round(dep/nEl)):'—','',`dépenses ÷ ${pl(nEl,'élève','élèves')}`)}${cpKpi('cpr-h','Heures d’instruction',hrFmt(hrs)+' h','','données depuis la rentrée')}${cpKpi('cpr-ch','Coût d’une heure',hrs?fmtM(Math.round(sal/hrs)):'—','','au taux des instructeurs')}${cpKpi('cpr-sal','Salaires estimés',fmtM(sal),'','pour les heures données')}</div>
-    <div class="two" style="margin-top:12px"><section class="panel"><h2>Par mois</h2><div class="tbl-wrap"><table class="tbl cp-tbl"><thead><tr><th>Mois</th><th class="num">Revenus</th><th class="num">Dépenses</th><th class="num">Solde</th></tr></thead><tbody>${rows}</tbody></table></div></section>
+  return `<div class="kpis">${kpiBox('cpr-el','Coût par élève',nEl?fmtM(Math.round(dep/nEl)):'—','',`dépenses ÷ ${pl(nEl,'élève','élèves')}`)}${kpiBox('cpr-h','Heures d’instruction',hrFmt(hrs)+' h','','données depuis la rentrée')}${kpiBox('cpr-ch','Coût d’une heure',hrs?fmtM(Math.round(sal/hrs)):'—','','au taux des instructeurs')}${kpiBox('cpr-sal','Salaires estimés',fmtM(sal),'','pour les heures données')}</div>
+    <div class="two u-mt12"><section class="panel"><h2>Par mois</h2><div class="tbl-wrap"><table class="tbl cp-tbl"><thead><tr><th>Mois</th><th class="num">Revenus</th><th class="num">Dépenses</th><th class="num">Solde</th></tr></thead><tbody>${rows}</tbody></table></div></section>
     <section class="panel"><h2>Par module</h2>${mods.length?`<div class="tbl-wrap"><table class="tbl cp-tbl"><thead><tr><th>Module</th><th class="num">Heures</th><th class="num">Instructeurs</th><th class="num">Consommables</th><th class="num">Total</th></tr></thead><tbody>${mods.map(([k,o])=>`<tr><td>${esc(k)}</td><td class="num">${esc(hrFmt(o.h))}</td><td class="num">${esc(fmtM(o.sal))}</td><td class="num">${esc(fmtM(o.con))}</td><td class="num"><b>${esc(fmtM(o.sal+o.con))}</b></td></tr>`).join('')}</tbody></table></div>`:'<p class="help">Aucune heure donnée pour l’instant.</p>'}</section></div>
-    <section class="panel" style="margin-top:12px"><h2>Exporter pour le comptable</h2><div class="row">${[['ecritures','Toutes les écritures'],['frais','Frais des élèves'],['factures','Factures'],['paie','Paie du mois']].map(([k,l])=>`<button class="btn sm" type="button" id="ca-exp-${k}" data-act="ca-exp" data-v="${k}">${icon('down')}${l}</button>`).join('')}</div><p class="help" style="margin-top:6px">Des fichiers CSV qui s’ouvrent dans Excel et s’importent dans la plupart des logiciels comptables.</p></section>`;
+    <section class="panel u-mt12"><h2>Exporter pour le comptable</h2><div class="row">${[['ecritures','Toutes les écritures'],['frais','Frais des élèves'],['factures','Factures'],['paie','Paie du mois']].map(([k,l])=>`<button class="btn sm" type="button" id="ca-exp-${k}" data-act="ca-exp" data-v="${k}">${icon('down')}${l}</button>`).join('')}</div><p class="help u-mt6">Des fichiers CSV qui s’ouvrent dans Excel et s’importent dans la plupart des logiciels comptables.</p></section>`;
 }
 /* Réglages de la compta */
 function cpReglPage(){
@@ -196,13 +189,13 @@ function cpElDrawer(d){
   const fact=(l,v,cls)=>`<div><dt>${l}</dt><dd class="${cls||''}">${v}</dd></div>`;
   return dTop('Compte de l’élève',esc(e.nom),esc(gName(e.groupe)))
     +`<div class="dr-body"><dl class="facts">${fact('Dû',esc(fmtM(f.du)))}${fact('Payé',esc(fmtM(f.paid)))}${fact('Réductions',esc(fmtM(f.red)))}${fact('Solde',`<b>${esc(fmtM(f.solde))}</b>`)}${fact('En retard',esc(fmtM(f.retard)),f.retard?'bad-t':'')}${fact('Prochaine échéance',f.next?esc(shortDate(parse(f.next.date))+' · '+fmtM(f.next.m)):'—')}</dl>
-      <h3 class="sb-h3" style="margin-top:14px">Tarifs</h3>${f.T.length?`<ul class="plist">${f.T.map(t=>`<li><span>${esc(t.nom)}<span class="muted sm">${(t.ech||[]).filter(y=>y.date&&+y.pct>0).length?' · '+esc((t.ech||[]).filter(y=>y.date&&+y.pct>0).map(y=>`${y.pct} % le ${shortDate(parse(y.date))}`).join(', ')):''}</span></span><b>${esc(fmtM(t.montant))}</b></li>`).join('')}</ul>`:'<p class="help">Aucun tarif pour sa classe.</p>'}
+      <h3 class="sb-h3 u-mt14">Tarifs</h3>${f.T.length?`<ul class="plist">${f.T.map(t=>`<li><span>${esc(t.nom)}<span class="muted sm">${(t.ech||[]).filter(y=>y.date&&+y.pct>0).length?' · '+esc((t.ech||[]).filter(y=>y.date&&+y.pct>0).map(y=>`${y.pct} % le ${shortDate(parse(y.date))}`).join(', ')):''}</span></span><b>${esc(fmtM(t.montant))}</b></li>`).join('')}</ul>`:'<p class="help">Aucun tarif pour sa classe.</p>'}
       <form class="cp-box" data-form="ca-pay-el" novalidate><h3 class="sb-h3">${d.sub==='red'?'Accorder une réduction':'Enregistrer un paiement'}</h3>
         <div class="grid2">${cpField('cx-mt','Montant ($)',moneyIn(d.sub==='red'?'':f.retard||Math.max(0,f.solde)||''),'inputmode="decimal" autocomplete="off" placeholder="0,00"')}${cpField('cx-date','Date',todayISO(),'type="date"')}</div>
         ${d.sub==='red'?cpField('cx-note','Raison','','maxlength="120" autocomplete="off" placeholder="Ex. bourse, entente de paiement"'):`<div class="grid2">${cpModes('cx-mode')}${cpField('cx-note','Note (facultatif)','','maxlength="120" autocomplete="off"')}</div>`}
         <div class="row"><button class="btn primary" type="submit"${dis()}>${d.sub==='red'?'Accorder':'Enregistrer le paiement'}</button><button class="btn ghost" type="button" data-act="ca-sub" data-v="${d.sub==='red'?'':'red'}">${d.sub==='red'?'Plutôt un paiement':'Accorder une réduction'}</button></div></form>
-      <h3 class="sb-h3" style="margin-top:14px">Paiements et réductions</h3>${E.length?`<ul class="plist">${E.map(x=>`<li><span>${esc(shortDate(parse(x.date)))} · ${x.type==='red'?'Réduction':x.type==='chg'?esc(x.libelle||'Frais ajouté'):esc(x.mode||'Paiement')}${x.note?` <span class="muted sm">· ${esc(x.note)}</span>`:''}</span><span class="row"><b class="cp-amt ${x.type==='rev'?'rev':''}">${x.type==='chg'?'+':''}${esc(fmtM(x.ttc))}</b>${x.type==='rev'?`<button class="btn sm ghost" type="button" data-act="ca-recu" data-id="${esc(x.id)}" aria-label="Imprimer le reçu">${icon('print')}Reçu</button>`:''}<button class="btn sm ghost" type="button" data-act="ca-entry-del" data-id="${esc(x.id)}" aria-label="Retirer">${icon('x')}</button></span></li>`).join('')}</ul>`:'<p class="help">Aucun paiement.</p>'}
-      <div class="row" style="margin-top:12px"><button class="btn sm" type="button" data-act="ca-releve" data-id="${esc(e.id)}">${icon('print')}Relevé de compte</button></div></div>`;
+      <h3 class="sb-h3 u-mt14">Paiements et réductions</h3>${E.length?`<ul class="plist">${E.map(x=>`<li><span>${esc(shortDate(parse(x.date)))} · ${x.type==='red'?'Réduction':x.type==='chg'?esc(x.libelle||'Frais ajouté'):esc(x.mode||'Paiement')}${x.note?` <span class="muted sm">· ${esc(x.note)}</span>`:''}</span><span class="row"><b class="cp-amt ${x.type==='rev'?'rev':''}">${x.type==='chg'?'+':''}${esc(fmtM(x.ttc))}</b>${x.type==='rev'?`<button class="btn sm ghost" type="button" data-act="ca-recu" data-id="${esc(x.id)}" aria-label="Imprimer le reçu">${icon('print')}Reçu</button>`:''}<button class="btn sm ghost" type="button" data-act="ca-entry-del" data-id="${esc(x.id)}" aria-label="Retirer">${icon('x')}</button></span></li>`).join('')}</ul>`:'<p class="help">Aucun paiement.</p>'}
+      <div class="row u-mt12"><button class="btn sm" type="button" data-act="ca-releve" data-id="${esc(e.id)}">${icon('print')}Relevé de compte</button></div></div>`;
 }
 function cpFactDrawer(d){
   const f=byId(S.data.factures||[],d.id);if(!f) return goneHTML('Facture');
@@ -212,8 +205,8 @@ function cpFactDrawer(d){
       <table class="tbl cp-lines"><thead><tr><th>Description</th><th class="num">Qté</th><th class="num">Prix</th><th class="num">Montant</th></tr></thead><tbody>${(f.lignes||[]).map(l=>`<tr><td>${esc(l.d)}</td><td class="num">${esc(String(l.q))}</td><td class="num">${esc(fmtM(l.p))}</td><td class="num">${esc(fmtM(Math.round(l.q*l.p)))}</td></tr>`).join('')}</tbody>
         <tfoot><tr><th colspan="3">Sous-total</th><th class="num">${esc(fmtM(t.ht))}</th></tr>${f.tx?`<tr><th colspan="3">TPS (${esc(String(f.tx.tps).replace('.',','))} %)</th><th class="num">${esc(fmtM(t.tps))}</th></tr><tr><th colspan="3">TVQ (${esc(String(f.tx.tvq).replace('.',','))} %)</th><th class="num">${esc(fmtM(t.tvq))}</th></tr>`:''}<tr><th colspan="3">Total</th><th class="num">${esc(fmtM(t.ttc))}</th></tr><tr><th colspan="3">Payé</th><th class="num">${esc(fmtM(p))}</th></tr><tr><th colspan="3">Solde</th><th class="num"><b>${esc(fmtM(t.ttc-p))}</b></th></tr></tfoot></table>
       ${open?`<form class="cp-box" data-form="ca-fact-pay" novalidate><h3 class="sb-h3">Enregistrer un paiement</h3><div class="grid2">${cpField('cx-mt','Montant ($)',moneyIn(t.ttc-p),'inputmode="decimal" autocomplete="off"')}${cpField('cx-date','Date',todayISO(),'type="date"')}</div><div class="grid2">${cpModes('cx-mode')}<span></span></div><div class="row"><button class="btn primary" type="submit"${dis()}>Enregistrer le paiement</button></div></form>`:''}
-      ${pays.length?`<h3 class="sb-h3" style="margin-top:12px">Paiements</h3><ul class="plist">${pays.map(x=>`<li><span>${esc(shortDate(parse(x.date)))} · ${esc(x.mode||'')}</span><b class="cp-amt rev">${esc(fmtM(x.ttc))}</b></li>`).join('')}</ul>`:''}
-      <div class="row" style="margin-top:14px">${s==='brouillon'?`<button class="btn sm primary" type="button" id="ca-fact-send" data-act="ca-fact-send"${dis()}>Marquer envoyée</button><button class="btn sm" type="button" data-act="ca-fact-edit">Modifier</button>`:''}<button class="btn sm" type="button" id="ca-fact-pr" data-act="ca-fact-pr">${icon('print')}Imprimer</button>${s!=='annulee'&&s!=='payee'?`<button class="btn sm ghost" type="button" data-act="ca-fact-cancel"${dis()}>Annuler la facture</button>`:''}</div></div>`;
+      ${pays.length?`<h3 class="sb-h3 u-mt12">Paiements</h3><ul class="plist">${pays.map(x=>`<li><span>${esc(shortDate(parse(x.date)))} · ${esc(x.mode||'')}</span><b class="cp-amt rev">${esc(fmtM(x.ttc))}</b></li>`).join('')}</ul>`:''}
+      <div class="row u-mt14">${s==='brouillon'?`<button class="btn sm primary" type="button" id="ca-fact-send" data-act="ca-fact-send"${dis()}>Marquer envoyée</button><button class="btn sm" type="button" data-act="ca-fact-edit">Modifier</button>`:''}<button class="btn sm" type="button" id="ca-fact-pr" data-act="ca-fact-pr">${icon('print')}Imprimer</button>${s!=='annulee'&&s!=='payee'?`<button class="btn sm ghost" type="button" data-act="ca-fact-cancel"${dis()}>Annuler la facture</button>`:''}</div></div>`;
 }
 function cpFactForm(d){
   const f=d.id?byId(S.data.factures||[],d.id):null, x=f||{date:todayISO(),echeance:iso(addDays(new Date(),30)),lignes:[],tx:cpCfg().taxes.on?{}:null};
@@ -242,8 +235,8 @@ function cpSlipDrawer(d){
   const R=cpPayRows(d.m).find(r=>r.t===d.t), sl=cpSlip(d.t,d.m), L=sl?sl.lignes:R?R.lignes:[];
   return dTop('Paie · '+esc(hrMonthName(d.m)),esc(tName(d.t)),sl?(sl.statut==='paye'?'Payé':'Approuvé'):'À approuver')
     +`<div class="dr-body"><table class="tbl cp-lines"><thead><tr><th>Date</th><th>Séance</th><th class="num">Heures</th><th class="num">Taux</th><th class="num">Montant</th></tr></thead><tbody>${L.map(l=>`<tr><td>${esc(shortDate(parse(l.date)))}</td><td>${esc(l.titre)}</td><td class="num">${esc(hrFmt(l.h))}</td><td class="num">${esc(fmtM(l.taux))}</td><td class="num">${esc(fmtM(Math.round(l.h*l.taux)))}</td></tr>`).join('')}</tbody>
-      <tfoot><tr><th colspan="2">Total</th><th class="num">${esc(hrFmt(sumC(L.map(l=>l.h))))}</th><th></th><th class="num">${esc(fmtM(sumC(L.map(l=>Math.round(l.h*l.taux)))))}</th></tr></tfoot></table>
-      <div class="row" style="margin-top:12px">${!sl&&d.m<todayISO().slice(0,7)?`<button class="btn sm primary" type="button" data-act="ca-paie-ok" data-t="${esc(d.t)}" data-m="${d.m}"${dis()}>Approuver</button>`:''}${sl?`<button class="btn sm" type="button" data-act="ca-slip-pr" data-t="${esc(d.t)}" data-m="${d.m}">${icon('print')}Imprimer le relevé</button>`:''}</div></div>`;
+      <tfoot><tr><th colspan="2">Total</th><th class="num">${esc(hrFmt(sumC(L.map(l=>l.h))))}</th><td class="tf-empty"></td><th class="num">${esc(fmtM(sumC(L.map(l=>Math.round(l.h*l.taux)))))}</th></tr></tfoot></table>
+      <div class="row u-mt12">${!sl&&d.m<todayISO().slice(0,7)?`<button class="btn sm primary" type="button" data-act="ca-paie-ok" data-t="${esc(d.t)}" data-m="${d.m}"${dis()}>Approuver</button>`:''}${sl?`<button class="btn sm" type="button" data-act="ca-slip-pr" data-t="${esc(d.t)}" data-m="${d.m}">${icon('print')}Imprimer le relevé</button>`:''}</div></div>`;
 }
 /* ---------- Enregistrement ---------- */
 const cpId=p=>p+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
@@ -355,35 +348,29 @@ async function cpExport(kind,m){
   return csv('ecritures',[['Date','Type','Poste','Libellé','Tiers','Élève','Mode','Avant taxes','TPS','TVQ','Total','Note']].concat(cpE().slice().sort((a,b)=>String(a.date).localeCompare(String(b.date))).map(x=>[x.date,x.type==='dep'?'Dépense':x.type==='red'?'Réduction':x.type==='chg'?'Frais ajouté':'Revenu',cpPoste(x.type==='red'?'rev':x.type,x.poste),x.libelle,x.tiers,x.eleve?(byId(S.data.eleves,x.eleve)||{}).nom:'',x.mode,num(x.ht),num(x.tps),num(x.tvq),num(x.ttc),x.note])));
 }
 /* ---------- Ce que chacun voit de lui-même (profil) ----------
-   L’élève : son équipement attribué et son compte ; l’enseignant : ses relevés de paie. L’administration a déjà tout ;
-   les autres ne lisent que leurs propres documents (stock.aId, compta.eleve, compta-paie.ens). */
-let unsubMine=[];
-function ensureMine(){
+   L’élève : son compte ; l’enseignant : ses relevés de paie. L’administration a déjà tout ;
+   les autres ne lisent que leurs propres documents (compta.eleve, compta-paie.ens). */
+let unsubCpMine=[];
+function cpMine(){
   const who=S.role==='student'?S.student:S.role==='teacher'?S.teacher:'', k=S.role+'|'+who;
-  if(!DB||S.archive||S._mineFor===k) return;
-  unsubMine.forEach(u=>{try{u();}catch(e){}});unsubMine=[];S._mineFor=k;S.data.mesStk=[];S.data.mesCpt=[];S.data.mesPaie=[];
+  if(!DB||S.archive||S._cpMineFor===k) return;
+  unsubCpMine.forEach(u=>{try{u();}catch(e){}});unsubCpMine=[];S._cpMineFor=k;S.data.mesCpt=[];S.data.mesPaie=[];
   if(!who||S.canAdmin!==false) return;
-  const sub=(q,key)=>{try{unsubMine.push(q.onSnapshot(x=>{if(S._mineFor!==k)return;S.data[key]=x.docs.map(d=>Object.assign({},d.data(),{id:d.id}));schedule();},()=>{}));}catch(e){}};
-  if(S.role==='student'){if(permOn('equipEl'))sub(col('stock').where('aId','==',who),'mesStk');if(permOn('compteEl'))sub(col('compta').where('eleve','==',who),'mesCpt');}
+  const sub=(q,key)=>{try{unsubCpMine.push(q.onSnapshot(x=>{if(S._cpMineFor!==k)return;S.data[key]=x.docs.map(d=>Object.assign({},d.data(),{id:d.id}));schedule();},()=>{}));}catch(e){}};
+  if(S.role==='student'){if(permOn('compteEl'))sub(col('compta').where('eleve','==',who),'mesCpt');}
   else if(permOn('paieEns')) sub(col('compta-paie').where('ens','==',who),'mesPaie');
 }
 const mine=()=>S.canAdmin!==false;
-const myStk=id=>(mine()?skArts():S.data.mesStk||[]).filter(a=>a.attrib&&a.attrib.t==='eleve'&&a.attrib.id===id);
 const myCpt=()=>mine()?cpE():S.data.mesCpt||[];
 const myPaie=id=>(mine()?S.data.paie||[]:S.data.mesPaie||[]).filter(p=>p.ens===id);
-function myStudentPanels(e){
+function myStudentPanel(e){
   let h='';
-  if(permOn('equipEl')){
-    const A=myStk(e.id);
-    h+=`<section class="panel" id="pf-equip"><h2>Mon équipement</h2>${A.length?`<ul class="acc-list">${A.map(a=>`<li><span>${esc(a.nom)}<span class="muted sm">${esc([' · '+(a.code||''),a.taille?'taille '+a.taille:''].filter(x=>x&&x!==' · ').join(' · '))}</span></span><span class="muted sm">${a.attrib.le?'reçu le '+esc(shortDate(new Date(a.attrib.le))):''}</span></li>`).join('')}</ul>
-      <div class="row" style="margin-top:10px"><button class="btn sm ghost" type="button" data-act="stk-dot-pr" data-id="${esc(e.id)}">${icon('print')}Ma feuille de dotation</button></div>`:'<p class="help">Aucun équipement ne vous est attribué.</p>'}</section>`;
-  }
   if(permOn('compteEl')&&cpCfg().tarifs.length){
     const f=cpFee(e,myCpt()), P=f.E.filter(x=>x.type==='rev').sort((a,b)=>String(b.date).localeCompare(String(a.date)));
     h+=`<section class="panel" id="pf-compte"><h2>Mon compte</h2><dl class="facts"><div><dt>Solde</dt><dd><b>${esc(fmtM(f.solde))}</b></dd></div><div><dt>En retard</dt><dd class="${f.retard?'bad-t':''}">${esc(fmtM(f.retard))}</dd></div>
       <div><dt>Prochaine échéance</dt><dd>${f.next?esc(shortDate(parse(f.next.date))+' · '+fmtM(f.next.m)):'—'}</dd></div><div><dt>Payé</dt><dd>${esc(fmtM(f.paid))}</dd></div></dl>
-      ${P.length?`<ul class="acc-list" style="margin-top:10px">${P.slice(0,6).map(x=>`<li><span>${esc(shortDate(parse(x.date)))} · ${esc(x.mode||'Paiement')}</span><span class="row"><b>${esc(fmtM(x.ttc))}</b><button class="btn sm ghost" type="button" data-act="ca-recu" data-id="${esc(x.id)}" aria-label="Imprimer le reçu">${icon('print')}</button></span></li>`).join('')}</ul>`:''}
-      <div class="row" style="margin-top:10px"><button class="btn sm ghost" type="button" data-act="ca-releve" data-id="${esc(e.id)}">${icon('print')}Mon relevé de compte</button></div></section>`;
+      ${P.length?`<ul class="acc-list u-mt10">${P.slice(0,6).map(x=>`<li><span>${esc(shortDate(parse(x.date)))} · ${esc(x.mode||'Paiement')}</span><span class="row"><b>${esc(fmtM(x.ttc))}</b><button class="btn sm ghost" type="button" data-act="ca-recu" data-id="${esc(x.id)}" aria-label="Imprimer le reçu">${icon('print')}</button></span></li>`).join('')}</ul>`:''}
+      <div class="row u-mt10"><button class="btn sm ghost" type="button" data-act="ca-releve" data-id="${esc(e.id)}">${icon('print')}Mon relevé de compte</button></div></section>`;
   }
   return h;
 }
@@ -391,5 +378,5 @@ function myTeacherPanel(id){
   if(!permOn('paieEns')) return '';
   const L=myPaie(id).slice().sort((a,b)=>String(b.mois).localeCompare(String(a.mois))), m=todayISO().slice(0,7), h=sumC(taughtRows().filter(r=>r.t===id&&r.s.date.slice(0,7)===m).map(r=>r.h));
   return `<section class="panel" id="pf-paie"><h2>Ma paie</h2><p class="help">Ce mois-ci : <b>${esc(hrFmt(h))} h</b> données. Le relevé suit la fin du mois, une fois approuvé par l’administration.</p>
-    ${L.length?`<ul class="acc-list" style="margin-top:8px">${L.slice(0,6).map(p=>`<li><span>${esc(hrMonthName(p.mois))} · ${esc(hrFmt(p.h))} h</span><span class="row"><b>${esc(fmtM(p.montant))}</b><span class="chip ${p.statut==='paye'?'ok':'info'}">${p.statut==='paye'?'Payé':'Approuvé'}</span><button class="btn sm ghost" type="button" data-act="ca-slip-pr" data-t="${esc(id)}" data-m="${esc(p.mois)}" aria-label="Imprimer le relevé">${icon('print')}</button></span></li>`).join('')}</ul>`:'<p class="help" style="margin-top:6px">Aucun relevé approuvé pour l’instant.</p>'}</section>`;
+    ${L.length?`<ul class="acc-list u-mt8">${L.slice(0,6).map(p=>`<li><span>${esc(hrMonthName(p.mois))} · ${esc(hrFmt(p.h))} h</span><span class="row"><b>${esc(fmtM(p.montant))}</b><span class="chip ${p.statut==='paye'?'ok':'info'}">${p.statut==='paye'?'Payé':'Approuvé'}</span><button class="btn sm ghost" type="button" data-act="ca-slip-pr" data-t="${esc(id)}" data-m="${esc(p.mois)}" aria-label="Imprimer le relevé">${icon('print')}</button></span></li>`).join('')}</ul>`:'<p class="help u-mt6">Aucun relevé approuvé pour l’instant.</p>'}</section>`;
 }

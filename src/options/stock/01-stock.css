@@ -2,7 +2,7 @@
 /* Inventaire et Achats : les onglets en haut de la page */
 .stk-seg{display:flex;width:fit-content;max-width:100%;margin-bottom:12px}
 .seg-n{margin-left:2px;color:var(--muted);font-style:normal;font-weight:500}
-.seg-n.bad{display:inline-block;min-width:18px;padding:0 5px;border-radius:999px;background:var(--accent);color:#FFFFFF;font-size:12px;font-weight:700;line-height:18px;text-align:center}
+.seg-n.bad{display:inline-block;min-width:18px;padding:0 5px;border-radius:999px;background:var(--accent);color:#FFFFFF;font-size:.75rem;font-weight:700;line-height:18px;text-align:center}
 .xm-sk{grid-template-columns:minmax(0,2.2fr) minmax(0,1fr) minmax(0,1.2fr) minmax(0,1.3fr) minmax(90px,auto)}
 .xm-hd.xm-sk{grid-template-columns:minmax(0,2.2fr) minmax(0,1fr) minmax(0,1.2fr) minmax(0,1.3fr) 90px}
 .xm-skm{grid-template-columns:44px minmax(0,2.4fr) minmax(0,1fr) minmax(0,1fr)}
@@ -10,19 +10,15 @@
 .xm-ski .xm-end,.xm-sk .xm-end{justify-content:flex-end}
 /* Stock en cartes : aucun libellé (.xm-lite) ; l’état, puis à qui ou combien, puis la catégorie (sélecteurs aussi forts que les règles générales des cartes, qui viennent après) */
 .skm-by{display:none}
-.nw{white-space:nowrap}
-#main.view-cards .xm-list>.xm-row.xm-lite>.xm-t:not([data-l]){flex:1 1 100%}
 #main.view-cards .xm-list>.xm-row.xm-sk>.stk-c{order:1}
-#main.view-cards .xm-list>.xm-row.xm-sk>:nth-child(3){order:2}
+#main.view-cards .xm-list>.xm-row.xm-sk>:nth-child(3 of :not(.row-open)){order:2}
 #main.view-cards .xm-list>.xm-row.xm-sk>.xm-m{order:3;color:var(--muted)}
 #main.view-cards .xm-list>.xm-row.xm-sk>.xm-end{order:4;flex:none;margin-left:auto;padding:0;border:0}
 #main.view-cards .skm-by{display:inline}
-.stk-c{display:inline-flex;align-items:center;gap:7px;font-size:13px;min-width:0}
-.dot{flex:none;width:10px;height:10px;border-radius:50%;background:var(--muted)}
-.dot.ok{background:var(--ok)}.dot.warn{background:var(--warn)}.dot.bad{background:var(--bad)}
-.stk-q b{font-size:15px;font-variant-numeric:tabular-nums}
+.stk-c{display:inline-flex;align-items:center;gap:7px;font-size:.8125rem;min-width:0}
+.stk-q b{font-size:.9375rem;font-variant-numeric:tabular-nums}
 .stk-q b.warn{color:var(--warn)}.stk-q b.bad{color:var(--bad)}
-.stk-q small{color:var(--muted);font-size:12.5px}
+.stk-q small{color:var(--muted);font-size:.78125rem}
 .stk-chips{display:flex;flex-wrap:wrap;gap:5px}
 .stk-chips .chip{cursor:pointer;border:0}
 .stk-acts{flex-wrap:wrap;gap:6px}
@@ -30,10 +26,6 @@
 .stk-ig h2{display:flex;align-items:center;gap:8px}
 form[data-suivi="qte"] .sa-u,form[data-suivi="unite"] .sa-q{display:none}
 form:not([data-cat="ari"]) .sa-ari{display:none}
-.pr-note{margin:14px 0 0;font-size:12px}
-.pr-sign2{display:flex;justify-content:space-between;gap:40px;margin-top:46px}
-.pr-sign2 p{flex:1;margin:0;padding-top:4px;border-top:1px solid #333;font-size:11px;text-align:center}
-.pr-to{margin:0 0 12px;font-size:12px}
 
 /* Stock : sélection, emplacements, scanner, étiquettes, comptage */
 .stk-tt{display:grid;grid-template-columns:auto minmax(0,1fr);column-gap:10px;align-items:center}
@@ -43,23 +35,23 @@ form:not([data-cat="ari"]) .sa-ari{display:none}
 .stk-bulk select{min-height:32px}
 .stk-empl{display:grid;grid-template-columns:minmax(220px,300px) minmax(0,1fr);gap:12px;align-items:start}
 .stk-tree ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}
-.stk-node{display:flex;align-items:center;gap:8px;width:100%;padding:6px 8px 6px calc(8px + var(--d,0) * 16px);border:0;border-radius:var(--r-sm);background:none;color:var(--ink-2);font-size:13.5px;text-align:left;cursor:pointer}
+.stk-node{display:flex;align-items:center;gap:8px;width:100%;padding:6px 8px 6px calc(8px + var(--d,0) * 16px);border:0;border-radius:var(--r-sm);background:none;color:var(--ink-2);font-size:.84375rem;text-align:left;cursor:pointer}
 .stk-tree li{--d:0}
 .stk-tree li .stk-node{padding-left:calc(8px + var(--d) * 16px)}
 .stk-node:hover{background:var(--surface-2)}
 .stk-node.on{background:var(--role-bg);color:var(--ink);font-weight:600}
 .stk-node .ic{width:15px;height:15px;color:var(--muted)}
 .stk-node span{flex:1;min-width:0}
-.stk-node i{font-style:normal;font-size:12px;color:var(--muted)}
+.stk-node i{font-style:normal;font-size:.75rem;color:var(--muted)}
 .stk-elist{min-width:0;display:flex;flex-direction:column;gap:10px}
 .stk-cam{display:flex;flex-direction:column;align-items:center;gap:8px;padding:12px;border:1px dashed var(--line-strong);border-radius:var(--r)}
 .stk-cam video{width:100%;max-height:300px;border-radius:var(--r-sm);background:#000;object-fit:cover}
-.stk-cam-hint{font-size:12.5px;color:var(--muted)}
-.stk-pre{margin:0;padding:8px 10px;border-radius:var(--r-sm);background:var(--surface-2);font-size:12.5px;line-height:1.5}
+.stk-cam-hint{font-size:.78125rem;color:var(--muted)}
+.stk-pre{margin:0;padding:8px 10px;border-radius:var(--r-sm);background:var(--surface-2);font-size:.78125rem;line-height:1.5}
 .stk-prep{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px}
 .stk-count .stk-cl{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px}
 .stk-count .stk-cl.on{background:var(--surface-2)}
-.chip-btn{padding:3px 10px;border:1px solid var(--line-strong);border-radius:999px;background:var(--surface);color:var(--ink-2);font-size:12.5px;font-weight:600;cursor:pointer}
+.chip-btn{padding:3px 10px;border:1px solid var(--line-strong);border-radius:999px;background:var(--surface);color:var(--ink-2);font-size:.78125rem;font-weight:600;cursor:pointer}
 .chip-btn.ok{background:var(--ok);border-color:var(--ok);color:#FFFFFF}
 .chip-btn.bad{background:var(--bad);border-color:var(--bad);color:#FFFFFF}
 .chip-btn.warn{background:var(--warn);border-color:var(--warn);color:#FFFFFF}
@@ -74,8 +66,8 @@ form:not([data-cat="ari"]) .sa-ari{display:none}
 .lab-t small{font-size:7.5pt;color:#444}
 @media (max-width:900px){.stk-empl{grid-template-columns:1fr}}
 @media (max-width:760px){
-  #drawer .stk-acts .btn{min-height:44px;font-size:15px;flex:1 1 45%}
-  .chip-btn{min-height:36px;padding:6px 12px;font-size:13px}
+  #drawer .stk-acts .btn{min-height:44px;font-size:.9375rem;flex:1 1 45%}
+  .chip-btn{min-height:36px;padding:6px 12px;font-size:.8125rem}
   .stk-tt .stk-ck{width:22px;height:22px}
 }
 
@@ -84,14 +76,14 @@ form:not([data-cat="ari"]) .sa-ari{display:none}
 .stk-fiche{display:flex;flex-direction:column;gap:8px;padding:12px 14px;border:1px solid var(--line);border-left:4px solid var(--line-strong);border-radius:var(--r);background:var(--surface);box-shadow:var(--shadow-sm)}
 .stk-fiche.warn{border-left-color:var(--warn)}.stk-fiche.bad{border-left-color:var(--bad)}
 .stk-fh{display:flex;align-items:center;gap:10px;padding:0;border:0;background:none;text-align:left;cursor:pointer;color:var(--ink)}
-.stk-fh b{display:block;font-size:15px}
-.stk-fh small{display:block;font-size:12.5px;color:var(--muted)}
+.stk-fh b{display:block;font-size:.9375rem}
+.stk-fh small{display:block;font-size:.78125rem;color:var(--muted)}
 .stk-fi{flex:none;display:grid;place-items:center;width:36px;height:36px;border-radius:10px;background:var(--role-bg);color:var(--ink-2)}
 .stk-fi.lg{width:48px;height:48px;border-radius:12px}
 .stk-fi.lg .ic{width:24px;height:24px}
-.stk-fs{margin:0;font-size:13.5px}
-.stk-fs b{font-size:17px;font-variant-numeric:tabular-nums}
-.stk-fs small{font-size:12.5px;color:var(--muted)}
+.stk-fs{margin:0;font-size:.84375rem}
+.stk-fs b{font-size:1.0625rem;font-variant-numeric:tabular-nums}
+.stk-fs small{font-size:.78125rem;color:var(--muted)}
 .stk-ft{display:flex;flex-wrap:wrap;gap:5px;margin:0}
 .stk-fhead{display:flex;flex-direction:column;gap:8px}
 .stk-fhrow{display:flex;flex-wrap:wrap;align-items:center;gap:12px}
@@ -99,6 +91,6 @@ form:not([data-cat="ari"]) .sa-ari{display:none}
 .stk-pk{display:flex;align-items:center;gap:10px;width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:var(--r-sm);background:var(--surface);text-align:left;cursor:pointer;color:var(--ink)}
 .stk-pk:hover{border-color:var(--line-strong);background:var(--surface-2)}
 .stk-pk>span:nth-child(2){flex:1;min-width:0}
-.stk-pk b{display:block;font-size:14px}
-.stk-pk small{display:block;font-size:12.5px;color:var(--muted)}
+.stk-pk b{display:block;font-size:.875rem}
+.stk-pk small{display:block;font-size:.78125rem;color:var(--muted)}
 form[data-form="stk-mod"][data-suivi="qte"] .sa-u,form[data-form="stk-mod"][data-suivi="unite"] .sa-q{display:none}

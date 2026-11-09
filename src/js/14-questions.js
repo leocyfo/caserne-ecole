@@ -27,9 +27,9 @@ function qbQuestPage(){
   const rows=L.map(x=>{const p=qbPct(st[x.id]), n=(st[x.id]||{}).n||0;
     return xRow('xm-qb',`data-act="qb-q" data-id="${esc(x.id)}"`,`<div class="xm-t"><b>${esc(x.texte)}</b><small>${esc(x.module?'M'+x.module:'Sans module')} · ${pl((x.choix||[]).length,'choix','choix')}</small></div>
       <span class="xm-m">${esc(LET[+x.bonne]||'')} · ${esc((x.choix||[])[+x.bonne]||'')}</span><span class="xm-m">${p==null?'—':`${p} % sur ${n}`}</span><div class="xm-end">${p!=null&&n>=3&&p<60?'<span class="chip bad">Souvent ratée</span>':''}</div>`,x.texte);}).join('');
-  return tb+(hard.length?`<section class="panel" id="qb-hard"><h2>Les plus ratées</h2><ul class="plist">${hard.map(o=>`<li><span><button class="link" type="button" data-act="qb-q" data-id="${esc(o.x.id)}">${esc(o.x.texte)}</button><span class="muted sm"> · M${esc(o.x.module||'')}</span></span><span class="chip bad">${o.p} % de bonnes réponses</span></li>`).join('')}</ul><p class="help" style="margin-top:6px">À revoir en classe, ou à reformuler si la question prête à confusion.</p></section>`:'')
+  return tb+(hard.length?`<section class="panel" id="qb-hard"><h2>Les plus ratées</h2><ul class="plist">${hard.map(o=>`<li><span><button class="link" type="button" data-act="qb-q" data-id="${esc(o.x.id)}">${esc(o.x.texte)}</button><span class="muted sm"> · M${esc(o.x.module||'')}</span></span><span class="chip bad">${o.p} % de bonnes réponses</span></li>`).join('')}</ul><p class="help u-mt6">À revoir en classe, ou à reformuler si la question prête à confusion.</p></section>`:'')
     +(L.length?xList('xm-qb',[['Question'],['Bonne réponse'],['Réussite'],['','r',1]],rows):'<section class="panel"><p class="help">Aucune question ne correspond.</p></section>')
-    +`<p class="help" style="margin-top:8px">${L.length===Q.length?pl(Q.length,'question','questions'):`${L.length} sur ${Q.length}`}.</p>`;
+    +`<p class="help u-mt8">${L.length===Q.length?pl(Q.length,'question','questions'):`${L.length} sur ${Q.length}`}.</p>`;
 }
 const qbModSel=(id,cur,any)=>`<select id="${id}">${any?`<option value="">${any}</option>`:''}${comps().map(k=>`<option value="${esc(k.code)}"${String(cur)===String(k.code)?' selected':''}>M${esc(k.code)} · ${esc(k.nom)}</option>`).join('')}</select>`;
 function qbQDrawer(d){
@@ -41,7 +41,7 @@ function qbQDrawer(d){
   return dTop(x?'Modifier la question':'Nouvelle question','Question à choix multiples',sub)+`<form class="dr-body" data-form="qb-q" novalidate>
     <label class="field"><span>Module</span>${qbModSel('qq-mod',v.module)}</label>
     <label class="field"><span>Question</span><textarea id="qq-texte" rows="3" maxlength="400">${esc(v.texte||'')}</textarea></label>
-    <fieldset class="qb-ch"><legend>Choix de réponse · cochez la bonne</legend>${ch.map((c,i)=>`<label class="qb-c"><input type="radio" name="qq-bonne" value="${i}"${+v.bonne===i?' checked':''} aria-label="Bonne réponse : ${LET[i]}"><b>${LET[i]}</b><input id="qq-c${i}" maxlength="200" value="${esc(c)}" autocomplete="off" placeholder="Choix ${LET[i]}${i>1?' (facultatif)':''}"><span class="qb-good">Bonne réponse</span></label>`).join('')}</fieldset>
+    <fieldset class="qb-ch"><legend>Choix de réponse · cochez la bonne</legend>${ch.map((c,i)=>`<label class="qb-c"><input type="radio" name="qq-bonne" value="${i}"${+v.bonne===i?' checked':''} aria-label="Bonne réponse : ${LET[i]}"><b>${LET[i]}</b><input id="qq-c${i}" maxlength="200" value="${esc(c)}" autocomplete="off" aria-label="Texte du choix ${LET[i]}" placeholder="Choix ${LET[i]}${i>1?' (facultatif)':''}"><span class="qb-good">Bonne réponse</span></label>`).join('')}</fieldset>
     <label class="field qb-expl"><span>Explication <small>montrée à l’élève après l’examen</small></span><textarea id="qq-expl" rows="2" maxlength="400" placeholder="Pourquoi c’est la bonne réponse">${esc(v.expl||'')}</textarea></label>
     ${d.err?`<p class="form-err" role="alert">${esc(d.err)}</p>`:''}
     ${can?`<div class="dr-foot"><button class="btn primary" type="submit" id="qq-save"${dis()}>Enregistrer</button>${x?(d.ask?`<button class="btn danger" type="button" id="qq-del-yes" data-act="qb-del-yes">Supprimer la question</button><button class="btn ghost" type="button" data-act="fo-ask-no">Annuler</button>`:'<button class="btn ghost" type="button" data-act="fo-ask">Supprimer</button>'):''}</div>`:''}</form>`;
@@ -97,7 +97,7 @@ const qbSeuil=x=>+x.seuil||seuil();
 function qbBlancsPage(){
   if(S.role==='student') return S.pg.qt?qbTakeView():qbMyBlancs(foMe());
   const B=qbB(), can=S.conn==='shared';
-  const tb=`<div class="toolbar"><p class="summary" style="margin:0"><span><b>${B.length}</b>${B.length>1?'examens blancs':'examen blanc'}</span><span><b>${(S.data.questions||[]).length}</b>questions</span></p><span class="grow"></span>${can?`<button class="btn primary" type="button" id="qb-b-new" data-act="qb-b">${icon('plus')}Nouvel examen blanc</button>`:''}</div>`;
+  const tb=`<div class="toolbar"><p class="summary u-m0"><span><b>${B.length}</b>${B.length>1?'examens blancs':'examen blanc'}</span><span><b>${(S.data.questions||[]).length}</b>questions</span></p><span class="grow"></span>${can?`<button class="btn primary" type="button" id="qb-b-new" data-act="qb-b">${icon('plus')}Nouvel examen blanc</button>`:''}</div>`;
   if(!B.length) return tb+emptyBox('Aucun examen blanc','Un examen blanc tire au hasard des questions des modules choisis, comme les examens théoriques de l’ENPQ (30 ou 40 questions). Les élèves le font en ligne et voient la correction tout de suite.');
   const rows=B.map(x=>{const st=qbState(x), T=qbTen().filter(t=>t.exam===x.id&&t.fin), avg=T.length?Math.round(T.reduce((n,t)=>n+(+t.pct||0),0)/T.length):null, who=new Set(T.map(t=>t.eleve)).size;
     return xRow('xm-qe',`data-act="qb-b" data-id="${esc(x.id)}"`,`<div class="xm-t"><b>${esc(x.nom)}</b><small>${esc((x.modules||[]).length?(x.modules||[]).map(m=>'M'+m).join(', '):'Tous les modules')}</small></div>

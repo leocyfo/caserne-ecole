@@ -12,7 +12,7 @@ function svcReport(sv){
   const eleves=svcEls(sv.id).map(e=>{const P=foEnpq(e), certs=foCfg().certs.map(c=>({nom:c.nom,enpq:c.enpq,it:foCertOf(e.id,c.id),st:foCertSt(foCertOf(e.id,c.id))})).filter(c=>c.st[0]==='bad'||c.st[0]==='warn'?!!c.it:c.st[0]!=='ok'&&c.enpq);
     return {id:e.id,nom:e.nom,classe:gName(e.groupe),pres:rateOf(st[e.id]),abs:(st[e.id]||{}).A||0,note:(N[e.id]||{}).avg==null?null:N[e.id].avg,todo:(N[e.id]||{}).todo||0,
       grilles:G.filter(g=>foState(e.id,g).k==='ok').length,nGrilles:G.length,enpq:P.envoye?'inscrit':P.ok?'pret':'incomplet',manque:P.miss,certs:certs.map(c=>c.nom+' : '+c.st[1].toLowerCase())};});
-  const factures=(S.data.factures||[]).filter(f=>f.statut!=='brouillon'&&(fold(f.client)===n||(sv.client&&fold(f.client)===fold(sv.client)))).map(f=>{const t=cpFTot(f).ttc;return {num:f.num||'',date:f.date||'',echeance:f.echeance||'',total:t,paye:cpFPaid(f),etat:cpFState(f)};});
+  const cp=opt('compta'), factures=!cp?[]:(S.data.factures||[]).filter(f=>f.statut!=='brouillon'&&(fold(f.client)===n||(sv.client&&fold(f.client)===fold(sv.client)))).map(f=>{const t=cpFTot(f).ttc;return {num:f.num||'',date:f.date||'',echeance:f.echeance||'',total:t,paye:cp.invoicePaid(f),etat:cp.invoiceState(f)};});
   return {nom:sv.nom,eleves,factures};
 }
 /* Le rapport lu par le service : calculé sur place quand la page a les données (aperçu de l’administration, démo), sinon le document */
@@ -38,27 +38,28 @@ function recruesPage(){
   if(!id||(!R&&!sv)) return emptyBox('Aucun service incendie',me?'Votre compte n’est relié à aucun service. Écrivez à l’administration de l’école.':'Ajoutez les services incendie dans Formation › Services incendie.');
   if(!R) return `<div class="toolbar">${pick}</div>`+emptyBox('Rapport pas encore prêt','L’administration de l’école doit d’abord mettre à jour les rapports des services.');
   const E=R.eleves||[], pres=E.filter(x=>x.pres!=null), avg=pres.length?Math.round(pres.reduce((n,x)=>n+x.pres,0)/pres.length):null, ready=E.filter(x=>x.enpq!=='incomplet').length, due=(R.factures||[]).filter(f=>f.etat==='envoyee'||f.etat==='retard');
-  const tb=`<div class="toolbar">${pick}<p class="summary" style="margin:0">${pick?'':`<span>${esc(R.nom||(sv&&sv.nom)||'')}</span>`}${R.maj?`<span>Mis à jour ${esc(ago(R.maj))}</span>`:''}</p><span class="grow"></span></div>`;
+  const tb=`<div class="toolbar">${pick}<p class="summary u-m0">${pick?'':`<span>${esc(R.nom||(sv&&sv.nom)||'')}</span>`}${R.maj?`<span>Mis à jour ${esc(ago(R.maj))}</span>`:''}</p><span class="grow"></span></div>`;
+  const cpS=opt('compta');
   const tiles=`<div class="xm-tiles" role="group" aria-label="Vos recrues"><div class="xm-tile"><span class="lbl">Recrues</span><b>${E.length}</b><small>à l’école cette année</small></div>
     <div class="xm-tile"><span class="lbl">Présence moyenne</span><b class="${avg!=null&&avg<(cfg().presWarn||90)?'warn':''}">${avg==null?'—':avg+' %'}</b><small>depuis la rentrée</small></div>
     <div class="xm-tile"><span class="lbl">Prêtes pour l’ENPQ</span><b>${ready}</b><small>sur ${E.length}</small></div>
-    <div class="xm-tile"><span class="lbl">Factures à payer</span><b class="${due.some(f=>f.etat==='retard')?'bad':''}">${due.length}</b><small>${due.length?fmtM(due.reduce((n,f)=>n+f.total-f.paye,0))+' à payer':'Tout est payé'}</small></div></div>`;
+    ${cpS?`<div class="xm-tile"><span class="lbl">Factures à payer</span><b class="${due.some(f=>f.etat==='retard')?'bad':''}">${due.length}</b><small>${due.length?fmtM(due.reduce((n,f)=>n+f.total-f.paye,0))+' à payer':'Tout est payé'}</small></div>`:''}</div>`;
   const ENP={inscrit:['info','Inscrite à l’ENPQ'],pret:['ok','Prête pour l’ENPQ'],incomplet:['off','Dossier incomplet']};
   const rows=E.map(x=>`<tr><th scope="row">${esc(x.nom)}<small class="muted"> · ${esc(x.classe)}</small></th><td class="num">${x.pres==null?'—':x.pres+' %'}${x.abs?`<small class="muted"> · ${pl(x.abs,'absence','absences')}</small>`:''}</td><td class="num">${x.note==null?'—':x.note+' %'}${x.todo?` <span class="chip warn">${pl(x.todo,'à reprendre','à reprendre')}</span>`:''}</td><td class="num">${x.grilles} / ${x.nGrilles}</td><td><span class="chip ${ENP[x.enpq][0]}">${ENP[x.enpq][1]}</span>${(x.certs||[]).length?`<small class="bad-t"> · ${esc(x.certs.join(', '))}</small>`:''}</td></tr>`).join('');
   return tb+tiles+(E.length?`<div class="tbl-wrap"><table class="tbl" id="svc-t"><thead><tr><th>Recrue</th><th class="num">Présence</th><th class="num">Moyenne aux examens</th><th class="num">Grilles pratiques</th><th>Dossier</th></tr></thead><tbody>${rows}</tbody></table></div>`:'<section class="panel"><p class="help">Aucune recrue de ce service cette année.</p></section>')
-    +`<section class="panel" id="svc-fact" style="margin-top:14px"><h2>Factures</h2>${(R.factures||[]).length?`<ul class="plist">${R.factures.map(f=>`<li><span><b>${esc(f.num)}</b><span class="muted sm"> · ${esc(f.date?shortDate(parse(f.date)):'')}${f.echeance?' · payable le '+esc(shortDate(parse(f.echeance))):''}</span></span><span>${esc(fmtM(f.total))} <span class="chip ${(CP_FS[f.etat]||['off'])[0]}">${esc((CP_FS[f.etat]||['',f.etat])[1])}</span></span></li>`).join('')}</ul>`:'<p class="help">Aucune facture.</p>'}</section>`;
+    +(!cpS?'':`<section class="panel u-mt14" id="svc-fact"><h2>Factures</h2>${(R.factures||[]).length?`<ul class="plist">${R.factures.map(f=>`<li><span><b>${esc(f.num)}</b><span class="muted sm"> · ${esc(f.date?shortDate(parse(f.date)):'')}${f.echeance?' · payable le '+esc(shortDate(parse(f.echeance))):''}</span></span><span>${esc(fmtM(f.total))} <span class="chip ${(cpS.invoiceStates[f.etat]||['off'])[0]}">${esc((cpS.invoiceStates[f.etat]||['',f.etat])[1])}</span></span></li>`).join('')}</ul>`:'<p class="help">Aucune facture.</p>'}</section>`);
 }
 /* Formation › Services incendie (administration) */
 function foServPage(){
   const L=svcList(), can=isAdmin()&&S.conn==='shared', R=S.data.rapports||[];
   if(can&&!S._svcAuto&&L.length&&S.termLoaded){S._svcAuto=true;setTimeout(()=>svcPublish(true),0);}
   ensureTerm(yearStart());
-  const tb=`<div class="toolbar"><p class="summary" style="margin:0"><span><b>${L.length}</b>${L.length>1?'services':'service'}</span><span><b>${S.data.eleves.filter(e=>e.service).length}</b>recrues</span></p><span class="grow"></span>
+  const tb=`<div class="toolbar"><p class="summary u-m0"><span><b>${L.length}</b>${L.length>1?'services':'service'}</span><span><b>${S.data.eleves.filter(e=>e.service).length}</b>recrues</span></p><span class="grow"></span>
     ${can&&L.length?`<button class="btn" type="button" id="svc-pub" data-act="svc-pub">${icon('up')}Mettre à jour les rapports</button>`:''}${can?`<button class="btn primary" type="button" id="svc-new" data-act="svc-edit">${icon('plus')}Ajouter un service</button>`:''}</div>`;
   if(!L.length) return tb+emptyBox('Aucun service incendie','Ajoutez les villes et services incendie qui envoient des recrues. Avec un compte « Service incendie », chacun voit la présence, les résultats, le carnet et les factures de ses recrues seulement.');
   const accts=id=>(S.data.comptes||[]).filter(a=>a.role==='service'&&a.ref===id).length;
   const rows=L.map(s=>{const r=R.find(x=>x.id===s.id);return xRow('xm-sv',`data-act="svc-edit" data-id="${esc(s.id)}"`,`<div class="xm-t"><b>${esc(s.nom)}</b><small>${esc([s.contact,s.courriel].filter(Boolean).join(' · ')||'—')}</small></div><span class="xm-m">${pl(svcEls(s.id).length,'recrue','recrues')}</span><span class="xm-m">${pl(accts(s.id),'compte','comptes')}</span><span class="xm-m">${r&&r.maj?'Rapport '+esc(ago(r.maj)):'Rapport pas encore publié'}</span><div class="xm-end"><button class="btn sm ghost" type="button" data-act="svc-view" data-id="${esc(s.id)}">Voir son rapport</button></div>`,s.nom);}).join('');
-  return tb+xList('xm-sv',[['Service'],['Recrues'],['Comptes'],['Rapport'],['','r',1]],rows)+`<p class="help" style="margin-top:8px">Pour donner l’accès : Comptes › Nouveau compte, rôle « Service incendie ». Les factures sont celles dont le client porte le nom du service.</p>`;
+  return tb+xList('xm-sv',[['Service'],['Recrues'],['Comptes'],['Rapport'],['','r',1]],rows)+`<p class="help u-mt8">Pour donner l’accès : Comptes › Nouveau compte, rôle « Service incendie ». Les factures sont celles dont le client porte le nom du service.</p>`;
 }
 function foServDrawer(d){
   const s=d.id?svcOf(d.id):null;if(d.id&&!s) return goneHTML('Service');

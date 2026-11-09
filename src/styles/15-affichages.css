@@ -1,5 +1,6 @@
 /* Affichage des listes (Affectations, Classes, Élèves, Personnel, Modules, Examens) : Liste par défaut, Cartes ou Compact.
    #main porte la classe view-cards ou view-dense ; le choix est retenu pour chaque page (bouton dans la barre du titre). */
+#main.view-cards .xm-list>.xm-row.xm-lite>.xm-t:not([data-l]){flex:1 1 100%}
 
 /* ----- Cartes : listes à lignes (Affectations, Modules, Examens, Stock) : légères ----- 
    En haut le titre, la date à gauche ; dessous, les valeurs à la suite, chacune avec son libellé en petit devant
@@ -14,19 +15,19 @@
 #main.view-cards .xm-list>.xm-row>.xm-t:not([data-l]){flex:1 1 calc(100% - 80px)}
 #main.view-cards .xm-list>.xm-row:has(>.xm-d)>.xm-t:not([data-l]){flex-basis:100%}
 #main.view-cards .xm-list>.xm-row .xm-t b,#main.view-cards .xm-list>.xm-row .xm-t small{white-space:normal}
-#main.view-cards .xm-list>.xm-row>.xm-m{font-size:12.5px;color:var(--muted)}
-#main.view-cards .xm-list>.xm-row>[data-l]{display:inline-flex;flex-direction:row;align-items:baseline;gap:5px;text-align:left;font-size:13px}
-#main.view-cards .xm-list>.xm-row>[data-l]::before{content:attr(data-l);flex:none;font-size:12.5px;font-weight:400;color:var(--muted)}
+#main.view-cards .xm-list>.xm-row>.xm-m{font-size:.78125rem;color:var(--muted)}
+#main.view-cards .xm-list>.xm-row>[data-l]{display:inline-flex;flex-direction:row;align-items:baseline;gap:5px;text-align:left;font-size:.8125rem}
+#main.view-cards .xm-list>.xm-row>[data-l]::before{content:attr(data-l);flex:none;font-size:.78125rem;font-weight:400;color:var(--muted)}
 #main.view-cards .xm-list>.xm-row>.xm-end{flex:0 1 auto;margin-left:auto;justify-content:flex-end;flex-wrap:wrap;gap:6px}
 #main.view-cards .xm-list>.xm-row>.xm-end:empty{display:none}
 /* les grands chiffres (enseignants 1 / 2, résultats 8 / 12) en taille de texte, sur la ligne */
 #main.view-cards .xm-list>.xm-row>.af-n{flex-wrap:wrap;gap:0 5px}
-#main.view-cards .xm-list>.xm-row>.af-n b{flex:none;font-size:14px;white-space:nowrap}
-#main.view-cards .xm-list>.xm-row>.af-n small{max-width:100%;font-size:12.5px}
+#main.view-cards .xm-list>.xm-row>.af-n b{flex:none;font-size:.875rem;white-space:nowrap}
+#main.view-cards .xm-list>.xm-row>.af-n small{max-width:100%;font-size:.78125rem}
 #main.view-cards .xm-list>.xm-row>.cl-big[data-l]{align-items:center;gap:6px}
-#main.view-cards .xm-list>.xm-row>.cl-big b{font-size:14px}
+#main.view-cards .xm-list>.xm-row>.cl-big b{font-size:.875rem}
 #main.view-cards .xm-list>.xm-row>.cl-big .meter{width:56px;height:6px}
-#main.view-cards .xm-list>.xm-row>.md-h{font-size:13px}
+#main.view-cards .xm-list>.xm-row>.md-h{font-size:.8125rem}
 #main.view-cards .xm-list>.xm-row>.md-h b{font-weight:600}
 #main.view-cards .md-cols>.ic{display:none}
 
@@ -38,18 +39,18 @@
 #main.view-cards .cl-row.cl-cols{grid-template-columns:1fr 1fr;grid-template-areas:"c c" "p p" "n s" "r a" "go go";gap:8px 14px}
 #main.view-cards .cl-row .cl-c{grid-area:c}
 #main.view-cards .cl-row .cl-prin{grid-area:p;flex-wrap:wrap;row-gap:4px}
-#main.view-cards .cl-row .cl-n{grid-area:n;display:flex;align-items:baseline;gap:5px;font-size:14px;text-align:left}
+#main.view-cards .cl-row .cl-n{grid-area:n;display:flex;align-items:baseline;gap:5px;font-size:.875rem;text-align:left}
 #main.view-cards .cl-row .cl-st{grid-area:s;justify-self:start}
-#main.view-cards .cl-row .cl-st .chip{font-size:12px;padding:3px 8px}
+#main.view-cards .cl-row .cl-st .chip{font-size:.75rem;padding:3px 8px}
 #main.view-cards .cl-row .cl-rate{grid-area:r}
 #main.view-cards .cl-row .cl-adv{grid-area:a;display:flex}
 #main.view-cards .cl-row .cl-big{flex-flow:row wrap;align-items:baseline;gap:4px 5px}
-#main.view-cards .cl-row .cl-big b{font-size:14px}
+#main.view-cards .cl-row .cl-big b{font-size:.875rem}
 #main.view-cards .cl-row .cl-big .meter{flex-basis:100%;height:5px}
-#main.view-cards .cl-row .cl-basis{flex-basis:100%;font-size:12px}
+#main.view-cards .cl-row .cl-basis{flex-basis:100%;font-size:.75rem}
 #main.view-cards .cl-row .cl-go{grid-area:go;justify-content:space-between;padding-top:2px}
 #main.view-cards .cl-row .cl-go-t,#main.view-cards .cl-row .cl-go>.ic{display:inline}
-#main.view-cards .cl-row [data-l]::before{content:attr(data-l);display:inline;font-size:12.5px;font-weight:400;color:var(--muted)}
+#main.view-cards .cl-row [data-l]::before{content:attr(data-l);display:inline;font-size:.78125rem;font-weight:400;color:var(--muted)}
 #main.view-cards .cl-row .cl-prin[data-l]::before{content:"Principal"}
 #main.view-cards .cl-row .cl-big[data-l]::before{flex:none}
 #main.view-cards .cl-row .cl-st[data-l]::before{display:none}
@@ -62,7 +63,7 @@
 #main.view-cards .tbl.stack tr{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;padding:12px 14px;border:1px solid var(--line);border-radius:var(--r);background:var(--surface);box-shadow:var(--shadow-sm)}
 #main.view-cards .tbl.stack tr.row-link:hover{border-color:var(--line-strong)}
 #main.view-cards .tbl.stack tr.row-link:hover td{background:none}
-#main.view-cards .tbl.stack td{display:block;padding:0;border:0;font-size:13.5px;text-align:left}
+#main.view-cards .tbl.stack td{display:block;padding:0;border:0;font-size:.84375rem;text-align:left}
 #main.view-cards .tbl.stack td:first-child{flex:1 1 0;min-width:0}
 #main.view-cards .tbl.stack tr::after{content:"";order:1;flex-basis:100%;margin-top:-6px}
 #main.view-cards .tbl.stack td.tb-line{flex-basis:100%}
@@ -71,7 +72,7 @@
 #main.view-cards .tbl.stack td.tb-act{margin-left:auto}
 #main.view-cards .tbl.stack td[data-l]::before{content:attr(data-l) " ";color:var(--muted)}
 #main.view-cards .tbl.stack td:has(>.tb-empty){display:none}
-#main.view-cards .tbl.stack .tb-n{font-size:14px}
+#main.view-cards .tbl.stack .tb-n{font-size:.875rem}
 #main.view-cards .tbl.stack .tb-cls .cl-num,#main.view-cards .tbl.stack .tb-rate .meter{display:none}
 #main.view-cards .tbl.stack .tb-rate{min-width:0}
 
@@ -81,12 +82,12 @@
 #main.view-cards .st-cards tbody{grid-template-columns:repeat(auto-fill,minmax(min(100%,220px),1fr));gap:8px}
 #main.view-cards .st-cards tr{padding:10px 12px;gap:4px 10px}
 #main.view-cards .st-cards .tb-who{gap:9px}
-#main.view-cards .st-cards .tb-who .link{font-size:14px;line-height:1.25}
+#main.view-cards .st-cards .tb-who .link{font-size:.875rem;line-height:1.25}
 #main.view-cards .st-cards .role-chip{display:table;margin:3px 0 0}
 #main.view-cards .st-cards td.tb-tel,#main.view-cards .st-cards td:has(>.tb-n.zero){display:none}
-#main.view-cards .st-cards td:not(:first-child):not(.tb-top),#main.view-cards .st-cards .tb-cls .muted{font-size:12.5px}
-#main.view-cards .st-cards .tb-n{font-size:12.5px}
-#main.view-cards .st-cards .tb-rate b{font-size:17px}
+#main.view-cards .st-cards td:not(:first-child):not(.tb-top),#main.view-cards .st-cards .tb-cls .muted{font-size:.78125rem}
+#main.view-cards .st-cards .tb-n{font-size:.78125rem}
+#main.view-cards .st-cards .tb-rate b{font-size:1.0625rem}
 #main.view-cards .st-cards tr[data-fn="cap"]{background:#9F2D35;border-color:#9F2D35}
 #main.view-cards .st-cards tr[data-fn="lt"]{background:#1E3A5F;border-color:#1E3A5F}
 #main.view-cards .st-cards tr[data-fn="vert"]{background:#1F5F45;border-color:#1F5F45}
@@ -106,26 +107,26 @@
 #main.view-dense .xm-row{padding-top:3px;padding-bottom:3px}
 #main.view-dense .xm-d{width:38px;height:32px;border-radius:7px}
 #main.view-dense .xm-d small:first-child{display:none}
-#main.view-dense .xm-d b{font-size:14px}
+#main.view-dense .xm-d b{font-size:.875rem}
 #main.view-dense .xm-t{flex-direction:row;align-items:baseline;gap:10px}
-#main.view-dense .xm-t b{font-size:13.5px;flex:none;max-width:60%}
-#main.view-dense .xm-t small{font-size:12px}
-#main.view-dense .cl-num,#main.view-dense .md-num{width:30px;height:30px;font-size:12.5px;border-radius:7px}
-#main.view-dense .btn.sm{min-height:26px;padding:2px 9px;font-size:12.5px}
+#main.view-dense .xm-t b{font-size:.84375rem;flex:none;max-width:60%}
+#main.view-dense .xm-t small{font-size:.75rem}
+#main.view-dense .cl-num,#main.view-dense .md-num{width:30px;height:30px;font-size:.78125rem;border-radius:7px}
+#main.view-dense .btn.sm{min-height:26px;padding:2px 9px;font-size:.78125rem}
 #main.view-dense .chip{padding:1px 7px}
 #main.view-dense .cl-hd{padding-top:6px;padding-bottom:6px}
 #main.view-dense .cl-row{padding-top:5px;padding-bottom:5px}
-#main.view-dense .cl-name b{font-size:14px}
-#main.view-dense .cl-name small{font-size:12px}
-#main.view-dense .cl-n,#main.view-dense .cl-big b{font-size:16px}
+#main.view-dense .cl-name b{font-size:.875rem}
+#main.view-dense .cl-name small{font-size:.75rem}
+#main.view-dense .cl-n,#main.view-dense .cl-big b{font-size:1rem}
 #main.view-dense .cl-big{gap:4px}
 #main.view-dense .cl-big .meter{height:5px}
-#main.view-dense .cl-prin .av,#main.view-dense .tb-who .av{width:24px;height:24px;font-size:10.5px}
-#main.view-dense .cl-prin select{min-height:28px;font-size:13.5px}
+#main.view-dense .cl-prin .av,#main.view-dense .tb-who .av{width:24px;height:24px;font-size:.65625rem}
+#main.view-dense .cl-prin select{min-height:28px;font-size:.84375rem}
 #main.view-dense .cl-go .btn{min-height:28px}
 #main.view-dense .tbl th{padding-top:6px;padding-bottom:6px}
-#main.view-dense .tbl td{padding-top:4px;padding-bottom:4px;font-size:13px}
-#main.view-dense .tb-n,#main.view-dense .tb-rate b{font-size:14px}
+#main.view-dense .tbl td{padding-top:4px;padding-bottom:4px;font-size:.8125rem}
+#main.view-dense .tb-n,#main.view-dense .tb-rate b{font-size:.875rem}
 #main.view-dense .tb-rate .meter{height:4px}
 /* la flèche qui termine une ligne cliquable ne sert pas sur une carte (toute la carte s’ouvre) */
 #main.view-cards .xm-list>.xm-row>svg.ic:last-child{display:none}

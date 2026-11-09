@@ -1,0 +1,50 @@
+/* Petites classes utilitaires (u-…) : elles remplacent les style="…" qui étaient écrits dans le code (IFT1005, ch. 3 : la présentation
+ dans les feuilles de style, pas dans le HTML). Fichier lu en dernier ; la classe est répétée (.u-x.u-x.u-x) pour gagner sur les règles
+ des autres fichiers, comme le faisait l’attribut style. */
+.u-f0-130.u-f0-130.u-f0-130{flex:0 1 130px}
+.u-f0-150.u-f0-150.u-f0-150{flex:0 1 150px}
+.u-f0-160.u-f0-160.u-f0-160{flex:0 1 160px}
+.u-f0-170.u-f0-170.u-f0-170{flex:0 1 170px}
+.u-f0-180.u-f0-180.u-f0-180{flex:0 1 180px}
+.u-f0-190.u-f0-190.u-f0-190{flex:0 1 190px}
+.u-f0-200.u-f0-200.u-f0-200{flex:0 1 200px}
+.u-f0-220.u-f0-220.u-f0-220{flex:0 1 220px}
+.u-f0-70.u-f0-70.u-f0-70{flex:0 1 70px}
+.u-f0-90.u-f0-90.u-f0-90{flex:0 1 90px}
+.u-f1.u-f1.u-f1{flex:1}
+.u-f1-200.u-f1-200.u-f1-200{flex:1 1 200px}
+.u-f1-220.u-f1-220.u-f1-220{flex:1 1 220px}
+.u-f1m.u-f1m.u-f1m{flex:1;min-width:0}
+.u-f2-160.u-f2-160.u-f2-160{flex:2 1 160px}
+.u-f2-200.u-f2-200.u-f2-200{flex:2 1 200px}
+.u-f2-240.u-f2-240.u-f2-240{flex:2 1 240px}
+.u-fb260.u-fb260.u-fb260{flex-basis:260px}
+.u-fs125.u-fs125.u-fs125{font-size:1.25rem}
+.u-fs78125.u-fs78125.u-fs78125{font-size:.78125rem}
+.u-fs875.u-fs875.u-fs875{font-size:.875rem}
+.u-g6-nw.u-g6-nw.u-g6-nw{gap:6px;flex-wrap:nowrap}
+.u-m0.u-m0.u-m0{margin:0}
+.u-m0-pre.u-m0-pre.u-m0-pre{margin:0;white-space:pre-wrap}
+.u-m2-0-0.u-m2-0-0.u-m2-0-0{margin:2px 0 0}
+.u-m6-0-10.u-m6-0-10.u-m6-0-10{margin:6px 0 10px}
+.u-m8-0-0.u-m8-0-0.u-m8-0-0{margin:8px 0 0}
+.u-mb10.u-mb10.u-mb10{margin-bottom:10px}
+.u-mb6.u-mb6.u-mb6{margin-bottom:6px}
+.u-mb8.u-mb8.u-mb8{margin-bottom:8px}
+.u-mt10.u-mt10.u-mt10{margin-top:10px}
+.u-mt12.u-mt12.u-mt12{margin-top:12px}
+.u-mt14.u-mt14.u-mt14{margin-top:14px}
+.u-mt16.u-mt16.u-mt16{margin-top:16px}
+.u-mt4.u-mt4.u-mt4{margin-top:4px}
+.u-mt6.u-mt6.u-mt6{margin-top:6px}
+.u-mt8.u-mt8.u-mt8{margin-top:8px}
+.u-mw220.u-mw220.u-mw220{max-width:220px}
+.u-mw340.u-mw340.u-mw340{max-width:340px}
+.u-nowrap.u-nowrap.u-nowrap{white-space:nowrap}
+.u-p12.u-p12.u-p12{padding:12px}
+.u-pt4.u-pt4.u-pt4{padding-top:4px}
+.u-span-up.u-span-up.u-span-up{grid-column:1/-1;margin-top:-4px}
+.u-w11.u-w11.u-w11{width:11%}
+.u-w17.u-w17.u-w17{width:17%}
+.u-w20.u-w20.u-w20{width:20%}
+.u-w21.u-w21.u-w21{width:21%}

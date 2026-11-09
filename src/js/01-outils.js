@@ -1,6 +1,11 @@
 /* ---------- Outils ---------- */
 const $=(s,r=document)=>r.querySelector(s);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+/* Sigles du métier : <abbr title> donne leur sens (lecteur d’écran, bulle au survol). Pour du texte déjà sûr (libellés du site), jamais dans un attribut. */
+const ABBR={ENPQ:'École nationale des pompiers du Québec',EPI:'Équipement de protection individuelle',ARI:'Appareil respiratoire isolant',DEP:'Diplôme d’études professionnelles'};
+const abbrs=s=>String(s??'').replace(/(^|[^\wÀ-ÿ])(ENPQ|EPI|ARI|DEP)(?![\wÀ-ÿ])/g,(m,p,k)=>p+'<abbr title="'+ABBR[k]+'">'+k+'</abbr>');
+/* Un numéro de téléphone (450 555-1234) ne se coupe pas en fin de ligne : espace et trait d’union insécables */
+const telNb=s=>String(s??'').replace(/(\d{3})[ .](\d{3})-(\d{4})/g,'$1 $2‑$3');
 const pad=n=>String(n).padStart(2,'0');
 const iso=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
 const parse=s=>{const [y,m,d]=String(s).split('-').map(Number);return new Date(y,m-1,d);};
@@ -89,3 +94,17 @@ const IC={
 };
 const icon=k=>`<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${IC[k]}</svg>`;
 
+/* Montants en cents (stock, compta, formation, services) */
+const _fmtM=new Intl.NumberFormat('fr-CA',{style:'currency',currency:'CAD'});
+const fmtM=c=>_fmtM.format((+c||0)/100);
+const money=v=>{const s=String(v==null?'':v).replace(/[\s  $]/g,'').replace(',','.');if(!/^\d+(\.\d{0,2})?$/.test(s))return null;return Math.round(parseFloat(s)*100);};
+const moneyIn=c=>c==null||c===''?'':((+c)/100).toFixed(2).replace('.',',');
+const sumC=a=>a.reduce((n,x)=>n+(+x||0),0);
+/* Le total d’une facture : la clôture de l’année s’en sert aussi quand la Compta n’est pas ajoutée */
+function cpFTot(f){const ht=sumC((f.lignes||[]).map(l=>Math.round((+l.q||0)*(+l.p||0)))), tps=f.tx?Math.round(ht*f.tx.tps/100):0, tvq=f.tx?Math.round(ht*f.tx.tvq/100):0;return {ht,tps,tvq,ttc:ht+tps+tvq};}
+const kpiBox=(id,l,v,cls,sub)=>`<div class="kpi" id="${id}"><span>${l}</span><b class="${cls||''}">${v}</b>${sub?`<small>${sub}</small>`:''}</div>`;
+const addMonths=(d,m)=>{if(!d||!m)return '';const x=parse(d);x.setMonth(x.getMonth()+(+m));return iso(x);};
+/* Bibliothèques et fichiers chargés à la demande */
+const QR_GEN='https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js', QR_READ='https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js';
+const _scripts={};
+function loadScript(url){return _scripts[url]||(_scripts[url]=new Promise((res,rej)=>{const x=document.createElement('script');x.src=url;x.onload=res;x.onerror=()=>{delete _scripts[url];rej(new Error('script'));};document.head.appendChild(x);}));}

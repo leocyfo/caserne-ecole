@@ -40,6 +40,6 @@ function historyPage(){
   if(!list.length) return tb+'<section class="panel"><p class="help">Aucune action ne correspond.</p></section>';
   const rows=list.slice(0,lim).map(e=>{const d=new Date(e.le), s=e.seance&&e.date?findSess(e.date,e.seance):null;
     return xRow('xm-jr',s?`data-act="sess-at" ${sAt(s)}`:'',`<span class="jr-w"><b>${dn(d)} ${esc(fMonthS.format(d))}</b><small>${pad(d.getHours())} h ${pad(d.getMinutes())}</small></span><div class="xm-t"><b>${esc(e.par||'Quelqu’un')} ${esc(e.txt)}</b>${e.obj?`<small>${esc(e.obj)}</small>`:''}</div><div class="xm-end"><span class="chip ${JR_CAT[e.cat][0]}">${JR_CAT[e.cat][1]}</span></div>`,`${e.par} ${e.txt} ${e.obj}`);}).join('');
-  return tb+xList('xm-jr',[['Quand','',1],['Action'],['','r']],rows)+(list.length>lim?`<div class="row" style="margin-top:12px"><button class="btn" type="button" id="jr-more" data-act="pg-set" data-k="jl" data-v="${lim+60}">Afficher plus (${list.length-lim})</button></div>`:'');
+  return tb+xList('xm-jr',[['Quand','',1],['Action'],['','r']],rows)+(list.length>lim?`<div class="row u-mt12"><button class="btn" type="button" id="jr-more" data-act="pg-set" data-k="jl" data-v="${lim+60}">Afficher plus (${list.length-lim})</button></div>`:'');
 }
 

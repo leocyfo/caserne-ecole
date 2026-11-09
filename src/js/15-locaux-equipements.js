@@ -4,7 +4,7 @@
    Deux séances au même moment avec le même local ou équipement sont en conflit, sauf si c’est le même module
    (les classes sont alors réunies), comme pour les enseignants. */
 const RES_T={local:'Local',equip:'Équipement'};
-const ressCat=()=>(cfg().ressources||[]).concat(skResa());
+const ressCat=()=>(cfg().ressources||[]).concat(opt('stock')?opt('stock').resources():[]);
 const ressAll=()=>ressCat().slice().sort((a,b)=>(a.type===b.type?0:a.type==='local'?-1:1)||collator.compare(a.nom||'',b.nom||''));
 const ressName=id=>{const r=ressCat().find(x=>x.id===id);return r?r.nom:'';};
 const ressNames=ids=>ids.map(ressName).filter(Boolean).join(', ');
@@ -35,8 +35,8 @@ function ressBoxHTML(s){
   const li=ids.map(id=>{const c=cl.filter(x=>x.id===id), sk=(ressCat().find(r=>r.id===id)||{}).stk, hs=sk&&(sk.statut==='hs'||sk.statut==='maint');return `<li><span class="chip ${c.length||hs?'bad':'off'}">${esc(ressName(id))}</span>${hs?`<span class="bad-t">${sk.statut==='hs'?'hors service':'en maintenance'}</span>`:''}${c.length?`<span class="bad-t">aussi pour ${esc(c.map(x=>gName(x.o.grp)+(x.o.c.code?' ('+x.o.c.code+')':'')).join(', '))} à ce moment</span>`:''}</li>`;}).join('');
   return `<section class="af-box" id="rs-box"><div class="af-box-h"><h3 class="sb-h3">Locaux et équipements${cl.length?' <span class="chip bad" id="rs-clash">Conflit</span>':''}</h3>${can?`<button class="btn sm ghost" type="button" id="rs-edit" data-act="rs-edit">${ed?'Terminer':'Modifier'}</button>`:''}</div>
     ${ids.length?`<ul class="rs-list">${li}</ul>`:'<p class="help" id="rs-none">Aucun pour cette séance.</p>'}
-    ${ed?`<div class="pk-list" id="rs-picks" style="margin-top:10px">${ressPicks(ids,`data-rs="1" ${sAt(s)}`)}</div>${own&&linkedX(s)?`<div class="row" style="margin-top:8px"><button class="btn sm ghost" type="button" id="rs-reset" data-act="rs-reset" ${sAt(s)}${dis()}>Revenir à ceux du cours du module</button></div>`:''}`
-      :!own&&ids.length&&linkedX(s)?'<p class="help" style="margin-top:6px">Selon le cours du module.</p>':own&&linkedX(s)?'<p class="help" style="margin-top:6px">Choisis pour cette séance seulement.</p>':''}</section>`;
+    ${ed?`<div class="pk-list u-mt10" id="rs-picks">${ressPicks(ids,`data-rs="1" ${sAt(s)}`)}</div>${own&&linkedX(s)?`<div class="row u-mt8"><button class="btn sm ghost" type="button" id="rs-reset" data-act="rs-reset" ${sAt(s)}${dis()}>Revenir à ceux du cours du module</button></div>`:''}`
+      :!own&&ids.length&&linkedX(s)?'<p class="help u-mt6">Selon le cours du module.</p>':own&&linkedX(s)?'<p class="help u-mt6">Choisis pour cette séance seulement.</p>':''}</section>`;
 }
 /* Enregistre les locaux et équipements d’une séance (null : revenir à ceux du cours du module) */
 async function saveSessRess(s,ids){
@@ -54,7 +54,7 @@ function ressPanel(){
   const used=id=>comps().some(k=>(k.cours||[]).some(c=>(c.ress||[]).includes(id)));
   return `<section class="dr-sec" id="p-ress"><h2 class="sec-title">Locaux et équipements</h2>
     <p class="help">Les salles, camions, tours ou bassins que les séances se partagent. On les relie aux cours dans le menu Modules ; deux séances qui veulent le même au même moment sont signalées.</p>
-    ${all.length?`<ul class="plist" id="p-ress-list" style="margin-top:8px">${all.map(r=>`<li><span><b>${esc(r.nom)}</b> <span class="muted sm">${RES_T[r.type]||''}${used(r.id)?' · relié à des cours':''}</span></span>${can?`<button type="button" class="x" data-act="p-del-res" data-id="${esc(r.id)}" aria-label="${esc('Retirer '+r.nom)}" title="Retirer"${dis()}>×</button>`:''}</li>`).join('')}</ul>`:''}
-    ${can?`<form class="inline-add" data-form="p-add-res" style="margin-top:10px"><label class="field" style="flex:2 1 200px"><span>Nom</span><input id="p-rnom" maxlength="50" autocomplete="off" placeholder="Ex. Tour d’entraînement"></label><label class="field" style="flex:0 1 160px"><span>Type</span><select id="p-rtype"><option value="equip">Équipement</option><option value="local">Local</option></select></label><button class="btn" type="submit"${dis()}>Ajouter</button></form>`:''}</section>`;
+    ${all.length?`<ul class="plist u-mt8" id="p-ress-list">${all.map(r=>`<li><span><b>${esc(r.nom)}</b> <span class="muted sm">${RES_T[r.type]||''}${used(r.id)?' · relié à des cours':''}</span></span>${can?`<button type="button" class="x" data-act="p-del-res" data-id="${esc(r.id)}" aria-label="${esc('Retirer '+r.nom)}" title="Retirer"${dis()}>×</button>`:''}</li>`).join('')}</ul>`:''}
+    ${can?`<form class="inline-add u-mt10" data-form="p-add-res"><label class="field u-f2-200"><span>Nom</span><input id="p-rnom" maxlength="50" autocomplete="off" placeholder="Ex. Tour d’entraînement"></label><label class="field u-f0-160"><span>Type</span><select id="p-rtype"><option value="equip">Équipement</option><option value="local">Local</option></select></label><button class="btn" type="submit"${dis()}>Ajouter</button></form>`:''}</section>`;
 }
 

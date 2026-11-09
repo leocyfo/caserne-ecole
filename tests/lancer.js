@@ -17,12 +17,12 @@ const chrome=trouverChrome();
 if(!chrome){console.error('Google Chrome est introuvable (indiquez son chemin dans la variable CHROME_PATH).');process.exit(1);}
 
 // Les pages de test sont construites à partir des sources (src/) à chaque lancement
-for(const b of ['build-test.js','build-ac.js','build-fo.js','build-lock.js','build-auth.js','build-phone.js']){
+for(const b of ['build-test.js','build-ac.js','build-fo.js','build-lock.js','build-auth.js','build-phone.js','build-opt.js']){
   const r=spawnSync(process.execPath,[b],{encoding:'utf8'});
   if(r.status!==0){console.error('construction impossible ('+b+') :\n'+(r.stderr||r.stdout));process.exit(1);}
 }
 
-const PAGES=['test.html','test-ac.html','test-fo.html','test-lock-s.html','test-lock-t.html','test-phone.html']
+const PAGES=['test.html','test-ac.html','test-fo.html','test-lock-s.html','test-lock-t.html','test-phone.html','test-opt.html','test-opt-s.html','test-opt-c.html','test-opt-2.html']
   .concat(['setup','request','approve','refused','signin','demo-login','demo-request','demo-stale'].map(n=>'test-auth-'+n+'.html'));
 const filtres=process.argv.slice(2), pages=PAGES.filter(p=>!filtres.length||filtres.some(f=>p.includes(f)));
 if(!pages.length){console.error('aucune page de test ne correspond à : '+filtres.join(' '));process.exit(1);}

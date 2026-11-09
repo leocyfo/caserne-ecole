@@ -5,9 +5,6 @@
    Une étiquette QR contient l’adresse du site suivie de #stk=<id> : l’appareil photo du téléphone ouvre l’article. */
 const SK_TAILLES=[['casque','Casque'],['manteau','Manteau'],['pantalon','Pantalon'],['bottes','Bottes'],['gants','Gants']];
 const SK_KIT_DEF=[{nom:'Casque',mot:'casque',taille:'casque'},{nom:'Habit de combat',mot:'habit',taille:'manteau'},{nom:'Bottes',mot:'botte',taille:'bottes'},{nom:'Gants',mot:'gant',taille:'gants'},{nom:'Cagoule',mot:'cagoule',taille:''}];
-const QR_GEN='https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js', QR_READ='https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js';
-const _scripts={};
-function loadScript(url){return _scripts[url]||(_scripts[url]=new Promise((res,rej)=>{const x=document.createElement('script');x.src=url;x.onload=res;x.onerror=()=>{delete _scripts[url];rej(new Error('script'));};document.head.appendChild(x);}));}
 const skModeles=()=>(S.data.stockModeles||[]).slice().sort((a,b)=>collator.compare(a.nom||'',b.nom||''));
 /* ---------- Emplacements : un arbre (bâtiment, local, rangement, camion) ---------- */
 function skLieux(){
@@ -64,11 +61,11 @@ function skFichePage(m){
     :tile('Exemplaires',A.length,'','')+tile('Libres',A.filter(skFree).length,'','prêts à remettre ou à sortir')+tile('Attribués',A.filter(a=>a.attrib&&a.attrib.id).length,'','aux élèves et aux classes')+tile('Hors d’usage',A.filter(a=>a.statut==='hs'||a.statut==='maint'||a.statut==='manquant').length,A.some(a=>a.statut==='hs'||a.statut==='manquant')?'bad':'','maintenance, hors service, manquants');
   const sizes=!q2&&(m.tailles||[]).length?`<div class="stk-ft">${m.tailles.map(t=>{const all=A.filter(a=>String(a.taille||'')===t), n=all.filter(skFree).length;return `<span class="chip ${n?'off':'warn'}">${esc(t)} : ${n} ${n>1?'libres':'libre'} sur ${all.length}</span>`;}).join('')}</div>`:'';
   return `<div class="stk-fhead panel"><button type="button" class="link" id="stk-fback" data-act="pg-set" data-k="sfi" data-v="">${icon('left')}Toutes les fiches</button>
-      <div class="stk-fhrow"><span class="stk-fi lg">${icon(skCat(m.cat)[2])}</span><div style="flex:1;min-width:0"><h2 style="margin:0">${esc(m.nom)}</h2><p class="help" style="margin:2px 0 0">${esc(m.note||'')}</p></div>
+      <div class="stk-fhrow"><span class="stk-fi lg">${icon(skCat(m.cat)[2])}</span><div class="u-f1m"><h2 class="u-m0">${esc(m.nom)}</h2><p class="help u-m2-0-0">${esc(m.note||'')}</p></div>
         ${can?`<div class="row"><button class="btn primary" type="button" id="stk-fadd" data-act="stk-add-to" data-id="${esc(m.id)}">${icon('plus')}Ajouter</button><button class="btn" type="button" data-act="stk-mod" data-id="${esc(m.id)}">Modifier la fiche</button>${!q2&&A.length?`<button class="btn ghost" type="button" data-act="stk-flab" data-id="${esc(m.id)}">${icon('print')}Étiquettes</button>`:''}</div>`:''}</div>
-      <dl class="facts facts3" style="margin-top:12px">${facts.map(([k,v])=>`<div><dt>${k}</dt><dd>${esc(v)}</dd></div>`).join('')}</dl></div>
-    <div class="kpis" style="margin-top:12px">${tiles}</div>${sizes?`<section class="panel" style="margin-top:12px"><h2>Par taille</h2>${sizes}</section>`:''}
-    <div class="stk-elist" style="margin-top:12px">${A.length?skList('','',m.id):emptyBox('Aucun exemplaire',can?'« Ajouter » crée les exemplaires de cette fiche : le nombre, la taille et l’emplacement suffisent.':'')}</div>`;
+      <dl class="facts facts3 u-mt12">${facts.map(([k,v])=>`<div><dt>${k}</dt><dd>${esc(v)}</dd></div>`).join('')}</dl></div>
+    <div class="kpis u-mt12">${tiles}</div>${sizes?`<section class="panel u-mt12"><h2>Par taille</h2>${sizes}</section>`:''}
+    <div class="stk-elist u-mt12">${A.length?skList('','',m.id):emptyBox('Aucun exemplaire',can?'« Ajouter » crée les exemplaires de cette fiche : le nombre, la taille et l’emplacement suffisent.':'')}</div>`;
 }
 function skModDrawer(d){
   const m=d.id?byId(skModeles(),d.id):null, x=m||{cat:d.cat||'epi',suivi:'unite'}, f=(id,l,v,att)=>`<label class="field"><span>${l}</span><input id="${id}" value="${esc(v==null?'':v)}" ${att||''}></label>`;
@@ -100,7 +97,7 @@ function skPickDrawer(d){
   return dTop('Ajouter au stock','Quel objet ?')
     +`<div class="dr-body"><label class="field"><span>Rechercher une fiche</span><input id="stk-pk-q" type="search" autocomplete="off" value="${esc(d.q||'')}" placeholder="Ex. casque, émulseur"></label>
       <ul class="stk-pick">${M.map(m=>`<li><button type="button" class="stk-pk" data-act="stk-add-to" data-id="${esc(m.id)}"><span class="stk-fi">${icon(skCat(m.cat)[2])}</span><span><b>${esc(m.nom)}</b><small>${esc([skCat(m.cat)[1],m.sous,skQte(m)?'en quantité':pl(skFicheArts(m).length,'exemplaire','exemplaires')].filter(Boolean).join(' · '))}</small></span>${icon('plus')}</button></li>`).join('')||'<li class="help">Aucune fiche ne correspond.</li>'}</ul>
-      <div class="row" style="margin-top:12px"><button class="btn" type="button" id="stk-pick-new" data-act="stk-mod" data-id="">${icon('plus')}Nouvelle fiche</button><button class="btn ghost" type="button" id="stk-pick-free" data-act="stk-free">Article sans fiche…</button></div></div>`;
+      <div class="row u-mt12"><button class="btn" type="button" id="stk-pick-new" data-act="stk-mod" data-id="">${icon('plus')}Nouvelle fiche</button><button class="btn ghost" type="button" id="stk-pick-free" data-act="stk-free">Article sans fiche…</button></div></div>`;
 }
 /* Ajouter à une fiche : le nombre, la taille, l’emplacement (ou la quantité reçue pour un consommable) */
 function skAddDrawer(d){
@@ -130,7 +127,7 @@ async function skQuickAdd(f){
     const ch=a?{qte:(+a.qte||0)+n,maj:now}:{nom:m.nom,cat:m.cat,suivi:'qte',sous:m.sous||'',qte:n,min:+m.min||0,unite:m.unite||'',empl:v('sq-empl'),prix:m.prix||null,fourn:m.fourn||'',modele:m.id,cree:now,maj:now};
     if(v('sq-lot')) ch.lot=v('sq-lot');if(v('sq-exp')) ch.exp=v('sq-exp');
     const ok=await write(async()=>{if(a)await col('stock').doc(id).update(ch);else await col('stock').doc(id).set(ch);await col('stock-mvt').doc(skId()).set(skMv(Object.assign({id},a||ch),a?'reappro':'entree',{qte:n,note:[m.fourn,ct?fmtM(ct):''].filter(Boolean).join(' · ')}));},`${n} ${m.unite||''} ajoutés`.replace(/\s+ajoutés/,' ajoutés'));
-    if(ok&&ct&&S.role==='admin') await cpAutoDepense({date:todayISO(),poste:m.cat==='conso'?'conso':'materiel',libelle:`${m.nom} (${n} ${m.unite||''})`.replace(/\s+\)/,')'),tiers:m.fourn||'',ht:ct,source:'stock'});
+    if(ok&&ct&&S.role==='admin') await skExpense({date:todayISO(),poste:m.cat==='conso'?'conso':'materiel',libelle:`${m.nom} (${n} ${m.unite||''})`.replace(/\s+\)/,')'),tiers:m.fourn||'',ht:ct,source:'stock'});
     if(ok) closeDrawer(true);return;
   }
   const n=Math.max(1,Math.min(60,Math.round(+v('sq-nb')||1))), codes=skCodes(m.prefixe||skPrefixe(m.nom),n);
@@ -170,8 +167,8 @@ function skImportDrawer(d){
       <label class="field"><span>Ou collez ici</span><textarea id="si-txt" rows="6" placeholder="Nom;Catégorie;Code;Taille;Emplacement">${esc(d.txt||'')}</textarea></label>
       <div class="row"><button class="btn" type="button" id="si-read" data-act="stk-imp-read">Lire</button></div>
       ${d.err?`<p class="form-err" role="alert">${esc(d.err)}</p>`:''}
-      ${L.length?`<h3 class="sb-h3" style="margin-top:12px">${pl(L.length,'article à importer','articles à importer')}</h3><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Nom</th><th>Catégorie</th><th>Code</th><th>Emplacement</th><th class="num">Qté</th></tr></thead><tbody>${L.slice(0,12).map(o=>`<tr><td>${esc(o.nom)}</td><td>${esc(skCat(o.cat)[1])}</td><td>${esc(o.code)}</td><td>${esc(o.empl)}</td><td class="num">${o.suivi==='qte'?esc(String(o.qte)):'1'}</td></tr>`).join('')}</tbody></table></div>${L.length>12?`<p class="help">… et ${L.length-12} autres.</p>`:''}
-        <div class="row" style="margin-top:10px"><button class="btn primary" type="submit" id="si-go"${dis()}>Importer ${L.length}</button></div>`:''}</form>`;
+      ${L.length?`<h3 class="sb-h3 u-mt12">${pl(L.length,'article à importer','articles à importer')}</h3><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Nom</th><th>Catégorie</th><th>Code</th><th>Emplacement</th><th class="num">Qté</th></tr></thead><tbody>${L.slice(0,12).map(o=>`<tr><td>${esc(o.nom)}</td><td>${esc(skCat(o.cat)[1])}</td><td>${esc(o.code)}</td><td>${esc(o.empl)}</td><td class="num">${o.suivi==='qte'?esc(String(o.qte)):'1'}</td></tr>`).join('')}</tbody></table></div>${L.length>12?`<p class="help">… et ${L.length-12} autres.</p>`:''}
+        <div class="row u-mt10"><button class="btn primary" type="submit" id="si-go"${dis()}>Importer ${L.length}</button></div>`:''}</form>`;
 }
 async function skImport(){
   const L=S.dr.rows||[];if(!L.length) return;const now=new Date().toISOString();
@@ -218,9 +215,9 @@ function skScanDrawer(d){
   const L=(d.list||[]).map(id=>byId(skArts(),id)).filter(Boolean), out=L.filter(a=>a.sortie&&a.sortie.le), ins=L.filter(a=>!(a.sortie&&a.sortie.le));
   return dTop('Mode terrain','Scanner du matériel')
     +`<div class="dr-body"><div class="stk-cam" id="stk-cam">${d.cam?'<video id="stk-video" playsinline muted></video><span class="stk-cam-hint">Visez le code QR</span>':`<button class="btn primary" type="button" id="stk-cam-go" data-act="stk-cam">${icon('eye')}Ouvrir la caméra</button><p class="help">Ou visez l’étiquette avec l’appareil photo du téléphone : l’article s’ouvre tout seul.</p>`}</div>
-      <form class="inline-add" data-form="stk-code" style="margin-top:10px"><label class="field" style="flex:1 1 200px"><span>Code, n° de série ou lien</span><input id="stk-code" autocomplete="off" placeholder="Ex. CAS-014"></label><button class="btn" type="submit">Ajouter</button></form>
+      <form class="inline-add u-mt10" data-form="stk-code"><label class="field u-f1-200"><span>Code, n° de série ou lien</span><input id="stk-code" autocomplete="off" placeholder="Ex. CAS-014"></label><button class="btn" type="submit">Ajouter</button></form>
       ${d.err?`<p class="form-err" role="alert">${esc(d.err)}</p>`:''}
-      <h3 class="sb-h3" style="margin-top:12px">${L.length?pl(L.length,'article scanné','articles scannés'):'Aucun article scanné'}</h3>
+      <h3 class="sb-h3 u-mt12">${L.length?pl(L.length,'article scanné','articles scannés'):'Aucun article scanné'}</h3>
       ${L.length?`<ul class="plist" id="stk-scan-list">${L.map(a=>`<li><button class="link" type="button" data-act="stk-open" data-id="${esc(a.id)}">${esc(skName(a))}</button><span class="row"><span class="chip ${a.sortie&&a.sortie.le?'warn':skConf(a)[0]}">${a.sortie&&a.sortie.le?'Sorti':esc(skConf(a)[1])}</span><button class="ann-x" type="button" data-act="stk-scan-x" data-id="${esc(a.id)}" aria-label="Retirer de la liste">${icon('x')}</button></span></li>`).join('')}</ul>
         <form data-form="stk-group" class="cp-box" novalidate>${ins.length&&skCanDo('sortie')?`<label class="field"><span>Séance</span><select id="sx-seance">${skSessOpts()}</select></label><label class="field"><span>Instructeur responsable</span><select id="sx-instr"><option value="">—</option>${teachers().map(x=>`<option value="${esc(x.id)}"${(S.role==='teacher'?S.teacher:'')===x.id?' selected':''}>${esc(x.nom)}</option>`).join('')}</select></label>`:''}
           <div class="row">${ins.length&&skCanDo('sortie')?`<button class="btn primary" type="button" id="stk-grp-out" data-act="stk-grp" data-v="sortie"${dis()}>Sortir ${ins.length}</button>`:''}${out.length&&skCanDo('retour')?`<button class="btn" type="button" id="stk-grp-in" data-act="stk-grp" data-v="retour"${dis()}>Rentrer ${out.length} (intacts)</button>`:''}${isAdmin()?`<button class="btn ghost" type="button" data-act="stk-grp" data-v="insp"${dis()}>Inspection faite</button>`:''}</div></form>`:''}</div>`;
@@ -286,7 +283,7 @@ function skKitDrawer(d){
   return dTop('Dotation','Équiper '+esc(gName(d.id)),`Kit d’aspirant : ${esc(K.map(k=>k.nom).join(', '))}`)
     +`<div class="dr-body"><p class="help">Les pièces libres sont choisies à la taille de chaque élève (fiche Dotations → Tailles). ${miss?`<b class="bad-t">${pl(miss,'pièce manque','pièces manquent')}</b> : à commander ou à libérer.`:'Rien ne manque.'}</p>
       <div class="tbl-wrap"><table class="tbl stk-kit"><thead><tr><th>Élève</th>${K.map(k=>`<th>${esc(k.nom)}</th>`).join('')}</tr></thead><tbody>${P.map(r=>`<tr><td>${esc(r.e.nom)}</td>${r.parts.map(p=>`<td>${p.has?`<span class="chip off" title="Déjà remis">${esc(p.has.code||'✓')}</span>`:p.pick?`<span class="chip ok">${esc(p.pick.code||p.pick.nom)}${p.pick.taille?' · '+esc(p.pick.taille):''}</span>`:`<span class="chip bad">Manque${p.taille?' ('+esc(p.taille)+')':''}</span>`}</td>`).join('')}</tr>`).join('')}</tbody></table></div>
-      <div class="row" style="margin-top:12px"><button class="btn primary" type="button" id="stk-kit-go" data-act="stk-kit-go" data-id="${esc(d.id)}"${n?dis():' disabled'}>Remettre ${pl(n,'pièce','pièces')}</button><button class="btn ghost" type="button" data-act="close">Annuler</button></div></div>`;
+      <div class="row u-mt12"><button class="btn primary" type="button" id="stk-kit-go" data-act="stk-kit-go" data-id="${esc(d.id)}"${n?dis():' disabled'}>Remettre ${pl(n,'pièce','pièces')}</button><button class="btn ghost" type="button" data-act="close">Annuler</button></div></div>`;
 }
 async function skKitGo(g){
   const le=new Date().toISOString(), fns=[];

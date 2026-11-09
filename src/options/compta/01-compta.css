@@ -1,0 +1,13 @@
+/* ---------- Compta ---------- */
+.cp-amt{font-variant-numeric:tabular-nums;white-space:nowrap}
+.cp-amt.rev{color:var(--ok)}
+.cp-amt.dep{color:var(--ink)}
+.cp-bar{min-width:140px}
+.cp-bar .meter{margin:0 0 2px}
+.cp-bar small{font-size:.75rem;color:var(--muted)}
+.cp-tarifs{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,330px),1fr));gap:12px}
+.cp-tarif{display:flex;flex-direction:column;gap:8px;margin:0;padding:10px 12px;border:1px solid var(--line);border-radius:var(--r-sm)}
+.cp-tarif legend{padding:0 4px;font-weight:700;font-size:.84375rem}
+.cp-ech{grid-template-columns:minmax(0,1fr) 90px}
+.cp-det summary{cursor:pointer;font-weight:600;font-size:.84375rem;margin:4px 0 8px}
+.cp-tx{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px}

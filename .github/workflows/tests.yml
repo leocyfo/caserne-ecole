@@ -24,7 +24,7 @@ jobs:
       - name: Assembler le site
         run: node outils/construire.js
       - name: Le site envoyé correspond aux sources
-        run: git diff --exit-code -- index.html demo.html demo/donnees.js
+        run: git diff --exit-code -- index.html demo.html demo/donnees.js options
       - name: Lancer les tests
         run: node tests/lancer.js
       - name: Garder les pages de résultats en cas d’échec

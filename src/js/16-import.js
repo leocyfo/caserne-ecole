@@ -95,9 +95,9 @@ function copyPanel(g){
     :!P.n?'Aucune séance ne peut être copiée à partir de cette date.'
     :`${pl(P.n,'séance','séances')} de ${esc(gName(src))} (du ${esc(d(P.first))} au ${esc(d(P.last))}) ${P.n>1?'seront copiées':'sera copiée'} du ${esc(d(P.from))} au ${esc(d(P.to))}, dans le même ordre, en sautant les fins de semaine et les congés.${P.out?` ${pl(P.out,'séance tombe','séances tombent')} après la fin de l’année scolaire et ne ${P.out>1?'seront pas copiées':'sera pas copiée'}.`:''}${P.clash?` ${pl(P.clash,'séance est ignorée','séances sont ignorées')} : ${esc(g.nom)} a déjà quelque chose à ce moment-là.`:''} Les présences et les résultats ne sont pas copiés.`;
   return `<div class="cp-box" id="cp-box"><h3 class="fiche-h3">Copier l’horaire d’une autre classe</h3><form class="inline-add" data-form="cp-go" data-g="${esc(g.id)}">
-      <label class="field" style="flex:0 1 220px"><span>Classe à copier</span><select id="cp-src" data-cp="src"${others.length?'':' disabled'}><option value="">Choisir…</option>${others.map(x=>`<option value="${esc(x.id)}"${x.id===src?' selected':''}>${esc(x.nom)}</option>`).join('')}</select></label>
-      <label class="field" style="flex:0 1 220px"><span>Première journée de ${esc(g.nom)}</span><input type="date" id="cp-date" data-cp="date" data-f="cpd" value="${esc(st.cpd||'')}"></label>
+      <label class="field u-f0-220"><span>Classe à copier</span><select id="cp-src" data-cp="src"${others.length?'':' disabled'}><option value="">Choisir…</option>${others.map(x=>`<option value="${esc(x.id)}"${x.id===src?' selected':''}>${esc(x.nom)}</option>`).join('')}</select></label>
+      <label class="field u-f0-220"><span>Première journée de ${esc(g.nom)}</span><input type="date" id="cp-date" data-cp="date" data-f="cpd" value="${esc(st.cpd||'')}"></label>
       <button class="btn primary" type="submit" id="cp-go"${P&&P.n?dis():' disabled'}>${P&&P.n?'Copier '+pl(P.n,'séance','séances'):'Copier'}</button></form>
-    <p class="help" id="cp-info" style="margin-top:8px">${info}</p></div>`;
+    <p class="help u-mt8" id="cp-info">${info}</p></div>`;
 }
 

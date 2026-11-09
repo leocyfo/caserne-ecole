@@ -21,7 +21,7 @@ function needProfiles(ids){
 const initials=n=>String(n||'').trim().split(/\s+/).map(w=>(w.match(/\p{L}/u)||[''])[0]).filter(Boolean).slice(0,2).join('').toUpperCase()||'?';
 const AV_COLORS=['#2C4F78','#7043A5','#146C62','#995D12','#A3326B','#1C7951'];
 function avHTML(name,url,cls){
-  if(url) return `<span class="av${cls?' '+cls:''}"><img src="${esc(url)}" alt=""></span>`;
+  if(url) return `<span class="av${cls?' '+cls:''}"><img src="${esc(url)}" alt="" width="240" height="240"></span>`;
   let h=0;for(const ch of String(name||''))h=(h*31+ch.charCodeAt(0))>>>0;
   return `<span class="av${cls?' '+cls:''}" style="background:${AV_COLORS[h%AV_COLORS.length]}" aria-hidden="true">${esc(initials(name))}</span>`;
 }
@@ -181,9 +181,9 @@ function profilePage(){
     panels+=`<section class="panel"><h2>Mes informations</h2>${facts([['Classe',gName(gid)],['Enseignant principal',principalOf(gid)?tName(principalOf(gid)):''],['Numéro',rec.numero],['Fonction',rec.fonction||'Aucune'],['Date de naissance',rec.naissance?longDate(parse(rec.naissance)):''],['Contact d’urgence',rec.parent],['Courriel',rec.courriel],['Téléphone',rec.telephone]])}</section>`;
     panels+=`<section class="panel"><h2>Ma semaine</h2><p class="big">${wk.length}<span> ${wk.length>1?'cours':'cours'}</span></p>
       <p class="help">${nx?`${W('Prochaine séance','Prochain cours')} : ${esc(nx.s.c.titre)}, ${esc(sess(nx.s).toLowerCase())}.`:W('Aucune séance prévue prochainement.','Aucun cours prévu prochainement.')}</p>
-      ${chores.length?`<h2 style="margin-top:14px">Corvées de ménage</h2><ul class="acc-list">${[...new Set(chores.map(s=>s.date))].sort().map(ds=>`<li><span>${esc(dayLabel(parse(ds)))}</span><span class="muted sm">toute la journée</span></li>`).join('')}</ul>`:'<p class="help">Aucune corvée de ménage cette semaine.</p>'}</section>`;
+      ${chores.length?`<h2 class="u-mt14">Corvées de ménage</h2><ul class="acc-list">${[...new Set(chores.map(s=>s.date))].sort().map(ds=>`<li><span>${esc(dayLabel(parse(ds)))}</span><span class="muted sm">toute la journée</span></li>`).join('')}</ul>`:'<p class="help">Aucune corvée de ménage cette semaine.</p>'}</section>`;
     panels+=`<section class="panel"><h2>Prochains examens</h2>${ex.length?`<div class="list">${examRows(ex,'student')}</div>`:'<p class="help">Aucun examen prévu.</p>'}</section>`;
-    panels+=myStudentPanels(Object.assign({},rec,{id:P.id||S.student,groupe:gid}));
+    for(const o of optAll()) if(o.profileStudent) panels+=o.profileStudent(Object.assign({},rec,{id:P.id||S.student,groupe:gid}));
   }else if(r==='teacher'){
     const id=P.id, z=S.data.dossiers[id]||{}, cs=S.data.cours.filter(c=>c.enseignant===id);
     const byG={};for(const c of cs)byG[c.groupe]=(byG[c.groupe]||0)+1;
@@ -193,16 +193,16 @@ function profilePage(){
     panels+=`<section class="panel"><h2>Mes informations</h2>${facts([['Fonction',rec.fonction||'Enseignant'],['Statut',rec.statut||'Actif'],['Courriel',rec.courriel],['Téléphone',z.telephone||rec.telephone]])}</section>`;
     panels+=`<section class="panel"><h2>Mes classes</h2>${Object.keys(byG).length?`<ul class="acc-list">${Object.entries(byG).sort((x,y)=>collator.compare(gName(x[0]),gName(y[0]))).map(([g,n])=>`<li><span>${esc(gName(g))}${principalOf(g)===id?' <span class="chip k0">Enseignant principal</span>':''}</span><span class="muted">${pl(n,'cours','cours')}</span></li>`).join('')}</ul>`:'<p class="help">Aucun cours assigné pour l’instant.</p>'}</section>`;
     panels+=`<section class="panel"><h2>Ma semaine</h2><p class="big">${wk.length}<span> ${W(wk.length>1?'séances':'séance','cours')}</span></p><p class="help">${late?`<b class="need-t">${pl(late,'présence à prendre','présences à prendre')}</b> pour des ${W('séances passées','cours passés')}. `:''}${nx?`${W('Prochaine séance','Prochain cours')} : ${esc(nx.s.c.titre)}, ${esc(sess(nx.s).toLowerCase())}.`:W('Aucune séance prévue prochainement.','Aucun cours prévu prochainement.')}</p></section>`;
-    panels+=myTeacherPanel(id);
+    for(const o of optAll()) if(o.profileTeacher) panels+=o.profileTeacher(id);
     if(a&&S.canWrite===false) warn='<div class="notice warn"><p>Votre accès à cette page ne permet pas encore d’enregistrer les présences. Demandez à l’administration l’accès <b>Contributeur</b> dans Partager.</p></div>';
   }else if(r==='service'){
     const s=svcOf(svcCur())||{};
     panels+=`<section class="panel"><h2>Mes informations</h2>${facts([['Rôle','Service incendie'],['Service',s.nom],['Personne-ressource',s.contact],['Courriel',s.courriel]])}</section>`;
-    panels+=`<section class="panel"><h2>Ce que vous voyez</h2><p class="help">La présence, les résultats, le carnet de compétences et le dossier ENPQ de vos recrues seulement, et les factures de votre service. Rien d’autre de l’école.</p><div class="row" style="margin-top:10px"><button class="btn sm" type="button" data-act="nav" data-page="recrues">Voir mes recrues</button></div></section>`;
+    panels+=`<section class="panel"><h2>Ce que vous voyez</h2><p class="help">La présence, les résultats, le carnet de compétences et le dossier ENPQ de vos recrues seulement${opt('compta')?', et les factures de votre service':''}. Rien d’autre de l’école.</p><div class="row u-mt10"><button class="btn sm" type="button" data-act="nav" data-page="recrues">Voir mes recrues</button></div></section>`;
   }else{
     const c=cfg(), all=S.data.comptes, n=k=>all.filter(x=>x.role===k).length;
     panels+=`<section class="panel"><h2>Mes informations</h2>${facts([['Rôle','Administrateur'],['Établissement',c.nom],['Année scolaire',c.annee],['Fiche du personnel',rec.nom||'']])}</section>`;
-    panels+=`<section class="panel"><h2>Comptes</h2><ul class="acc-list"><li><span>Administrateurs</span><b>${n('admin')}</b></li><li><span>Enseignants</span><b>${n('teacher')}</b></li><li><span>Élèves</span><b>${n('student')}</b></li>${n('service')?`<li><span>Services incendie</span><b>${n('service')}</b></li>`:''}</ul><div class="row" style="margin-top:12px"><button class="btn sm" type="button" data-act="nav" data-page="comptes">Gérer les comptes</button></div></section>`;
+    panels+=`<section class="panel"><h2>Comptes</h2><ul class="acc-list"><li><span>Administrateurs</span><b>${n('admin')}</b></li><li><span>Enseignants</span><b>${n('teacher')}</b></li><li><span>Élèves</span><b>${n('student')}</b></li>${n('service')?`<li><span>Services incendie</span><b>${n('service')}</b></li>`:''}</ul><div class="row u-mt12"><button class="btn sm" type="button" data-act="nav" data-page="comptes">Gérer les comptes</button></div></section>`;
   }
   return head+warn+`<div class="panels">${panels}</div>`;
 }

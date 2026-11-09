@@ -77,7 +77,13 @@ const xTitle=x=>x.rep?(x.c&&modKey(x.c)!=null?`Reprise · ${codeOf(x.c)}${esc(x.
 const xSub=x=>esc([x.c&&!x.rep&&x.e.titre&&x.e.titre!=='Examen'?x.e.titre:'',x.salle?'Local '+x.salle:'',x.e.surveillant?'Surveillance : '+shortName(tName(x.e.surveillant)):''].filter(Boolean).join(' · '));
 const xWhen=x=>{const k=daysBetween(todayISO(),x.date);return `<span class="chip ${x.rep?'info':k<=2?'exam':'off'}">${k<=0?'Aujourd’hui':k===1?'Demain':k<14?'Dans '+k+' jours':'Dans '+Math.round(k/7)+' semaines'}</span>`;};
 const xCls=x=>`<span class="cl-num sm" title="${esc(gName(x.grp))}">${esc(xNum(x.grp))}</span>`;
-const xRow=(cls,act,cells,label)=>`<article class="xm-row xm-cols ${cls}${act?' go':''}"${act?` ${act} tabindex="0" role="button" aria-label="${esc(label)}"`:''}>${cells}</article>`;
+/* Rangée cliquable : un bouton pour le clavier et les lecteurs d’écran. Si la rangée contient déjà des boutons ou des champs,
+   le bouton est un élément à part (invisible, encadré au focus) : pas de contrôle dans un autre (WCAG 4.1.2). */
+const hasCtl=h=>/<(button|as|input|select|textarea)|tabindex="0"/.test(h);
+const rowOpen=(act,label)=>`<button type="button" class="row-open" ${act} aria-label="${esc(label)}"></button>`;
+const xRow=(cls,act,cells,label)=>!act?`<article class="xm-row xm-cols ${cls}">${cells}</article>`
+  :hasCtl(cells)?`<div class="xm-row xm-cols ${cls} go" ${act}>${rowOpen(act,label)}${cells}</div>`
+  :`<div class="xm-row xm-cols ${cls} go" ${act} tabindex="0" role="button" aria-label="${esc(label)}">${cells}</div>`;
 /* head : [libellé, classe, sans libellé dans les cartes (Moment, Quand : la valeur se lit seule)] */
 const xList=(cls,head,rows)=>`<div class="cl-list xm-list"><div class="xm-hd xm-cols ${cls}" aria-hidden="true">${head.map(h=>`<span${h[1]?` class="${h[1]}"`:''}${h[2]?' data-nl':''}>${h[0]}</span>`).join('')}</div>${rows}</div>`;
 const xLabel=x=>`${x.rep?'Journée de reprise':(x.c?x.c.titre:x.e.titre||'Examen')} · ${dayLabel(parse(x.date))} · ${gName(x.grp)}`;
@@ -117,7 +123,7 @@ function examsPage(){
       const rs=x.rep?RSu.find(y=>y.key===x.key):null, nq=rs?B.reps.filter(q=>{const dq=repDayFor(q.x,RSu);return dq&&dq.key===rs.key;}).length:0;
       const sub=x.rep?(rs&&rs.mods.length?`${rs.mods.map(m=>'M'+m).join(', ')}${nq?' · '+pl(nq,'reprise à faire','reprises à faire'):''}`:'Modules à reprendre : à choisir'):xSub(x);
       return xRow('xm-up'+(x.rep?' is-rep':''),xOpen(x),`${xDate(x,x.rep?'rep':k<=2?'hot':'')}<div class="xm-t"><b>${xTitle(x)}</b>${sub?`<small>${sub}</small>`:''}</div>${xCls(x)}<span class="xm-m">${esc(momentOf(x))}</span><div class="xm-end">${x.rep?'<span class="chip info">Reprise</span>':xWhen(x)}</div>`,xLabel(x));}).join(''))
-      +(B.up.length>lim?`<div class="row" style="margin-top:12px"><button class="btn" type="button" data-act="pg-set" data-k="lim" data-v="${lim+25}">Afficher plus (${B.up.length-lim})</button></div>`:'')
+      +(B.up.length>lim?`<div class="row u-mt12"><button class="btn" type="button" data-act="pg-set" data-k="lim" data-v="${lim+25}">Afficher plus (${B.up.length-lim})</button></div>`:'')
       :`<section class="panel"><p class="help">Aucun examen à venir.</p></section>`;
   }else if(tab==='todo'){
     body=B.todo.length?xList('xm-todo',[['Date'],['Examen'],['Classe'],['Résultats entrés'],['','r']],B.todo.map(x=>{const p=Math.round(x.got/x.els.length*100);

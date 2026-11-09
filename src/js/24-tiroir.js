@@ -13,9 +13,6 @@ const titleOf=c=>`${c.code?`<span class="chip ${tone(c)}">${esc(c.code)}</span>`
 const DR_SHAPES={
   info:['pop',360],att:['side',600],course:['side',660],move:['bottom',760],print:['center',480],notifs:['pop',420,'below'],
   addc:['center',600],exam:['center',600],student:['center',660],staff:['side',600],acct:['center',520],
-  stk:['side',600],'stk:pick':['center',680],'stk:add':['center',520],'stk:dot':['sheet',980],'stk:mod':['side',720],'stk:imp':['center',840],'stk:scan':['center',560],
-  'stk:kit':['sheet',1100],'stk:sizes':['sheet',980],'stk:cmd':['sheet',1100],'stk:fourn':['center',600],'stk:rep':['center',600],
-  'cpt:eleve':['side',600],'cpt:fact':['center',840],'cpt:factEdit':['center',840],'cpt:entry':['center',560],'cpt:slip':['center',840],
   'fo:grille':['side',720],'fo:sheet':['sheet',980],'fo:grp':['center',620],'fo:view':['side',480],'fo:pre':['center',760],'fo:certs':['side',560],'fo:enpq':['side',520],
   'fo:qrin':['pop',360,'below'],'fo:afauto':['sheet',1100],'fo:serv':['sheet',980],'fo:q':['center',640],'fo:qimp':['center',840],'fo:blanc':['center',840]
 };
@@ -45,7 +42,7 @@ function openDrawer(dr){
 }
 function closeDrawer(force){
   const d=S.dr;if(!d)return;
-  skStopCam();
+  for(const o of optAll()) if(o.closeDrawer) o.closeDrawer();
   if(d.kind==='att'&&d.dirty&&!force){d.confirmClose=true;renderDrawer();return;}
   S.dr=null;renderDrawer();
 }
@@ -57,7 +54,8 @@ function renderDrawer(){
   }
   const d=S.dr;
   if(d.kind==='att') syncAtt();
-  const html=d.kind==='att'?attDrawer():d.kind==='fo'?foDrawer():d.kind==='addc'?addCourseDrawer():d.kind==='course'?courseDrawer():d.kind==='exam'?examDrawer():d.kind==='student'?studentDrawer():d.kind==='staff'?staffDrawer():d.kind==='move'?moveDrawer():d.kind==='acct'?accountDrawer():d.kind==='print'?printDrawer():d.kind==='notifs'?notifDrawer():d.kind==='stk'?stockDrawer():d.kind==='cpt'?comptaDrawer():infoDrawer();
+  const od=optAll().find(o=>o.drawers&&o.drawers[d.kind]);
+  const html=od?od.drawers[d.kind]():d.kind==='att'?attDrawer():d.kind==='fo'?foDrawer():d.kind==='addc'?addCourseDrawer():d.kind==='course'?courseDrawer():d.kind==='exam'?examDrawer():d.kind==='student'?studentDrawer():d.kind==='staff'?staffDrawer():d.kind==='move'?moveDrawer():d.kind==='acct'?accountDrawer():d.kind==='print'?printDrawer():d.kind==='notifs'?notifDrawer():infoDrawer();
   const fresh=el._k!==d.uid, [shape,w]=drShape(d), sh=shape==='pop'&&!d.at?'center':shape;
   el.className='drawer sh-'+sh;el.style.setProperty('--dw',w+'px');
   sc.classList.toggle('light',sh==='pop'||sh==='bottom');
@@ -86,7 +84,7 @@ function attDrawer(){
   if(!els.length) body+=`<div class="notice"><p>Aucun élève dans ${esc(gName(c.groupe))}. L’administration les inscrit dans le menu Classes.</p></div>`;
   else{
     const chips=['P','A','R','M'].filter(k=>cnt[k]).map(k=>`<span class="chip ${CHIP[k]}">${cnt[k]} ${LBLS[k][cnt[k]>1?1:0]}</span>`).join('');
-    body+=`<div class="row"><div class="att-sum">${chips}${els.length-marked?`<span class="chip off">${pl(els.length-marked,'non marqué','non marqués')}</span>`:''}</div><span style="flex:1"></span><button class="btn sm" type="button" data-act="att-all"${els.length===marked?' disabled':''}>Marquer les autres présents</button></div>
+    body+=`<div class="row"><div class="att-sum">${chips}${els.length-marked?`<span class="chip off">${pl(els.length-marked,'non marqué','non marqués')}</span>`:''}</div><span class="u-f1"></span><button class="btn sm" type="button" data-act="att-all"${els.length===marked?' disabled':''}>Marquer les autres présents</button></div>
     <ul class="att-list">${els.map(e=>`<li><span class="st-num sm" aria-hidden="true">${e.numero!=null&&e.numero!==''?esc(e.numero):'—'}</span><span class="nm">${esc(e.nom)}${e.fonction?`<span class="role-chip">${esc(e.fonction)}</span>`:''}</span><span class="att-btns" role="group" aria-label="${esc('Présence de '+e.nom)}">${['P','A','R','M'].map(v=>`<button type="button" class="ab ab-${v}" id="ab-${esc(e.id)}-${v}" data-act="att-set" data-el="${esc(e.id)}" data-v="${v}" aria-pressed="${st[e.id]===v}" title="${LBL[v]}"><span class="full">${LBL[v]}</span><span class="abbr">${v}</span></button>`).join('')}</span></li>`).join('')}</ul>`;
   }
   body+=`<label class="field"><span>Remarque pour ${W('cette séance','ce cours')}</span><textarea id="a-note" data-f="note" rows="2" placeholder="Ex. exercice à l’extérieur, matériel manquant…">${esc(d.draft.note)}</textarea></label>`;
@@ -179,7 +177,7 @@ function courseDrawer(){
     <label class="field"><span>Période</span>${periodSelect('c-p-'+i,s.debut,s.fin,`data-slotp="${i}"`,s.custom)}</label>
     <label class="field"><span>Activité</span>${actSelect('c-a-'+i,s.type||'activite',`data-f="type" data-i="${i}"`)}</label>
     <label class="field"><span>Local</span><input id="c-s-${i}" data-f="salle" data-i="${i}" value="${esc(s.salle)}" placeholder="${esc(f.salle||'Habituel')}" autocomplete="off"></label>
-    <button type="button" class="icon-btn" data-act="c-del-slot" data-i="${i}" aria-label="Retirer cette période"${f.creneaux.length<2?' disabled':''}>×</button>${s.custom||periodOf(s.debut,s.fin)==='autre'?`<div class="slot-times"><label class="field"><span>Début</span><input type="time" id="c-d-${i}" data-f="debut" data-i="${i}" value="${esc(s.debut)}" step="300"></label><label class="field"><span>Fin</span><input type="time" id="c-f-${i}" data-f="fin" data-i="${i}" value="${esc(s.fin)}" step="300"></label></div>`:''}${s.du&&s.du>todayISO()?`<p class="help" style="grid-column:1/-1;margin-top:-4px">À partir du ${esc(longDate(parse(s.du)))}</p>`:''}</div>`).join('');
+    <button type="button" class="icon-btn" data-act="c-del-slot" data-i="${i}" aria-label="Retirer cette période"${f.creneaux.length<2?' disabled':''}>×</button>${s.custom||periodOf(s.debut,s.fin)==='autre'?`<div class="slot-times"><label class="field"><span>Début</span><input type="time" id="c-d-${i}" data-f="debut" data-i="${i}" value="${esc(s.debut)}" step="300"></label><label class="field"><span>Fin</span><input type="time" id="c-f-${i}" data-f="fin" data-i="${i}" value="${esc(s.fin)}" step="300"></label></div>`:''}${s.du&&s.du>todayISO()?`<p class="help u-span-up">À partir du ${esc(longDate(parse(s.du)))}</p>`:''}</div>`).join('');
   const prevC=d.id?byId(S.data.cours,d.id):null, t0=iso(addDays(new Date(),-14));
   const extras=prevC?(prevC.extras||[]).filter(x=>x.de&&x.date>=t0).sort((a,b)=>a.date.localeCompare(b.date)):[];
   const dated=prevC?datedOf(prevC).slice().sort((a,b)=>a.date.localeCompare(b.date)||a.debut.localeCompare(b.debut)):[], tday=todayISO(), upc=dated.filter(x=>x.date>=tday);
@@ -197,7 +195,7 @@ function courseDrawer(){
       ${mk?'':`<label class="field"><span>Nom de l’activité</span><input id="c-titre" data-f="titre" value="${esc(f.titre)}" maxlength="80" autocomplete="off"></label>`}
       <div class="grid2"><label class="field"><span>Classe</span><select id="c-groupe" data-f="groupe" disabled>${gOpts}</select></label>${mk?`<label class="field"><span>Chargé de cours</span><input id="c-ens-ro" value="${esc(f.enseignant&&byId(S.data.enseignants,f.enseignant)?tName(f.enseignant):'À choisir dans le module')}" disabled></label>`:`<label class="field"><span>Responsable</span><select id="c-ens" data-f="enseignant">${tOpts}</select></label>`}</div>
       <div class="grid2"><label class="field"><span>Local habituel</span><input id="c-salle" data-f="salle" value="${esc(f.salle)}" maxlength="40" placeholder="Ex. Salle 2" autocomplete="off"></label>
-      <fieldset style="padding-top:4px"><legend>Couleur</legend><div class="swatches">${colors}</div></fieldset></div>
+      <fieldset class="u-pt4"><legend>Couleur</legend><div class="swatches">${colors}</div></fieldset></div>
       ${f.creneaux.length?`<fieldset><legend>Périodes chaque semaine</legend>${rows}</fieldset>`:''}
       <p class="help">${mk?'Le chargé de cours donne les séances du module à toutes les classes. Il se choisit dans le menu Modules, comme le nom et les heures.':'Une activité n’appartient à aucun module : aucun enseignant n’est requis par défaut.'}</p>
       ${d.warn?`<div class="notice warn"><p><b>Conflits d’horaire.</b> Vérifiez avant d’enregistrer.</p><ul>${d.warn.map(w=>`<li>${esc(w)}</li>`).join('')}</ul></div>`:''}
@@ -210,9 +208,9 @@ function courseDrawer(){
   const body=`${sessBox}<form id="c-form" data-form="course" novalidate>
     <div class="grid-code">${nameField}<label class="field"><span>Code</span><input id="c-code" data-f="code" value="${esc(f.code)}" maxlength="5" placeholder="Ex. M7" autocomplete="off"></label></div>${customField}
     <div class="grid2"><label class="field"><span>Classe</span><select id="c-groupe" data-f="groupe">${gOpts}</select></label><label class="field"><span>Enseignant</span><select id="c-ens" data-f="enseignant">${tOpts}</select></label></div>
-    <label class="field" style="max-width:220px"><span>Heures prévues au programme</span><input type="number" id="c-heures" data-f="heures" value="${esc(f.heures)}" min="0" step="1" inputmode="numeric"></label>
+    <label class="field u-mw220"><span>Heures prévues au programme</span><input type="number" id="c-heures" data-f="heures" value="${esc(f.heures)}" min="0" step="1" inputmode="numeric"></label>
     <div class="grid2"><label class="field"><span>Local habituel</span><input id="c-salle" data-f="salle" value="${esc(f.salle)}" maxlength="40" placeholder="Ex. Salle 2" autocomplete="off"></label>
-    <fieldset style="padding-top:4px"><legend>Couleur</legend><div class="swatches">${colors}</div></fieldset></div>
+    <fieldset class="u-pt4"><legend>Couleur</legend><div class="swatches">${colors}</div></fieldset></div>
     <fieldset><legend>Périodes chaque semaine</legend>${!f.creneaux.length&&dated.length?'<p class="help">Ce cours suit les dates de l’horaire annuel. Ajoutez une période seulement s’il revient aussi chaque semaine.</p>':''}${rows}<div><button class="btn sm" type="button" data-act="c-add-slot">${icon('plus')}Ajouter une période</button></div></fieldset>
     <div class="grid2"><label class="field"><span>Premier cours</span><input type="date" id="c-du" data-f="du" value="${esc(f.du)}"></label><label class="field"><span>Dernier cours</span><input type="date" id="c-au" data-f="au" value="${esc(f.au)}"></label></div>
     <p class="help">Laissez les dates vides pour suivre toute l’année scolaire. Les congés du calendrier scolaire sont retirés automatiquement.</p>

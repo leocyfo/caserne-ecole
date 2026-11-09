@@ -42,7 +42,7 @@ const prSlug=v=>String(v||'').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[
 /* Ligne de signature au bas de chaque page (Paramètres > Impression) */
 const prFoot=()=>{const x=String(cfg().impSign||'').trim();return x?`<p class="pr-sign">${esc(x)}</p>`:'';};
 /* Le logo de l’Académie (site/logo.svg) : adresse complète, pour qu’il paraisse aussi dans la feuille remise en fichier */
-const prLogo=()=>cfg().impLogo===false?'':`<img class="pr-logo" src="${esc(new URL('site/logo.svg',location.href).href)}" alt="">`;
+const prLogo=()=>cfg().impLogo===false?'':`<img class="pr-logo" src="${esc(new URL('site/logo.svg',location.href).href)}" alt="" width="893" height="335">`;
 function prHead(title,sub){const c=cfg(), co=c.impCoord!==false, ad=[c.adresse,c.tel,c.courriel,c.web].filter(Boolean);return `<header class="pr-head">${prLogo()}<div><h1>${esc(title)}</h1><p>${sub}</p></div><div class="pr-org"><b>${esc(c.nom||'')}</b><br>${esc(c.annee||'')}${c.programme?'<br>'+esc(c.programme):''}${co&&c.resp?'<br>'+esc(c.resp):''}${co&&ad.length?'<br>'+esc(ad.join(' · ')):''}${c.impDate===true?'<br>Imprimé le '+esc(longDate(new Date())):''}</div></header>${c.pied?`<p class="pr-pied">${esc(c.pied)}</p>`:''}`;}
 const prWeekLbl=mon=>{const a=mon, b=addDays(mon,4);return a.getMonth()===b.getMonth()?`${dn(a)} au ${dn(b)} ${fMonth.format(b)} ${b.getFullYear()}`:`${dn(a)} ${fMonth.format(a)} au ${dn(b)} ${fMonth.format(b)} ${b.getFullYear()}`;};
 /* Tout ce qui est à l’horaire d’une semaine (du lundi au vendredi) */
@@ -102,7 +102,7 @@ function transcriptHTML(e){
   const ok=mine.filter(x=>resOk(x.res[e.id])).length, ko=mine.filter(x=>resKo(x.res[e.id])).length, kf=mine.filter(x=>resFail(x.res[e.id])).length, rate=ok+ko+kf?Math.round(ok/(ok+ko+kf)*100):null;
   const rows=mine.map(x=>{const dd=parse(x.date);return `<tr><td>${esc(shortDate(dd))} ${dd.getFullYear()}</td><td>${esc(x.c?(x.c.code?x.c.code+' ':'')+x.c.titre:'')}</td><td>${esc((x.e&&x.e.titre)||'Examen')}</td><td>${x.pct[e.id]!=null?esc(noteTxt(x.pct[e.id])):''}</td><td><b>${esc(RES[x.res[e.id]][1])}</b></td></tr>`;}).join('');
   return `<section class="pr-page">${prHead('Relevé de résultats',esc(e.nom)+(e.numero!=null&&e.numero!==''?' · n° '+esc(e.numero):'')+' · '+esc(gName(e.groupe)))}
-    ${mine.length?`<table class="pr-t pr-res"><thead><tr><th style="width:17%">Date</th><th>Module</th><th style="width:20%">Examen</th><th style="width:11%">Note</th><th style="width:21%">Résultat</th></tr></thead><tbody>${rows}</tbody></table>`:'<p>Aucun résultat inscrit pour l’instant.</p>'}
+    ${mine.length?`<table class="pr-t pr-res"><thead><tr><th class="u-w17">Date</th><th>Module</th><th class="u-w20">Examen</th><th class="u-w11">Note</th><th class="u-w21">Résultat</th></tr></thead><tbody>${rows}</tbody></table>`:'<p>Aucun résultat inscrit pour l’instant.</p>'}
     <p class="pr-sum">${pl(mine.length,'examen','examens')} · ${ok} ${ok>1?'réussis':'réussi'}${ko?` · ${ko} à reprendre`:''}${kf?` · ${pl(kf,'échec de module','échecs de module')}`:''}${rate!=null?` · ${rate} % de réussite`:''}</p>
     <div class="pr-sign"><span>Remis le ${esc(longDate(new Date()))}</span><span>Signature : ______________________________</span></div>${prFoot()}</section>`;
 }

@@ -103,11 +103,31 @@ await closeDrawer();
 /* Fenêtres : la bulle et la fenêtre du centre montent du bas, sur toute la largeur */
 if($('#nf-bell')){click($('#nf-bell'));await wait(250);const r=(e=>({left:e.offsetLeft,top:e.offsetTop,right:e.offsetLeft+e.offsetWidth,bottom:e.offsetTop+e.offsetHeight,width:e.offsetWidth,height:e.offsetHeight}))($('#drawer'));ok('bell panel rises from the bottom',$('#drawer').classList.contains('sh-pop')&&Math.round(r.width)===390&&Math.round(r.bottom)===innerHeight&&r.top>0,Math.round(r.width)+' · '+Math.round(r.bottom));await closeDrawer();}
 
-/* Élève : examens à venir avec le titre entier et l’étiquette dessous */
+/* Élève : sur téléphone, l’horaire n’a plus « Prochains examens » (ils sont dans Examens) ; ceux de Mon profil gardent le titre entier et l’étiquette dessous */
 click($('[data-role=student]'));await wait(150);click(navBtn('calendar'));await wait(220);
+ok('student schedule without next exams on the phone',!$$('#main .panel h2').some(h=>/Prochains examens/.test(h.textContent)));
+click(navBtn('profil'));await wait(220);
 const xm=$$('#main .xm-mini').filter(vis);
 ok('next exams: full title, chip under it',xm.length>0&&xm.every(r=>{const b=r.querySelector('.xm-t b'),c=r.querySelector(':scope>.chip');return b.scrollWidth<=b.clientWidth+1&&(!c||rect(c).top>=rect(b).bottom-1);}),xm.length);
 click($('[data-role=admin]'));await wait(150);click(navBtn('calendar'));await wait(150);
+
+/* Coquille mobile : menu de gauche caché, onglets en bas, « Plus », sous-menus en pastilles */
+{const tabs=$('#mtabs'), bs=tabs?[...tabs.querySelectorAll('button')]:[];
+ ok('side menu hidden, tabs at the bottom',!vis($('.sidebar'))&&!!tabs&&vis(tabs)&&bs.length===5&&Math.round(rect(tabs).bottom)===innerHeight,bs.map(b=>b.textContent.trim()).join(','));
+ ok('tab buttons at 44 px or more',bs.length>0&&bs.every(b=>rect(b).height>=44&&rect(b).width>=44),bs.map(b=>Math.round(rect(b).width)+'x'+Math.round(rect(b).height)).join(' '));
+ ok('current page tab',!!$('#mtabs [data-page=calendar][aria-current=page]'));
+ click($('#m-more'));await wait(200);
+ const mm=$('#mmore');
+ ok('« Plus » opens the whole menu',!!mm&&!mm.hidden&&$$('#mmore .mm-grid [data-act=nav]').length===$$('#nav [data-act=nav]').length,$$('#mmore .mm-grid [data-act=nav]').length);
+ click($('#mmore [data-page=stock]'));await wait(250);
+ ok('a choice in « Plus » opens the page and closes the sheet',/Stock/.test($('#heading h1').textContent)&&$('#mmore').hidden&&!!$('#m-more[aria-current=page]'));
+ const chips=$$('#msub button').filter(vis);
+ ok('stock sections as chips under the title',chips.length===$$('#nav [data-k=sk]').length&&chips.length>0&&rect($('#msub')).top>=rect($('#heading')).bottom-1,chips.length);
+ click(chips[1]);await wait(200);
+ ok('a chip opens its section',!!$('#msub button[aria-current=page]')&&$('#msub button[aria-current=page]').dataset.v===chips[1].dataset.v);
+ click($('#mtabs [data-page=accueil]'));await wait(200);
+ ok('no chips on a page without sections',$('#msub').hidden);
+ click($('#mtabs [data-page=calendar]'));await wait(150);}
 }catch(e){R.push('ERROR '+e.message+' '+e.stack);}
 R.push('ERRS '+JSON.stringify(window.__errs));
 const pre=document.createElement('pre');pre.id='results';pre.textContent=R.join('\n');document.body.appendChild(pre);

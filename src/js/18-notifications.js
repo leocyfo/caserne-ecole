@@ -37,20 +37,7 @@ function notifs(){
       if(x&&!x.s.cancelled&&byId(D.enseignants,d.enseignant)) out.push({id:`c:${d.id}:attente`,t:d.maj||'',tone:'info',title:'Nouvelle candidature',text:`${tName(d.enseignant)} · ${x.txt}.`,go:{k:'aff',tab:'cand'}});
     }
   }
-  if(S.role==='admin'&&nfOn('stock')){
-    const A=D.stock||[], late=A.filter(a=>!skQte(a)&&a.statut!=='hs'&&skConf(a)[0]==='bad').length, low=A.filter(a=>skQte(a)&&skConf(a)[0]!=='ok').length;
-    if(late) out.push({id:`sk:late:${late}:${day}`,t:day+'T07:00',tone:'bad',title:'Stock',text:`${pl(late,'échéance d’inspection dépassée','échéances d’inspection dépassées')}.`,go:{k:'stock',tab:'insp'}});
-    const lr=A.filter(skLate).length, rl=(D.stockRep||[]).filter(r=>r.statut==='ouverte'&&r.prevu&&r.prevu<day).length;
-    if(lr) out.push({id:`sk:ret:${lr}:${day}`,t:day+'T07:00',tone:'warn',title:'Stock',text:`${pl(lr,'retour de matériel en retard','retours de matériel en retard')}.`,go:{k:'stock',tab:'prep'}});
-    if(rl) out.push({id:`sk:rep:${rl}:${day}`,t:day+'T07:00',tone:'warn',title:'Stock',text:`${pl(rl,'réparation en retard','réparations en retard')}.`,go:{k:'stock',tab:'rep'}});
-    if(low) out.push({id:`sk:low:${low}:${day}`,t:day+'T07:00',tone:'warn',title:'Stock',text:`${pl(low,'consommable sous le seuil','consommables sous le seuil')}.`,go:{k:'stock',tab:'conso'}});
-  }
-  if(S.role==='admin'&&nfOn('compta')&&S.loaded.compta){
-    const late=D.eleves.filter(e=>cpFee(e).etat==='retard').length, ap=cpToApprove();
-    if(late) out.push({id:`cp:late:${late}:${day}`,t:day+'T07:00',tone:'bad',title:'Compta',text:`${pl(late,'élève en retard de paiement','élèves en retard de paiement')}.`,go:{k:'compta',tab:'frais'}});
-    if(ap) out.push({id:`cp:paie:${ap}:${day}`,t:day+'T07:00',tone:'warn',title:'Compta',text:`${pl(ap,'relevé de paie à approuver','relevés de paie à approuver')}.`,go:{k:'compta',tab:'paie'}});
-  }
-  if(S.role==='teacher'&&who){const mine=(D.stock||[]).filter(a=>skLate(a)&&a.sortie.instr===who);if(mine.length) out.push({id:`sk:mine:${mine.length}:${day}`,t:day+'T07:00',tone:'warn',title:'Matériel à rentrer',text:mine.map(a=>skName(a)).slice(0,4).join(', ')+(mine.length>4?'…':'')+'.',go:{k:'stock',tab:'prep'}});}
+  for(const o of optAll()) if(o.notifs) out.push(...o.notifs(D,day,who));
   out.push(...foNotifs());
   out.push(...annNotifs());
   out.sort((a,b)=>(b.t||'').localeCompare(a.t||''));

@@ -116,7 +116,7 @@ function archivesHTML(can){
         <li><b>Gardés :</b> l’école et les réglages, les modules et les locaux, le personnel et les comptes, l’inventaire du stock, les réglages de la compta et les factures encore ouvertes${p.keep?', les classes et leurs élèves':''}.</li>
         <li><b>Nouvelle année :</b> ${esc(p.nom)}, du ${esc(dn(p.debut))} au ${esc(dn(p.fin))}.</li>
       </ul>
-      ${c.fin&&c.fin>todayISO()?`<p class="notice warn" style="margin:0"><span>L’année en cours n’est pas terminée : son dernier jour est le ${esc(dn(c.fin))}.</span></p>`:''}
+      ${c.fin&&c.fin>todayISO()?`<p class="notice warn u-m0"><span>L’année en cours n’est pas terminée : son dernier jour est le ${esc(dn(c.fin))}.</span></p>`:''}
       <p class="help">L’archive se consulte en tout temps ici, en lecture seule, et s’exporte.</p>
       <div class="row"><button class="btn primary" type="button" id="p-close-go" data-act="p-close-go"${dis()}>Oui, clôturer ${esc(c.annee||'l’année')}</button><button class="btn ghost" type="button" data-act="p-close-no">Annuler</button></div></section>`;
   else if(can) close=`<form class="panel ps-card ps-wide" data-form="p-close" novalidate><h3>Clôturer l’année et commencer la suivante</h3>

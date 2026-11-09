@@ -61,7 +61,7 @@ function adminMain(){
     const can=S.canAdmin!==false;
     return `<div class="empty"><h2>Aucun cours pour l’instant</h2><p>Préparez l’horaire de la session en trois étapes.</p>
       <ol class="steps"><li><b>Classes et élèves.</b> Créez vos classes, puis collez la liste des élèves de chacune.</li><li><b>Personnel.</b> Ajoutez chaque enseignant qui donne des cours.</li><li><b>Cours.</b> Planifiez chaque cours avec sa classe, son enseignant et ses périodes de la semaine.</li></ol>
-      ${can&&siteMode()?`<p class="help">Ou partez de l’exemple : l’horaire 2026–2027 des classes 119 à 123, avec leurs enseignants et leurs élèves.</p><div class="row" style="margin-bottom:10px"><button class="btn" type="button" id="import-demo" data-act="import-demo"${dis()}>Charger l’exemple de l’Académie</button></div>`:''}
+      ${can&&siteMode()?`<p class="help">Ou partez de l’exemple : l’horaire 2026–2027 des classes 119 à 123, avec leurs enseignants et leurs élèves.</p><div class="row u-mb10"><button class="btn" type="button" id="import-demo" data-act="import-demo"${dis()}>Charger l’exemple de l’Académie</button></div>`:''}
       ${can?`<div class="row"><button class="btn" type="button" data-act="nav" data-page="classes">Gérer les classes</button><button class="btn primary" type="button" data-act="new-course">${icon('plus')}Planifier un cours</button></div>`:''}</div>`;
   }
   const f=S.filtre, list=filterItems(weekItems(),'admin');
@@ -102,7 +102,7 @@ function teacherMain(){
   panels+=`<section class="panel"><h2>Présences de la semaine</h2>
     <p class="big">${done}<span> / ${live.length}</span></p><div class="meter" role="img" aria-label="${p} % des ${W('séances','cours')}"><i style="width:${p}%"></i></div>
     <p class="help">${live.length?`${pl(done,W('séance complétée','cours complété'),W('séances complétées','cours complétés'))} sur ${live.length} cette semaine.`:W('Aucune séance cette semaine.','Aucun cours cette semaine.')}</p>
-    ${late.length?`<h2 style="margin-top:14px">À rattraper</h2><div class="miss-list">${late.slice(0,5).map(s=>missRow(s,'teacher')).join('')}</div>${late.length>5?`<p class="help">Et ${late.length-5} autres.</p>`:''}`:''}</section>`;
+    ${late.length?`<h2 class="u-mt14">À rattraper</h2><div class="miss-list">${late.slice(0,5).map(s=>missRow(s,'teacher')).join('')}</div>${late.length>5?`<p class="help">Et ${late.length-5} autres.</p>`:''}`:''}</section>`;
   return `<div class="panels">${panels}</div>`+daytabsHTML()+boardHTML(list,[{name:W('Mes séances','Mes cours'),match:()=>true}],'teacher');
 }
 function nextSession(filter){

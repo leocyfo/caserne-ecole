@@ -96,82 +96,6 @@ document.addEventListener('click',async e=>{
     case 'new-staff':openStaff(null);break;
     case 'pg-set':pg[b.dataset.k]=b.dataset.v;render();break;
     case 'p-export':await exportData(b.dataset.v);break;
-    /* Stock */
-    case 'stk-open':openDrawer({kind:'stk',id:b.dataset.id,mode:'view'});break;
-    case 'stk-new':openDrawer({kind:'stk',mode:'pick',cat:b.dataset.v||'',empl:b.dataset.e||''});break;
-    case 'stk-free':if(S.dr){S.dr.mode='new';S.dr.cat=S.dr.cat||'epi';renderDrawer();}break;
-    case 'stk-add-to':openDrawer({kind:'stk',mode:'add',id:b.dataset.id});break;
-    case 'stk-fiche':if(S.dr)closeDrawer(true);if(S.page!=='stock')goPage('stock');S.pg.sk='cat';S.pg.sfi=b.dataset.id;render();window.scrollTo({top:0});break;
-    case 'stk-fiches-auto':await skFichesAuto();break;
-    case 'stk-flab':{const m=byId(skModeles(),b.dataset.id);if(m)await skLabels(skFicheArts(m));break;}
-    case 'stk-edit':if(S.dr){S.dr.mode='edit';renderDrawer();}break;
-    case 'stk-view':if(S.dr){S.dr.mode='view';S.dr.act='';renderDrawer();}break;
-    case 'stk-do':if(S.dr){S.dr.mode='act';S.dr.act=b.dataset.v;renderDrawer();}break;
-    case 'stk-go':openDrawer({kind:'stk',id:b.dataset.id,mode:'act',act:b.dataset.v});break;
-    case 'stk-dot':openDrawer({kind:'stk',mode:'dot',t:b.dataset.t,id:b.dataset.id});break;
-    case 'stk-dot-pr':await skDotPrint(b.dataset.id);break;
-    case 'stk-back':await skBack(b.dataset.id);break;
-    case 'stk-del-ask':if(S.dr){S.dr.del=!!b.dataset.v;renderDrawer();}break;
-    case 'stk-del':{const id=S.dr&&S.dr.id;if(id&&await write(()=>col('stock').doc(id).delete(),'Article supprimé'))closeDrawer(true);break;}
-    case 'stk-mvt-exp':await skMvtExport();break;
-    case 'stk-mod':openDrawer({kind:'stk',mode:'mod',id:b.dataset.id||''});break;
-    case 'stk-from':openDrawer({kind:'stk',mode:'new',modele:b.dataset.id});break;
-    case 'stk-mod-del':if(await write(()=>col('stock-modeles').doc(b.dataset.id).delete(),'Modèle retiré'))closeDrawer(true);break;
-    case 'stk-imp':openDrawer({kind:'stk',mode:'imp'});break;
-    case 'stk-imp-read':{const d=S.dr, fi=$('#si-file'), t=fi&&fi.files&&fi.files[0]?await readTextFile(fi.files[0]):$('#si-txt').value;d.txt=t;const r=skParseImport(t);d.rows=r||[];d.err=r==null?'Il manque une colonne « Nom » sur la première ligne.':!r.length?'Aucune ligne à importer.':'';renderDrawer();break;}
-    case 'stk-sel':{const id=b.dataset.id, L=skSel(), i=L.indexOf(id);if(i<0)L.push(id);else L.splice(i,1);render();break;}
-    case 'stk-bk':if(b.dataset.v==='none'){S.pg.ssel=[];render();}else if(b.dataset.v==='all'){S.pg.ssel=(S.pg.svis||[]).slice();render();}else await skBulk(b.dataset.v);break;
-    case 'stk-labels':await skLabels(b.dataset.v==='sel'?skSel().map(id=>byId(skArts(),id)).filter(Boolean):b.dataset.v==='one'&&S.dr?[byId(skArts(),S.dr.id)].filter(Boolean):skArts().filter(a=>!skQte(a)));break;
-    case 'stk-scan':openDrawer({kind:'stk',mode:'scan',list:[]});break;
-    case 'stk-cam':await skCamStart();break;
-    case 'stk-scan-x':if(S.dr&&S.dr.list){S.dr.list=S.dr.list.filter(x=>x!==b.dataset.id);renderDrawer();}break;
-    case 'stk-grp':await skGroup(b.dataset.v);break;
-    case 'stk-kit':openDrawer({kind:'stk',mode:'kit',id:b.dataset.id});break;
-    case 'stk-kit-go':await skKitGo(b.dataset.id);break;
-    case 'stk-sizes':openDrawer({kind:'stk',mode:'sizes',id:b.dataset.id});break;
-    case 'stk-sign':await skSigned(b.dataset.id,!!b.dataset.v);break;
-    case 'stk-dup':{const a=S.dr&&byId(skArts(),S.dr.id);if(!a)break;const y=Object.assign({},a,{code:a.code?a.code+'-copie':'',serie:'',attrib:null,aId:'',sortie:null,cree:new Date().toISOString(),maj:new Date().toISOString()});delete y.id;delete y.exemple;const id='s'+Date.now().toString(36);if(await write(()=>col('stock').doc(id).set(y),'Article dupliqué'))openDrawer({kind:'stk',id,mode:'edit'});break;}
-    case 'stk-rep-new':{const a=S.dr&&byId(skArts(),S.dr.id);if(a)openDrawer({kind:'stk',mode:'rep',art:a.id});break;}
-    case 'stk-rep':openDrawer({kind:'stk',mode:'rep',id:b.dataset.id});break;
-    case 'stk-rep-done':await skRepDone();break;
-    case 'stk-rep-cancel':{const r=S.dr&&byId(skReps(),S.dr.id);if(r&&await write(()=>col('stock-rep').doc(r.id).update({statut:'annulee'}),'Bon annulé'))closeDrawer(true);break;}
-    case 'stk-prep-out':await skPrepOut(b.dataset.key,b.dataset.date);break;
-    case 'stk-prep-conso':await skPrepConso(b.dataset.key,b.dataset.date);break;
-    case 'stk-prep-pr':await skPrepPrint();break;
-    case 'stk-bes-del':{const c=configDoc(), st=Object.assign({},c.stock||{}), B=Object.assign({},st.besoins||{});delete B[b.dataset.v];st.besoins=B;c.stock=st;await saveConfig(c,'Besoins retirés');break;}
-    case 'stk-buy':await skBuy();break;
-    case 'stk-cmd':openDrawer({kind:'stk',mode:'cmd',id:b.dataset.id||''});break;
-    case 'stk-cmd-st':{const id=S.dr&&S.dr.id;if(id&&await write(()=>col('stock-cmd').doc(id).update({statut:b.dataset.v}),b.dataset.v==='envoyee'?'Commande envoyée':'Commande annulée'))renderDrawer();break;}
-    case 'stk-fo':openDrawer({kind:'stk',mode:'fourn',id:b.dataset.id||''});break;
-    case 'stk-cpt-new':await skCountNew();break;
-    case 'stk-cpt-at':S.pg.sk='cpt';S.pg.sce=b.dataset.v;S.pg.scp='';render();break;
-    case 'stk-cl':await skCountMark(b.dataset.id,b.dataset.v,null);break;
-    case 'stk-cpt-end':await skCountEnd();break;
-    case 'stk-inv-exp':await skInvExport();break;
-    case 'stk-inv-pr':await skInvPrint();break;
-    case 'stk-insp-pr':await skInspPrint();break;
-    case 'stk-tour-ok':await skTourOk(b.dataset.id);break;
-    /* Compta */
-    case 'ca-el':openDrawer({kind:'cpt',mode:'eleve',id:b.dataset.id});break;
-    case 'ca-sub':if(S.dr){S.dr.sub=b.dataset.v;renderDrawer();}break;
-    case 'ca-fact-new':openDrawer({kind:'cpt',mode:'factEdit'});break;
-    case 'ca-fact':openDrawer({kind:'cpt',mode:'fact',id:b.dataset.id});break;
-    case 'ca-fact-edit':if(S.dr){S.dr.mode='factEdit';renderDrawer();}break;
-    case 'ca-fact-view':if(S.dr){S.dr.mode='fact';renderDrawer();}break;
-    case 'ca-fact-send':{const id=S.dr&&S.dr.id;if(id)await write(()=>col('compta-factures').doc(id).update({statut:'envoyee',envoyee:new Date().toISOString()}),'Facture marquée envoyée');break;}
-    case 'ca-fact-cancel':{const id=S.dr&&S.dr.id;if(id)await write(()=>col('compta-factures').doc(id).update({statut:'annulee'}),'Facture annulée');break;}
-    case 'ca-fact-pr':{const f=S.dr&&byId(S.data.factures||[],S.dr.id);if(f)await cpPrintFact(f);break;}
-    case 'ca-entry-new':openDrawer({kind:'cpt',mode:'entry',t:b.dataset.t});break;
-    case 'ca-entry':openDrawer({kind:'cpt',mode:'entry',id:b.dataset.id});break;
-    case 'ca-entry-del':{const id=b.dataset.id;if(await write(()=>col('compta').doc(id).delete(),'Écriture retirée')&&S.dr&&S.dr.mode==='entry')closeDrawer(true);break;}
-    case 'ca-recu':{const x=byId(S.data.compta||[],b.dataset.id)||byId(S.data.mesCpt||[],b.dataset.id);if(x)await cpPrintRecu(x,myCpt());break;}
-    case 'ca-releve':{const e=byId(S.data.eleves,b.dataset.id)||(b.dataset.id===S.student?Object.assign({},subject().rec,{id:S.student}):null);if(e)await cpPrintReleve(e,myCpt());break;}
-    case 'ca-paie-ok':await cpApprove(b.dataset.t,b.dataset.m);break;
-    case 'ca-paie-all':{const m=b.dataset.m;await runAll(cpPayRows(m).filter(r=>!cpSlip(r.t,m)).map(r=>()=>col('compta-paie').doc(m+'_'+r.t).set({mois:m,ens:r.t,h:r.h,montant:r.mt,lignes:r.lignes,statut:'approuve',le:new Date().toISOString(),par:whoAmI()})),'Paie approuvée');break;}
-    case 'ca-paie-pay':await cpPaid(b.dataset.id);break;
-    case 'ca-slip':openDrawer({kind:'cpt',mode:'slip',t:b.dataset.t,m:b.dataset.m});break;
-    case 'ca-slip-pr':await cpPrintSlip(b.dataset.t,b.dataset.m);break;
-    case 'ca-exp':await cpExport(b.dataset.v,b.dataset.m);break;
     case 'an-new':S.pg.aed='new';S.pg.adup='';S.pg.adraft=null;render();{const x=$('#an-titre');if(x)x.focus();}break;
     case 'an-edit':if(S.page!=='params')goPage('params');S.pg.ps='annonces';S.pg.aed=b.dataset.id;S.pg.adup='';S.pg.adraft=null;render();window.scrollTo({top:0});break;
     case 'an-dup':S.pg.aed='new';S.pg.adup=b.dataset.id;S.pg.adraft=null;render();window.scrollTo({top:0});break;
@@ -275,8 +199,7 @@ document.addEventListener('click',async e=>{
     case 'nf-go':{const n=notifs()[+b.dataset.i];if(!n)break;const g=n.go;S.dr=null;
       if(g.k==='aff'){goPage('affectations');S.pg.at=g.tab;render();}
       else if(g.k==='mes'){goPage('mescours');S.pg.mt=g.tab;render();}
-      else if(g.k==='stock'){goPage('stock');S.pg.sk=g.tab;render();}
-      else if(g.k==='compta'){goPage('compta');S.pg.cp=g.tab;render();}
+      else if(opt(g.k)){goPage(g.k);S.pg[SUBNAV[g.k].key]=g.tab;render();}
       else if(g.k==='fo'){goPage('formation');S.pg.fo=g.tab;render();}
       else if(g.k==='ann'){S.annVu=(S.annVu||[]).filter(k=>!k.startsWith(g.id+'@'));S.annAll=true;savePrefs();if(g.cal&&S.page!=='calendar')goPage('calendar');render();const el=document.getElementById('ann-'+g.id);if(el){el.scrollIntoView({block:'center'});el.classList.add('flash');}}
       else{const mon=monday(parse(g.date));if(iso(mon)!==iso(S.week)){S.week=mon;S.day=defaultDay();subWeek();}S.page='calendar';S.pg={};render();openSession(g.key,g.date);}
@@ -306,6 +229,7 @@ document.addEventListener('click',async e=>{
     case 'm-del-g':{const id=b.dataset.id;pg.justAdded=null;const fns=studentsOf(id).map(e=>()=>col('eleves').doc(e.id).delete());fns.push(()=>col('groupes').doc(id).delete());pg.ask=null;await runAll(fns,'Classe supprimée');break;}
     /* calendrier scolaire */
     case 'p-del-conge':case 'p-del-etape':{if(S.busy)break;const c=configDoc(),k=a==='p-del-conge'?'conges':'etapes';c[k].splice(+b.dataset.i,1);await saveConfig(c,'Retiré du calendrier');break;}
+    default:for(const o of optAll()) if(o.click&&await o.click(a,b,e)) break;
   }
 });
 document.addEventListener('submit',async e=>{
@@ -414,26 +338,7 @@ document.addEventListener('submit',async e=>{
   }
   if(k==='p-close'){askCloseYear(f);return;}
   if(k==='an-save'){await annSave(f,true);return;}
-  if(k==='stk-save'){await skSave(f);return;}
-  if(k==='stk-act'){await skAct(f);return;}
-  if(k==='stk-dot'){await skDot(f);return;}
-  if(k==='stk-regl'){await skSaveRegl(f);return;}
-  if(k==='stk-mod'){await skSaveMod(f);return;}
-  if(k==='stk-add'){await skQuickAdd(f);return;}
-  if(k==='stk-imp'){await skImport();return;}
-  if(k==='stk-code'){const x=f.querySelector('#stk-code');skScanAdd(x.value);x.value='';x.focus();return;}
-  if(k==='stk-sizes'){await skSaveSizes(f);return;}
-  if(k==='stk-cmd'){await skSaveCmd(f);return;}
-  if(k==='stk-rcv'){await skReceive(f);return;}
-  if(k==='stk-fo'){await skSaveFourn(f);return;}
-  if(k==='stk-rep'){await skSaveRep(f);return;}
-  if(k==='stk-bes'){const m=f.querySelector('#sb-mod').value, a=f.querySelector('#sb-art').value, q=Math.max(1,Math.round(+f.querySelector('#sb-qte').value||1)), c=configDoc(), st=Object.assign({},c.stock||{}), B=Object.assign({},st.besoins||{});B[m]=(B[m]||[]).filter(x=>x.art!==a).concat([{art:a,qte:q}]);st.besoins=B;c.stock=st;await saveConfig(c,'Besoin ajouté');return;}
-  if(k==='ca-pay-el'){await cpPayEl(f);return;}
-  if(k==='ca-fact'){await cpSaveFact(f);return;}
-  if(k==='ca-fact-pay'){await cpFactPay(f);return;}
-  if(k==='ca-entry'){await cpSaveEntry(f);return;}
-  if(k==='ca-budget'){await cpSaveBudget(f);return;}
-  if(k==='ca-regl'){await cpSaveRegl(f);return;}
+  for(const o of optAll()) if(o.submit&&await o.submit(k,f)) return;
   if(k==='p-save'){
     /* chaque section a son formulaire : on prend seulement les champs qu’il contient */
     const c=configDoc(), q=id=>f.querySelector('#'+id), val=id=>String(q(id).value).trim(), on=id=>q(id).checked, all=x=>[...f.querySelectorAll(x)];
@@ -458,13 +363,13 @@ document.addEventListener('submit',async e=>{
       c.grades=gs;}
     if(q('p-fonctions')){const fl=[];for(const x of val('p-fonctions').split('\n').map(y=>y.trim().replace(/\s+/g,' ').slice(0,40)).filter(Boolean)) if(!fl.some(y=>y.toLowerCase()===x.toLowerCase())) fl.push(x);
       if(!fl.length){toast('Gardez au moins une fonction.','bad');return;}c.fonctions=fl;}
-    if(all('[data-perm]').length){const p={};for(const x of all('[data-perm]')) p[x.dataset.perm]=x.checked;c.perms=p;}
+    if(all('[data-perm]').length){const p=Object.assign({},c.perms||{});for(const x of all('[data-perm]')) p[x.dataset.perm]=x.checked;c.perms=p;}
     if(f.querySelector('[name=p-couleur]')){const x=f.querySelector('[name=p-couleur]:checked');c.couleur=x?x.value:'';if(c.couleur==='perso'){if(!okHex(val('p-col-hex'))){toast('Choisissez une couleur.','bad');return;}c.couleurPerso=val('p-col-hex').toUpperCase();}}
     if(q('p-vue')) c.vueDefaut=val('p-vue');
     if(q('p-ouverture')) c.ouverture=val('p-ouverture');
-    if(all('[data-menu]').length) c.menuMasque=all('[data-menu]').filter(x=>!x.checked).map(x=>x.dataset.menu);
-    if(all('[data-menu-nom]').length){const m={};for(const x of all('[data-menu-nom]')){const v=x.value.trim();if(v)m[x.dataset.menuNom]=v;}c.menuNoms=m;}
-    if(all('[data-nf]').length){const n={};for(const x of all('[data-nf]')) n[x.dataset.nf]=x.checked;c.notifs=n;}
+    if(all('[data-menu]').length) c.menuMasque=(c.menuMasque||[]).filter(k=>!f.querySelector(`[data-menu="${k}"]`)).concat(all('[data-menu]').filter(x=>!x.checked).map(x=>x.dataset.menu));
+    if(all('[data-menu-nom]').length){const m=Object.assign({},c.menuNoms||{});for(const x of all('[data-menu-nom]')){const v=x.value.trim();if(v)m[x.dataset.menuNom]=v;else delete m[x.dataset.menuNom];}c.menuNoms=m;}
+    if(all('[data-nf]').length){const n=Object.assign({},c.notifs||{});for(const x of all('[data-nf]')) n[x.dataset.nf]=x.checked;c.notifs=n;}
     if(q('p-imp-logo')) c.impLogo=on('p-imp-logo');
     if(q('p-imp-coord')) c.impCoord=on('p-imp-coord');
     if(q('p-imp-date')) c.impDate=on('p-imp-date');
@@ -496,16 +401,7 @@ document.addEventListener('input',e=>{
     return;
   }
   if(t.id==='s-q'){S.pg.q=t.value;render();return;}
-  if(t.id==='stk-q'){S.pg.sq=t.value;render();return;}
-  if(t.id==='stk-fq'){S.pg.sfq=t.value;render();return;}
-  if(t.id==='stk-pk-q'&&S.dr){S.dr.q=t.value;renderDrawer();return;}
-  if(t.id==='sq-nb'&&S.dr){const m=byId(skModeles(),S.dr.id), c=$('#sq-codes');if(m&&c)c.textContent=skCodesTxt(m,Math.max(1,Math.min(60,Math.round(+t.value||1))));return;}
-  if(t.id==='sm-suivi'){t.form.dataset.suivi=t.value;return;}
-  if(t.id==='stk-mq'){S.pg.smq=t.value;render();return;}
-  if(t.id==='ca-q'){S.pg.cq=t.value;render();return;}
-  if(t.id==='ca-q2'){S.pg.cq2=t.value;render();return;}
-  /* fiche d’article : le suivi suit la catégorie ; les champs affichés suivent le suivi */
-  if(t.id==='sa-cat'||t.id==='sa-suivi'){const f=t.form;if(t.id==='sa-cat'){f.dataset.cat=t.value;const su=f.querySelector('#sa-suivi');if(su&&f.dataset.suivi!==(t.value==='conso'?'qte':'unite')&&!f.dataset.touched){su.value=t.value==='conso'?'qte':'unite';}}else f.dataset.touched='1';f.dataset.suivi=f.querySelector('#sa-suivi').value;return;}
+  for(const o of optAll()) if(o.input&&o.input(t)) return;
 
   if(t.id==='jr-q'){S.pg.jq=t.value;S.pg.jl='';render();return;}
   /* note en % d’un élève : elle inscrit le résultat selon le seuil de réussite */
@@ -532,10 +428,7 @@ document.addEventListener('input',e=>{
 });
 document.addEventListener('change',async e=>{
   const t=e.target;
-  if(t.id==='stk-bk-empl'&&t.value){await skBulk('empl',t.value);return;}
-  if(t.id==='stk-bk-st'&&t.value){await skBulk('st',t.value);return;}
-  if(t.dataset&&t.dataset.cq){await skCountMark(t.dataset.cq,null,t.value===''?null:Math.max(0,Math.round(+t.value)));return;}
-  {const m={'stk-fc':'sfc','stk-pd':'spd','stk-ce':'sce','stk-te':'ste','stk-f':'sf','stk-mt':'smt','stk-g':'sg','ca-g':'cg','ca-e':'ce','ca-fe':'cfe','ca-pf':'cpf','ca-m':'cm'}[t.id];if(m){S.pg[m]=t.value;if(m==='cm'||m==='sg')S.pg.sback='';render();return;}}
+  for(const o of optAll()) if(o.change&&await o.change(t)) return;
   /* reprises : une note en % inscrit l’issue selon le seuil ; ajout d’un module à une journée de reprise */
   if(t.dataset&&t.dataset.rpn){const v=t.value.trim();if(v===''||isNaN(+v))return;const n=Math.max(0,Math.min(100,+v));await setRetake(t.dataset.key,t.dataset.el,n>=seuil(),t.dataset.date||'',n);return;}
   if(t.dataset&&t.dataset.rd==='add'){if(t.value)await repModules(t.dataset.date,t.value,true);return;}

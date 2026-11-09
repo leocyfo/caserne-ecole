@@ -23,63 +23,64 @@
 #gate *{box-sizing:border-box}
 .g-card{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,6fr);width:min(100%,920px);background:#FFFFFF;border:1px solid #E3E8EF;border-radius:16px;overflow:hidden;box-shadow:0 16px 48px rgba(14,26,43,.12)}
 .g-side{background:#0E1A2B;color:#E9EEF5;padding:34px 30px;display:flex;flex-direction:column;gap:22px}
-.g-brand{display:flex;align-items:center;gap:12px;font-weight:800;font-size:20px;letter-spacing:-.015em;line-height:1.2}
+.g-brand{display:flex;align-items:center;gap:12px;font-weight:800;font-size:1.25rem;letter-spacing:-.015em;line-height:1.2}
 .g-brand i{font-style:normal;color:#F3A19D}
-.g-brand small{display:block;margin-top:2px;font-size:12.5px;letter-spacing:0;color:#9AA7B9;font-weight:500}
+.g-brand small{display:block;margin-top:2px;font-size:.78125rem;letter-spacing:0;color:#9AA7B9;font-weight:500}
 .g-logo{width:48px;height:48px;flex:none}
 .g-logo img{width:100%;height:100%;display:block}
-.g-side .g-ecole{margin-top:auto;font-size:12.5px;line-height:1.5;color:#9AA7B9}
+.g-side .g-ecole{margin-top:auto;font-size:.78125rem;line-height:1.5;color:#9AA7B9}
 .g-side .g-ecole b{color:#E9EEF5;font-weight:600}
-.g-side p{margin:0;color:#C7CED8;font-size:14.5px;line-height:1.55}
-.g-side ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:10px;font-size:14px;color:#C7CED8}
+.g-side p{margin:0;color:#C7CED8;font-size:.90625rem;line-height:1.55}
+.g-side ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:10px;font-size:.875rem;color:#C7CED8}
 .g-side li{display:flex;gap:10px;align-items:flex-start}
 .g-side li::before{content:"";width:7px;height:7px;border-radius:50%;background:#E5484D;margin-top:6px;flex:none}
 .g-main{padding:32px 34px;display:flex;flex-direction:column;gap:16px;min-width:0}
-.g-main h1{margin:0;font-size:24px;line-height:1.2}
-.g-main .g-sub{margin:-8px 0 0;color:#5B6878;font-size:14.5px;line-height:1.5}
+.g-main h1{margin:0;font-size:1.5rem;line-height:1.2}
+.g-main .g-sub{margin:-8px 0 0;color:#5B6878;font-size:.90625rem;line-height:1.5}
 .g-tabs{display:flex;gap:3px;padding:3px;background:#E9EEF4;border-radius:9px}
-.g-tabs button{flex:1;border:0;background:none;padding:9px 10px;border-radius:7px;font-family:inherit;font-size:13.5px;font-weight:600;color:#5B6878;cursor:pointer}
+.g-tabs button{flex:1;border:0;background:none;padding:9px 10px;border-radius:7px;font-family:inherit;font-size:.84375rem;font-weight:600;color:#5B6878;cursor:pointer}
 .g-tabs button[aria-pressed="true"]{background:#FFFFFF;color:#142132;box-shadow:0 1px 3px rgba(20,33,50,.14)}
 .g-form{display:flex;flex-direction:column;gap:12px}
-.g-field{display:flex;flex-direction:column;gap:5px;font-size:13px;font-weight:700;color:#2C3B4F}
-.g-field input,.g-field select,.g-field textarea{width:100%;min-height:42px;border:1px solid #CBD5E1;border-radius:8px;background:#FFFFFF;padding:9px 11px;font-family:inherit;font-size:15px;color:#0E1A2B}
+.g-field{display:flex;flex-direction:column;gap:5px;font-size:.8125rem;font-weight:700;color:#2C3B4F}
+.g-field input,.g-field select,.g-field textarea{width:100%;min-height:42px;border:1px solid #CBD5E1;border-radius:8px;background:#FFFFFF;padding:9px 11px;font-family:inherit;font-size:.9375rem;color:#0E1A2B}
 .g-field textarea{min-height:64px;resize:vertical}
 .g-field input:focus,.g-field select:focus,.g-field textarea:focus{outline:2px solid #2C6BC9;outline-offset:1px;border-color:#2C6BC9}
 .g-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.g-btn{min-height:44px;border:1px solid #C62F2A;border-radius:8px;background:#C62F2A;color:#FFFFFF;font-family:inherit;font-size:15px;font-weight:600;cursor:pointer;padding:0 16px}
+.g-btn{min-height:44px;border:1px solid #C62F2A;border-radius:8px;background:#C62F2A;color:#FFFFFF;font-family:inherit;font-size:.9375rem;font-weight:600;cursor:pointer;padding:0 16px}
 .g-btn:hover{background:#AD2722}
 .g-btn:disabled{opacity:.55;cursor:wait}
 .g-btn.alt{background:#FFFFFF;color:#142132;border-color:#CBD5E1}
 .g-btn.alt:hover{background:#F4F6F9}
-.g-link{border:0;background:none;padding:0;color:#245C9A;font-family:inherit;font-size:13.5px;font-weight:600;cursor:pointer;text-align:left}
+.g-link{border:0;background:none;padding:0;color:#245C9A;font-family:inherit;font-size:.84375rem;font-weight:600;cursor:pointer;text-align:left}
 .g-link:hover{text-decoration:underline}
-.g-err{margin:0;padding:10px 12px;border-radius:8px;background:#FDECEE;color:#B42318;font-size:14px;font-weight:700}
-.g-info{margin:0;padding:10px 12px;border-radius:8px;background:#EAF3FF;color:#1F4E8C;font-size:14px}
-.g-note{margin:0;color:#5B6878;font-size:13px;line-height:1.5}
+.g-err{margin:0;padding:10px 12px;border-radius:8px;background:#FDECEE;color:#B42318;font-size:.875rem;font-weight:700}
+.g-info{margin:0;padding:10px 12px;border-radius:8px;background:#EAF3FF;color:#1F4E8C;font-size:.875rem}
+.g-note{margin:0;color:#5B6878;font-size:.8125rem;line-height:1.5}
 .g-state{display:flex;flex-direction:column;align-items:flex-start;gap:12px}
-.g-badge{display:inline-flex;align-items:center;gap:8px;padding:5px 11px;border-radius:999px;background:#FFF4DE;color:#8A5300;font-size:13px;font-weight:700}
+.g-badge{display:inline-flex;align-items:center;gap:8px;padding:5px 11px;border-radius:999px;background:#FFF4DE;color:#8A5300;font-size:.8125rem;font-weight:700}
 .g-badge.bad{background:#FDECEE;color:#B42318}
 .g-badge::before{content:"";width:8px;height:8px;border-radius:50%;background:currentColor}
 .g-actions{display:flex;flex-wrap:wrap;gap:10px}
-.g-spin{color:#5B6878;font-size:15px}
-.g-demo{display:flex;flex-direction:column;gap:9px;padding:12px 14px;border:1px dashed #B9C6D6;border-radius:10px;background:#F8FAFC;font-size:13.5px;color:#2C3B4F}
-.g-demo p{margin:0;color:#5B6878;font-size:12.5px;line-height:1.5}
+.g-spin{color:#5B6878;font-size:.9375rem}
+.g-demo{display:flex;flex-direction:column;gap:9px;padding:12px 14px;border:1px dashed #B9C6D6;border-radius:10px;background:#F8FAFC;font-size:.84375rem;color:#2C3B4F}
+.g-demo p{margin:0;color:#5B6878;font-size:.78125rem;line-height:1.5}
 .g-demo-btns{display:flex;flex-wrap:wrap;gap:6px}
-.g-demo-btns button{border:1px solid #CBD5E1;background:#FFFFFF;border-radius:999px;padding:7px 12px;font-family:inherit;font-size:13px;font-weight:600;color:#0E1A2B;cursor:pointer}
+.g-demo-btns button{border:1px solid #CBD5E1;background:#FFFFFF;border-radius:999px;padding:7px 12px;font-family:inherit;font-size:.8125rem;font-weight:600;color:#0E1A2B;cursor:pointer}
 .g-demo-btns button:hover{border-color:#2C4F78;background:#EEF4FB}
-.g-demo code{font:700 12.5px Consolas,monospace;background:#E9EEF4;padding:1px 5px;border-radius:4px}
+.g-demo code{font:700 .78125rem Consolas,monospace;background:#E9EEF4;padding:1px 5px;border-radius:4px}
 .vh-g{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 @media (max-width:760px){.g-card{grid-template-columns:1fr}.g-side{padding:24px 22px;gap:14px}.g-side ul{display:none}.g-main{padding:24px 22px}.g-row{grid-template-columns:1fr}}`;
   const style=document.createElement('style');style.textContent=css;document.head.appendChild(style);
+  const T0=document.title; // titre de l’onglet de départ ; l’écran affiché le précède (« Connexion · … »)
   const root=document.createElement('div');root.id='gate';root.setAttribute('role','dialog');root.setAttribute('aria-modal','true');root.setAttribute('aria-labelledby','g-title');
   document.body.appendChild(root);
 
   const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  const logo='<span class="g-logo" aria-hidden="true"><img src="site/embleme-blanc.svg" alt=""></span>';
+  const logo='<span class="g-logo" aria-hidden="true"><img src="site/embleme-blanc.svg" alt="" width="48" height="48"></span>';
   const side=`<aside class="g-side"><div class="g-brand">${logo}<span>Pompier<i>Note</i><small>Académie des pompiers</small></span></div>
     <p>L’horaire des classes, les présences, les examens et les corvées, au même endroit.</p>
     <ul><li>Chaque élève voit son horaire, ses examens et ses résultats.</li><li>Chaque enseignant voit ses cours, indique ses disponibilités et prend les présences.</li><li>L’administration gère les classes, les modules, le personnel et les comptes.</li></ul>
-    <p class="g-ecole"><b>Académie des pompiers</b> · on forme les meilleurs pompiers depuis 1979<br>Caserne-école : 9577, rue Saint-Vincent, Mirabel · <span style="white-space:nowrap">450 258-4460</span></p></aside>`;
+    <p class="g-ecole"><b>Académie des pompiers</b> · on forme les meilleurs pompiers depuis 1979<br>Caserne-école : 9577, rue Saint-Vincent, Mirabel · <span class="u-nowrap">450 258-4460</span></p></aside>`;
   const v=k=>esc(st.vals[k]||'');
   const field=(id,label,type,extra)=>`<label class="g-field" for="g-${id}"><span>${label}</span><input id="g-${id}" name="${id}" type="${type}" value="${type==='password'?'':v(id)}" ${extra||''}></label>`;
   const msg=()=>(st.err?`<p class="g-err" role="alert">${esc(st.err)}</p>`:'')+(st.info?`<p class="g-info" role="status">${esc(st.info)}</p>`:'');
@@ -93,11 +94,11 @@
   const demo=()=>!!(B&&B.demo);
   const demoBox=()=>demo()?`<div class="g-demo" id="g-demo"><div><b>Démo</b> : connectez-vous en un clic avec un de ces comptes (mot de passe <code>demo123</code>).</div>
     <div class="g-demo-btns">${B.demo.accounts.map((a,i)=>`<button type="button" id="g-demo-${i}" data-g="demo" data-i="${i}">${esc(a.label)}</button>`).join('')}</div>
-    <p>Les comptes et les données de la démo restent dans ce navigateur. N’entrez pas un vrai mot de passe. <button class="g-link" type="button" data-g="reset" style="font-size:12.5px">Réinitialiser la démo</button></p></div>`:'';
+    <p>Les comptes et les données de la démo restent dans ce navigateur. N’entrez pas un vrai mot de passe. <button class="g-link u-fs78125" type="button" data-g="reset">Réinitialiser la démo</button></p></div>`:'';
   function view(){
     const s=st.view;
     if(s==='loading') return `<div class="g-main"><p class="g-spin" role="status">Chargement…</p></div>`;
-    if(s==='offline') return `<div class="g-main g-state"><span class="g-badge bad">Service injoignable</span><h1 id="g-title">Connexion impossible pour le moment</h1><p class="g-sub" style="margin:0">Le service de connexion ne répond pas. Vérifiez votre connexion internet, puis rechargez la page.</p><div class="g-actions"><button class="g-btn" type="button" id="g-reload" data-g="reload">Recharger la page</button></div></div>`;
+    if(s==='offline') return `<div class="g-main g-state"><span class="g-badge bad">Service injoignable</span><h1 id="g-title">Connexion impossible pour le moment</h1><p class="g-sub u-m0">Le service de connexion ne répond pas. Vérifiez votre connexion internet, puis rechargez la page.</p><div class="g-actions"><button class="g-btn" type="button" id="g-reload" data-g="reload">Recharger la page</button></div></div>`;
     if(s==='noconfig') return `<div class="g-main"><h1 id="g-title">Site en préparation</h1><p class="g-sub">Le site n’est pas encore relié à sa base de données. La connexion sera disponible très bientôt.</p><p class="g-note"><a href="demo.html">Essayer la démo</a> en attendant.</p></div>`;
     if(s==='login'||s==='request'){
       const tabs=`<div class="g-tabs" role="group" aria-label="Choix"><button type="button" id="g-tab-login" data-g="tab" data-v="login" aria-pressed="${s==='login'}">Se connecter</button><button type="button" id="g-tab-request" data-g="tab" data-v="request" aria-pressed="${s==='request'}">Demander un compte</button></div>`;
@@ -112,11 +113,11 @@
       <form class="g-form" id="g-form-setup" novalidate>${field('nom','Nom complet','text','autocomplete="name" maxlength="80" required')}${field('courriel','Courriel','email','autocomplete="email" required')}${field('mdp','Mot de passe (6 caractères ou plus)','password','autocomplete="new-password" minlength="6" required')}
       <button class="g-btn" type="submit" id="g-setup"${dis()}>Créer le compte administrateur</button></form></div>`;
     if(s==='pending') return `<div class="g-main g-state"><span class="g-badge">En attente d’approbation</span><h1 id="g-title">Votre demande est envoyée</h1>
-      <p class="g-sub" style="margin:0">L’administration doit approuver votre compte. Vous arriverez directement sur votre horaire dès qu’elle l’aura fait${st.user?`, en vous connectant avec ${esc(st.user.email)}`:''}.</p>
+      <p class="g-sub u-m0">L’administration doit approuver votre compte. Vous arriverez directement sur votre horaire dès qu’elle l’aura fait${st.user?`, en vous connectant avec ${esc(st.user.email)}`:''}.</p>
       ${demo()?'<p class="g-info">Démo : pour approuver la demande, déconnectez-vous, connectez-vous avec le compte <b>Administration</b>, puis ouvrez le menu <b>Comptes</b>. Revenez ensuite avec votre nouveau compte.</p>':''}
       <div class="g-actions"><button class="g-btn alt" type="button" id="g-out" data-g="out">Se déconnecter</button></div></div>`;
     if(s==='refused') return `<div class="g-main g-state"><span class="g-badge bad">Demande refusée</span><h1 id="g-title">Votre demande n’a pas été acceptée</h1>
-      <p class="g-sub" style="margin:0">Communiquez avec l’administration de l’Académie, ou envoyez une nouvelle demande avec un message qui précise qui vous êtes.</p>
+      <p class="g-sub u-m0">Communiquez avec l’administration de l’Académie, ou envoyez une nouvelle demande avec un message qui précise qui vous êtes.</p>
       <div class="g-actions"><button class="g-btn" type="button" id="g-again" data-g="again">Envoyer une nouvelle demande</button><button class="g-btn alt" type="button" data-g="out">Se déconnecter</button></div></div>`;
     if(s==='request-signed') return `<div class="g-main"><h1 id="g-title">Demander un compte</h1><p class="g-sub">Vous êtes connecté avec ${esc(st.user?st.user.email:'')}, mais aucun compte ne vous est encore attribué.</p>${msg()}
       <form class="g-form" id="g-form-request2" novalidate>${requestFields(false)}<button class="g-btn" type="submit" id="g-send2"${dis()}>Envoyer la demande</button></form>
@@ -130,6 +131,7 @@
     // les mots de passe restent dans les champs (jamais écrits dans la page) quand l’écran se redessine
     const pw={};root.querySelectorAll('input[type=password]').forEach(i=>{pw[i.id]=i.value;});
     root.innerHTML=`<div class="g-card">${side}${view()}</div>`;
+    {const gt=root.querySelector('#g-title'), t=gt&&gt.textContent.trim();document.title=(t?t+' · ':'')+T0;}
     for(const [id,val] of Object.entries(pw)){const i=document.getElementById(id);if(i&&root.contains(i))i.value=val;}
     const f=focus&&document.getElementById(focus);
     if(f&&f.tagName!=='BUTTON') f.focus();

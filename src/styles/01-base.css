@@ -3,8 +3,8 @@
   color-scheme:light;
   --side:#0E1A2B; --side-ink:#E9EEF5; --side-soft:#B9C4D3; --side-muted:#7F8DA3; --side-line:#1F2E44; --side-hover:#162539; --side-active:#1D2F4A;
   --bg:#F3F5F8; --surface:#FFFFFF; --surface-2:#F8FAFC; --head:#F8FAFC; --head-ink:#52627A; --row-ink:#16294A;
-  --ink:#0E1A2B; --ink-2:#334256; --muted:#617086; --line:#E3E8EF; --line-2:#EDF1F6; --line-strong:#CBD4E0; --role:#0E1A2B; --role-bg:#EDF1F6;
-  --accent:#C62F2A; --accent-hover:#AD2722; --accent-ink:#FFFFFF; --eyebrow:#617086; --today:#C62F2A; --focus:#2563EB;
+  --ink:#0E1A2B; --ink-2:#334256; --muted:#596880; --line:#E3E8EF; --line-2:#EDF1F6; --line-strong:#CBD4E0; --role:#0E1A2B; --role-bg:#EDF1F6;
+  --accent:#C62F2A; --accent-hover:#AD2722; --accent-ink:#FFFFFF; --eyebrow:#596880; --today:#C62F2A; --focus:#2563EB;
   --ok:#17784E; --ok-bg:#DDF5E8; --warn:#93580C; --warn-bg:#FFEDCC; --bad:#B42F3A; --bad-bg:#FDE3E4; --info:#245C9A; --info-bg:#DFEBFC; --off:#5A6676; --off-bg:#E7EAEE;
   --font:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
   --r:10px; --r-sm:7px;
@@ -12,15 +12,24 @@
   --shadow:0 16px 48px rgba(14,26,43,.22);
 }
 *{box-sizing:border-box}
+/* !important seulement là où une règle doit tout emporter (IFT1005 : sinon, mauvaise pratique) : « hidden », « moins d’animations » (réglage du système),
+   le glisser-déposer (04-horaire) et l’impression (05-panneaux) */
 [hidden]{display:none!important}
+@media (prefers-reduced-motion: reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:0s!important;scroll-behavior:auto!important}}
+/* Tailles de texte en rem : elles suivent la taille choisie dans le navigateur (100 % = 16 px) */
+html{font-size:100%}
 /* la page ne passe pas sous l’encoche d’un iPhone tenu à l’horizontale (marges env) */
-body{margin:0;background:var(--bg);color:var(--ink);font:13.5px/1.45 var(--font);-webkit-font-smoothing:antialiased;font-feature-settings:"cv11";padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:.84375rem/1.45 var(--font);-webkit-font-smoothing:antialiased;font-feature-settings:"cv11";padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
 body.lock{overflow:hidden}
 button,input,select,textarea{font:inherit;color:inherit}
 button{cursor:pointer}
 :focus-visible{outline:2px solid var(--focus);outline-offset:2px}
 .ic{width:18px;height:18px;flex:none}
 .vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+/* Bouton d’ouverture d’une rangée qui contient d’autres boutons (voir xRow) : invisible ; au clavier, toute la rangée s’encadre */
+.row-open{position:absolute;width:1px;height:1px;padding:0;margin:0;border:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap;background:none}
+.row-open:focus-visible{outline:none}
+:is(.xm-row,.cl-row,.st-row):has(>.row-open:focus-visible){outline:3px solid var(--focus);outline-offset:-3px}
 .k0{--card:#EDF4FE;--chip:#DCEAFD;--chip-ink:#275F9D;--bar:#7AA9E3}
 .k1{--card:#FFF6E6;--chip:#FFEBC7;--chip-ink:#995D12;--bar:#E5A84B}
 .k2{--card:#F5EFFE;--chip:#EADCFC;--chip-ink:#7043A5;--bar:#A982DB}
@@ -28,9 +37,9 @@ button{cursor:pointer}
 .k4{--card:#F8F6E8;--chip:#F0EAC2;--chip-ink:#6F6311;--bar:#C2B04A}
 .k5{--card:#EBF8F6;--chip:#D2F1EC;--chip-ink:#146C62;--bar:#4DB3A5}
 .k6{--card:#EDF9F2;--chip:#D7F6E6;--chip-ink:#1C7951;--bar:#56B486}
-.k7{--card:#F0F3F8;--chip:#E1E7F2;--chip-ink:#546C91;--bar:#9AA8BD}
+.k7{--card:#F0F3F8;--chip:#E1E7F2;--chip-ink:#4B6185;--bar:#9AA8BD}
 .kx{--card:#FFF0F1;--chip:#FFE0E1;--chip-ink:#B1353F;--bar:#E26A70}
-.role-chip{display:inline-flex;align-items:center;margin-left:6px;padding:1px 6px;border-radius:4px;font-size:11px;font-weight:700;background:#FFF1E0;color:#995D12;vertical-align:1px}
+.role-chip{display:inline-flex;align-items:center;margin-left:6px;padding:1px 6px;border-radius:4px;font-size:.6875rem;font-weight:700;background:#FFF1E0;color:#995D12;vertical-align:1px}
 /* capitaine : rouge foncé ; lieutenants : bleu marine (mêmes couleurs que leurs cartes) */
 .role-chip.rc-cap{background:#9F2D35;color:#FFFFFF}
 .role-chip.rc-lt{background:#1E3A5F;color:#FFFFFF}
@@ -40,9 +49,14 @@ button{cursor:pointer}
 /* Petites classes utiles : liens, aide, textes discrets, couleurs de texte */
 .link{background:none;border:0;padding:0;font-weight:700;color:var(--ink);text-align:left}
 .link:hover{text-decoration:underline;color:var(--head-ink)}
-.help{font-size:13px;color:var(--muted);margin:0}
+.help{font-size:.8125rem;color:var(--muted);margin:0}
+/* Lignes de texte faciles à lire : 75 caractères au plus (IFT1005, ch. 6) */
+p.help,.notice p,.ann-b p,.panel>p:not(.empty,.hm-sum,.summary){max-width:75ch}
+/* sigles (<abbr title>) : le sens paraît au survol ; pas de pointillé dans le menu et les titres */
+abbr[title]{cursor:help}
+.nav abbr,h1 abbr{text-decoration:none}
 .muted{color:var(--muted)}
-.sm{font-size:13px}
+.sm{font-size:.8125rem}
 .ok-t{color:var(--ok)}
 .need-t{color:var(--warn);font-weight:700}
 .bad-t{color:var(--bad);font-weight:700}

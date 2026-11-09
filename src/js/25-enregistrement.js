@@ -112,7 +112,7 @@ function examDrawer(){
   if(d.id&&!e) return goneHTML('Examen');
   if(!canEditExam(e)){
     const x=examItem(e);
-    return dTop('Examen',x.c?titleOf(x.c):esc(e.titre||'Examen'),esc(e.titre||''))+`<div class="dr-body"><dl class="facts"><div><dt>Quand</dt><dd>${esc(dayLabel(parse(e.date)))}, ${momentOf(x).toLowerCase()}</dd></div><div><dt>Local</dt><dd>${esc(x.salle)||'À confirmer'}</dd></div><div><dt>Classe</dt><dd>${esc(gName(x.grp))}</dd></div><div><dt>Surveillance</dt><dd>${esc(e.surveillant?tName(e.surveillant):'À confirmer')}</dd></div></dl>${e.notes?`<section class="dr-sec"><h3>À savoir</h3><p style="margin:0;white-space:pre-wrap">${esc(e.notes)}</p></section>`:''}</div>`;
+    return dTop('Examen',x.c?titleOf(x.c):esc(e.titre||'Examen'),esc(e.titre||''))+`<div class="dr-body"><dl class="facts"><div><dt>Quand</dt><dd>${esc(dayLabel(parse(e.date)))}, ${momentOf(x).toLowerCase()}</dd></div><div><dt>Local</dt><dd>${esc(x.salle)||'À confirmer'}</dd></div><div><dt>Classe</dt><dd>${esc(gName(x.grp))}</dd></div><div><dt>Surveillance</dt><dd>${esc(e.surveillant?tName(e.surveillant):'À confirmer')}</dd></div></dl>${e.notes?`<section class="dr-sec"><h3>À savoir</h3><p class="u-m0-pre">${esc(e.notes)}</p></section>`:''}</div>`;
   }
   let cs=S.data.cours.slice().sort((a,b)=>collator.compare(gName(a.groupe)+a.titre,gName(b.groupe)+b.titre));
   if(S.role==='teacher') cs=cs.filter(c=>c.enseignant===S.teacher||c.id===f.cours);
@@ -182,7 +182,7 @@ function examResultsHTML(f,can){
   const sum=`<div class="att-sum">${cnt.reussi?`<span class="chip ok">${pl(cnt.reussi,'réussite','réussites')}</span>`:''}${cnt.reprise?`<span class="chip info">${pl(cnt.reprise,'réussi en reprise','réussis en reprise')}</span>`:''}${cnt.echec?`<span class="chip bad">${pl(cnt.echec,'échec','échecs')}</span>`:''}${cnt.absent?`<span class="chip warn">${pl(cnt.absent,'absent','absents')}</span>`:''}${cnt.echecf?`<span class="chip bad">${pl(cnt.echecf,'échec de module','échecs de module')}</span>`:''}${none?`<span class="chip off">${none} sans résultat</span>`:''}${avg!=null?`<span class="chip off" id="xr-avg">Moyenne ${avg} %</span>`:''}</div>`;
   const btn=(e,v,k,cls,l)=>`<button type="button" class="ab ${cls}" id="xr-${esc(e.id)}-${k}" data-act="x-res" data-el="${esc(e.id)}" data-v="${v}" aria-pressed="${r[e.id]===v}">${l}</button>`;
   const li=e=>{const v=r[e.id];return `<li><span class="st-num sm" aria-hidden="true">${e.numero!=null&&e.numero!==''?esc(e.numero):'—'}</span><span class="nm">${esc(e.nom)}${v==='reprise'?'<small>Réussi en reprise</small>':v==='echecf'?'<small>Échec du module</small>':''}</span>${can?`<input class="xr-n" type="number" id="xn-${esc(e.id)}" data-xn="${esc(e.id)}" data-f="pct" min="0" max="100" step="1" inputmode="numeric" placeholder="%" aria-label="${esc('Note de '+e.nom+' en %')}" value="${p[e.id]!=null?esc(p[e.id]):''}"><span class="att-btns" role="group" aria-label="${esc('Résultat de '+e.nom)}">${btn(e,'reussi','r','ab-P','Réussi')}${btn(e,'echec','e','ab-A','Échec')}${btn(e,'absent','a','ab-R','Absent')}</span>`:v?`<span class="chip ${RES[v][0]}">${RES[v][1]}${p[e.id]!=null?' · '+esc(noteTxt(p[e.id])):''}</span>`:'<span class="chip off">—</span>'}</li>`;};
-  return `<fieldset class="xr"><legend>Résultats</legend>${sum}<ul class="att-list">${els.map(li).join('')}</ul>${can?`<p class="help" style="margin-top:8px">La note en % est facultative. Elle inscrit le résultat : réussi à partir de ${seuil()} %.</p>`:''}${can&&none?'<div class="row" style="margin-top:10px"><button class="btn sm" type="button" data-act="x-res-all">Marquer les autres réussis</button></div>':''}</fieldset>`;
+  return `<fieldset class="xr"><legend>Résultats</legend>${sum}<ul class="att-list">${els.map(li).join('')}</ul>${can?`<p class="help u-mt8">La note en % est facultative. Elle inscrit le résultat : réussi à partir de ${seuil()} %.</p>`:''}${can&&none?'<div class="row u-mt10"><button class="btn sm" type="button" data-act="x-res-all">Marquer les autres réussis</button></div>':''}</fieldset>`;
 }
 /* Dossier d’un élève */
 function openStudent(id){
@@ -287,7 +287,9 @@ function toast(msg,kind,action){
   const t=document.createElement('div');t.className='toast'+(kind?' '+kind:'');t.setAttribute('role','status');
   const s=document.createElement('span');s.textContent=msg;t.appendChild(s);
   if(action){const b=document.createElement('button');b.type='button';b.textContent=action.label;b.addEventListener('click',()=>{t.remove();action.fn();});t.appendChild(b);}
-  $('#toasts').appendChild(t);setTimeout(()=>t.remove(),action?9000:4000);
+  $('#toasts').appendChild(t);
+  /* le message reste tant que la souris ou le clavier est dessus : on a le temps de le lire (WCAG 2.2.1) */
+  const bye=()=>{if(!t.isConnected)return;if(t.matches(':hover,:focus-within'))setTimeout(bye,1500);else t.remove();};setTimeout(bye,action?9000:5000);
 }
 function errMsg(e){
   const c=e&&e.code;

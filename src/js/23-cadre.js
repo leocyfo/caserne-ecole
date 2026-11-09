@@ -17,14 +17,16 @@ function setHTML(el,html,key){
    Une entrée qui réunit plusieurs pages les montre en onglets à côté du titre ; elle s’ouvre sur sa première page. */
 const NAV={
   admin:[['accueil','Accueil','home'],['calendar','Calendrier','cal','Horaire',['calendar','annee']],['affectations','Affectations','clip'],['classes','Classes','teach','École'],['eleves','Élèves et personnel','users',null,['eleves','personnel']],['formation','Formation','check'],['modules','Modules et examens','layers','Ressources',['modules','examens']],['stock','Stock','box'],['compta','Compta','coin'],['comptes','Comptes','key','Administration'],['historique','Historique','clock'],['params','Paramètres','gear'],['nouveautes','Nouveautés','spark']],
-  teacher:[['accueil','Accueil','home'],['calendar','Mon horaire','cal',null,['calendar','annee']],['mescours','Mes cours','clip'],['dispos','Disponibilités','calok'],['examens','Examens','exam'],['formation','Évaluations','check'],['stock','Matériel','box'],['profil','Mon profil','user']],
+  /* enseignant : trois petits groupes plutôt que huit entrées à la suite (IFT1005, ch. 6 : environ quatre choix à la fois) */
+  teacher:[['accueil','Accueil','home'],['calendar','Mon horaire','cal','Horaire',['calendar','annee']],['mescours','Mes cours','clip'],['dispos','Disponibilités','calok'],['examens','Examens','exam','École'],['formation','Évaluations','check'],['stock','Matériel','box'],['profil','Mon profil','user','Compte']],
   service:[['recrues','Mes recrues','users']],
   student:[['accueil','Accueil','home'],['calendar','Mon horaire','cal',null,['calendar','annee']],['examens','Examens','exam'],['formation','Ma formation','check'],['profil','Mon profil','user']]
 };
 const TAB_LBL={calendar:'Horaire',annee:'Année scolaire',eleves:'Élèves',personnel:'Personnel',modules:'Modules',examens:'Examens'};
 /* L’entrée du menu qui contient une page (elle-même, ou celle qui la réunit avec d’autres) */
 /* Entrées masquées dans Paramètres (administration seulement ; jamais l’accueil, le calendrier, les paramètres ni les nouveautés) */
-const navHidden=r=>r==='admin'?(cfg().menuMasque||[]).filter(k=>!['accueil','calendar','params','nouveautes'].includes(k)):r==='teacher'&&!(skCfg().perms.sortie||skCfg().perms.bris)?['stock']:[];
+const navHidden=r=>(r==='admin'?(cfg().menuMasque||[]).filter(k=>!['accueil','calendar','params','nouveautes'].includes(k)):[])
+  .concat(OPTIONS.filter(k=>!OPT[k]||(OPT[k].hidden&&OPT[k].hidden(r))));
 const navList=r=>NAV[r].filter(n=>!navHidden(r).includes(n[0]));
 /* Le menu affiché : une section masquée en entier disparaît ; sinon son titre passe à sa première entrée visible */
 function navShown(){const hid=navHidden(S.role), out=[];let pend='';for(const n of NAV[S.role]){if(n[3])pend=n[3];if(hid.includes(n[0]))continue;const x=[...n];x[3]=pend;out.push(x);pend='';}return out;}
@@ -48,7 +50,7 @@ function ensureSel(){
   if(!a){const els=studentsOf(S.group);if(els.length&&!els.some(e=>e.id===S.student))S.student=els[0].id;}
   if(S.filtre){const k=S.filtre[0],id=S.filtre.slice(2);if((k==='g'&&!gs.some(g=>g.id===id))||(k==='e'&&!ts.some(t=>t.id===id)))S.filtre='';else S.fmode=k;}
   if(S.role==='student') ensureMyRes();
-  if(S.role!=='admin') ensureMine();
+  if(S.role!=='admin') for(const o of optAll()) if(o.mine) o.mine();
   foMine();
   svcMine();
 }
@@ -85,14 +87,12 @@ function renderSide(){
 let navMode='';
 const SUBNAV={
   params:{lbl:'Paramètres',key:'ps',id:'ps',tabs:()=>PS_TABS.map(([k,l,i])=>{const n=k==='annonces'?annList().filter(a=>annState(a)==='cours').length:0;return {k,l,i,n,nt:n?pl(n,'annonce en cours','annonces en cours'):''};})},
-  stock:{lbl:'Stock',key:'sk',id:'sk',tabs:stockTabs},
-  compta:{lbl:'Compta',key:'cp',id:'cpt',tabs:comptaTabs},
   formation:{lbl:'Formation',key:'fo',id:'fo',tabs:foTabs}
 };
 function subNavHTML(p){
   const d=SUBNAV[p], ts=d.tabs(), hit=ts.find(t=>t.k===S.pg[d.key]||(t.sub||[]).some(s=>s.k===S.pg[d.key])), cur=(hit||ts[0]).k, lbl=S.role==='teacher'&&p==='stock'?'Matériel':p==='formation'&&S.role!=='admin'?(S.role==='teacher'?'Évaluations':'Ma formation'):(S.role==='admin'&&menuNom(p))||d.lbl;
   return `<li><button type="button" class="nav-back" id="nav-${p}" title="Revenir au menu" data-act="nav" data-page="${esc(S.navFrom&&S.navFrom!==p?S.navFrom:'calendar')}">${icon('left')}<span>${esc(lbl)}</span></button></li>`
-    +ts.map(t=>`${t.sec?`<li class="nav-sec">${t.sec}</li>`:''}<li><button type="button" id="${d.id}-${t.k}" title="${t.l}${t.nt?' · '+t.nt:''}" data-act="pg-set" data-k="${d.key}" data-v="${t.k}"${cur===t.k?' aria-current="page"':''}>${icon(t.i)}<span>${t.l}</span>${t.n?`<i class="nav-todo${t.bad?' bad':''}"${t.nt?` title="${esc(t.nt)}"`:''}>${t.n}</i>`:''}</button></li>`).join('');
+    +ts.map(t=>`${t.sec?`<li class="nav-sec">${t.sec}</li>`:''}<li><button type="button" id="${d.id}-${t.k}" title="${t.l}${t.nt?' · '+t.nt:''}" data-act="pg-set" data-k="${d.key}" data-v="${t.k}"${cur===t.k?' aria-current="page"':''}>${icon(t.i)}<span>${abbrs(t.l)}</span>${t.n?`<i class="nav-todo${t.bad?' bad':''}"${t.nt?` title="${esc(t.nt)}"`:''}>${t.n}</i>`:''}</button></li>`).join('');
 }
 /* Page ouverte : la bulle rouge (comme le logo) glisse jusqu’à l’entrée choisie ; pas d’animation au premier placement.
    Menu réduit : un carré de la taille du logo, centré sur l’icône. */
@@ -168,7 +168,7 @@ const HEAD={
   params:['Paramètres','L’établissement, l’année scolaire et les accès.'],
   nouveautes:['Nouveautés','Ce qui a changé sur le site : nouvelles fonctions, améliorations et corrections.'],
   compta:['Compta','L’argent de l’école : frais des élèves, factures, paie des instructeurs, dépenses et budget.'],
-  recrues:['Mes recrues','La présence, les résultats et le dossier de vos recrues, et les factures de votre service.'],
+  recrues:['Mes recrues','La présence, les résultats et le dossier de vos recrues.'],
   formation:['Formation','Évaluations pratiques, carnets de compétences, examens blancs, certificats et dossier ENPQ.']
 };
 /* Les mêmes titres, avec le mot « séance », quand l’école a des modules */
@@ -199,10 +199,29 @@ function renderHeading(){
   const tabsHTML=tabs?`<div class="seg pg-tabs" role="group" aria-label="${esc(title)}">${tabs.map(p=>`<button type="button" id="tab-${p}" data-act="nav" data-page="${p}" aria-pressed="${S.page===p}">${TAB_LBL[p]}</button>`).join('')}</div>`:'';
   const hd=$('#heading');
   hd.classList.toggle('has-tabs',!!tabs);
-  setHTML(hd,`<div class="ph-t"><div class="ph-row"><h1 title="${esc(h[1]||'')}">${title}</h1>${tabsHTML}</div></div><div class="ph-tools" id="hd-tools"></div>${side?`<div class="head-side">${side}</div>`:''}`);
+  setHTML(hd,`<div class="ph-t"><div class="ph-row"><h1 title="${esc(h[1]||'')}">${abbrs(title)}</h1>${tabsHTML}</div></div><div class="ph-tools" id="hd-tools"></div>${side?`<div class="head-side">${side}</div>`:''}`);
   const ht=$('#hd-tools');if(ht&&ht._h===undefined&&hdTools.k===S.role+'/'+S.page) setHTML(ht,hdTools.html);
   fitHeading();
+  /* Le titre de l’onglet nomme la page ouverte (favoris, historique, impression, lecteur d’écran) */
+  const hEl=hd.querySelector('h1'), pt=S.page==='accueil'?'Accueil':(hEl?hEl.textContent.trim():'');
+  /* page à sections (Paramètres, Formation, Stock, Compta) : la section d’abord, comme un fil d’Ariane (« Année scolaire · Paramètres ») */
+  let sec='';const sd=SUBNAV[S.page];if(sd){try{const ts=sd.tabs(), t=ts.find(x=>x.k===S.pg[sd.key]||(x.sub||[]).some(s=>s.k===S.pg[sd.key]))||ts[0];sec=t&&t.l&&t.l!==pt?t.l:'';}catch(e){}}
+  const dt=(sec?sec+' · ':'')+(pt?pt+' · '+DOC_T0:DOC_T0);if(document.title!==dt&&!document.body.classList.contains('printing')&&!document.body.classList.contains('gate-open')) document.title=dt;
 }
+const DOC_T0=document.title||'PompierNote';
+/* Pied de page : le nom de l’école et ses coordonnées (Paramètres › École), avec des liens tel: et mailto: */
+function renderFoot(){
+  const el=$('#site-foot');if(!el) return;
+  const c=cfg(), web=String(c.web||'').trim(), url=web&&!/^https?:\/\//i.test(web)?'https://'+web:web;
+  const parts=[c.nom?`<span>${esc(c.nom)}</span>`:'',
+    /* le numéro ne se coupe pas en fin de ligne : espaces et traits d’union insécables */
+    c.tel?`<a href="tel:${esc(String(c.tel).replace(/[^\d+]/g,''))}">${esc(String(c.tel).replace(/ /g,' ').replace(/-/g,'‑'))}</a>`:'',
+    c.courriel?`<a href="mailto:${esc(c.courriel)}">${esc(c.courriel)}</a>`:'',
+    url&&/^https?:\/\/[^\s"<>]+$/i.test(url)?`<a href="${esc(url)}" target="_blank" rel="noopener">${esc(web.replace(/^https?:\/\//i,'').replace(/\/$/,''))}</a>`:''].filter(Boolean);
+  setHTML(el,allLoaded()&&parts.length>1?parts.join(''):'');
+}
+/* « Aller au contenu » : met le focus au début de la page, sans toucher à l’adresse (#pres=, #stk= y sont lus) */
+document.addEventListener('click',e=>{const a=e.target.closest&&e.target.closest('a.skip');if(!a)return;e.preventDefault();const m=$('#main');if(m){m.focus({preventScroll:true});window.scrollTo({top:0});}});
 /* La barre du titre tient sur une ligne si tout y entre ; sinon les libellés raccourcissent ; sinon la barre de la page passe sur une deuxième ligne */
 function fitHeading(){
   const h=$('#heading'), t=$('#hd-tools');if(!h) return;
@@ -233,12 +252,25 @@ function viewMode(){
 }
 /* Cartes : chaque valeur d’une ligne reçoit le libellé de sa colonne, écrit en petit devant elle
    (sauf la vignette, les titres, les boutons et les colonnes data-nl). Les lignes .xm-lite (Stock) n’en ont aucun. */
+/* Un tableau plus large que l’écran défile : sans bouton ni champ dedans, il prend le focus pour défiler aux flèches (WCAG 2.1.1) */
+function scrollKeys(el){
+  for(const w of el.querySelectorAll('.tbl-wrap')){
+    const scr=w.scrollWidth>w.clientWidth+1, ctl=w.querySelector('button,a[href],input,select,textarea,[tabindex]');
+    if(scr&&!ctl){if(!w.hasAttribute('tabindex')){const c=w.querySelector('caption'), h=w.previousElementSibling;w.tabIndex=0;w.setAttribute('role','region');w.setAttribute('aria-label',((c&&c.textContent)||(h&&/^H[2-4]$/.test(h.tagName)&&h.textContent)||'Tableau').trim());}}
+    else if(w.getAttribute('role')==='region'&&w.tabIndex===0){w.removeAttribute('tabindex');w.removeAttribute('role');w.removeAttribute('aria-label');}
+  }
+  /* tableau qui défile lui-même (relevé sur téléphone) : le focus seulement, il reste un tableau pour les lecteurs d’écran */
+  for(const t of el.querySelectorAll('.fo-rel table.tbl')){
+    const scr=t.scrollWidth>t.clientWidth+1;
+    if(scr&&!t.hasAttribute('tabindex')) t.tabIndex=0; else if(!scr&&t.hasAttribute('tabindex')) t.removeAttribute('tabindex');
+  }
+}
 function labelCards(el){
   for(const l of el.querySelectorAll('.xm-list')){
     const hd=l.querySelector(':scope>.xm-hd');if(!hd) continue;
     const labels=[...hd.children].map(x=>x.hasAttribute('data-nl')?'':x.textContent.trim());
     for(const r of l.querySelectorAll(':scope>.xm-row:not(.xm-lite)'))
-      [...r.children].forEach((c,i)=>{
+      [...r.children].filter(c=>!c.classList.contains('row-open')).forEach((c,i)=>{
         if(c.matches('.xm-d,.cl-num,.xm-end,.xm-t,.xm-who')) return;
         if(labels[i]&&!c.dataset.l) c.dataset.l=labels[i];
       });
@@ -256,7 +288,7 @@ function renderMain(){
   let tools='';
   if(p==='calendar'){S._stats=null;html=wait||(S.role==='admin'?teacherChipsHTML()+adminMain():S.role==='teacher'?teacherMain():studentMain());tools=toolbarHTML();}
   else{
-    html=wait||(p==='accueil'?accueilPage():p==='classes'?classesPage():p==='eleves'?studentsPage():p==='personnel'?staffPage():p==='modules'?modulesPage():p==='affectations'?affPage():p==='mescours'?myCoursesPage():p==='dispos'?disposPage():p==='examens'?examsPage():p==='annee'?yearPage():p==='nouveautes'?newsPage():p==='historique'?historyPage():p==='stock'?stockPage():p==='compta'?comptaPage():p==='formation'?formationPage():p==='recrues'?recruesPage():p==='comptes'?accountsPage():p==='profil'?profilePage():paramsPage());
+    html=wait||(opt(p)?opt(p).page():p==='accueil'?accueilPage():p==='classes'?classesPage():p==='eleves'?studentsPage():p==='personnel'?staffPage():p==='modules'?modulesPage():p==='affectations'?affPage():p==='mescours'?myCoursesPage():p==='dispos'?disposPage():p==='examens'?examsPage():p==='annee'?yearPage():p==='nouveautes'?newsPage():p==='historique'?historyPage():p==='formation'?formationPage():p==='recrues'?recruesPage():p==='comptes'?accountsPage():p==='profil'?profilePage():paramsPage());
     if(!wait){const x=splitTools(html);html=svBarHTML()+x.body;tools=x.tools;}
   }
   const vm=wait?'':viewMode();
@@ -266,6 +298,7 @@ function renderMain(){
   setHTML(el,html,key);
   el.classList.toggle('view-cards',vm==='cards');el.classList.toggle('view-dense',vm==='dense');
   if(vm==='cards') labelCards(el);
+  scrollKeys(el);
   playEnter(el,p,vm);
   hdTools={k:S.role+'/'+p,html:tools};
   $('#heading').classList.toggle('with-tools',!!tools);
@@ -338,9 +371,8 @@ function glide(el,b,keepH){
   });
 }
 function render(){choreMemo=new Map();applyConfig();ensureSel();
-  /* une étiquette QR scannée avec l’appareil photo : l’article s’ouvre dès que le stock est chargé */
-  if(!S._skHash&&S.loaded.stock&&S.conn==='shared'&&/#stk=/.test(location.hash)){S._skHash=true;setTimeout(skHash,0);}
-  if(!S._qrHash&&S.conn==='shared'&&allLoaded()&&/#pres=/.test(location.hash)){S._qrHash=true;setTimeout(qrHash,0);}renderSide();renderTop();renderNotices();renderHeading();renderMain();renderDrawer();}
+  for(const o of optAll()) if(o.render) o.render();
+  if(!S._qrHash&&S.conn==='shared'&&allLoaded()&&/#pres=/.test(location.hash)){S._qrHash=true;setTimeout(qrHash,0);}renderSide();renderTop();renderNotices();renderHeading();renderMain();renderFoot();renderDrawer();}
 let rq=false;
 function schedule(){if(rq)return;rq=true;setTimeout(()=>{rq=false;render();},16);}
 

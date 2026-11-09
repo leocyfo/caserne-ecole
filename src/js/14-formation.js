@@ -105,8 +105,8 @@ function foEnpq(e){
   if(G.length){const n=G.filter(g=>foState(e.id,g).k==='ok').length;items.push({k:'grilles',l:'Grilles pratiques requises',ok:n===G.length,detail:`${n} sur ${G.length} réussies`,auto:true});}
   const N=foNotes()[e.id]||{tot:0,ok:0,todo:0};
   items.push({k:'exam',l:'Examens de l’école',ok:!N.todo&&!!N.tot,detail:N.tot?(N.todo?pl(N.todo,'examen à reprendre','examens à reprendre'):`${N.ok} réussis`):'Aucun résultat',auto:true});
-  const cpt=foFull()?(S.loaded.compta?cpE():null):(permOn('compteEl')?S.data.mesCpt||[]:null);
-  if(cpt){const f=cpFee(e,cpt.filter(x=>x.note!=='ENPQ'));items.push({k:'frais',l:'Frais à jour',ok:f.etat!=='retard',detail:f.etat==='retard'?'paiement en retard':CP_FE[f.etat][1],auto:true});}
+  const cp=opt('compta'), cpt=!cp?null:foFull()?(S.loaded.compta?cp.entries():null):(permOn('compteEl')?S.data.mesCpt||[]:null);
+  if(cpt){const f=cp.fee(e,cpt.filter(x=>x.note!=='ENPQ'));items.push({k:'frais',l:'Frais à jour',ok:f.etat!=='retard',detail:f.etat==='retard'?'paiement en retard':cp.feeStates[f.etat][1],auto:true});}
   for(const p of C.pieces) items.push({k:'p-'+p.id,id:p.id,l:p.nom,ok:!!(d.coches||{})[p.id],detail:(d.coches||{})[p.id]?'reçu le '+shortDate(parse((d.coches||{})[p.id])):'à recevoir',auto:false});
   const miss=items.filter(x=>!x.ok).length;
   return {items,miss,ok:!miss,envoye:d.envoye||'',note:d.note||'',doc:d};
@@ -179,7 +179,7 @@ function foDash(){
 /* ---------- Grilles pratiques ---------- */
 function foGrillesPage(){
   const G=foG(), adm=isAdmin()&&S.conn==='shared', st=S.data.eleves;
-  const tb=`<div class="toolbar"><p class="summary" style="margin:0"><span><b>${G.length}</b>${G.length>1?'grilles':'grille'}</span><span><b>${G.filter(g=>g.enpq).length}</b>requises pour l’ENPQ</span></p><span class="grow"></span>${adm?`<button class="btn primary" type="button" id="fo-g-new" data-act="fo-grille">${icon('plus')}Nouvelle grille</button>`:''}</div>`;
+  const tb=`<div class="toolbar"><p class="summary u-m0"><span><b>${G.length}</b>${G.length>1?'grilles':'grille'}</span><span><b>${G.filter(g=>g.enpq).length}</b>requises pour l’ENPQ</span></p><span class="grow"></span>${adm?`<button class="btn primary" type="button" id="fo-g-new" data-act="fo-grille">${icon('plus')}Nouvelle grille</button>`:''}</div>`;
   if(!G.length) return tb+emptyBox('Aucune grille','Une grille décrit une manœuvre : ses étapes, ses points critiques, le seuil de réussite et le temps limite. L’instructeur la remplit sur la tablette pendant l’exercice.');
   const rows=G.map(g=>{const P=g.points||[], ok=st.filter(e=>foState(e.id,g).k==='ok').length;
     return xRow('xm-fg',`data-act="fo-grille" data-id="${esc(g.id)}"`,`<div class="xm-t"><b>${esc(g.nom)}</b><small>${esc(g.module?modLbl(g.module):'Sans module')}</small></div>
@@ -234,7 +234,7 @@ function foEvalPage(){
   const rr=recent.map(x=>xRow('xm-fe',`data-act="fo-view" data-id="${esc(x.id)}"`,`<span class="xm-m">${esc(foWhen(x))}</span><div class="xm-t"><b>${esc((byId(S.data.eleves,x.eleve)||{}).nom||'Élève')}</b><small>${esc(x.nom||'')}</small></div>
     <span class="xm-m">Essai ${esc(String(x.essai||1))} · ${esc(String(x.score))} %</span><span class="xm-m">${esc(x.evalNom||'')}</span><div class="xm-end"><span class="chip ${x.resultat==='reussi'?'ok':'bad'}">${x.resultat==='reussi'?'Réussie':esc(x.motif||'Échec')}</span>${x.sig&&x.sig.el?'':'<span class="chip off">Non signée par l’élève</span>'}</div>`,x.nom||'')).join('');
   return tb+`<section class="panel"><h2>${esc(gr.nom)}<small class="muted"> · ${esc(gName(gid))}</small></h2>${els.length?`<ul class="fo-elist">${rows}</ul>`:'<p class="help">Aucun élève dans cette classe.</p>'}
-      <p class="help" style="margin-top:8px">${pl((gr.points||[]).length,'étape','étapes')}, dont ${(gr.points||[]).filter(p=>p.crit).length} critiques · réussite à ${esc(String(+gr.seuil||70))} %${+gr.temps?` en ${esc(String(gr.temps))} min`:''} · ${pl(+gr.essais||2,'essai','essais')}.${can?' Cochez des élèves pour inscrire une réussite à tout un groupe.':''}</p></section>
+      <p class="help u-mt8">${pl((gr.points||[]).length,'étape','étapes')}, dont ${(gr.points||[]).filter(p=>p.crit).length} critiques · réussite à ${esc(String(+gr.seuil||70))} %${+gr.temps?` en ${esc(String(gr.temps))} min`:''} · ${pl(+gr.essais||2,'essai','essais')}.${can?' Cochez des élèves pour inscrire une réussite à tout un groupe.':''}</p></section>
     <h2 class="sec-h">Dernières évaluations de la classe</h2>${recent.length?xList('xm-fe',[['Date','',1],['Élève'],['Essai et note'],['Évaluateur'],['','r',1]],rr):'<section class="panel"><p class="help">Aucune évaluation pour cette classe.</p></section>'}`;
 }
 /* L’évaluateur proposé : l’enseignant connecté, sinon le chargé du module, sinon le premier */
@@ -320,8 +320,8 @@ function foViewDrawer(d){
     ${pts?`<ol class="fo-pts fo-done">${pts}</ol>`:''}${x.note?`<p><b>Commentaire :</b> ${esc(x.note)}</p>`:''}${x.lot?'<p class="help">Inscrite en groupe.</p>':''}
     <h3 class="sb-h3">Signatures</h3><ul class="plist"><li><span>Évaluateur : ${esc((sig.ev&&sig.ev.nom)||x.evalNom||'')}</span><span class="muted sm">${sig.ev?esc(shortDate(new Date(sig.ev.le))):'—'}</span></li>
       <li><span>Élève : ${esc(e.nom)}</span><span class="muted sm">${sig.el?'signé le '+esc(shortDate(new Date(sig.el.le))):'<span class="chip off">Pas encore signée</span>'}</span></li></ul>
-    ${me&&!sig.el&&S.conn==='shared'?`<div class="row" style="margin-top:10px"><button class="btn primary" type="button" id="fo-sign" data-act="fo-sign" data-id="${esc(x.id)}">Je signe : j’ai pris connaissance du résultat</button></div>`:''}
-    ${isAdmin()&&S.conn==='shared'?`<div class="row" style="margin-top:14px">${d.ask?`<button class="btn danger" type="button" id="fo-ev-del-yes" data-act="fo-ev-del-yes" data-id="${esc(x.id)}">Supprimer cette évaluation</button><button class="btn ghost" type="button" data-act="fo-ask-no">Annuler</button>`:`<button class="btn ghost sm" type="button" data-act="fo-ask">Supprimer</button>`}</div>`:''}</div>`;
+    ${me&&!sig.el&&S.conn==='shared'?`<div class="row u-mt10"><button class="btn primary" type="button" id="fo-sign" data-act="fo-sign" data-id="${esc(x.id)}">Je signe : j’ai pris connaissance du résultat</button></div>`:''}
+    ${isAdmin()&&S.conn==='shared'?`<div class="row u-mt14">${d.ask?`<button class="btn danger" type="button" id="fo-ev-del-yes" data-act="fo-ev-del-yes" data-id="${esc(x.id)}">Supprimer cette évaluation</button><button class="btn ghost" type="button" data-act="fo-ask-no">Annuler</button>`:`<button class="btn ghost sm" type="button" data-act="fo-ask">Supprimer</button>`}</div>`:''}</div>`;
 }
 /* ---------- Carnets ---------- */
 function foCarnetPage(){
@@ -350,8 +350,8 @@ function foPrePage(){
   const P=foCfg().prereq, adm=isAdmin()&&S.conn==='shared', bl=foBlocked(14);
   const chips=p=>[...(p.grilles||[]).map(id=>(byId(S.data.grilles||[],id)||{}).nom).filter(Boolean),...(p.modules||[]).map(m=>'M'+m),...(p.certs||[]).map(t=>(foCfg().certs.find(c=>c.id===t)||{}).nom).filter(Boolean)].map(t=>`<span class="chip off">${esc(t)}</span>`).join(' ');
   const mods=comps().map(k=>{const p=P[String(k.code)];return `<li><span><b>M${esc(k.code)}</b> ${esc(k.nom)}<span class="fo-req"> ${p?chips(p)||'<span class="muted sm">aucun</span>':'<span class="muted sm">aucun préalable</span>'}</span></span>${adm?`<button class="btn sm ghost" type="button" id="fo-pre-${esc(k.code)}" data-act="fo-pre" data-v="${esc(k.code)}">Modifier</button>`:''}</li>`;}).join('');
-  const up=bl.map(b=>`<li><span><b>${esc('M'+b.code+' '+b.s.c.titre)}</b><span class="muted sm"> · ${esc(dayLabel(parse(b.s.date)).toLowerCase())} · ${esc(gName(b.s.grp))}</span><ul class="fo-miss">${b.miss.map(x=>`<li>${esc(x.e.nom)} : <span class="bad-t">${esc(x.m.join(', '))}</span></li>`).join('')}</ul></span><span class="chip bad">${pl(b.miss.length,'élève','élèves')}</span></li>`).join('');
-  return `<div class="two"><section class="panel" id="fo-pre-up"><h2>Séances des 14 prochains jours</h2>${up?`<ul class="plist">${up}</ul>`:'<p class="help">Tous les élèves ont les préalables de leurs prochaines séances.</p>'}<p class="help" style="margin-top:8px">L’instructeur voit aussi l’avertissement en prenant les présences de la séance.</p></section>
+  const up=bl.map(b=>`<li><div><b>${esc('M'+b.code+' '+b.s.c.titre)}</b><span class="muted sm"> · ${esc(dayLabel(parse(b.s.date)).toLowerCase())} · ${esc(gName(b.s.grp))}</span><ul class="fo-miss">${b.miss.map(x=>`<li>${esc(x.e.nom)} : <span class="bad-t">${esc(x.m.join(', '))}</span></li>`).join('')}</ul></div><span class="chip bad">${pl(b.miss.length,'élève','élèves')}</span></li>`).join('');
+  return `<div class="two"><section class="panel" id="fo-pre-up"><h2>Séances des 14 prochains jours</h2>${up?`<ul class="plist">${up}</ul>`:'<p class="help">Tous les élèves ont les préalables de leurs prochaines séances.</p>'}<p class="help u-mt8">L’instructeur voit aussi l’avertissement en prenant les présences de la séance.</p></section>
     <section class="panel" id="fo-pre-mods"><h2>Préalables par module</h2><p class="help">Ce qu’un élève doit avoir réussi avant de suivre les séances du module : des grilles pratiques, d’autres modules, un certificat valide le jour de la séance.</p><ul class="plist">${mods}</ul></section></div>`;
 }
 function foPreDrawer(d){
@@ -386,12 +386,12 @@ function foCertsPage(){
 }
 function foMyCerts(e){
   const C=foCfg().certs;
-  return `<section class="panel" id="fo-mycerts"><h2>Mes certificats</h2><ul class="plist">${C.map(c=>{const it=foCertOf(e.id,c.id), s=foCertSt(it);return `<li><span>${esc(c.nom)}${it&&it.num?`<span class="muted sm"> · n° ${esc(it.num)}</span>`:''}${c.enpq?' <span class="chip info">ENPQ</span>':''}</span><span class="chip ${s[0]}">${esc(s[1])}</span></li>`;}).join('')}</ul><p class="help" style="margin-top:8px">Apportez votre nouveau certificat à l’administration avant l’expiration.</p></section>`;
+  return `<section class="panel" id="fo-mycerts"><h2>Mes certificats</h2><ul class="plist">${C.map(c=>{const it=foCertOf(e.id,c.id), s=foCertSt(it);return `<li><span>${esc(c.nom)}${it&&it.num?`<span class="muted sm"> · n° ${esc(it.num)}</span>`:''}${c.enpq?' <span class="chip info">ENPQ</span>':''}</span><span class="chip ${s[0]}">${esc(s[1])}</span></li>`;}).join('')}</ul><p class="help u-mt8">Apportez votre nouveau certificat à l’administration avant l’expiration.</p></section>`;
 }
 function foCertsDrawer(d){
   const e=byId(S.data.eleves,d.id);if(!e) return goneHTML('Élève');
   return dTop('Certificats',esc(e.nom),esc(gName(e.groupe)))+`<form class="dr-body" data-form="fo-certs" data-id="${esc(e.id)}" novalidate>${foCfg().certs.map(c=>{const it=foCertOf(e.id,c.id)||{};
-    return `<fieldset class="fo-cf"><legend>${esc(c.nom)}${c.mois?` <small class="muted">· valide ${esc(String(c.mois))} mois</small>`:''}</legend><div class="grid3"><label class="field"><span>Obtenu le</span><input type="date" id="fc-o-${esc(c.id)}" value="${esc(it.obtenu||'')}"></label><label class="field"><span>Expire le</span><input type="date" id="fc-e-${esc(c.id)}" value="${esc(it.expire||'')}" placeholder="calculée"></label><label class="field"><span>Numéro</span><input id="fc-n-${esc(c.id)}" maxlength="40" value="${esc(it.num||'')}" autocomplete="off"></label></div></fieldset>`;}).join('')}
+    return `<fieldset class="fo-cf"><legend>${esc(c.nom)}${c.mois?` <small class="muted">· valide ${esc(String(c.mois))} mois</small>`:''}</legend><div class="grid3"><label class="field"><span>Obtenu le</span><input type="date" id="fc-o-${esc(c.id)}" value="${esc(it.obtenu||'')}"></label><label class="field"><span>Expire le</span><input type="date" id="fc-e-${esc(c.id)}" value="${esc(it.expire||'')}" title="Laissée vide, elle est calculée"></label><label class="field"><span>Numéro</span><input id="fc-n-${esc(c.id)}" maxlength="40" value="${esc(it.num||'')}" autocomplete="off"></label></div></fieldset>`;}).join('')}
     <p class="help">Sans date d’expiration, elle se calcule à partir de la date d’obtention et de la durée de validité.</p>
     <div class="dr-foot"><button class="btn primary" type="submit" id="fc-save"${dis()}>Enregistrer</button></div></form>`;
 }
@@ -412,13 +412,13 @@ function foEnpqPage(){
   const gid=foGroup(), els=studentsOf(gid), can=isAdmin()&&S.conn==='shared', sel=new Set(S.pg.fesel||[]), f=S.pg.fef||'';
   const L=els.map(e=>({e,P:foEnpq(e)})).filter(x=>!f||(f==='pret'?x.P.ok&&!x.P.envoye:f==='inc'?!x.P.ok:!!x.P.envoye));
   const tb=`<div class="toolbar">${foGroupSel('fo-g',gid)}<select id="fo-ef" aria-label="Afficher">${[['','Tous'],['pret','Prêts à inscrire'],['inc','Incomplets'],['env','Inscrits']].map(([k,l])=>`<option value="${k}"${f===k?' selected':''}>${l}</option>`).join('')}</select><span class="grow"></span>
-    <button class="btn" type="button" id="fo-enpq-csv" data-act="fo-enpq-csv">${icon('down')}Exporter les prêts</button>${can?`<button class="btn" type="button" id="fo-enpq-fees" data-act="fo-enpq-fees"${sel.size?'':' disabled'}>${icon('coin')}Ajouter les frais${sel.size?' ('+sel.size+')':''}</button><button class="btn primary" type="button" id="fo-enpq-sent" data-act="fo-enpq-sent"${sel.size?'':' disabled'}>Marquer inscrits</button>`:''}</div>`;
+    <button class="btn" type="button" id="fo-enpq-csv" data-act="fo-enpq-csv">${icon('down')}Exporter les prêts</button>${can&&opt('compta')?`<button class="btn" type="button" id="fo-enpq-fees" data-act="fo-enpq-fees"${sel.size?'':' disabled'}>${icon('coin')}Ajouter les frais${sel.size?' ('+sel.size+')':''}</button><button class="btn primary" type="button" id="fo-enpq-sent" data-act="fo-enpq-sent"${sel.size?'':' disabled'}>Marquer inscrits</button>`:''}</div>`;
   /* ce qui manque, en clair : « Premiers soins : expiré le 15 sept. », « Grilles pratiques requises : 4 sur 6 réussies »… */
   const miss=P=>P.items.filter(x=>!x.ok).map(x=>x.auto?`${x.l} : ${x.detail}`:x.l).join(' · ');
   const rows=L.map(({e,P})=>`<tr><td class="fo-ck">${can?`<input type="checkbox" data-act="fo-esel" data-id="${esc(e.id)}"${sel.has(e.id)?' checked':''} aria-label="Cocher ${esc(e.nom)}">`:''}</td><th scope="row"><button class="link" type="button" data-act="fo-enpq" data-id="${esc(e.id)}">${esc(e.nom)}</button></th>
     <td class="fo-miss-t">${P.ok?`<span class="muted">${pl(P.items.length,'condition remplie','conditions remplies')}</span>`:esc(miss(P))}</td><td>${P.envoye?`<span class="chip info">Inscrit le ${esc(shortDate(parse(P.envoye)))}</span>`:P.ok?'<span class="chip ok">Prêt</span>':`<span class="chip warn">${pl(P.miss,'manque','manques')}</span>`}</td></tr>`).join('');
   return tb+`<p class="help">Les conditions d’admission à l’examen de qualification de l’ENPQ : certificats, grilles pratiques requises, examens de l’école, frais à jour, pièces du dossier. Cliquez un nom pour la liste complète. Les frais d’examen se règlent dans Réglages.</p>`
-    +(L.length?`<div class="tbl-wrap"><table class="tbl fo-enpq" id="fo-enpq-t"><thead><tr><th></th><th>Élève</th><th>Ce qui manque</th><th>État</th></tr></thead><tbody>${rows}</tbody></table></div>`:emptyBox('Aucun élève','Aucun élève ne correspond.'));
+    +(L.length?`<div class="tbl-wrap"><table class="tbl fo-enpq" id="fo-enpq-t"><thead><tr><th><span class="vh">Cocher</span></th><th>Élève</th><th>Ce qui manque</th><th>État</th></tr></thead><tbody>${rows}</tbody></table></div>`:emptyBox('Aucun élève','Aucun élève ne correspond.'));
 }
 function foMyEnpq(e){
   const P=foEnpq(e);
@@ -450,10 +450,11 @@ function foEnpqCSV(){
 }
 /* Les frais d’examen de l’ENPQ s’ajoutent au compte des élèves choisis (Compta) */
 async function foEnpqFees(){
+  const cp=opt('compta');if(!cp) return;
   const ids=(S.pg.fesel||[]).filter(id=>byId(S.data.eleves,id)), F=foCfg().frais.filter(x=>+x.montant>0);
   if(!ids.length||!F.length){toast(F.length?'Cochez des élèves.':'Aucun frais d’examen dans Réglages.','bad');return;}
   const fns=[];
-  for(const id of ids) for(const x of F) fns.push(()=>col('compta').doc(cpId('e')).set(cpEntry({date:todayISO(),type:'chg',poste:'frais',ht:+x.montant,ttc:+x.montant,eleve:id,libelle:x.nom,note:'ENPQ'})));
+  for(const id of ids) for(const x of F) fns.push(()=>cp.addEntry({date:todayISO(),type:'chg',poste:'frais',ht:+x.montant,ttc:+x.montant,eleve:id,libelle:x.nom,note:'ENPQ'}));
   S.pg.fesel=[];
   if(await runAll(fns,`Frais d’examen ajoutés au compte de ${pl(ids.length,'élève','élèves')}`)) logEv('formation',`a ajouté les frais d’examen de l’ENPQ à ${pl(ids.length,'élève','élèves')}`);
 }
@@ -496,11 +497,11 @@ async function foPrint(id){
 /* ---------- Réglages ---------- */
 function foReglPage(){
   const C=foCfg(), can=isAdmin()&&S.conn==='shared', ro=can?'':' disabled';
-  return `<form data-form="fo-regl" novalidate><div class="ps-cards">
+  return `<form data-form="fo-regl" novalidate><h2 class="vh">Réglages de la formation</h2><div class="ps-cards">
     <section class="panel ps-card"><h3>Certificats suivis</h3><label class="field"><span>Un par ligne : nom ; validité en mois ; ENPQ</span><textarea id="fr-certs" rows="6"${ro}>${esc(C.certs.map(c=>`${c.nom} ; ${c.mois||0}${c.enpq?' ; ENPQ':''}`).join('\n'))}</textarea></label><p class="help">« ENPQ » : exigé pour l’examen de qualification. Validité 0 : n’expire pas.</p>
       <label class="field"><span>Alerte avant l’expiration (jours)</span><input id="fr-alerte" type="number" min="1" max="365" value="${esc(String(C.alerte))}"${ro}></label></section>
     <section class="panel ps-card"><h3>Dossier ENPQ</h3><label class="field"><span>Pièces à recevoir, une par ligne</span><textarea id="fr-pieces" rows="4"${ro}>${esc(C.pieces.map(p=>p.nom).join('\n'))}</textarea></label>
-      <label class="field"><span>Frais d’examen ajoutés au compte : libellé ; montant</span><textarea id="fr-frais" rows="3"${ro}>${esc(C.frais.map(x=>`${x.nom} ; ${moneyIn(x.montant)}`).join('\n'))}</textarea></label><p class="help">Par défaut, la grille tarifaire 2026 de l’ENPQ : 5 examens théoriques à 92,00 $ et l’examen pratique à 344,30 $. À vérifier chaque année.</p></section>
+      ${opt('compta')?`<label class="field"><span>Frais d’examen ajoutés au compte : libellé ; montant</span><textarea id="fr-frais" rows="3"${ro}>${esc(C.frais.map(x=>`${x.nom} ; ${moneyIn(x.montant)}`).join('\n'))}</textarea></label><p class="help">Par défaut, la grille tarifaire 2026 de l’ENPQ : 5 examens théoriques à 92,00 $ et l’examen pratique à 344,30 $. À vérifier chaque année.</p>`:''}</section>
     <section class="panel ps-card"><h3>Évaluations pratiques</h3><label class="ck"><input type="checkbox" id="fr-niv"${C.niveaux?' checked':''}${ro}> Noter aussi un niveau de maîtrise de 1 à 4</label><p class="help">1 débutant, 2 en progrès, 3 maîtrisé, 4 très bonne maîtrise. Le niveau s’affiche dans les carnets.</p></section>
   </div>${can?`<div class="ps-save"><button class="btn primary" type="submit" id="fr-save"${dis()}>Enregistrer</button></div>`:''}</form>`;
 }
@@ -509,7 +510,7 @@ async function foSaveRegl(){
   const C=foCfg(), v=id=>String(($('#'+id)||{}).value||''), lines=id=>v(id).split(/\r?\n/).map(l=>l.trim()).filter(Boolean);
   const certs=lines('fr-certs').map(l=>{const p=l.split(';').map(x=>x.trim()), nom=p[0], old=C.certs.find(c=>c.nom.toLowerCase()===nom.toLowerCase());return {id:old?old.id:foSlug(nom),nom,mois:Math.max(0,Math.round(+(p[1]||0)||0)),enpq:/enpq/i.test(p[2]||'')};}).filter(c=>c.nom);
   const pieces=lines('fr-pieces').map(nom=>{const old=C.pieces.find(p=>p.nom.toLowerCase()===nom.toLowerCase());return {id:old?old.id:foSlug(nom),nom};});
-  const frais=[];for(const l of lines('fr-frais')){const p=l.split(';').map(x=>x.trim()), m=money(p[1]||'');if(!p[0]||m==null){toast('Frais : écrivez « libellé ; montant », par exemple « Examen pratique ; 344,30 ».','bad');return;}frais.push({nom:p[0],montant:m});}
+  const frais=$('#fr-frais')?[]:C.frais;if($('#fr-frais')) for(const l of lines('fr-frais')){const p=l.split(';').map(x=>x.trim()), m=money(p[1]||'');if(!p[0]||m==null){toast('Frais : écrivez « libellé ; montant », par exemple « Examen pratique ; 344,30 ».','bad');return;}frais.push({nom:p[0],montant:m});}
   const c=configDoc();c.formation=Object.assign({},c.formation||{},{certs,pieces,frais,alerte:Math.max(1,Math.round(+v('fr-alerte')||30)),niveaux:!!($('#fr-niv')||{}).checked});
   await saveConfig(c,'Réglages de la formation enregistrés');
 }

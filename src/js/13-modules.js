@@ -49,13 +49,13 @@ function modulesPage(){
   if(S.pg.fiche) return moduleFiche();
   const ms=modList(), st=S.pg, can=isAdmin()&&S.conn==='shared', tot=ms.reduce((n,m)=>n+modTot(m.k),0), un=ms.reduce((n,m)=>n+(+m.k.unites||0),0);
   const add=st.adding&&can?`<section class="panel cl-add"><form class="inline-add" data-form="md-add">
-      <label class="field" style="flex:0 1 90px"><span>N°</span><input type="number" id="md-code" min="1" step="1" inputmode="numeric" required></label>
-      <label class="field" style="flex:2 1 240px"><span>Nom du module</span><input id="md-nom" maxlength="90" autocomplete="off" required></label>
-      <label class="field" style="flex:0 1 130px"><span>Heures de théorie</span><input type="number" id="md-ht" min="0" step="1" inputmode="numeric"></label>
-      <label class="field" style="flex:0 1 130px"><span>Heures de pratique</span><input type="number" id="md-hp" min="0" step="1" inputmode="numeric"></label>
-      <label class="field" style="flex:1 1 200px"><span>Chargé de cours</span>${chargeSelect('md-charge','',null)}</label>
+      <label class="field u-f0-90"><span>N°</span><input type="number" id="md-code" min="1" step="1" inputmode="numeric" required></label>
+      <label class="field u-f2-240"><span>Nom du module</span><input id="md-nom" maxlength="90" autocomplete="off" required></label>
+      <label class="field u-f0-130"><span>Heures de théorie</span><input type="number" id="md-ht" min="0" step="1" inputmode="numeric"></label>
+      <label class="field u-f0-130"><span>Heures de pratique</span><input type="number" id="md-hp" min="0" step="1" inputmode="numeric"></label>
+      <label class="field u-f1-200"><span>Chargé de cours</span>${chargeSelect('md-charge','',null)}</label>
       <button class="btn primary" type="submit"${dis()}>Créer le module</button><button class="btn ghost" type="button" data-act="pg-set" data-k="adding" data-v="">Annuler</button></form></section>`:'';
-  const tb=`<div class="toolbar"><p class="summary" style="margin:0"><span><b>${ms.length}</b>${ms.length>1?'modules':'module'}</span><span><b>${tot}</b>heures au programme</span>${un?`<span><b>${un}</b>unités</span>`:''}</p><span class="grow"></span>${can&&!st.adding?`<button class="btn primary" type="button" id="md-add-open" data-act="pg-set" data-k="adding" data-v="1">${icon('plus')}Créer un module</button>`:''}</div>`;
+  const tb=`<div class="toolbar"><p class="summary u-m0"><span><b>${ms.length}</b>${ms.length>1?'modules':'module'}</span><span><b>${tot}</b>heures au programme</span>${un?`<span><b>${un}</b>unités</span>`:''}</p><span class="grow"></span>${can&&!st.adding?`<button class="btn primary" type="button" id="md-add-open" data-act="pg-set" data-k="adding" data-v="1">${icon('plus')}Créer un module</button>`:''}</div>`;
   if(!ms.length) return tb+add+(st.adding?'':emptyBox('Aucun module pour l’instant','Créez les modules du programme : leur numéro, leur nom, leurs heures de théorie et de pratique et leur chargé de cours.'));
   const rows=ms.map(({k})=>{const n=new Set(modCourses(k.code).map(c=>c.groupe)).size, ch=chargeName(k), nc=mCours(k).length;
     return xRow('md-cols',`id="md-${esc(k.code)}" data-act="module" data-id="${esc(k.code)}"`,`<span class="cl-num md-num" aria-hidden="true">M${esc(k.code)}</span><div class="xm-t"><b>${esc(k.nom)}</b></div><span class="xm-m md-ch">${ch?esc(ch):'<span class="muted">À choisir</span>'}</span><span class="md-h">${hTxt(modT(k))}</span><span class="md-h">${hTxt(modP(k))}</span><span class="md-h"><b>${modTot(k)} h</b></span><span class="md-h">${nc||'<span class="muted">—</span>'}</span><span class="md-h">${n||'<span class="muted">—</span>'}</span>${icon('right')}`,'Ouvrir le module '+k.nom);}).join('');
@@ -82,19 +82,19 @@ function moduleFiche(){
       return `<div class="fiche-two"><section class="panel"><h2>Le module</h2><form class="stackf" data-form="md-save" data-code="${code}">
           <label class="field"><span>Nom du module</span><input id="md-nom" value="${esc(k.nom)}" maxlength="90" autocomplete="off" required></label>
           <div class="grid3"><label class="field"><span>Heures de théorie requises</span><input type="number" id="md-ht" value="${modT(k)==null?'':modT(k)}" min="0" step="1" inputmode="numeric"></label><label class="field"><span>Heures de pratique requises</span><input type="number" id="md-hp" value="${modP(k)==null?'':modP(k)}" min="0" step="1" inputmode="numeric"></label><label class="field"><span>Unités</span><input type="number" id="md-un" value="${k.unites==null?'':esc(k.unites)}" min="0" step="1" inputmode="numeric"></label></div>
-          <label class="field" style="max-width:340px"><span>Chargé de cours</span>${chargeSelect('md-charge',k.charge||'',k)}</label>
+          <label class="field u-mw340"><span>Chargé de cours</span>${chargeSelect('md-charge',k.charge||'',k)}</label>
           <p class="help">Le chargé de cours donne les séances du module à toutes les classes. Dans la fenêtre d’une séance, on peut le retirer ou lui ajouter des enseignants.</p>
           <div class="row"><button class="btn primary" type="submit"${can?dis():' disabled'}>Enregistrer</button></div></form></section>
         <section class="panel"><h2>Supprimer le module</h2>
           ${blocked?`<p class="help" id="md-del-why">Un module qui a des cours ne peut pas être supprimé. Il reste ${esc(left.join(', '))}.</p>`:'<p class="help">Ce module n’a aucun cours : il peut être supprimé.</p>'}
-          ${conf?`<div class="confirm" style="margin-top:10px"><p>Supprimer le module M${code} ?</p><div class="row"><button class="btn sm danger" type="button" data-act="md-del" data-code="${code}"${dis()}>Supprimer</button><button class="btn sm ghost" type="button" data-act="pg-set" data-k="ask" data-v="">Annuler</button></div></div>`:`<div class="row" style="margin-top:10px"><button class="btn sm danger" type="button" id="md-ask" data-act="pg-set" data-k="ask" data-v="mod"${can&&!blocked?dis():' disabled'}>Supprimer le module</button></div>`}</section></div>`;
+          ${conf?`<div class="confirm u-mt10"><p>Supprimer le module M${code} ?</p><div class="row"><button class="btn sm danger" type="button" data-act="md-del" data-code="${code}"${dis()}>Supprimer</button><button class="btn sm ghost" type="button" data-act="pg-set" data-k="ask" data-v="">Annuler</button></div></div>`:`<div class="row u-mt10"><button class="btn sm danger" type="button" id="md-ask" data-act="pg-set" data-k="ask" data-v="mod"${can&&!blocked?dis():' disabled'}>Supprimer le module</button></div>`}</section></div>`;
     }
     if(tab==='cours'){
       const tSel=(id,v,attrs)=>`<select id="${id}" ${attrs}>${COURS_TYPES.map(t=>`<option value="${t}"${v===t?' selected':''}>${actLabel(t)}</option>`).join('')}${COURS_TYPES.includes(v)?'':`<option value="${esc(v)}" selected>${esc(actLabel(v)||'Autre')}</option>`}</select>`;
       const form=can?`<section class="panel md-add"><h2>Ajouter un cours au module</h2><form class="inline-add" data-form="mc-add" data-code="${code}">
-        <label class="field" style="flex:0 1 170px"><span>Numéro du cours</span><input id="mc-num" maxlength="30" autocomplete="off" placeholder="Ex. ${code}.${kc.length+1}" required></label>
-        <label class="field" style="flex:0 1 200px"><span>Type de cours</span>${tSel('mc-type','theorie','')}</label>
-        <label class="field" style="flex:0 1 170px"><span>Enseignants requis</span><input type="number" id="mc-req" min="0" max="9" step="1" value="1" inputmode="numeric"></label>
+        <label class="field u-f0-170"><span>Numéro du cours</span><input id="mc-num" maxlength="30" autocomplete="off" placeholder="Ex. ${code}.${kc.length+1}" required></label>
+        <label class="field u-f0-200"><span>Type de cours</span>${tSel('mc-type','theorie','')}</label>
+        <label class="field u-f0-170"><span>Enseignants requis</span><input type="number" id="mc-req" min="0" max="9" step="1" value="1" inputmode="numeric"></label>
         <button class="btn primary" type="submit"${dis()}>Ajouter le cours</button></form></section>`:'';
       const hasR=ressAll().length>0;
       const rsCell=c=>{const names=ressNames(c.ress||[]), on=st.rc===c.id;
@@ -110,8 +110,8 @@ function moduleFiche(){
     if(tab==='examens'){
       const eSel=(id,v,attrs)=>`<select id="${id}" ${attrs}>${EXAM_T[v]?'':'<option value="" selected>Type à préciser</option>'}${Object.entries(EXAM_T).map(([t,l])=>`<option value="${t}"${v===t?' selected':''}>${l}</option>`).join('')}</select>`;
       const form=can?`<section class="panel md-add"><h2>Ajouter un examen au module</h2><form class="inline-add" data-form="me-add" data-code="${code}">
-        <label class="field" style="flex:0 1 200px"><span>Type d’examen</span>${eSel('me-type','t','')}</label>
-        <label class="field" style="flex:1 1 220px"><span>Nom de l’examen</span><input id="me-nom" maxlength="60" autocomplete="off" placeholder="Ex. Examen final" required></label>
+        <label class="field u-f0-200"><span>Type d’examen</span>${eSel('me-type','t','')}</label>
+        <label class="field u-f1-220"><span>Nom de l’examen</span><input id="me-nom" maxlength="60" autocomplete="off" placeholder="Ex. Examen final" required></label>
         <button class="btn primary" type="submit"${dis()}>Ajouter l’examen</button></form></section>`:'';
       const rows=ke.map(e=>`<article class="xm-row xm-cols md-e" id="me-${esc(e.id)}"><div class="xm-t"><b>${esc(e.nom)}</b></div>
           ${can?eSel('me-t-'+e.id,e.type||'',`data-me="type" data-code="${code}" data-id="${esc(e.id)}" aria-label="${esc('Type de l’examen '+e.nom)}"${dis()}`):`<span class="xm-m">${esc(EXAM_T[e.type]||'—')}</span>`}
@@ -138,13 +138,13 @@ function moduleFiche(){
     const pkey=k.code+'|'+gid, pick=new Set(st.pick&&st.pick.key===pkey?st.pick.items:[]), done=id=>!!(U.use[id]&&U.use[id].has(gid));
     const form=!can?'':kc.length||ke.length?`<section class="panel md-add"><h2>Ajouter une séance à ${esc(gName(gid))}</h2><form class="stackf" data-form="md-add-x" data-code="${code}" data-g="${esc(gid)}">
         <fieldset class="pk-set"><legend>Cours ou examen donné</legend><div class="pk-list" id="mx-picks">${pickList(k,pick,done,`data-key="${esc(pkey)}"${dis()}`)}</div></fieldset>
-        <div class="mx-row"><label class="field" style="flex:0 1 170px"><span>Date</span><input type="date" id="mx-date" required></label>
-        <label class="field" style="flex:0 1 180px"><span>Moment</span><select id="mx-per">${PERIODES.map(p=>`<option value="${p.k}"${p.k==='jour'?' selected':''}>${p.label}</option>`).join('')}</select></label>
+        <div class="mx-row"><label class="field u-f0-170"><span>Date</span><input type="date" id="mx-date" required></label>
+        <label class="field u-f0-180"><span>Moment</span><select id="mx-per">${PERIODES.map(p=>`<option value="${p.k}"${p.k==='jour'?' selected':''}>${p.label}</option>`).join('')}</select></label>
         <button class="btn primary" type="submit"${dis()}>Ajouter la séance</button></div>
         <p class="help">Une séance peut couvrir plusieurs cours. Un crochet marque ce qui est déjà à l’horaire de la classe.</p></form></section>`
       :`<section class="panel md-add"><p class="help" id="mx-nocours">Ajoutez d’abord les cours du module, dans l’onglet Cours : une séance est un cours donné à une classe, à une date.</p></section>`;
     const listH=xs.length?`<div class="cl-list xm-list"><div class="xm-hd xm-cols md-x" aria-hidden="true"><span>Date</span><span>Séance</span><span>Type</span><span>Ens. requis</span><span>Enseignants</span><span></span></div>${rows}</div>`:`<section class="panel"><p class="help">Aucune séance de ce module pour ${esc(gName(gid))}.</p></section>`;
-    return `<div class="st-bar">${sel}<span class="grow"></span><p class="summary" style="margin:0"><span><b>${xs.length}</b>${xs.length>1?'séances':'séance'}</span></p></div>${sum}${form}${listH}`;
+    return `<div class="st-bar">${sel}<span class="grow"></span><p class="summary u-m0"><span><b>${xs.length}</b>${xs.length>1?'séances':'séance'}</span></p></div>${sum}${form}${listH}`;
   };
   return ficheShell('modules',list,cur,item,head,[['cours','Cours'],['examens','Examens'],['seances','Séances'],['reglages','Réglages']],content);
 }
